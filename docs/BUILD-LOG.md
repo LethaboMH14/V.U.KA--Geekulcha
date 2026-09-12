@@ -83,3 +83,17 @@ Needs/blockers: repository must go public (or gain GitHub Pro) before branch pro
 Business handoff: not applicable.
 
 Next: Sibusiso sets branch protection the moment the repository is public or on Pro, requiring both CI jobs and the review rule in RULES.md.
+
+## 2026-09-13 | Claude Sonnet 5 | claude-sonnet-5 | G6/G7 — repos made private | authored, Lethabo directed and confirmed
+
+Changed: `docs/OPEN-GAPS.md` G6 and G7 rows updated with exact findings and a partial-mitigation status. Located the three secret-bearing files (confirmed only in `Team-Sonar---Vuka-`'s history/HEAD, not in `BEACON` — corrects `CLAUDE.md`'s claim that the EskomSePush token was "in BOTH repos") and the proprietary dataset files (confirmed in both `BEACON` and `Team-Sonar---Vuka-`, still on `main` as of today). Made both `LethaboMH14/BEACON` and `LethaboMH14/Team-Sonar---Vuka-` private on Lethabo's explicit go-ahead (`gh repo edit --visibility private`), verified with `gh repo view --json isPrivate` → `true` for both.
+
+Evidence: `git log --all --diff-filter=A --name-only` located the files across all branches after they didn't appear in a plain working-tree search. Exact line numbers cross-checked against `CLAUDE.md` §0's original claims — `weather_ingestion.py:7` and `acled_ingestion.py:6-7` match exactly; `esp_pipeline.py:51` matches for line number but the "in both repos" claim does not hold. `gh repo view` before and after confirms both repos flipped from `PUBLIC` to `PRIVATE`.
+
+Decision: repos made private — Lethabo (lead), 13 Sep 2026, in chat, after I reported the live exposure and asked before acting.
+
+Needs/blockers: **rotation is still outstanding and is not something this session can do** — the WeatherAPI key, EskomSePush token and the password (which the account pattern suggests belongs to Ndumiso, not on this team) all need the account holder directly. History purge (`git filter-repo`) is staged conceptually but not executed — needs rotation confirmed first, then explicit go-ahead to force-push, since it's irreversible for any existing clone/fork. Password value is not recorded in this repository or this log, by design.
+
+Business handoff: not applicable — this is remediation of a predecessor-project exposure, not a household-facing change.
+
+Next: Lethabo/Ndumiso rotate the three credentials; confirm here; then stage and execute the history purge with explicit sign-off before any force-push.
