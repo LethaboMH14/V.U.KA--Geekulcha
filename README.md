@@ -116,6 +116,7 @@ Rows referencing paths not yet present are pending the port described above.
 
 | Document | What it is |
 |---|---|
+| [`docs/HANDOVER.md`](docs/HANDOVER.md) | **Start here if you are picking up implementation** — state, hard rules, verified numbers, what to build in order |
 | [`docs/00-SPEC.md`](docs/00-SPEC.md) | Numbered requirements, frozen contracts, and the requirement-to-test map |
 | [`docs/01-ARCHITECTURE.md`](docs/01-ARCHITECTURE.md) | The architecture of record — all four layers, the trust boundary, the data tiers. 105 pages |
 | [`docs/TECH-STACK.md`](docs/TECH-STACK.md) | Every technology with the reason it was chosen — and what we refused to use |
