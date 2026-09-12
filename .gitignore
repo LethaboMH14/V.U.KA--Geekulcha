@@ -5,6 +5,7 @@
 *.pem
 *.key
 *.p12
+*.pfx
 *.keystore
 *.jks
 credentials.json
@@ -20,6 +21,9 @@ secrets/
 *.sqlite3
 data/raw/
 data/private/
+data/claims/
+captures/
+recordings/
 
 # ── Models and large binaries ────────────────────────────────────────
 *.tflite
@@ -30,6 +34,8 @@ data/private/
 *.weights
 
 # ── Dependencies and build output ────────────────────────────────────
+.tools/
+work/
 node_modules/
 dist/
 build/

@@ -1,0 +1,9 @@
+title = "VUKA clean-history scanning"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "vuka-synthetic-test-secret"
+description = "Deliberately noncredential fixture for exercising the scanner gate"
+regex = '''VUKA_TEST_SECRET_[A-Z0-9]{24}'''
