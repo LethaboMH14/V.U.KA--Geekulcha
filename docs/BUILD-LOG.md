@@ -97,3 +97,17 @@ Needs/blockers: **rotation is still outstanding and is not something this sessio
 Business handoff: not applicable — this is remediation of a predecessor-project exposure, not a household-facing change.
 
 Next: Lethabo/Ndumiso rotate the three credentials; confirm here; then stage and execute the history purge with explicit sign-off before any force-push.
+
+## 2026-09-13 | Claude Sonnet 5 | claude-sonnet-5 | G6/G7 closed — history purged, rotated, force-pushed, verified | authored, Lethabo directed and confirmed each step
+
+Changed: `docs/OPEN-GAPS.md` — G6 and G7 marked closed; new G18 recorded (both predecessor repos intentionally kept private going forward, per `CLAUDE.md` D15, not a temporary state). Executed the full remediation: mirror-cloned both `BEACON` and `Team-Sonar---Vuka-` fresh into a scratch directory (never touched the working checkouts); ran `git filter-repo --invert-paths` to remove `Gradhack_Insure_Data.xlsx`, `claims_cleaned.csv`, `claims_cleaned.xlsx` from every branch of both; ran `git filter-repo --replace-text` to redact the WeatherAPI key, EskomSePush token, ACLED email and password (Team-Sonar-Vuka), and — found only during this pass, not in the original remediation list — a Roboflow API key committed to `BEACON`'s `vision/.env`. Confirmed the file existed in BEACON at a different path than `CLAUDE.md` originally described (root level, not `vuka/data-pipeline/`), and confirmed it carried the *same already-rotated* WeatherAPI/EskomSePush values as Team-Sonar-Vuka, not separate live ones. Force-pushed both rewritten histories (`git push --mirror --force`) after Lethabo confirmed no other clones existed and gave explicit go-ahead.
+
+Evidence: `git log --all --diff-filter=A --name-only` across every branch of both mirrors confirms both dataset paths and all four secret strings are gone. `gitleaks git --redact --log-opts="--all"` on both mirrors before push: zero leaks. After push, independently re-verified against **fresh clones from GitHub** (not the mirrors used to push) — `gitleaks git --log-opts="--all"` zero leaks on both, `gitleaks dir` zero leaks on both working trees. GitHub API (`git/trees/main?recursive=true`) confirms the dataset files are absent from both live repos; `contents/.../weather_ingestion.py` and `contents/.../acled_ingestion.py` fetched directly from the API confirm the redacted placeholder text is what is actually live, not what a local mirror merely claims. All original branches on both repos survived the rewrite (5 on BEACON, 24 on Vuka) — nothing dropped.
+
+Decision: repos rotated (Lethabo/account holders, confirmed in chat) then purged and force-pushed (Lethabo, explicit go-ahead in chat, 13 Sep 2026, after confirming no other local clones existed).
+
+Needs/blockers: none remaining for G6/G7. The Roboflow key rotation should be double-checked by whoever owns that Roboflow account, since this session confirmed only that the value in `.env` matched what the account holder rotated — not independently verified against the Roboflow dashboard.
+
+Business handoff: not applicable — remediation of predecessor-project exposures, not a household-facing change.
+
+Next: none required. Both repos remain private per G18; do not restore public visibility without a fresh reason and review.
