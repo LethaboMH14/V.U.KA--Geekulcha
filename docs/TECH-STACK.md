@@ -56,7 +56,7 @@ Every row includes **why this and not the obvious alternative.** A stack list pr
 
 | Component | Choice | Why |
 |---|---|---|
-| Framework | **FastAPI + WebSockets** | Native async, Pydantic validation at the boundary, and WS for sub-second fan-out. **Measured 318 ms p95** end-to-end |
+| Framework | **FastAPI + WebSockets** | Native async, Pydantic validation at the boundary, and WS for sub-second fan-out. **Measured 318 ms p95** (n = 10) end-to-end |
 | WS routing | **Room-scoped** — `/ws/ops`, `/ws/member` | A member socket must never receive operator traffic. Enforced and tested, not assumed |
 | Database | **SQLite → PostgreSQL + pgvector** | SQLite for offline and local; Postgres with pgvector for embedding similarity search at scale. One migration path, decided on day zero |
 | Migrations | **Alembic from the first commit** | Not a single init script. Schema state is never ad-hoc, and the upgrade path to Postgres was designed rather than discovered |
@@ -76,7 +76,7 @@ Every row includes **why this and not the obvious alternative.** A stack list pr
 | Public chain | **OpenTimestamps → Bitcoin** | Free, no wallet, no token, no account — and chosen for **longevity**. A claim may reach court in ten years; if the chain you anchored to has died, your proof died with it |
 | Alternative | **Hedera Consensus Service** | ~3–5 s finality, ~$0.0001/message, purpose-built for tamper-proof event ordering. Our fallback if low latency ever matters |
 | **Rejected** | ~~Private / permissioned chain alone~~ | A chain whose validators are the insurer, the security company and us does **not** solve the trust problem *for the member* — the parties in the dispute would be running the nodes. A private layer is fine for throughput; the **anchor must be public** |
-| **Rejected** | ~~Alerts on-chain~~ | Our relay is 318 ms. The fastest chain is ~2 s. Consensus in the alert path costs lives and buys nothing |
+| **Rejected** | ~~Alerts on-chain~~ | Our relay is 318 ms (n = 10). The fastest chain is ~2 s. Consensus in the alert path costs lives and buys nothing |
 | **Rejected** | ~~Tokens, smart-contract auto-dispatch, gate unlock~~ | The first is decoration; the second and third violate **ADR-0002** — no machine-alone consequence on probabilistic inference |
 | On-chain payload | **32-byte root only** | No faces, no voices, no locations. A hash of a hash |
 | Governance | **2-of-2 multi-signature** on whitelist / disarm / threshold / delete | Closes the highest-value insider attack — a whitelisted entity accumulates **no** suspicion at all, and one operator could add one alone |

@@ -348,7 +348,7 @@ ATAM-style. Each scenario is testable, and each names the tactic that satisfies 
 | # | Source | Stimulus | Environment | Response | **Measure** | Tactic | Status |
 |---|---|---|---|---|---|---|---|
 | **QA-1** | Assailant | Forces victim to unlock phone | Under coercion, in public | Duress PIN unlocks identically; silent signal raised | **Zero** observable difference in UI, packet size or timing | Indistinguishable-path design | 📋 SPECIFIED |
-| **QA-2** | Camera | Person detected at premises | Normal operation | Alert rendered on operator screen | **≤ 2 000 ms p95** — measured **318 ms** | Edge inference + WS fan-out | ✅ BUILT |
+| **QA-2** | Camera | Person detected at premises | Normal operation | Alert rendered on operator screen | **≤ 2 000 ms p95** — measured **318 ms**, n = 10 | Edge inference + WS fan-out | ✅ BUILT |
 | **QA-3** | Network | Total connectivity loss | Load-shedding, stage 6 | Phone continues detecting and queues | **100 %** of local function retained; queue replayed in order | Offline-first, local queue | ✅ BUILT |
 | **QA-4** | Accused person | Requests their own record | Any time | Full decision history + verifiable anchor proof | **≤ 30 days** statutory; target same-day, machine-checkable | Append-only chain + Merkle proof | 🔨 BUILDING · G3 |
 | **QA-5** | Insider operator | Attempts to whitelist an entity alone | Authenticated, legitimate session | Action refused; the attempt is itself anchored | **0** single-signature whitelists possible | Two-of-two signature | 🔨 BUILDING · G3 |
@@ -1115,7 +1115,7 @@ flowchart LR
 
 | Budget | Target | Measured | Referee |
 |---|---|---|---|
-| Detection → alert render, **p95** | ≤ 2 000 ms | **318 ms** | `scripts/latency.py` |
+| Detection → alert render, **p95** | ≤ 2 000 ms | **318 ms** (n = 10) | `scripts/latency.py` |
 | Detection → alert render, **p50** | — | **273 ms** | same |
 | Per-inference, 2 GB Android device | ≤ 50 ms | meets | bench |
 | Vision throughput, person detection | ≥ 8 FPS | meets | appliance bench |
@@ -1986,7 +1986,7 @@ The last row is the one worth pausing on. In most systems, human unavailability 
 
 | Budget | Target | Current | Enforced by |
 |---|---|---|---|
-| Detection → alert render, p95 | ≤ 2 000 ms | **318 ms** | `scripts/latency.py` |
+| Detection → alert render, p95 | ≤ 2 000 ms | **318 ms** (n = 10) | `scripts/latency.py` |
 | Detection → alert render, p50 | — | **273 ms** | same |
 | Vision throughput, person detection | ≥ 8 FPS | meets | appliance bench |
 | Shipped on-device models | ≤ 20 MB | meets | sha256 manifest |
@@ -2279,7 +2279,7 @@ flowchart LR
 |---|---|---|
 | Components integrated, not isolated | Four layers, end-to-end pipeline, ~33 600 LOC across the repository | Read it |
 | Validated in a **relevant** environment | Real SAPS quarterly data, 15 712 claims, 709 geocoded suburbs, live Eskom and weather feeds | Run the pipeline |
-| Measured against a budget | Detection → alert p95 **318 ms** against a 2 000 ms budget | `scripts/latency.py` |
+| Measured against a budget | Detection → alert p95 **318 ms** (n = 10) against a 2 000 ms budget | `scripts/latency.py` |
 | Automated verification exists | **440 tests**, contract tests on exact shapes | CI |
 | Decisions are documented and traceable | **25 ADRs**, 207 commits, append-only build log | `docs/adr.md` |
 
@@ -2629,7 +2629,7 @@ The verifier recomputes **every entry and every pointer**, and returns the **fir
 
 | Claim in here | Check it by |
 |---|---|
-| 318 ms p95 | Run `scripts/latency.py` yourself |
+| 318 ms p95 (n = 10) | Run `scripts/latency.py` yourself |
 | 440 tests, 25 ADRs, 207 commits | Clone and count |
 | No code path sets `flagged` | Grep for it. That is the test |
 | The forecast fails its baseline | `data/eval/` — the numbers are in the repository |

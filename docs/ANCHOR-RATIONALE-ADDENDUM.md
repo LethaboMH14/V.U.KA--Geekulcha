@@ -87,7 +87,7 @@ Your reading describes neighbours' cameras across 5 km waking to track a getaway
 
 `CASE 2000` was read off a news chyron and **created a vehicle entity that does not exist.** Now imagine that plate auto-broadcast to 5 km of cameras with a smart contract behind it and no human in the path. You'd be building a machine for pre-arming a neighbourhood against a phantom.
 
-**Human-gate the cordon.** An operator confirms, then the cordon arms. The blockchain's job is to record *that a human authorised a suburb-wide cordon at 02:14* — which is a power that absolutely should be publicly auditable. But the cordon itself runs on your WebSocket relay at 318 ms, because a getaway car does not wait for consensus.
+**Human-gate the cordon.** An operator confirms, then the cordon arms. The blockchain's job is to record *that a human authorised a suburb-wide cordon at 02:14* — which is a power that absolutely should be publicly auditable. But the cordon itself runs on your WebSocket relay at 318 ms (n = 10), because a getaway car does not wait for consensus.
 
 And say the distinction out loud: **a mesh is decentralised radio, not a blockchain.** ISIPHEPHELO's LoRa mesh is genuinely decentralised infrastructure. Conflating that with a ledger is the mistake a blockchain-literate judge will catch instantly.
 
@@ -171,7 +171,7 @@ Six candidate uses. Three built, one adapted, three refused — each refusal cit
 | ✅ | Multi-sig on destructive admin actions | Build | closes the whitelist hole |
 | ✅ | Subject access with anchor proof | Build | discharges ADR-0006 |
 | 🟡 | Digital cordon | Build **human-gated**, not contract-triggered | ADR-0007 (the `CASE 2000` phantom) |
-| ❌ | Real-time alerts on chain | Refuse | 318 ms measured vs 2 s minimum |
+| ❌ | Real-time alerts on chain | Refuse | 318 ms (n = 10) measured vs 2 s minimum |
 | ❌ | Personal data on chain | Refuse | D9 — embeddings not images |
 | ❌ | Token incentives for camera data | Refuse | pays people to erode D9 |
 | ❌ | Smart gate passes | Refuse | **ADR-0002** — no machine-alone decisions |

@@ -251,7 +251,7 @@ Gotchas already hit, so nobody loses an hour to them:
 
 ## 11 · Open questions a human must answer
 
-1. **Ndumiso Skhosana.** Named as builder C in the old architecture doc, not on the Sonke team. The data-science work is real and in the commit history. It is currently attributed as founding work under the predecessor project, with forward ownership to Khutso (traceability) and Babatunde (figures). **If he is still with the team, this is wrong and needs correcting.**
+1. ~~**Ndumiso Skhosana.**~~ **RESOLVED 12 September 2026.** Confirmed by Lethabo: Ndumiso and Sali are not on the VUKA/Geekulcha team — they belong to the predecessor project. The existing attribution (founding work under the predecessor project, forward ownership to Khutso for traceability and Babatunde for figures) is correct as written and needs no change. Neither name appears anywhere else in this repository.
 2. **Sunday end time.** The acceptance email says 15:00; the programme PDF says 16:00. Plan against 15:00.
 3. **The claims-derived figures.** Currently framed as "analysed under a prior engagement, not redistributed", which keeps R1.09bn and R10.9m-per-1% in the business case. The stricter alternative is SAPS-only, losing both.
 4. **R1–R5 status.** Until rotation, password change, history purge and scanning are genuinely done, `09-VUKA-SSDLC.md` §5 must not be published — it describes a remediation as complete.

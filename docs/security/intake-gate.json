@@ -1,0 +1,11 @@
+{
+  "status": "blocked",
+  "requirements": {
+    "three_credentials_revoked": {"verified": false, "evidence": null},
+    "reused_password_changed": {"verified": false, "evidence": null},
+    "old_private_dataset_remediated": {"verified": false, "evidence": null},
+    "old_readmes_built_designed_split": {"verified": false, "evidence": null},
+    "local_hook_and_ci_proven": {"verified": false, "evidence": null}
+  },
+  "lead_approvals": {"lethabo": null, "sibusiso": null}
+}
