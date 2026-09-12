@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VUKA — System Architecture</title>
+<style>
+:root{
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --raise:#ffffff;
+  --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --rule:#c3c2b7; --border:rgba(11,11,11,0.10);
+  --vigil:#2a78d6; --khaya:#eb6834; --umoja:#1baf7a; --anchor:#4a3aa7;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --s1:#cde2fb; --s3:#6da7ec; --s5:#256abf; --s7:#0d366b;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --raise:#222221;
+    --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --rule:#383835; --border:rgba(255,255,255,0.10);
+    --vigil:#3987e5; --khaya:#d95926; --umoja:#199e70; --anchor:#9085e9;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);
+ font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:36px 22px 80px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:26px 28px;margin:0 0 20px}
+h1{font-size:29px;margin:0 0 6px;letter-spacing:-0.02em}
+h2{font-size:11.5px;text-transform:uppercase;letter-spacing:0.09em;color:var(--muted);margin:0 0 18px;font-weight:600}
+h3{font-size:15.5px;margin:0 0 6px}
+p{margin:0 0 12px;color:var(--ink2)}
+.lead{color:var(--ink);font-size:16.5px}
+.sm{font-size:13px}
+code{font-size:12.5px;background:color-mix(in srgb,var(--ink) 6%,transparent);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+strong{color:var(--ink);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 11px;
+ border-radius:999px;border:1px solid var(--border);color:var(--ink2)}
+.chip .sw{width:9px;height:9px;border-radius:2px}
+
+/* stat row */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:1px;background:var(--grid);
+ border:1px solid var(--grid);border-radius:10px;overflow:hidden;margin:20px 0 0}
+.stat{background:var(--surface);padding:14px 15px}
+.stat .v{font-size:23px;font-weight:600;letter-spacing:-0.02em;display:block;line-height:1.15}
+.stat .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em}
+
+/* layer stack */
+.layers{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+@media (max-width:900px){.layers{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.layers{grid-template-columns:1fr}}
+.layer{border:1px solid var(--border);border-radius:10px;padding:14px 15px;background:var(--raise);position:relative;overflow:hidden}
+.layer::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.layer.v::before{background:var(--vigil)} .layer.k::before{background:var(--khaya)}
+.layer.u::before{background:var(--umoja)} .layer.a::before{background:var(--anchor)}
+.layer .hd{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+.layer .nm{font-weight:700;font-size:15px;letter-spacing:-0.01em}
+.layer .say{font-size:10.5px;color:var(--muted)}
+.layer .role{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:9px;font-weight:600}
+.layer ul{margin:0;padding-left:15px;font-size:12.5px;color:var(--ink2)}
+.layer li{margin:0 0 4px}
+.layer .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
+ padding:2px 7px;border-radius:4px;margin-top:10px}
+.tag.built{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good);border:1px solid color-mix(in srgb,var(--good) 34%,transparent)}
+.tag.bld{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink);border:1px solid color-mix(in srgb,var(--warn) 44%,transparent)}
+
+/* pipeline */
+.pipe{display:flex;flex-direction:column;gap:0;margin:6px 0 0}
+.stage{display:grid;grid-template-columns:112px 1fr;gap:14px;align-items:start;padding:11px 0}
+.stage+.stage{border-top:1px solid var(--grid)}
+.stage .lb{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600;padding-top:2px}
+.stage .bd{font-size:13.5px;color:var(--ink2)}
+.stage .bd b{color:var(--ink)}
+.stage .bd .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;color:var(--ink)}
+.gate{border:2px solid var(--crit);border-radius:10px;padding:14px 16px;margin:14px 0;background:color-mix(in srgb,var(--crit) 7%,transparent)}
+.gate .t{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:var(--crit);margin-bottom:5px}
+.gate p{margin:0;font-size:13.5px;color:var(--ink)}
+
+/* boundary table */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);
+ font-weight:600;padding:0 12px 8px 0;border-bottom:1px solid var(--rule)}
+td{padding:9px 12px 9px 0;border-bottom:1px solid var(--grid);color:var(--ink2);vertical-align:top}
+td strong{color:var(--ink)}
+td.y{color:var(--good);font-weight:600;white-space:nowrap}
+td.n{color:var(--crit);font-weight:600;white-space:nowrap}
+
+/* deployment */
+.dep{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+.node{border:1px solid var(--border);border-radius:10px;padding:14px 15px;background:var(--raise)}
+.node .h{font-size:13.5px;font-weight:700;margin-bottom:2px}
+.node .s{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-weight:600}
+.node ul{margin:0;padding-left:15px;font-size:12.5px;color:var(--ink2)}
+.node li{margin:0 0 3px}
+.flowline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin:14px 0 0}
+.flowline .bx{background:var(--raise);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:12px;color:var(--ink);white-space:nowrap}
+.ar{color:var(--muted)}
+.ms{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;color:var(--umoja);font-weight:600}
+
+/* meters */
+.crit{display:grid;grid-template-columns:1fr 74px;gap:12px;align-items:center;padding:8px 0}
+.crit+.crit{border-top:1px solid var(--grid)}
+.crit .k{font-size:13px}
+.crit .k span{display:block;font-size:10.5px;color:var(--muted);line-height:1.3}
+.crit .m{height:7px;background:var(--s1);border-radius:4px;overflow:hidden;margin-top:5px}
+.crit .m i{display:block;height:100%;background:var(--s5);border-radius:4px}
+.crit .n{font-size:12.5px;font-weight:600;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.note{font-size:12.5px;color:var(--muted);border-left:2px solid var(--rule);padding-left:12px;margin:16px 0 0}
+footer{text-align:center;font-size:12px;color:var(--muted);margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="card">
+  <h1>VUKA — System Architecture</h1>
+  <p class="lead">Four layers. One shared core. One hard boundary that no machine may cross.</p>
+  <div class="chips" style="margin-top:14px">
+    <span class="chip"><span class="sw" style="background:var(--vigil)"></span>VIGIL · the person</span>
+    <span class="chip"><span class="sw" style="background:var(--khaya)"></span>KHAYA · the home</span>
+    <span class="chip"><span class="sw" style="background:var(--umoja)"></span>UMOJA · the street</span>
+    <span class="chip"><span class="sw" style="background:var(--anchor)"></span>ANCHOR · the record</span>
+  </div>
+  <div class="stats">
+    <div class="stat"><span class="v">318<span style="font-size:14px">ms</span></span><span class="k">p95 measured</span></div>
+    <div class="stat"><span class="v">33.6k</span><span class="k">Lines shipped</span></div>
+    <div class="stat"><span class="v">440</span><span class="k">Tests passing</span></div>
+    <div class="stat"><span class="v">32<span style="font-size:14px">B</span></span><span class="k">On-chain / hour</span></div>
+    <div class="stat"><span class="v">0</span><span class="k">Images stored</span></div>
+    <div class="stat"><span class="v">TRL 5</span><span class="k">Readiness</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>1 · The four layers</h2>
+  <div class="layers">
+    <div class="layer v">
+      <div class="hd"><span class="nm">VIGIL</span><span class="say">VIJ-il</span></div>
+      <div class="role">The person · Android</div>
+      <ul>
+        <li>Kotlin foreground service, partial wakelock, boot receiver</li>
+        <li>YAMNet TFLite INT8 on-device</li>
+        <li>Acoustic · motion · vehicle-link</li>
+        <li>Covert duress PIN, stealth mode</li>
+        <li>Offline-first local queue</li>
+      </ul>
+      <span class="tag built">✓ Built · July</span>
+    </div>
+    <div class="layer k">
+      <div class="hd"><span class="nm">KHAYA</span><span class="say">KY-ah</span></div>
+      <div class="role">The home · edge appliance</div>
+      <ul>
+        <li>ARM SoC + NPU, sealed unit</li>
+        <li>YOLOv8 person/animal/weapon</li>
+        <li>Glass-break + gunshot, 2-stage</li>
+        <li>48–72h LiFePO4, LTE failover</li>
+        <li>Tamper switch + signed heartbeat</li>
+      </ul>
+      <span class="tag built">✓ Built · July</span>
+    </div>
+    <div class="layer u">
+      <div class="hd"><span class="nm">UMOJA</span><span class="say">oo-MOH-ja</span></div>
+      <div class="role">The street · cloud</div>
+      <ul>
+        <li>FastAPI + WS room routing</li>
+        <li>Entity resolution, whitelist-first</li>
+        <li>678 SAPS precincts · 709 suburbs</li>
+        <li>OR-Tools patrol, 12-min dwell</li>
+        <li>Human verify queue</li>
+      </ul>
+      <span class="tag built">✓ Built · July</span>
+    </div>
+    <div class="layer a">
+      <div class="hd"><span class="nm">ANCHOR</span><span class="say">AN-ker</span></div>
+      <div class="role">The record · ledger</div>
+      <ul>
+        <li>SHA-256 prev-hash chain</li>
+        <li>Ed25519 per-party signatures</li>
+        <li>Hourly Merkle root, published</li>
+        <li>2-of-2 on destructive actions</li>
+        <li>Subject-access with proof</li>
+      </ul>
+      <span class="tag bld">▶ Building · 9 days</span>
+    </div>
+  </div>
+  <p class="note"><strong>Read it as a sentence.</strong> VIGIL wakes for one person. KHAYA watches one property. UMOJA connects a street. ANCHOR publishes what all three of them did.</p>
+</div>
+
+<div class="card">
+  <h2>2 · The decision pipeline — one incident, end to end</h2>
+  <div class="pipe">
+    <div class="stage"><div class="lb">Sense</div><div class="bd">Three <b>physically independent</b> channels. Acoustic (mel features → YAMNet), motion (IMU windows), vehicle link (BT pairing state). Independence is the whole point — never stack correlated models and call it confidence.</div></div>
+    <div class="stage"><div class="lb">Calibrate</div><div class="bd">Each channel emits a <b>calibrated</b> probability from a temperature-scaled head. A raw softmax entering fusion is a correctness bug, not a style issue.</div></div>
+    <div class="stage"><div class="lb">Contextualise</div><div class="bd">Prior log-odds from load-shedding stage, area risk, hour-of-day, sunrise/sunset. <span class="mono">base + β_stage·stage + β_cell·cellRisk + β_hour·hourRisk</span></div></div>
+    <div class="stage"><div class="lb">Fuse</div><div class="bd"><span class="mono">posterior_logodds = prior + Σ wᵢ · ln(pᵢ/(1−pᵢ))</span><br>Log-odds, not Dempster-Shafer — Zadeh's paradox breaks D-S under high conflict, and our worst cases <em>are</em> high-conflict (ADR-0005).</div></div>
+    <div class="stage"><div class="lb">Conflict gate</div><div class="bd">Coefficient <span class="mono">K</span> rises when channels contradict. <b>High K suppresses escalation and routes to verification.</b> Disagreement is information, not noise to average away.</div></div>
+    <div class="stage"><div class="lb">Escalate</div><div class="bd">L0→L3 with <b>hysteresis</b> — separate θ_up and θ_down per level, so state cannot chatter at a boundary. Every escalation carries a visible cancel window.</div></div>
+  </div>
+
+  <div class="gate">
+    <div class="t">⛔ The hard boundary — ADR-0002, accepted July 2026</div>
+    <p><strong>The machine's ceiling is <code>watch_candidate</code>.</strong> There is no code path in <code>brain/fusion.py</code> that can set state to <code>flagged</code>. Only <code>human_verify()</code> can, and it requires an authenticated operator ID. A biometric match is a lead for a human, never a verdict — because NIST FRVT documents demographic false-positive differentials up to two orders of magnitude, and in South Africa that is not academic.</p>
+  </div>
+
+  <div class="pipe">
+    <div class="stage"><div class="lb">Human decides</div><div class="bd">Flag · Dismiss · Whitelist. <b>Destructive actions require two signatures</b> — whitelist, camera disarm, threshold change, deletion. Because adding a vehicle to the whitelist makes it permanently invisible to the suspicion engine, that is the highest-value insider attack in the system.</div></div>
+    <div class="stage"><div class="lb">Record</div><div class="bd">Action, actor, target, timestamp and <span class="mono">prev_hash</span> → SHA-256. Each entry bound to the one before it. Signed by the asserting party's Ed25519 key.</div></div>
+    <div class="stage"><div class="lb">Anchor</div><div class="bd">Hourly Merkle root → public chain. <b>32 bytes.</b> Not immutability — <b>precedence</b>: proof a record existed before anyone had a reason to falsify it.</div></div>
+    <div class="stage"><div class="lb">Decay</div><div class="bd"><span class="mono">score_now = base × 0.5^(days/7)</span>, computed at read time. No scheduler needed. <b>It forgets you. Nobody has to decide to forgive you.</b></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>3 · The trust boundary — what crosses, and what never does</h2>
+  <table>
+    <thead><tr><th>Data</th><th>Leaves the device?</th><th>Reaches the cloud?</th><th>Goes on chain?</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Raw audio</strong></td><td class="n">✕ Never</td><td class="n">✕ Never</td><td class="n">✕ Never</td><td>3-second ring buffer, discarded. Only the label survives</td></tr>
+      <tr><td><strong>Face / plate images</strong></td><td class="n">✕ Never</td><td class="n">✕ Never</td><td class="n">✕ Never</td><td>Vectors only. Enforced in the vision layer, not in policy</td></tr>
+      <tr><td><strong>Embeddings (vectors)</strong></td><td class="y">✓ Yes</td><td class="y">✓ Yes</td><td class="n">✕ Never</td><td>Needed for re-identification. TTL enforced in the data layer</td></tr>
+      <tr><td><strong>Location</strong></td><td class="y">✓ On escalation</td><td class="y">✓ Yes</td><td class="n">✕ Never</td><td>Public ledgers are permanent and correlatable</td></tr>
+      <tr><td><strong>Decision events</strong></td><td class="y">✓ Yes</td><td class="y">✓ Yes</td><td class="y">✓ <em>Hashed</em></td><td>Only the hash. The payload stays in our database</td></tr>
+      <tr><td><strong>Merkle root</strong></td><td class="y">✓ Yes</td><td class="y">✓ Yes</td><td class="y">✓ Yes</td><td>32 bytes per hour. A hash of a hash. This is the entire on-chain footprint</td></tr>
+    </tbody>
+  </table>
+  <p class="note"><strong>The one-sentence answer to "so you're putting biometrics on a blockchain?"</strong> — No. We anchor a hash of a hash. Deleting a person's data does not break the chain, because the chain never held it.</p>
+</div>
+
+<div class="card">
+  <h2>4 · Deployment topology</h2>
+  <div class="dep">
+    <div class="node">
+      <div class="h">📱 Member phone</div><div class="s">VIGIL · Android, bare RN + Kotlin</div>
+      <ul><li>All inference on-device</li><li>Works with no signal, no power, screen off</li><li>Local queue, store-and-forward</li><li>≤20 MB shipped models, ≤50 ms per inference on a 2 GB device</li></ul>
+    </div>
+    <div class="node">
+      <div class="h">📦 Property appliance</div><div class="s">KHAYA · sealed edge unit</div>
+      <ul><li>ARM SoC + NPU, INT8 models</li><li>Cameras and mics on the LAN</li><li>48–72 h LiFePO4 — a countermeasure, not a convenience: cutting power is step one of a break-in</li><li>Wi-Fi primary, LTE failover</li><li>Signed heartbeat into the chain</li></ul>
+    </div>
+    <div class="node">
+      <div class="h">☁️ Regional service</div><div class="s">UMOJA · FastAPI on Azure</div>
+      <ul><li>WS relay, room-scoped</li><li>PostgreSQL + pgvector</li><li>Entity graph, risk cells, patrol solver</li><li>Rate limiting, operator auth</li><li>Never the decision path — sync and coordination only</li></ul>
+    </div>
+    <div class="node">
+      <div class="h">⛓ Public chain</div><div class="s">ANCHOR · OpenTimestamps → Bitcoin</div>
+      <ul><li>One Merkle root per hour</li><li>No wallet, no token, no account</li><li>Chosen for <strong>longevity</strong> — a claim may go to court in ten years</li><li>Hedera Consensus Service as the low-latency alternative</li><li><strong>~R1.30/month for the entire network</strong> — batched, so it is a fixed cost, not per-user</li></ul>
+    </div>
+  </div>
+  <div class="flowline">
+    <span class="bx">detection</span><span class="ar">→</span>
+    <span class="bx">on-device fusion</span><span class="ar">→</span>
+    <span class="bx">WS relay</span><span class="ar">→</span>
+    <span class="bx">alert render</span>
+    <span class="ms">measured p50 273 ms · p95 318 ms · budget 2 000 ms</span>
+  </div>
+  <p class="note"><strong>Graceful degradation is the architecture, not a feature.</strong> The camera works with no server (local queue). The server works with no vision (claims-only mode). The dashboard shows stale-marked data, never blank. Every layer defines its behaviour when the layer above it disappears.</p>
+</div>
+
+<div class="card">
+  <h2>5 · Referee numbers — the budgets we publish</h2>
+  <div class="crit"><div class="k">Detection → alert render, p95<span>Enforced by scripts/latency.py, matched by sighting ID</span><div class="m"><i style="width:16%"></i></div></div><div class="n">318 / 2000 ms</div></div>
+  <div class="crit"><div class="k">Vision throughput, person detection<span>Appliance bench</span><div class="m"><i style="width:100%"></i></div></div><div class="n">≥8 FPS</div></div>
+  <div class="crit"><div class="k">On-chain footprint per hour<span>One Merkle root. Fixed regardless of network size</span><div class="m"><i style="width:4%"></i></div></div><div class="n">32 bytes</div></div>
+  <div class="crit"><div class="k">Anchor liveness — hours with a published root<span>Target 100%; any gap is itself an anchored event</span><div class="m"><i style="width:100%"></i></div></div><div class="n">100%</div></div>
+  <div class="crit"><div class="k">Dual-signature compliance on destructive actions<span>Target 100%; exceptions are anchored, not suppressed</span><div class="m"><i style="width:100%"></i></div></div><div class="n">100%</div></div>
+  <div class="crit"><div class="k">False alerts surfaced per camera-week<span>Tuned in evaluation, checked by ml/eval/fa_budget.py in CI</span><div class="m"><i style="width:10%"></i></div></div><div class="n">≤1</div></div>
+  <div class="crit"><div class="k">Forecast skill vs naive baseline<span style="color:var(--crit)">⚠ CURRENTLY FAILING — MAE 0.484 vs 0.246 for a constant. Published, being fixed, on the honesty slide</span><div class="m"><i style="width:0%"></i></div></div><div class="n" style="color:var(--crit)">fails</div></div>
+  <p class="note">That last row stays on the slide. We publish the numbers that embarrass us — it is the only reason to believe the ones that don't.</p>
+</div>
+
+<footer>VUKA · Team Sonar · Geekulcha Annual Hackathon 2026 · Blockchain for Impact Use</footer>
+</div>
+</body>
+</html>

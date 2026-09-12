@@ -1,0 +1,65 @@
+# ── Secrets. Never commit. ───────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.keystore
+*.jks
+credentials.json
+service-account*.json
+secrets/
+
+# ── Data. Nothing proprietary, nothing personal, ever. ───────────────
+*.xlsx
+*.xls
+*.csv
+*.db
+*.sqlite
+*.sqlite3
+data/raw/
+data/private/
+
+# ── Models and large binaries ────────────────────────────────────────
+*.tflite
+*.onnx
+*.pt
+*.pth
+*.h5
+*.weights
+
+# ── Dependencies and build output ────────────────────────────────────
+node_modules/
+dist/
+build/
+.next/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.gradle/
+android/app/build/
+android/.cxx/
+
+# ── Tooling and local state ──────────────────────────────────────────
+.remember/
+.claude/settings.local.json
+.DS_Store
+Thumbs.db
+*.log
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+coverage/
+.coverage
+htmlcov/
+
+# ── Editors ──────────────────────────────────────────────────────────
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
