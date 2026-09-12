@@ -69,3 +69,17 @@ Needs/blockers: none remaining from this item.
 Business handoff: not applicable.
 
 Next: request Sibusiso's review on PR #2 given he authored the WBS and PR #1 which #2 supersedes.
+
+## 2026-09-12 | Claude Sonnet 5 | claude-sonnet-5 | G17 discovered — branch protection blocked | authored
+
+Changed: `SECURITY.md` and `docs/OPEN-GAPS.md` — recorded a new, verified finding (G17): branch protection on `main` cannot currently be configured because the repository is private on GitHub's free tier. Also recorded that CI now has an evidenced green remote run on PR #2 (both `secret-scan` and `document-contracts` jobs `SUCCESS`), which SECURITY.md previously flagged as unevidenced.
+
+Evidence: `gh pr view 2 --json statusCheckRollup` — both jobs `SUCCESS`, checked 12 Sep 2026. `gh api repos/LethaboMH14/V.U.KA--Geekulcha/branches/main/protection` → `403: Upgrade to GitHub Pro or make this repository public to enable this feature`. `gh repo view --json isPrivate` → `true`. All three commands and their exact output recorded in `SECURITY.md`.
+
+Decision: none authorised by this entry — flagged for Sibusiso, who owns branch protection per SECURITY.md's existing text.
+
+Needs/blockers: repository must go public (or gain GitHub Pro) before branch protection requiring the CI jobs and nonauthor review can be enforced. Until then, passing CI is advisory only — nothing stops a direct push to main.
+
+Business handoff: not applicable.
+
+Next: Sibusiso sets branch protection the moment the repository is public or on Pro, requiring both CI jobs and the review rule in RULES.md.
