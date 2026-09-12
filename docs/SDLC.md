@@ -8,7 +8,7 @@
 | **Version** | 1.0 · 19 August 2026 |
 | **Companions** | `19-VUKA-System-Architecture.md` (what we build) · `09-VUKA-SSDLC.md` (the five security boxes) · `21-VUKA-SDLC-Gap-Analysis.md` (what was missing) |
 | **Authority** | `CLAUDE.md` is the master build context. Locked decisions D1–D16 win over this document until an ADR supersedes them |
-| **Team** | Three builders — A (architecture, mobile, ML), B (backend, systems, security), C (data science, risk, business) |
+| **Team** | Seven builders across four universities. Two joint leads; see `docs/TEAM.md` for the roster and ownership split |
 
 ---
 
@@ -18,7 +18,7 @@ A lifecycle document usually describes how a team *intends* to work. This one de
 
 Two facts shape every choice in here:
 
-1. **Three people cannot run concurrent workstreams.** Anything that requires three parallel tracks of attention will fail on the first day someone has an exam or a job.
+1. **A distributed team cannot run concurrent workstreams.** Anything that requires three parallel tracks of attention will fail on the first day someone has an exam or a job.
 2. **The product's entire value is that it can be checked.** A process that lets a claim reach a slide without a test behind it does not just produce bad software — it destroys the one asset we cannot rebuild.
 
 Everything below follows from those two sentences.
@@ -48,7 +48,7 @@ flowchart LR
     style P fill:#ece9f7,stroke:#4a3aa7
 ```
 
-Step ③ is the one that makes three builders viable. **Contracts freeze before implementation**, so nobody blocks on somebody else's design decision. Builder B can write the ingest endpoint while Builder A writes the client that calls it, because the shape between them was agreed and frozen first, and a contract test will catch either of them drifting.
+Step ③ is the one that makes a distributed team viable. **Contracts freeze before implementation**, so nobody blocks on somebody else's design decision. Builder B can write the ingest endpoint while Builder A writes the client that calls it, because the shape between them was agreed and frozen first, and a contract test will catch either of them drifting.
 
 Step ⑧ is the one that makes the product credible. A result that embarrasses us is published on the same path as one that flatters us — the forecast failing its baseline is in the repository, in the architecture document, and on the honesty slide.
 
@@ -56,14 +56,14 @@ Step ⑧ is the one that makes the product credible. A result that embarrasses u
 
 | Model | Why not here |
 |---|---|
-| **Scrum / concurrent sprints** | Ceremony overhead is a fixed cost, and with three people it is a large fraction of capacity. Concurrent sprint tracks also assume you can absorb one track stalling. We cannot |
+| **Scrum / concurrent sprints** | Ceremony overhead is a fixed cost, and across four campuses it is a large fraction of capacity. Concurrent sprint tracks also assume you can absorb one track stalling. We cannot |
 | **Waterfall** | The requirements genuinely changed — the ANCHOR layer is new this cycle. A model that treats change as failure would have forced us to pretend |
 | **Pure Kanban** | No natural point at which the whole team stops and verifies. Our riskiest failure is a claim outrunning its evidence, and only a gate catches that |
 | **Move fast and fix later** | The thing we would break is the reason anyone should believe us |
 
 ### 1.3 Sequenced phases, not parallel sprints
 
-**One gate at a time, all three builders on it.** This is the single most important process decision in the document.
+**One gate at a time, the whole team on it.** This is the single most important process decision in the document.
 
 ```mermaid
 flowchart LR
@@ -172,15 +172,19 @@ B's second column is a defined role, not a personality trait. **Someone must be 
 | **Honesty ledger** | **R** | **R** | **R** |
 | Demo orchestration | C | **R/A** | C |
 
-The honesty ledger is R for all three deliberately. **Any builder can stop a claim**, and none of them needs the other two to agree.
+The honesty ledger is R for everyone deliberately. **Any builder can stop a claim**, and none of them needs anyone else to agree.
 
-### 3.3 ⚠️ The stated team gap
+### 3.3 ⚠️ The stated team gaps
 
-Three men; UI/UX shared rather than owned; no dedicated design or security-sector background.
+The two gaps this section previously carried — no gender variety, and UI/UX shared rather than owned — are both closed. The team is now seven builders across four universities, with gender variety present and a dedicated frontend developer and security designer. They are replaced here rather than deleted, because a document that quietly drops its stated gaps is worth less than one that keeps a current list.
 
-**Recruiting a fourth member is the highest-return action available before 25 August** — most valuable if she brings design or security-sector experience, which closes two scoring lines at once. 14 exported screen specifications already exist as a handover artefact so a new member is productive on day one rather than week three.
+What is still real:
 
-This is written down rather than smoothed over because a judge scoring team composition will see it in thirty seconds anyway, and the only thing worse than the gap is appearing not to have noticed it.
+- **We have never built together in one room.** Seven people, four universities, coordinating remotely until 25 September. Integration risk concentrates on the first evening. Mitigation: everything coordinates through files in the repository — a per-person file, a shared append-only build log, frozen contracts — so no handover depends on anyone being reachable.
+- **Mixed AI tooling across the team.** Claude Code, Codex, Cline, different models, no shared memory between them. Mitigation: `RULES.md` and `AGENTS.md` bind every person and every tool to the same standards and recording discipline.
+- **UX is owned by a co-lead who also owns architecture.** Better than shared, still a single point of failure under load.
+
+This is written down rather than smoothed over because a judge scoring team composition will see it in thirty seconds anyway, and the only thing worse than a gap is appearing not to have noticed it.
 
 ---
 
@@ -442,8 +446,8 @@ Every incident produces a written post-incident record with: what happened · wh
 | Change | Requires |
 |---|---|
 | Ordinary code | PR + review by ≥ 1 other builder + CI green |
-| **A locked decision D1–D16** | **ADR + all three builders** |
-| **A frozen contract** | **ADR + all three builders** |
+| **A locked decision D1–D16** | **ADR + both leads** |
+| **A frozen contract** | **ADR + both leads** |
 | Chain entry schema | ADR + all three. Additive only, forever |
 | Fusion parameters | Versioned file; the version is recorded in the decision record |
 | **Whitelist / camera disarm / threshold change / record deletion** | **Two-of-two operator signatures at runtime (D10). Not a process control — a code control** |

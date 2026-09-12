@@ -93,7 +93,7 @@ Every one of these is a standalone sale. **One platform, five products.**
 | **A municipality** | Where crime concentrates by hour and suburb, from official open data | Risk layer |
 | **CPSI (government)** | Safety tech that can be *checked* rather than trusted. POPIA answered in the architecture, not a policy PDF | Human gate + anchor + subject access |
 | **Telkom** | Works at the edge, offline, through load-shedding — a story about resilient connectivity, not bandwidth appetite | On-device stack |
-| **UNISA** | Calibration harnesses, a published backtest, 27 architecture decision records. Research hygiene you can mark | `ml/eval/`, ADRs |
+| **UNISA** | Calibration harnesses, a published backtest, 25 architecture decision records. Research hygiene you can mark | `ml/eval/`, ADRs |
 | **CompTIA** | Security-by-design, POPIA by construction, secrets discipline, contract tests | Whole build |
 | **A team in Nairobi or Lagos** | Load-shedding and thin bandwidth aren't South African problems. Swap the crime dataset, the rest ports | Whole platform |
 
@@ -103,7 +103,7 @@ Every one of these is a standalone sale. **One platform, five products.**
 
 **Scale**
 - ✅ ~33,600 lines of application code across two repos
-- ✅ 440 test cases · 27 accepted architecture decision records · ~6,800 lines of architecture docs
+- ✅ 440 test cases · 25 accepted architecture decision records · ~6,800 lines of architecture docs
 - ✅ 4 contributors, 5 documented roles
 - ✅ **Measured** end-to-end latency: p50 273 ms, p95 318 ms against a 2,000 ms budget. Measured with a harness that matches by ID so a concurrent probe can't corrupt the result
 

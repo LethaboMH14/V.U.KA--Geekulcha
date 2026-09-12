@@ -117,6 +117,9 @@ Rows referencing paths not yet present are pending the port described above.
 | Document | What it is |
 |---|---|
 | [`docs/00-SPEC.md`](docs/00-SPEC.md) | Numbered requirements, frozen contracts, and the requirement-to-test map |
+| [`docs/01-ARCHITECTURE.md`](docs/01-ARCHITECTURE.md) | The architecture of record — all four layers, the trust boundary, the data tiers. 105 pages |
+| [`docs/TECH-STACK.md`](docs/TECH-STACK.md) | Every technology with the reason it was chosen — and what we refused to use |
+| [`docs/TEAM.md`](docs/TEAM.md) | Seven builders, four universities, and the gaps that are still real |
 | [`docs/SDLC.md`](docs/SDLC.md) | How the work is done — spec-driven, with verification mapped back to the requirement |
 | [`docs/SDLC-GAP-ANALYSIS.md`](docs/SDLC-GAP-ANALYSIS.md) | What is wrong with our own process, written by us |
 | [`docs/USER-JOURNEY.md`](docs/USER-JOURNEY.md) | Four journeys through one machine — including the subject's |

@@ -214,7 +214,7 @@ event → canonical JSON → SHA-256 with prev_hash → chain entry
 
 ## 4 · Frozen contracts
 
-Changing any of these requires sign-off from all three builders and an ADR entry. **This is the spec-driven discipline: contracts freeze before implementation.**
+Changing any of these requires sign-off from both leads and an ADR entry. **This is the spec-driven discipline: contracts freeze before implementation.**
 
 ### 4.1 Core API surface (excerpt)
 
@@ -341,4 +341,4 @@ Disclosed here so that no judge has to discover them.
 
 Propose via an ADR entry in `docs/adr.md` (append-only). Discuss in the pull request. Mark **Accepted** on merge. Update the frozen-contract section if a locked decision changed. **Never edit history — supersede it.**
 
-**27 ADRs accepted to date.** The security and ethical properties of this system are architectural, dated, and reviewable — which is the only reason to believe they will still be there next month.
+**25 ADRs accepted to date.** The security and ethical properties of this system are architectural, dated, and reviewable — which is the only reason to believe they will still be there next month.

@@ -787,31 +787,43 @@ function arrow(s, x, y, w, onDark, label) {
 /* ============ 22 · TEAM ============ */
 {
   const s = pres.addSlide(); dark(s);
-  eyebrow(s, 'Skills and capabilities', true); monogram(s, -1, true);
-  title(s, 'Three builders. Contracts frozen before implementation.', true);
+  eyebrow(s, 'Team composition · skills and capabilities', true); monogram(s, -1, true);
+  title(s, 'Seven builders, four universities.\nContracts frozen before implementation.', true, { fontSize: 30, h: 1.0, lineSpacing: 34 });
 
   const team = [
-    ['A', 'Architecture, mobile, ML integration', ['Kotlin foreground service, on-device INT8 inference', 'Calibrated fusion + conflict gate', 'L0–L3 state machine with hysteresis', 'The spec, the model manifest, the ADRs'], P.vigil],
-    ['B', 'Backend, systems, security engineering', ['FastAPI + WS, migrations day zero, rate limiting', 'SHA-256 evidence chain + integrity verifier', 'Lazy decay at read time — no scheduler to fail', 'Latency harness · CI · demo orchestration'], P.umoja],
-    ['C', 'Data science, risk modelling, business case', ['15,712 records → 764 hotspots → 709 geocoded', 'Calibration harness, ECE, false-alarm budget', 'Published the held-out backtest — including the failure', 'The rand figures, and which of them are estimates'], P.khaya],
+    ['LH', 'Lethabo Hoaeane', 'University of South Africa', 'Profiler · co-lead', 'Architecture, product and UX. The spec, the ADRs, final review.', P.vigil],
+    ['SK', 'Sibusiso Khumalo', 'Witwatersrand', 'Backend · co-lead', 'Service, evidence chain, CI, demo orchestration.', P.umoja],
+    ['BA', 'Babatunde Adelusi', 'Pretoria', 'Business Developer', 'Business case, unit economics, go-to-market, the pitch.', P.anchor],
+    ['MC', 'Mutarisi Chibaya', 'Pretoria', 'Frontend Developer', 'Operator dashboard and the member-facing screens.', P.vigil],
+    ['KM', 'Khutso Mothopa', 'Witwatersrand', 'System Analyst', 'Requirements, work breakdown, traceability, verification map.', P.umoja],
+    ['VK', 'Vukosi Khoza', 'Witwatersrand', 'IoT Developer', 'KHAYA appliance — sensors, edge runtime, power, tamper.', P.khaya],
+    ['IM', 'Ipeleng Constance Modise', 'Tshwane University of Technology', 'Security Designer', 'OWASP coverage, threat model, SSDLC, physical security.', P.anchor],
   ];
-  team.forEach((t, i) => {
-    const x = M + i * 4.06;
-    card(s, x, 1.9, 3.82, 3.5, true);
-    iconCircle(s, x + 0.26, 2.12, 0.52, t[3], t[0], P.white);
-    s.addText(t[1], { x: x + 0.26, y: 2.76, w: 3.3, h: 0.56, margin: 0, valign: 'top', fontFace: F.h, fontSize: 13.5, bold: true, color: P.ice, lineSpacing: 18 });
-    bullets(s, t[2], { x: x + 0.26, y: 3.36, w: 3.3, h: 1.9, margin: 0, fontFace: F.b, fontSize: 10.5, color: P.mute, lineSpacing: 14, paraSpaceAfter: 5, valign: 'top' });
-  });
 
-  card(s, M, 5.6, 5.9, 1.3, true);
-  s.addText('How three people ship this', { x: M + 0.3, y: 5.75, w: 5.4, h: 0.28, margin: 0, fontFace: F.b, fontSize: 11, bold: true, charSpacing: 1, color: P.amber });
-  s.addText('Frozen contracts so nobody blocks. Sequenced gates, not concurrent sprints. Every change through a pull request. Tests are the specification, so a regression is caught by a machine and not by whoever remembers.', {
-    x: M + 0.3, y: 6.05, w: 5.4, h: 0.72, margin: 0, fontFace: F.b, fontSize: 11, color: P.ice, lineSpacing: 14 });
+  const CW = 2.84, GAP = 0.24, CH = 1.58;
+  function member(t, x, y) {
+    card(s, x, y, CW, CH, true);
+    iconCircle(s, x + 0.16, y + 0.14, 0.4, t[5], t[0], P.white);
+    s.addText(t[1], { x: x + 0.64, y: y + 0.12, w: CW - 0.78, h: 0.24, margin: 0, valign: 'middle', fontFace: F.b, fontSize: 10, bold: true, color: P.ice });
+    s.addText(t[2], { x: x + 0.64, y: y + 0.35, w: CW - 0.78, h: 0.19, margin: 0, valign: 'middle', fontFace: F.b, fontSize: 7.5, color: P.mute });
+    s.addText(t[3].toUpperCase(), { x: x + 0.16, y: y + 0.62, w: CW - 0.32, h: 0.22, margin: 0, fontFace: F.b, fontSize: 8.5, bold: true, charSpacing: 0.8, color: t[5] });
+    s.addText(t[4], { x: x + 0.16, y: y + 0.86, w: CW - 0.32, h: 0.62, margin: 0, valign: 'top', fontFace: F.b, fontSize: 8.5, color: P.mute, lineSpacing: 11 });
+  }
+  team.slice(0, 4).forEach((t, i) => member(t, M + i * (CW + GAP), 1.80));
+  const bx = (W - (3 * CW + 2 * GAP)) / 2;
+  team.slice(4).forEach((t, i) => member(t, bx + i * (CW + GAP), 3.50));
 
-  card(s, 6.8, 5.6, 5.9, 1.3, true, '2A1418');
-  s.addText('Stated gap', { x: 7.1, y: 5.75, w: 5.3, h: 0.28, margin: 0, fontFace: F.b, fontSize: 11, bold: true, charSpacing: 1, color: 'F5898D' });
-  s.addText('Three men, and UI/UX is shared rather than owned. We are recruiting a fourth member — highest value if she brings design or security-sector background, which closes both lines at once. Fourteen exported screen specifications already exist as a handover artefact.', {
-    x: 7.25, y: 6.02, w: 5.15, h: 0.78, margin: 0, fontFace: F.b, fontSize: 10.5, color: P.ice, lineSpacing: 13.5 });
+  card(s, M, 5.24, 5.9, 1.60, true);
+  s.addText('Skills coverage', { x: M + 0.3, y: 5.38, w: 5.4, h: 0.26, margin: 0, fontFace: F.b, fontSize: 10.5, bold: true, charSpacing: 1, color: P.amber });
+  s.addText('Software · backend · enterprise architecture · UI/UX · IoT and hardware · security design · systems analysis · business development. Four universities, and gender variety in the team.', {
+    x: M + 0.3, y: 5.66, w: 5.4, h: 1.04, margin: 0, valign: 'top', fontFace: F.b, fontSize: 10.5, color: P.ice, lineSpacing: 13.5 });
+
+  card(s, 6.8, 5.24, 5.9, 1.60, true, '2A1418');
+  s.addText('Stated gap', { x: 7.1, y: 5.38, w: 5.3, h: 0.26, margin: 0, fontFace: F.b, fontSize: 10.5, bold: true, charSpacing: 1, color: 'F5898D' });
+  s.addText('We are distributed across four universities and will not have built together in one room until the 25th. UI/UX is now owned rather than shared — but by a co-lead who also owns architecture, which is a single point of failure we are managing, not one we have removed.', {
+    x: 7.1, y: 5.66, w: 5.3, h: 1.04, margin: 0, valign: 'top', fontFace: F.b, fontSize: 9.5, color: P.ice, lineSpacing: 12.5 });
+
+  foot(s, 'Frozen contracts so nobody blocks. Sequenced gates, not concurrent sprints. A pull request for everything, including documents. Tests are the specification.', true);
 }
 
 /* ============ 23 · HONESTY LEDGER ============ */

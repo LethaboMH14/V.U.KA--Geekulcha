@@ -42,7 +42,7 @@ That has now largely been closed. §3 is the full register. §4 is what is still
 
 | Criterion | Gap found | Status now |
 |---|---|---|
-| **Team Composition** /10 | ⚠️ Three men; UI/UX shared, not owned; no design or security-sector background. **Scored on skills variety, sector background and/or gender variety** | Stated openly in Architecture §2.9 and SDLC §3.3. **Not closed — see §5** |
+| **Team Composition** /10 | Previously: three builders, no gender variety, UI/UX shared rather than owned. **Scored on skills variety, sector background and/or gender variety** | **Closed.** Seven builders across four universities, gender variety present, dedicated frontend and security-design roles. Current gaps in `docs/TEAM.md` §3 |
 | **Innovation & Creativity** /10 | The genuinely novel ideas (conflict-suppressed fusion, precedence-not-immutability, refusal-as-a-tested-requirement) were **buried in prose** | Surfaced as named, diagrammed mechanisms |
 | **Progress of solution profile** /10 — *names wireframing and architecture outlook* | ⚠️ **Architecture outlook was thin. Wireframes are not committed anywhere** | Architecture: closed. **Wireframes: still open — §4 item 1** |
 | **User Journey Story** /10 | Prose only | Sequence diagram with real timestamps added |
@@ -236,7 +236,7 @@ A gap analysis that only lists faults is a bad analysis. Five things in the orig
 |---|---|
 | **The problem statement** | The coercion thesis — *the authentication factor and the asset now sit in the same object, in the victim's own hand, secured by a biometric that can be compelled* — is the sharpest paragraph in the entire pack. It should open the deck |
 | **The honesty ledger** | Deciding in advance which claims you refuse to make is rare, and it is the moat |
-| **The refusal to relitigate** | Sixteen locked decisions with an amendment protocol is why three people can move at all |
+| **The refusal to relitigate** | Sixteen locked decisions with an amendment protocol is why a distributed team can move at all |
 | **The open-gap register** | Publishing your own weaknesses before anyone asks is the highest-trust move available, and it was already there |
 | **The lineage** | VUKA and BEACON were built in July 2026 for a different programme, with a `CLAUDE.md` from that month describing the two-layer architecture. **ANCHOR is the third layer of a plan published before this hackathon existed.** The commit history is the capability statement, and it is verifiable |
 
