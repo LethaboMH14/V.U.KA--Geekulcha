@@ -111,3 +111,17 @@ Needs/blockers: none remaining for G6/G7. The Roboflow key rotation should be do
 Business handoff: not applicable — remediation of predecessor-project exposures, not a household-facing change.
 
 Next: none required. Both repos remain private per G18; do not restore public visibility without a fresh reason and review.
+
+## 2026-09-13 | Claude Sonnet 5 | claude-sonnet-5 | G11 — wireframes committed | authored
+
+Changed: committed 12 of the 14 exported priority-screen wireframes to `docs/wireframes/`, ported from the BEACON design handoff (`design/exports/design_handoff_beacon/screens/`, predecessor codebase, `origin/main`). Added `docs/wireframes/README.md` — an index mapping each screen to a specific step in one of the four journeys in `docs/USER-JOURNEY.md`, honest about which mappings are exact (e.g. Verify Queue → J1 19:43:15 and J4 16:22) versus contextual (e.g. Executive Analytics → not journey-specific, business/impact view only). Two of the 14 files — `support.js` and `ios-frame.jsx`, the design tool's own rendering helpers, referenced by the `.dc.html` files but explicitly marked "not meant to ship" in the source bundle's own README — are held back rather than committed, because their extensions trip the same `scripts/check-intake.mjs` gate that Task 3's scaffolding is waiting on both leads to clear. Documented this limitation plainly in the wireframes README rather than silently shipping partial rendering. Updated `docs/OPEN-GAPS.md` G11 to reflect the screens closed, the two helper files still pending.
+
+Evidence: `grep -liE "api[_-]?key|password|token|secret"` over all 12 `.dc.html` files before committing — no matches, consistent with the source README's claim these use mock data only. `node scripts/check-docs.mjs` passes (exit 0). `node scripts/check-intake.mjs --staged`, run with ONLY the wireframes and `docs/OPEN-GAPS.md` staged (Task 3's unrelated scaffolding explicitly unstaged first, to avoid conflating the two): [result recorded by the commit itself — see the pre-commit hook output].
+
+Decision: none — a `.dc.html`/`.md` commit, no contract or locked decision touched.
+
+Needs/blockers: `support.js` and `ios-frame.jsx` land once the intake gate clears (same blocker as Task 3, tracked in `docs/OPEN-GAPS.md`). Mutarisi/Lethabo still own recreating these designs pixel-perfectly against the actual stack (`docs/HANDOVER.md` Task 6) — this commit only makes the existing reference visible, it does not build the real screens.
+
+Business handoff: not applicable — no capability changed, design reference only.
+
+Next: Task 6 (recreate against the real stack) once the application layers exist to recreate them in.
