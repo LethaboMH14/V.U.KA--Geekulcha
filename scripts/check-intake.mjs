@@ -21,7 +21,7 @@ const feature = files.filter(p => /^(server|edge|mobile|android|app|src|componen
   (!/^(scripts|\.githooks|\.github)\//.test(p) && /\.(py|kt|java|tsx?|jsx?|go|rs|swift|apk|onnx|pt|tflite)$/i.test(p)));
 if (!feature.length) { console.log('Intake gate: documentation/repository tooling only.'); process.exit(0); }
 const gate = JSON.parse(read('docs/security/intake-gate.json'));
-const keys = ['three_credentials_revoked', 'reused_password_changed', 'old_private_dataset_remediated', 'old_readmes_built_designed_split', 'local_hook_and_ci_proven'];
+const keys = ['four_exposure_groups_revoked', 'reused_password_changed', 'old_private_dataset_remediated', 'old_readmes_built_designed_split', 'local_hook_and_ci_proven'];
 const good = gate.status === 'approved' && keys.every(k => gate.requirements?.[k]?.verified === true &&
   typeof gate.requirements[k].evidence === 'string' && gate.requirements[k].evidence.trim()) &&
   ['lethabo','sibusiso'].every(k => typeof gate.lead_approvals?.[k] === 'string' && gate.lead_approvals[k].trim());

@@ -27,7 +27,7 @@ Parents: 1 clean intake/team; 2 user flow; 3 minimal demonstration; 4 assurance;
 | 4.2 | Vukosi | 17 | 4 | none | Measure load and obtain BOM quotes | Wattage/runtime procedure and quote dates recorded; missing kit explicit | C3 |
 | 4.3 | Ipeleng | 19 | 5 | 3.3,4.1 | Exercise operator, tenant and duress abuse cases | Actual outcomes plus unresolved tests recorded; failed mode excluded | C3,C4 |
 | 4.4 | Vukosi | 19 | 4 | 3.2,4.2 | Exercise power/offline recovery | Mains/WAN loss observed; no fabricated continuity or receipt | C3,C4 |
-| 4.5 | Sibusiso | 20 | 4 | 3.5,4.3,4.4 | Run integrated evidence gate and freeze | Both leads record pass or cut scope; tag only tested snapshot | C3,C4 |
+| 4.5 | Sibusiso | 20 | 4 | 3.5,4.3,4.4 | Run integrated evidence checkpoint | Both leads record pass or cut scope; tag only tested snapshot | C3,C4 |
 | 5.1 | Babatunde | 17 | 4 | 1.5 | Draft consumer-first presentation spine | Team and household offer match current evidence | C1,C2 |
 | 5.2 | Babatunde | 18 | 5 | 4.2 | Validate model, pilot catchment and buyer objections | Named-site evidence or explicit unknowns; arithmetic independently checked | C2 |
 | 5.3 | Babatunde | 19 | 4 | 2.5,5.1,5.2 | Build five-minute pitch and one-slide economics | Every number has lineage; rehearsal timing recorded | C2,C4 |
@@ -96,7 +96,7 @@ Unchecked means proposed/not accepted, including tasks partially prepared by thi
 - [ ] 1.3 — Sep 13 — Install and exercise local/CI scanning [I]; depends none.
 - [ ] 3.1 — Sep 15 — Freeze event/API/governance contracts [C3]; depends 1.4.
 - [ ] 3.3 — Sep 17 — Port and verify human gate and proof path [C2,C3]; depends 1.4,3.1.
-- [ ] 4.5 — Sep 20 — Run integrated evidence gate and freeze [C3,C4]; depends 3.5,4.3,4.4.
+- [ ] 4.5 — Sep 20 — Run integrated evidence checkpoint [C3,C4]; depends 3.5,4.3,4.4.
 - [ ] 7.2 — Sep 26 — Rehearse fallback and scoped hotfix procedure [C3]; depends 7.1.
 
 ### Babatunde Adelusi
@@ -142,7 +142,7 @@ Internal-only leaves: 6/35. They protect safe intake and delivery; avoid expandi
 
 ## 9. Calendar
 
-The brief calls this a thirteen-day calendar but asks for Sep 13–27 inclusive, which is fifteen days. Sep 13–25 inclusive is thirteen; Sep 26–27 are event continuation. **Feature freeze Sep 20** leaves Sep 21–24 for integration, evidence and rehearsal; no speculative features after freeze. Earlier deadline 15:00 SAST Sep 27 controls.
+The brief calls this a thirteen-day calendar but asks for Sep 13–27 inclusive, which is fifteen days. Sep 13–25 inclusive is thirteen; Sep 26–27 are event continuation. **The integrated evidence checkpoint is Sep 20 and feature freeze is Sep 24**, matching `docs/HANDOVER.md` and `docs/TEAM.md`. Earlier deadline 15:00 SAST Sep 27 controls.
 
 | Date | Due / owners | Gate or rule |
 |---|---|---|
@@ -153,11 +153,11 @@ The brief calls this a thirteen-day calendar but asks for Sep 13–27 inclusive,
 | Sep 17 | 2.4 Mutarisi: Build or draw operator/subject wireframes; 3.3 Sibusiso: Port and verify human gate and proof path; 4.2 Vukosi: Measure load and obtain BOM quotes; 5.1 Babatunde: Draft consumer-first presentation spine | Babatunde starts presentation/alignment |
 | Sep 18 | 2.5 Lethabo: Observe household walkthrough and revise; 3.4 Mutarisi: Connect one synthetic end-to-end flow; 5.2 Babatunde: Validate model, pilot catchment and buyer objections | Dependencies and reviewer availability govern |
 | Sep 19 | 3.5 Khutso: Reproduce evidence and resolve TRL wording; 4.3 Ipeleng: Exercise operator, tenant and duress abuse cases; 4.4 Vukosi: Exercise power/offline recovery; 5.3 Babatunde: Build five-minute pitch and one-slide economics | Dependencies and reviewer availability govern |
-| Sep 20 | 4.5 Sibusiso: Run integrated evidence gate and freeze | GATE 2: integrated evidence and feature freeze; cut failed capabilities |
+| Sep 20 | 4.5 Sibusiso: Run integrated evidence checkpoint | GATE 2: review integrated evidence; cut failed capabilities |
 | Sep 21 | 5.4 Babatunde: Audit claims against delivered demo; 6.1 Mutarisi: Prepare accessible offline visual fallback | Dependencies and reviewer availability govern |
 | Sep 22 | 6.2 Vukosi: Pack and test venue power/network kit; 6.3 Ipeleng: Review proposed release for privacy and secrets | Dependencies and reviewer availability govern |
 | Sep 23 | 5.5 Babatunde: Rehearse hostile questions and short pitch; 6.4 Khutso: Assemble submission/evidence index | Dependencies and reviewer availability govern |
-| Sep 24 | 6.5 Lethabo: Run offline dress rehearsal and release gate | GATE 3: offline rehearsal and release review; public release only after approvals |
+| Sep 24 | 6.5 Lethabo: Run offline dress rehearsal and release gate | GATE 3: feature freeze; public release only after approvals |
 | Sep 25 | 7.1 Khutso: Verify venue copy and judging checklist | Venue: awards 15:00, hacking 16:00; verify logistics |
 | Sep 26 | 7.2 Sibusiso: Rehearse fallback and scoped hotfix procedure; 7.3 Babatunde: Rehearse final pitch with all presenters | Dependencies and reviewer availability govern |
 | Sep 27 | 7.4 Lethabo: Final submission by 15:00 SAST; 7.5 Ipeleng: Close temporary demo access and record handover | Submit by 15:00 SAST, earlier supplied deadline |

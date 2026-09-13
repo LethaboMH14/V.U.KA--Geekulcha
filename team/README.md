@@ -1,6 +1,6 @@
 # Team files
 
-Seven proposed work packages, not confirmations of availability or activity. Each person owns their file and declares their actual tool/model before starting. See [WBS](../docs/audit/05-team-operating-system.md).
+Seven owned work packages. Start with [START-HERE.md](START-HERE.md), then read your personal file and the [WBS](../docs/audit/05-team-operating-system.md). Each person must declare their actual availability and tool/model before editing; only Sibusiso's 13 September review session is currently confirmed.
 
 - [Lethabo](lethabo.md)
 - [Sibusiso](sibusiso.md)

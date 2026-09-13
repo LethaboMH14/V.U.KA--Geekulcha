@@ -2,11 +2,11 @@
 
 Exported design references, high-fidelity, from the BEACON design handoff (`design/exports/design_handoff_beacon/`, predecessor codebase). Closes **G11** in `docs/OPEN-GAPS.md` — the rubric's "Progress of solution profile" criterion explicitly names wireframing (`docs/SDLC-GAP-ANALYSIS.md` §4.1).
 
-Each `.dc.html` file is a self-contained design reference — open it directly in a browser. It shows intended look, layout, copy and interaction; it is **not production code to copy directly** (per the original handoff's own README). Colours, type, spacing and copy are final per the design system in the source bundle; recreating them pixel-perfectly against this repo's actual stack (`docs/TECH-STACK.md`) is `docs/HANDOVER.md` Task 6, owned by Mutarisi, reviewed by Lethabo.
+Each `.dc.html` file is a design reference. It shows intended look, layout, copy and interaction; it is **not production code to copy directly** (per the original handoff's own README). Colours, type, spacing and copy are design inputs; recreating them against this repo's actual stack (`docs/TECH-STACK.md`) is `docs/HANDOVER.md` Task 6, owned by Mutarisi and reviewed by Lethabo.
 
-## ⚠️ Rendering note
+## Rendering note
 
-These files reference two small runtime helpers from the source bundle — `support.js` (design-tool plumbing that gives the custom `<x-dc>`/`<helmet>`/`<x-import>` tags their behaviour) and `ios-frame.jsx` (the iOS device-bezel used by the five member-facing screens). **Those two files are not included here yet** — they are `.js`/`.jsx`, which trips the same intake-gate check (`scripts/check-intake.mjs`) that Task 3's scaffolding is currently waiting on both leads to clear. Opening these `.dc.html` files directly right now will render the design copy and inline styles, but not the full custom-element behaviour or the iOS frame. They'll be added once the gate closes.
+The source bundle references `support.js`, proprietary design-tool runtime plumbing that its own README says is **not meant to ship**, and `ios-frame.jsx`, a reference-only preview bezel. They are intentionally excluded. The `.dc.html` files preserve inspectable design source but are not promised as standalone runnable pages. Production implementation must recreate the screens with repository components, real state and real APIs.
 
 ## Index — screen → journey step
 

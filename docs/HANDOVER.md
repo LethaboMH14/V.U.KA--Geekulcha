@@ -10,7 +10,7 @@ Read this file, then `../README.md`, then `00-SPEC.md`, then `SDLC.md`. That is 
 
 **The repository contains documentation and the submission pack. It contains no application code yet.**
 
-That is not a gap in the work — it is the port that has not started. A working four-layer system exists in two predecessor repositories built in July 2026 (~33,600 lines, 440 tests, 207 commits). It is being moved here **file by file, with review**, because those repositories have a contaminated history. See §3.
+That is not a gap in the work — it is the port that has not started. A four-layer implementation exists in two predecessor repositories built in July 2026 (approximately 33,600 tracked lines and 224 `origin/main` commits). A source scan finds 510 test-function definitions; the earlier “440 tests” count has not been reproduced by running the suites. It is being moved here **file by file, with review**, because those repositories had contaminated histories. See §3 and `docs/EVIDENCE.md`.
 
 | | |
 |---|---|
@@ -93,7 +93,7 @@ If a change makes the system more capable but less checkable, it is the wrong ch
 **Measured**
 
 - Detection → alert render: **318 ms p95**, 273 ms p50, against a 2,000 ms budget. **This is n = 10.** The sample size travels with the number, every time.
-- **440 tests** · **25 ADRs** · **207 commits** · ~33,600 lines, ~10,300 server-side.
+- **25 ADRs** · **224 `origin/main` commits** · ~33,600 tracked lines, ~10,300 server-side · **510 test-function definitions found; executed-suite count pending**.
 
 > The ADR count is **25**. Several documents previously said 27; that was corrected on 12 September across six files. Do not reintroduce it.
 

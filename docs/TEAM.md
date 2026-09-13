@@ -66,7 +66,7 @@ This work exists and is verifiable. It was produced under the predecessor projec
 
 | Skill the criterion names | Covered by | Depth |
 |---|---|---|
-| **Software development** | All seven | ~33,600 lines shipped, 440 test cases, 207 commits |
+| **Software development** | Lethabo, Sibusiso, Mutarisi, Vukosi and Khutso are assigned technical delivery; Ipeleng owns security/privacy review; Babatunde owns business validation | Predecessors contain ~33,600 tracked lines and 224 `origin/main` commits; 510 test-function definitions found, executed-suite count pending |
 | **Backend** | Sibusiso | FastAPI, WebSockets, PostgreSQL + pgvector, migrations, auth, rate limiting |
 | **Enterprise architecture** | Lethabo, Khutso | 25 ADRs, frozen contracts, amendment protocol, spec-driven method, documented threat model, requirement-to-test traceability |
 | **UI / UX** | Mutarisi, Lethabo | 20 React screens built; 14 exported design-handoff screen specifications; design tokens; Figma |
@@ -124,7 +124,7 @@ Gate status is stated as at 12 September and is not claimed complete until it is
 
 ## 5 · Capability claim, in one paragraph
 
-> This team has already built and shipped the system it is proposing. Not a prototype and not a mockup — approximately **33,600 lines of application code**, **440 test cases**, **25 accepted architecture decision records**, **207 commits**, a working Android build with on-device inference, a data pipeline over 15,712 records joined to official SAPS statistics across 678 precincts and all nine provinces, and an end-to-end latency of **318 ms at p95 (n = 10) against a 2,000 ms budget — measured over ten runs, with the harness in the repository.**
+> The predecessor repositories contain a substantial implementation: approximately **33,600 tracked lines**, **25 accepted architecture decision records** and **224 commits on their `origin/main` branches**. A source scan finds **510 test-function definitions**, but the suites have not been rerun here. The Android, pipeline, 15,712-record analysis and **318 ms p95 (n = 10)** latency statements remain historical claims with the limits recorded in `docs/EVIDENCE.md`; this clean repository does not yet ship the integrated product.
 >
 > All of it was committed in July 2026, before this hackathon existed. The commit history is the capability statement. What remains is the ledger layer, which is specified, contracted and scheduled — and which extends a hash chain that already exists and already passes its integrity tests.
 >

@@ -4,6 +4,12 @@ Audit date: 12 September 2026. Source: user-supplied `26-ASTRA-AUDIT-PROMPT.md`,
 
 Observed checkout base: `464d0c4e8af12897f27619620742aaa69c9332ca`, one commit, README and MIT LICENSE only. No previous history imported. Old code, deck, ADRs, Sonke screenshots, email, programme and datasets were not available for inspection. Repository visibility was not independently queried.
 
+## P4 falsification result shown in the 13 September review screenshot
+
+The screenshot reports `delta_r2 = 0.02787082786001449` and `p_value = 0.00018062196419940484`, and says a second implementation reproduced Sibusiso's checked-in result exactly. A search of this repository and the current predecessor working trees did not locate those exact values, the claimed independent program, its input snapshot or a run manifest. The screenshot is therefore a review lead, not repository evidence, until those artifacts are committed.
+
+Even when independently reproduced, equality from two programs using the same copied dataset establishes implementation reproducibility for that calculation. It does not by itself validate the dataset's provenance, the research design, causal interpretation, generalisation, or IP ownership. Any pitch or audit statement must keep those claims separate.
+
 ## Supplied historical evidence — not reproduced in this checkout
 
 - Detection to alert: 318 ms p95, 273 ms p50, **n = 10**, budget 2,000 ms.

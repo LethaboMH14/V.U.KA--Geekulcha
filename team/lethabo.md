@@ -1,6 +1,6 @@
 # Lethabo Hoaeane
 
-**Proposed planning package; owner has not confirmed availability or started these tasks.**
+**Work is evidenced in PR #2; availability and future AI tool/model still require Lethabo's own declaration.**
 
 - University / role: UNISA / Co-lead; architecture, product, UX and Figma
 - Owns outright: Product flow, final copy, architecture decisions.
@@ -8,9 +8,9 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: 1.2, proposed, not started.
+- Current task / status: 1.2 complete; G12 model licence register is next.
 - Claimed files / contract versions: none; reserve before editing.
-- Last updated: 12 September 2026 by Codex assistant as a planning assignment.
+- Last updated: 13 September 2026 during Sibusiso's review.
 
 ## Sequenced work
 
@@ -33,11 +33,11 @@ All hours and dates below are ASSUMPTIONS, subject to availability and gates.
 
 ## Changed this session
 
-No work by Lethabo Hoaeane is asserted. This package was created by the assistant. No files are reserved and no PR exists.
+PR #2 records Lethabo's coordination scaffolding, predecessor remediation evidence, ADR consolidation, wireframe references and Figma links. Sibusiso reviewed those changes on 13 September; corrections are recorded on the review branch rather than silently rewriting the author history.
 
 ## Needs and blockers
 
-- Original documents missing → Lethabo retrieves sanitised originals.
+- Model provenance and licence evidence missing → Lethabo completes G12 before any model artifact is accepted.
 - shared contract dispute → both leads.
 - unavailable user testers → Babatunde recruits with consent.
 
@@ -61,4 +61,5 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 
 ## Running log
 
-- 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
+- 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster.
+- 2026-09-13 — PR #2 work reviewed by Sibusiso. Accepted: remediation record, ADR consolidation, wireframe references and coordination scaffolding. Corrections required: evidence wording, gate record, calendar alignment and stale personal status. Next: G12 model licence register.

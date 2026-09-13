@@ -296,7 +296,7 @@ The submission template requests TRL 3. We are stating our actual level with evi
 | Latency measured under load in the intended topology, not simulated | TRL 5 |
 | Real data through the full pipeline: 15,712 records, 709 geocoded, 678 precincts | TRL 4–5 |
 | On-device model shipped in an installable Android build | TRL 5 |
-| 440 tests including security-property tests | TRL 4–5 |
+| 510 test-function definitions found in predecessor source; executed-suite count pending | Historical implementation evidence; current TRL still requires a named test record |
 | Hardware appliance not yet fabricated | caps at 5, not 6 |
 | No field deployment with real households | caps at 5, not 6 |
 

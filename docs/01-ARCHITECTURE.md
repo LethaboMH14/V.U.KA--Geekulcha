@@ -2280,8 +2280,8 @@ flowchart LR
 | Components integrated, not isolated | Four layers, end-to-end pipeline, ~33 600 LOC across the repository | Read it |
 | Validated in a **relevant** environment | Real SAPS quarterly data, 15 712 claims, 709 geocoded suburbs, live Eskom and weather feeds | Run the pipeline |
 | Measured against a budget | Detection → alert p95 **318 ms** (n = 10) against a 2 000 ms budget | `scripts/latency.py` |
-| Automated verification exists | **440 tests**, contract tests on exact shapes | CI |
-| Decisions are documented and traceable | **25 ADRs**, 207 commits, append-only build log | `docs/adr.md` |
+| Automated verification source exists | **510 test-function definitions found**; executed-suite count pending | CI |
+| Decisions are documented and traceable | **25 ADRs**, 224 predecessor `origin/main` commits, append-only build log | `docs/adr.md` |
 
 ### ⚠️ Why we are **not** claiming TRL 6
 
@@ -2630,7 +2630,7 @@ The verifier recomputes **every entry and every pointer**, and returns the **fir
 | Claim in here | Check it by |
 |---|---|
 | 318 ms p95 (n = 10) | Run `scripts/latency.py` yourself |
-| 440 tests, 25 ADRs, 207 commits | Clone and count |
+| 510 test-function definitions, 25 ADRs, 224 predecessor `origin/main` commits | Re-run commands in `docs/EVIDENCE.md`; execute suites before claiming a passing test count |
 | No code path sets `flagged` | Grep for it. That is the test |
 | The forecast fails its baseline | `data/eval/` — the numbers are in the repository |
 | Every hour is anchored | `anchor/verify.py`, or a public OpenTimestamps verifier that has never heard of us |

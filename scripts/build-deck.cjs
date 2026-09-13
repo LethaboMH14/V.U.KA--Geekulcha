@@ -364,7 +364,7 @@ function arrow(s, x, y, w, onDark, label) {
     ['Latency measured under load in the intended topology, not simulated', 'TRL 5', P.green],
     ['On-device model shipped inside an installable Android build', 'TRL 5', P.green],
     ['Real data through the full pipeline: 15,712 records, 709 geocoded, 678 precincts', 'TRL 4–5', P.green],
-    ['440 tests, including security-property tests on the human gate', 'TRL 4–5', P.green],
+    ['510 test-function definitions found; executed-suite count pending', 'Historical implementation evidence', P.green],
     ['Appliance hardware not fabricated — breadboard and bench only', 'caps at 5', P.red],
     ['No field deployment in real households yet', 'caps at 5', P.red],
   ];
