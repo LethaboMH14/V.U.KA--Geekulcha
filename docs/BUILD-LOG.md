@@ -125,3 +125,19 @@ Needs/blockers: `support.js` and `ios-frame.jsx` land once the intake gate clear
 Business handoff: not applicable — no capability changed, design reference only.
 
 Next: Task 6 (recreate against the real stack) once the application layers exist to recreate them in.
+
+## 2026-09-13 | Claude Sonnet 5 | claude-sonnet-5 | Figma workspace — 2 flagship screens + FigJam board | authored
+
+Changed: at the user's request for "a professional and easy workflow," built two live Figma files (not committed to the repo — Figma has no repo-friendly export for editable files; linked from `docs/wireframes/README.md` instead). **Design file** (`figma.com/design/pZYQ3m68SWIMFqaOk8kN3R`): a real design-token foundation (21 colour variables bound to Figma Variables, matching the source design brief's hex values exactly — verified via `git show` on `theme 3 discovery`'s `design/exports/design_handoff_beacon/README.md`, not invented), community-library components imported from Figma Community (Button/Card from "Simple Design System", Chip from "Material 3 Design Kit" — found via `get_libraries`/`search_design_system`, not hand-drawn), two fully-built flagship screens (Verify Queue, Member Alert Detail) matching the source brief's exact layout specification, and the remaining 10 screens as correctly-sized frames carrying their real spec content as placeholder text. **FigJam board** (`figma.com/board/1vj9NC9ylnlG7God607Ls0`): five sections — the four journeys, the 12-screen index, the seven-person roster, G11–G15 open items, and a live participatory area for the team's own stickies.
+
+Notable findings during the build: (1) Apple's official "iOS and iPadOS 26" community library blocks programmatic component instantiation via the Plugin API (`Not permitted to upsert from library`) — a real licensing restriction, not a bug; Member Alert Detail's status bar/home indicator are hand-built plain equivalents instead, which are not copyrighted assets. (2) A real bug, not a rendering artifact: every bare `figma.createAutoLayout()` call defaults to opaque white fill unless explicitly cleared — this produced white boxes behind roughly a third of Verify Queue's text before being diagnosed via a structural fill-audit (not guessed) and fixed by clearing 17 stray fills, sparing the one frame (the selected queue row) where white is intentional. Later frames were built with `fills=[]` set explicitly from the start, avoiding a repeat.
+
+Evidence: every colour value cross-checked against the source repo's actual design-system documentation. Both flagship screens screenshotted and visually verified after the fill fix — no artifacts remain. `docs/wireframes/README.md` updated with both file links, `node scripts/check-docs.mjs` re-run and passing (exit 0).
+
+Decision: none — a design-reference and coordination artifact, no contract or locked decision touched. Neither Figma file is committed to the repo (nothing to commit — they're hosted, linked).
+
+Needs/blockers: the two remaining iOS system-chrome elements (status bar, home indicator) on any future mobile screen should use the same hand-built approach, not attempt to import from the iOS 26/27 community libraries. The 10 placeholder screens still need Task 6's actual build-out.
+
+Business handoff: not applicable — design tooling, no household-facing capability changed.
+
+Next: Mutarisi picks up the design file to build out the remaining 10 screens using the established token/component system; team uses the FigJam board's open-items area for live questions.
