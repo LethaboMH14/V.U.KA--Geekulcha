@@ -69,7 +69,7 @@ Today each party holds its own record and every dispute is one word against anot
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  TIER 0 — NEVER TOUCHES THE CHAIN                            │
-│  Real-time alerts (WebSocket, 318 ms) · location · audio ·    │
+│  Real-time alerts (WebSocket) · location · audio ·             │
 │  video · face and plate embeddings · anything personal ·      │
 │  anything with a latency budget                               │
 └──────────────────────────────────────────────────────────────┘
@@ -190,7 +190,7 @@ Three of your four rivals will have tokenised something. Put this up:
 
 | ❌ Refused | Why |
 |---|---|
-| **Real-time alert transport** | Our WebSocket relay is 318 ms measured. The fastest chain is 2 s. Consensus in the alert path costs lives, and buys nothing |
+| **Real-time alert transport** | Our WebSocket relay is 318 ms measured, n = 10. The fastest chain is 2 s. Consensus in the alert path costs lives, and buys nothing |
 | **Any personal data on chain** | Location, audio, video, biometric embeddings. Public ledgers are permanent and correlatable. We anchor a hash of a hash |
 | **Rewards / Vitality points as tokens** | A database with an audit log is strictly better on cost, latency and UX. Tokenising it would be decoration |
 | **Smart contracts that auto-dispatch armed response** | This one is architectural, not squeamish. **It would violate ADR-0002.** No soft evidence may trigger a response without a human. A contract that dispatches on a threshold is precisely the machine-decides-alone failure our whole design exists to prevent |

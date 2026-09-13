@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+if command -v gitleaks >/dev/null 2>&1; then
+  scanner=gitleaks
+elif [ -x "$root/.tools/gitleaks.exe" ]; then
+  scanner="$root/.tools/gitleaks.exe"
+elif [ -x "$root/.tools/gitleaks" ]; then
+  scanner="$root/.tools/gitleaks"
+else
+  echo "Commit blocked: install Gitleaks using SECURITY.md." >&2
+  exit 1
+fi
+"$scanner" git --pre-commit --staged --redact --config .gitleaks.toml
+node scripts/check-intake.mjs --staged

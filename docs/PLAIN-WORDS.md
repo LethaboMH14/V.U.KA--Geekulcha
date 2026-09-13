@@ -105,7 +105,7 @@ Every one of these is a standalone sale. **One platform, five products.**
 - ✅ ~33,600 lines of application code across two repos
 - ✅ 440 test cases · 25 accepted architecture decision records · ~6,800 lines of architecture docs
 - ✅ 4 contributors, 5 documented roles
-- ✅ **Measured** end-to-end latency: p50 273 ms, p95 318 ms against a 2,000 ms budget. Measured with a harness that matches by ID so a concurrent probe can't corrupt the result
+- ✅ **Measured** end-to-end latency: p50 273 ms, p95 318 ms (n = 10) against a 2,000 ms budget. Measured with a harness that matches by ID so a concurrent probe can't corrupt the result
 
 **Machine learning & data science**
 - ✅ On-device YAMNet TFLite acoustic classifier, sha256-registered in a model registry — and a registry bug caught by loading the real interpreter rather than trusting the recorded value

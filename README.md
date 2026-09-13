@@ -2,7 +2,7 @@
 
 **You are not alone. You don't have to ask.**
 
-VUKA — isiZulu for *wake up* — is a community-safety network for South Africa built on one property no competitor has: **it can be verified rather than trusted.**
+VUKA — isiZulu for *wake up* — is a proposed community-safety network for South Africa, built on one property no competitor has: **it can be verified rather than trusted.**
 
 Every decision this system makes about a person is written to a hash-linked record. Every hour, a 32-byte summary of those records is published to a public chain that has never heard of us. That does not make a record true. It proves the record existed *before anyone had a reason to change it* — and anyone, including someone who actively distrusts us, can check it without our cooperation.
 
@@ -44,28 +44,31 @@ Four AI-adjacent features were designed and then refused on the record: auto-dis
 
 ## Status of this repository
 
-**Documentation is complete and lives here now. Source is being ported file by file**, with review and secret scanning, from two predecessor repositories built in July 2026. The predecessor history is deliberately **not** imported: this repository starts clean and stays clean.
+**Documentation, coordination scaffolding and repository controls are complete and live here now.** This repository contains no application code and no fabricated appliance yet. Source is being ported file by file, with review and secret scanning, from two predecessor repositories built in July 2026. The predecessor history is deliberately **not** imported: this repository starts clean and stays clean.
 
-The figures below are measurements from the predecessor codebase, which is the code being ported. They are stated here with their limits attached.
+The figures below are measurements taken in the predecessor codebases, which is the code being ported — **they are supplied results, not yet reproduced inside this repository.** Every figure is stated with the exact command that reproduces it in [`docs/EVIDENCE.md`](docs/EVIDENCE.md); none is rounded up.
 
-### Built — exists, runs, has tests
+### Built — exists, has been measured, or is verified against source
 
-- All four layers implemented to working state and running end to end
-- **Detection to alert render: 318 ms p95, 273 ms p50**, against a 2,000 ms budget — **measured over ten runs, n = 10**
-- Hash-linked evidence chain with a verifier that recomputes every entry *and* every pointer, and returns the **first broken link by index** rather than a pass/fail boolean
-- The human gate and the whitelist governance boundary, enforced in code
-- **440 tests**, including contract tests asserting exact request and response shapes
-- **25 architecture decision records**, append-only, dated before this hackathon was announced
-- **207 commits**, roughly 33,600 lines
+- Coordination scaffolding for seven people across four AI coding tools: [`RULES.md`](RULES.md), [`AGENTS.md`](AGENTS.md), one file per person in [`team/`](team/README.md), an append-only [`docs/BUILD-LOG.md`](docs/BUILD-LOG.md)
+- Secret scanning live as **both** a pre-commit hook and a CI gate — see [`SECURITY.md`](SECURITY.md)
+- A document-contract checker (`node scripts/check-docs.mjs`) that fails CI if a document's own claims drift from what the repository can show
+- All four layers **implemented in the predecessor codebase** to a working, end-to-end state — porting into this repository is in progress
+- Detection to alert render: **318 ms p95, 273 ms p50**, against a 2,000 ms budget — **measured over ten runs, n = 10**, in the predecessor codebase
+- Hash-linked evidence chain with a verifier that recomputes every entry *and* every pointer, and returns the **first broken link by index** rather than a pass/fail boolean — predecessor codebase
+- The human gate and the whitelist governance boundary, enforced in code — predecessor codebase
+- **25 architecture decision records**, append-only, ported into [`docs/adr.md`](docs/adr.md) with a provenance table, dated before this hackathon was announced
 - Risk layer over public SAPS open crime data, covering 17 of 18 target towns
 
 ### Designed, not built
 
+- The VIGIL, UMOJA, KHAYA and ANCHOR application code, inside this repository — the port is in progress, see [`docs/HANDOVER.md`](docs/HANDOVER.md)
 - Hourly Merkle batching, Ed25519 per-party signing, and publication via OpenTimestamps
 - Subject access: a person requesting their own file with a verifiable anchor proof
 - Deletion that removes the payload and retains the hash
-- Five of six suspicion factors — one is implemented, the rest are documented stubs
+- Five of six suspicion factors — one is implemented in the predecessor codebase, the rest are documented stubs
 - The KHAYA appliance as fabricated hardware
+- The proposed KHAYA bundle price of **R299/month is a model, not a quote.** Availability, response service, payment terms and deployment approval are unverified
 
 ### What currently fails
 
@@ -79,7 +82,7 @@ Published here because it is the only reason to believe the numbers that don't.
 - No computer-vision model we trained ourselves — vision is integration of pretrained models
 - POPIA obligations not yet discharged: no retention TTL, no subject-access path, no deletion route
 
-The full register, with an owner and a closing date against every item, is in [`docs/SDLC-GAP-ANALYSIS.md`](docs/SDLC-GAP-ANALYSIS.md).
+The full register, with an owner and a closing date against every item, is in [`docs/OPEN-GAPS.md`](docs/OPEN-GAPS.md) and [`docs/SDLC-GAP-ANALYSIS.md`](docs/SDLC-GAP-ANALYSIS.md).
 
 ### Claims we refuse to make
 
@@ -91,9 +94,9 @@ Anything simulated carries a `sim_` prefix, in the code and when we say it aloud
 
 ## Technology readiness
 
-**TRL 4, met and verified.** Components validated in a laboratory environment, running end to end on real hardware with a measured latency path and a contract-tested interface.
+**TRL 4, met and verified.** Components validated in a laboratory environment, in the predecessor codebase, running end to end on real hardware with a measured latency path and a contract-tested interface.
 
-Two subsystems — the evidence chain and the on-device sensing path — are at **TRL 5**. What caps the system is that **the appliance hardware has not been fabricated**. We would rather state that than round up.
+Two subsystems in the predecessor codebase — the evidence chain and the on-device sensing path — reached **TRL 5** there. What caps the system as it stands here is that **the appliance hardware has not been fabricated**, and application code has not yet landed in this clean repository. We would rather state that than round up.
 
 ---
 
@@ -101,14 +104,16 @@ Two subsystems — the evidence chain and the on-device sensing path — are at 
 
 | Claim | Check it by |
 |---|---|
-| 318 ms p95 | Run `scripts/latency.py` yourself |
-| 440 tests, 25 ADRs, 207 commits | Clone and count |
-| No code path sets `flagged` | Grep for it. That is the test |
-| The forecast fails its baseline | `data/eval/` — the numbers are in the repository |
-| Every hour is anchored | `anchor/verify.py`, or any public OpenTimestamps verifier |
-| A whitelisted entity accumulates no suspicion | Read `factor_f1_recurrence`. It is four lines |
+| 25 ADRs | [`docs/adr.md`](docs/adr.md) — clone and count |
+| 318 ms p95, n = 10 | [`docs/EVIDENCE.md`](docs/EVIDENCE.md) — command and predecessor source |
+| Commit and test counts | [`docs/EVIDENCE.md`](docs/EVIDENCE.md) — exact commands, not a bare number |
+| No code path sets `flagged` | Grep for it, once the port lands. That is the test |
+| The forecast fails its baseline | [`docs/OPEN-GAPS.md`](docs/OPEN-GAPS.md) — the numbers are in the repository |
+| Secret scanning actually blocks a secret | `node scripts/test-security.mjs` — exercises the real failure path, not an assertion |
+| Documents don't overclaim their own status | `node scripts/check-docs.mjs` |
+| A whitelisted entity accumulates no suspicion | Read `factor_f1_recurrence`, once ported. It is four lines |
 
-Rows referencing paths not yet present are pending the port described above.
+Rows referencing paths not yet present are pending the port described in [`docs/HANDOVER.md`](docs/HANDOVER.md).
 
 ---
 
@@ -117,8 +122,17 @@ Rows referencing paths not yet present are pending the port described above.
 | Document | What it is |
 |---|---|
 | [`docs/HANDOVER.md`](docs/HANDOVER.md) | **Start here if you are picking up implementation** — state, hard rules, verified numbers, what to build in order |
+| [`BRIEF.md`](BRIEF.md) | One page to read before each session |
+| [`RULES.md`](RULES.md) | Standing rules for every person and every AI tool |
+| [`AGENTS.md`](AGENTS.md) | How to drive an AI coding tool here — Claude Code, Codex, Cline alike |
+| [`SECURITY.md`](SECURITY.md) | Secret-scanning setup, required before the first code commit |
 | [`docs/00-SPEC.md`](docs/00-SPEC.md) | Numbered requirements, frozen contracts, and the requirement-to-test map |
 | [`docs/01-ARCHITECTURE.md`](docs/01-ARCHITECTURE.md) | The architecture of record — all four layers, the trust boundary, the data tiers. 105 pages |
+| [`docs/adr.md`](docs/adr.md) | 25 architecture decision records, append-only, with a provenance table |
+| [`docs/OPEN-GAPS.md`](docs/OPEN-GAPS.md) | The gap register, kept current |
+| [`docs/BUILD-LOG.md`](docs/BUILD-LOG.md) | Append-only log of every behaviour change |
+| [`docs/EVIDENCE.md`](docs/EVIDENCE.md) | Every number in this README, with the command that reproduces it |
+| [`docs/audit/`](docs/audit/README.md) | Eight-part audit and alignment pack — economics, journeys, production readiness, red-team |
 | [`docs/TECH-STACK.md`](docs/TECH-STACK.md) | Every technology with the reason it was chosen — and what we refused to use |
 | [`docs/TEAM.md`](docs/TEAM.md) | Seven builders, four universities, and the gaps that are still real |
 | [`docs/SDLC.md`](docs/SDLC.md) | How the work is done — spec-driven, with verification mapped back to the requirement |
@@ -129,6 +143,7 @@ Rows referencing paths not yet present are pending the port described above.
 | [`docs/08-BUSINESS.md`](docs/08-BUSINESS.md) | Market, unit economics, go-to-market |
 | [`docs/LEAN-CANVAS.md`](docs/LEAN-CANVAS.md) | Nine blocks, with numbers rather than adjectives |
 | [`docs/PLAIN-WORDS.md`](docs/PLAIN-WORDS.md) | The whole system without jargon |
+| [`team/README.md`](team/README.md) | One file per builder — owns, current task, blockers |
 | [`submission/`](submission/) | The pitch deck and the interactive architecture view |
 
 ---

@@ -82,7 +82,7 @@ Each requirement carries an ID used throughout this document and in test names.
 
 | ID | Requirement | Target | Measured | Status |
 |---|---|---|---|---|
-| **N1** | Detection → alert render, p95 | ≤ 2 000 ms | **318 ms** | ✅ |
+| **N1** | Detection → alert render, p95 | ≤ 2 000 ms | **318 ms** (n = 10) | ✅ |
 | **N2** | Detection → alert render, p50 | — | **273 ms** | ✅ |
 | **N3** | Vision throughput, person detection | ≥ 8 FPS | meets | ✅ |
 | **N4** | Shipped on-device model budget | ≤ 20 MB | meets | ✅ |
@@ -275,7 +275,7 @@ WS     /ws/member                     member room — MUST never receive ops eve
 | **E1 human gate** | contract tests assert no path sets `flagged` without an operator ID | ✅ pass |
 | WS isolation | `test_ws_channel_routing.py` — member socket must never receive ops events | ✅ pass |
 | Rate limiting | `test_rate_limit_middleware.py` | ✅ pass |
-| N1 latency | `scripts/latency.py`, matched by sighting ID | ✅ 318 ms p95 |
+| N1 latency | `scripts/latency.py`, matched by sighting ID | ✅ 318 ms p95 (n = 10) |
 | N10 forecast skill | `data_prep/backtest_results.csv`, 654 held-out rows | ⚠️ **FAILS — published anyway** |
 | E6 calibration | `ml/eval/calibration.py` — reliability diagram, ECE | ⚠️ harness exists, **not yet run on real data** |
 | F13 dual signature | abuse-case suite: *a single operator must NOT be able to whitelist* | 🔨 to be written |
@@ -296,7 +296,7 @@ The submission template requests TRL 3. We are stating our actual level with evi
 | Latency measured under load in the intended topology, not simulated | TRL 5 |
 | Real data through the full pipeline: 15,712 records, 709 geocoded, 678 precincts | TRL 4–5 |
 | On-device model shipped in an installable Android build | TRL 5 |
-| 440 tests including security-property tests | TRL 4–5 |
+| 510 test-function definitions found in predecessor source; executed-suite count pending | Historical implementation evidence; current TRL still requires a named test record |
 | Hardware appliance not yet fabricated | caps at 5, not 6 |
 | No field deployment with real households | caps at 5, not 6 |
 

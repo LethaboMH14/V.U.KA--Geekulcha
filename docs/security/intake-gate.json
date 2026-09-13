@@ -1,0 +1,14 @@
+{
+  "status": "approved",
+  "requirements": {
+    "four_exposure_groups_revoked": {"verified": true, "evidence": "docs/OPEN-GAPS.md G6; docs/BUILD-LOG.md 2026-09-13 remediation record"},
+    "reused_password_changed": {"verified": true, "evidence": "docs/OPEN-GAPS.md G6; account-holder confirmation recorded without retaining the credential"},
+    "old_private_dataset_remediated": {"verified": true, "evidence": "docs/OPEN-GAPS.md G7; predecessor histories and live trees rechecked after purge"},
+    "old_readmes_built_designed_split": {"verified": true, "evidence": "predecessor README and design handoff label implemented, simulated, roadmap and design-reference material; docs/EVIDENCE.md preserves the limits"},
+    "local_hook_and_ci_proven": {"verified": true, "evidence": "node scripts/test-security.mjs .tools/gitleaks.exe passed locally; GitHub Actions run 34734301899 passed secret-scan and document-contracts at 7f5144f"}
+  },
+  "lead_approvals": {
+    "lethabo": "Authored and pushed the remediation and evidence record in PR #2 (head 7f5144f); this records author acceptance, not independent review.",
+    "sibusiso": "Approved 2026-09-13 after reviewing PR #2, remote CI, clean scans, predecessor README labelling and the evidence boundaries documented in this branch."
+  }
+}

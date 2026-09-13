@@ -168,7 +168,7 @@ They already hold the customer relationship, the monthly billing rail, and armed
 | # | Advantage | Why a competitor cannot simply copy it |
 |---|---|---|
 | **1** | **An anchored history compounds and cannot be backdated** | From the hour we begin publishing, our verifiable record grows. A later entrant starts at zero and can never catch up on record length — you cannot retroactively insert entries into a public chain. Features are copyable. Provable history is not |
-| **2** | **~33,600 lines shipped before this hackathon existed** | 440 tests, 25 ADRs, 6,800 lines of architecture docs, measured 318 ms p95 — all committed in July, all public, all timestamped. Nobody compresses that into a weekend |
+| **2** | **~33,600 tracked predecessor lines existed before this hackathon** | 510 test-function definitions found, 25 ADRs, 224 `origin/main` commits and a historical 318 ms p95 (n = 10); see `docs/EVIDENCE.md` for what has and has not been rerun |
 | **3** | **We defend against our own operators** | The whitelist blind spot is a category-level gap across all of private security. Two signatures plus a public anchor. We are first through it |
 | **4** | **Credibility cannot be retro-fitted** | A written list of claims we refuse to make. We publish the numbers that embarrass us — our forecast loses to a constant and we say so. A rival can adopt the practice; they cannot produce six weeks of it dated before they needed it |
 | **5** | **Built for here, not ported to here** | Offline-first, load-shedding-native, 2 GB Android, works when the tower is down. The constraint was the starting point — which also makes it portable to every market with the same constraints |
@@ -182,7 +182,7 @@ They already hold the customer relationship, the monthly billing rail, and armed
 
 | Metric | Target | Current |
 |---|---|---|
-| Detection → alert, p95 | ≤ 2,000 ms | **318 ms** ✅ |
+| Detection → alert, p95 | ≤ 2,000 ms | **318 ms** (n = 10) ✅ |
 | Anchor liveness (hours with a published root) | 100% | — |
 | Dual-signature compliance on destructive actions | 100% | — |
 | False alerts per camera-week | ≤ 1 | in evaluation |

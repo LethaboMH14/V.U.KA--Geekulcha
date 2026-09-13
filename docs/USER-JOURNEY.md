@@ -16,7 +16,7 @@
 | **19:41:03** | Three physically independent channels are fused | — | `posterior = σ(prior + Σ wᵢ·logit(pᵢ))`. Context prior lifts it: dark, load-shedding stage 4, a road with history. **Conflict coefficient K stays low — the channels agree** | VIGIL |
 | **19:41:04** | Threshold crossed | — | State moves to **L2**. If K had been high, this would have been suppressed and routed to verification instead | VIGIL |
 | **19:42:10** | Her Guardian's phone lights up | She sees a countdown on her own screen. **She can still stop this** | Signed duress event queued. Nothing has been sent to police | VIGIL |
-| **19:42:40** | Countdown expires uncancelled | — | Event relayed. **Measured p95: 318 ms from detection to render** | VIGIL → UMOJA |
+| **19:42:40** | Countdown expires uncancelled | — | Event relayed. **Measured p95: 318 ms from detection to render, n = 10** | VIGIL → UMOJA |
 | **19:43:15** | An operator opens the queue | — | Entity marked **`watch_candidate`** — and the state column is **visibly locked there.** No code path can take it further | UMOJA |
 | **19:44:02** | The operator reviews and dismisses | — | She drove into a parking garage; the pairing dropped on the ramp. **False positive, caught by a human.** `action: verify_dismiss, actor: op_A41` written to the chain | UMOJA |
 | **20:00:00** | Hourly batch | — | Merkle root over the batch → published. **32 bytes** | ANCHOR |

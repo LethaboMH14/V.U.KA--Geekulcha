@@ -1,0 +1,47 @@
+# VUKA — Open gap register
+
+Kept current. Published here so no judge, reviewer or teammate has to discover a gap themselves — see `CLAUDE.md` §11 and `docs/00-SPEC.md` §7 for the register this consolidates, and `docs/SDLC-GAP-ANALYSIS.md` for the fuller reasoning behind each. **Closing a gap means editing this file in the same PR that closes it** — see `docs/BUILD-LOG.md`. A gap that closes is marked closed here, never deleted; if what closed it wasn't quite what this row asked for, replace the row rather than removing it (`docs/HANDOVER.md` §10.4 — gender variety and UX ownership are the precedent).
+
+| # | Gap | Owner | Closing gate | Status |
+|---|---|---|---|---|
+| **G1** | Fusion weights hand-set from a cost matrix, not fitted. `ml/params/fusion_params.json` self-labels *"PROVISIONAL — NOT fit on real data"* | Khutso, Lethabo | G4 · Calibrate (23 Sep) | Open |
+| **G2** | The crime forecast loses to a constant baseline — MAE 0.484 vs 0.246 | Khutso, Babatunde | G4 · Calibrate (23 Sep) | Open — **published regardless of outcome, never softened** |
+| **G3** | POPIA obligations undischarged — no retention TTL, no subject-access path, no deletion route (`ADR-0006` records the obligation) | Sibusiso, Mutarisi | G3 · Govern (21 Sep) | Open |
+| **G4** | Suspicion factors: 1 of 6 implemented (`factor_f1_recurrence`). F2–F6 are documented stubs, not silent absences | Lethabo | Post-hackathon | Open |
+| **G5** | No computer-vision model trained by this team — vision is integration of pretrained models (YOLOv8, YAMNet, InsightFace) | Lethabo | Post-hackathon | Open — stated plainly, never claimed otherwise |
+| ~~G6~~ | ~~Secrets committed to a public repository.~~ **CLOSED 13 September 2026.** Four exposures found and remediated, not the three originally listed: a WeatherAPI key and an EskomSePush token, present in **both** predecessor repos (`weather_ingestion.py`, `esp_pipeline.py` — `CLAUDE.md`'s "in both repos" claim for the token was correct after all, just at a different path in `BEACON` than in `Team-Sonar---Vuka-`); a real person's university email and plaintext password (`acled_ingestion.py:6-7`, `Team-Sonar---Vuka-` only); and a previously undocumented **Roboflow API key** committed to `BEACON`'s `vision/.env`, found only during the verification pass. All four rotated by the account holders (confirmed in chat, values never entered or reproduced by this session). History purged from **every branch of both repositories** via `git filter-repo --replace-text`, force-pushed, and independently re-verified against fresh clones from GitHub — `gitleaks git --log-opts="--all"` reports zero leaks on both, and the GitHub API confirms the redacted placeholders are what's actually live | Sibusiso (verified this session) | — | **Closed — rotated, purged, force-pushed, independently re-verified** |
+| ~~G7~~ | ~~A third party's proprietary claims dataset tracked in a public MIT-licensed repository.~~ **CLOSED 13 September 2026.** `Gradhack_Insure_Data.xlsx`, `claims_cleaned.csv` and `claims_cleaned.xlsx` removed entirely from every branch of both `BEACON` and `Team-Sonar---Vuka-` via `git filter-repo --invert-paths`, force-pushed, confirmed absent from both live GitHub trees via the API (`git/trees/main?recursive=true`). The clean repo already re-bases the risk layer on SAPS-only figures (`docs/00-SPEC.md` §1.3), so no further re-basing work was needed — only the removal | Babatunde, Lethabo (verified this session) | — | **Closed — purged, force-pushed, confirmed absent on GitHub** |
+| **G18** | Both predecessor repositories (`BEACON`, `Team-Sonar---Vuka-`) were made private on 13 Sep 2026 as an immediate stopgap before rotation completed, and were **kept private afterward rather than reverted to public** — consistent with the original `CLAUDE.md` D15 decision ("originals kept private as lineage"). This is the intended final state, not a temporary step; nobody should make either repo public again without a fresh reason and a fresh review, since their full history (branches included) now contains the *redacted* form of what was exposed, not proof it was never there | Lethabo | — | Informational — no action needed, recorded so a later session doesn't "helpfully" restore public visibility |
+| **G8** | No independent penetration test | Ipeleng | G5 · Harden (24 Sep) | Open — scheduled before the first paying household, not before the hackathon |
+| **G9** | Bias evaluation not run on the face pipeline — the stated answer to the NIST FRVT demographic differentials is itself untested | Ipeleng, Lethabo | G5 · Harden (24 Sep) | Open |
+| **G10** | Appliance hardware not fabricated. This is what caps the system's TRL at 4–5, not 6 | Vukosi | Post-hackathon | Open — stated as the honest ceiling, not rounded up |
+| ~~G11~~ | ~~Exported wireframe specifications were not committed anywhere a judge could inspect them.~~ **CLOSED 13 September 2026.** All 12 `.dc.html` design references are committed to `docs/wireframes/` with a journey index. The source bundle's `support.js` is proprietary design-tool plumbing explicitly marked “not meant to ship”; `ios-frame.jsx` is reference-only. Their deliberate exclusion is documented in the wireframe README and is not unfinished product work | Mutarisi, Lethabo | — | **Closed — 12 references indexed; non-shipping helpers excluded** |
+| **G12** | No model provenance/licence register for YOLOv8, YAMNet, InsightFace, EasyOCR. Ultralytics YOLOv8 ships AGPL-3.0 with a separate commercial licence; some InsightFace pretrained weights are non-commercial-research-only — unverified against what this repo actually ships | Lethabo, Babatunde | Before G0 closes publicly (16 Sep) | 🔴 **Open — a second licensing finding in the same submission would read as a pattern, not a mistake, after G7** |
+| **G13** | Model cards not written. Template exists in `docs/SDLC.md`; the row that matters — known limitations / demographic performance — has a valid, required answer today: *"not measured"* | Lethabo | Align (17–19 Sep) | Open |
+| **G14** | No machine-readable `openapi.yaml`. The contract is frozen and written in prose only; a judge or partner cannot explore it without reading the code | Sibusiso | G3 · Govern (21 Sep) | Open |
+| **G15** | No operator training or duty material. The human gate is the system's central safety mechanism, and there is nothing describing what an operator is trained to verify, what evidence is sufficient, or how to co-sign. An untrained human gate is a rubber stamp — functionally the automated decision this system refuses to build | Lethabo, Sibusiso | G3 · Govern (21 Sep) | Open |
+| ~~G16~~ | ~~The detailed WBS called Sep 20 the feature freeze while `docs/HANDOVER.md` and `docs/TEAM.md` set Sep 24.~~ **CLOSED 13 September 2026.** The WBS now identifies Sep 20 as the integrated evidence checkpoint and Sep 24 as GATE 3 / feature freeze | Lethabo, Sibusiso | — | **Closed — calendars aligned** |
+| **G17** | Branch protection on `main` cannot be configured while the repository is private on GitHub's free tier — `gh api repos/.../branches/main/protection` returns `403: Upgrade to GitHub Pro or make this repository public`, confirmed 12 Sep 2026. Both CI jobs pass on a real remote run (PR #2, `secret-scan` and `document-contracts` both `SUCCESS`), but nothing on GitHub currently stops a direct push to `main` or a merge with failing checks — passing CI is advisory only until protection is enforced | Sibusiso | **G0 · Clean (16 Sep)** | 🔴 **Open — a second, concrete reason the repo must go public by G0, not only the one already stated in `docs/HANDOVER.md` §6** |
+
+## Blocked by design, not by neglect
+
+| Item | Blocked until | Gap |
+|---|---|---|
+| Reliability diagram + ECE | G4 — needs real labelled data | G1 |
+| Bias evaluation results | G5 | G9 |
+| Independent penetration test | G5 | G8 |
+| Hardware validation | Fabrication (post-hackathon) | G10 |
+| Member privacy notice, terms, DPA | Pilot, with counsel | — |
+| **POPIA Information Officer registration** | Before pilot | a concrete, cheap, statutory step worth diarising now |
+
+## Already closed — kept for the record, not deleted
+
+| Former gap | Closed by | Evidence |
+|---|---|---|
+| Team was three, no gender variety, UX shared rather than owned | Team grew to seven across four universities | `docs/TEAM.md`, confirmed against the Sonke roster 12 Sep 2026 |
+| Repository history contained the predecessors' commits | Repository re-created clean, 4 commits, no predecessor remote | `git remote -v`, `git log` |
+| 25 ADRs existed in two colliding, unreconciled numbering series | Ported and renumbered with a provenance table | `docs/adr.md`, ADR-0026 |
+
+## Open question closed on 12 September 2026
+
+`docs/HANDOVER.md` §11 asked whether Ndumiso Skhosana's data-science attribution needed correcting. Confirmed by Lethabo: Ndumiso and Sali are not on the VUKA/Geekulcha team — they belong to the predecessor project. No attribution change needed; the existing wording in `docs/TEAM.md` (founding work under the predecessor project, forward ownership to Khutso and Babatunde) is correct as written.
