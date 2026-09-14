@@ -8,7 +8,7 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: WBS 1.3 complete; WBS 3.1 contract draft ready for both-lead and consumer review.
+- Current task / status: WBS 3.3 governance boundary implemented with tests; WBS 3.1 contract remains proposed pending team review.
 - Claimed files / contract versions: `contracts/openapi.yaml`, `contracts/events.schema.json`, team/START-HERE.md, SECURITY.md, BRIEF.md, docs/security/intake-gate.json and docs/BUILD-LOG.md; contract version 0.1.0 proposed, pending review.
 - Last updated: 13 September 2026 during Sibusiso's review session.
 
@@ -63,3 +63,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 - 2026-09-13 — Sibusiso confirmed identity and requested full readiness/review. Reviewed Lethabo's PR #2 evidence, corrected the gate/calendar/role record and retained unresolved product work as explicitly assigned gaps.
 - 2026-09-14 — WBS 1.3 completed in the review clone: `.githooks` is configured; `node scripts/check-docs.mjs` passed; `node scripts/test-security.mjs .tools/gitleaks.exe` passed all fixture checks, including synthetic leak rejection, staged-content protection and missing-scanner failure; `gitleaks dir` and `gitleaks git --log-opts="--all"` found no leaks; `node scripts/check-intake.mjs` passed. Next: WBS 3.1.
 - 2026-09-14 — WBS 3.1 draft created: `contracts/openapi.yaml` v0.1.0 and `contracts/events.schema.json` define tenant scope, idempotency, signed ingestion, event timing/sequence, state transitions, two-signer requirements and WebSocket separation. Pending both-lead, Mutarisi, Vukosi and Khutso review; no endpoint implementation is claimed.
+- 2026-09-14 — WBS 3.3 boundary implemented in `server/governance.py` with focused tests in `server/test_governance.py`. Tests cover operator identity/reason, machine ceiling, two distinct whitelist signers and terminal states. `python`/`py` is unavailable in this environment, so test execution is pending on a Python-enabled clone; document and intake checks pass.

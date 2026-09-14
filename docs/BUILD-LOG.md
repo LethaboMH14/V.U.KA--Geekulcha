@@ -175,3 +175,11 @@ Evidence: shapes were derived from `docs/00-SPEC.md` §4.1–§4.3 and `docs/OVE
 Review required: both leads plus Mutarisi, Vukosi and Khutso must review the proposed contract before it is marked accepted. Ipeleng must review authority, tenant and subject-rights implications. Any accepted change needs an ADR and synchronized consumers.
 
 Business handoff: this is a coordination contract only; it creates no household-facing capability.
+
+## 2026-09-14 | Codex assistant for Sibusiso | WBS 3.3 governance boundary
+
+Changed: added `server/governance.py`, a pure transition boundary for `observed`/`watch_candidate` to human `flagged`, `dismissed` or two-signer `whitelisted` decisions. Added focused tests covering missing identity/reason, the machine ceiling, distinct co-signers and terminal-state protection.
+
+Evidence: `node scripts/check-docs.mjs`, `node scripts/check-intake.mjs` and `git diff --check` pass. Python test execution was attempted with `python` and `py -3`, but neither runtime is installed in this environment; run `python -m unittest discover -s server -p 'test_*.py'` in a Python-enabled clone before accepting WBS 3.3.
+
+Review required: Ipeleng and Lethabo must review authority and two-signer semantics; Mutarisi must review the API adapter shape; Khutso must review acceptance mapping. No transport, persistence or production endpoint is claimed.
