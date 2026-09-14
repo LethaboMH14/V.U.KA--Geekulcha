@@ -8,7 +8,7 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: PR #2 merged as fa72f32; onboarding consistency review, then WBS 3.1 API/event contract.
+- Current task / status: WBS 1.3 complete; next WBS 3.1 API/event contract.
 - Claimed files / contract versions: readiness review of team/START-HERE.md, SECURITY.md, BRIEF.md, docs/security/intake-gate.json and docs/BUILD-LOG.md; no application contract changes.
 - Last updated: 13 September 2026 during Sibusiso's review session.
 
@@ -61,3 +61,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster.
 - 2026-09-13 — Sibusiso confirmed identity and requested full readiness/review. Reviewed Lethabo's PR #2 evidence, corrected the gate/calendar/role record and retained unresolved product work as explicitly assigned gaps.
+- 2026-09-14 — WBS 1.3 completed in the review clone: `.githooks` is configured; `node scripts/check-docs.mjs` passed; `node scripts/test-security.mjs .tools/gitleaks.exe` passed all fixture checks, including synthetic leak rejection, staged-content protection and missing-scanner failure; `gitleaks dir` and `gitleaks git --log-opts="--all"` found no leaks; `node scripts/check-intake.mjs` passed. Next: WBS 3.1.

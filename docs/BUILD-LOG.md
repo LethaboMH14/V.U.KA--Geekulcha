@@ -153,3 +153,15 @@ Needs/blockers: G17 remote branch protection remains unresolved. Individual memb
 Business handoff: no household capability changed; this corrects team startup instructions. Next: reviewers accept the onboarding correction branch; team starts from main and the owner-specific work packages.
 
 Review note for scaffold branch fa2403f: server/README.md describes a claims fallback despite the SAPS-only intake plan, and describes grepping as the human-authority test although RULES.md explicitly requires behavioural bypass tests. Owners should reconcile these instructions before porting the server. shared/README.md also requires confirmation of the signatory rule for flag versus whitelist against the canonical specification; this review does not change that locked contract. These observations are branch review findings, not claims about implemented defects.
+
+## 2026-09-14 | Codex assistant for Sibusiso | WBS 1.3 security scanning complete
+
+Changed: verified the review clone's `.githooks` configuration and exercised the committed security controls. No application code or credentials were added.
+
+Evidence: `node scripts/check-docs.mjs` passed; `node scripts/test-security.mjs .tools/gitleaks.exe` passed all fixture checks (clean commit, synthetic leak rejection, staged-content protection, clean replacement, blocked feature intake and missing scanner); `.tools/gitleaks.exe dir --redact --config .gitleaks.toml .` passed with no leaks; `.tools/gitleaks.exe git --redact --config .gitleaks.toml --log-opts="--all"` scanned 14 commits with no leaks; `node scripts/check-intake.mjs` passed. The hook path is `.githooks` (`git config --get core.hooksPath`).
+
+Decision: WBS 1.3 acceptance is met. This verifies repository controls and clean history; it does not verify external account rotation or branch protection.
+
+Needs/blockers: WBS 3.1 API/event contract remains next and depends on the clean-intake evidence record. Branch protection remains G17.
+
+Business handoff: no household-facing capability changed; contributors can install and exercise the same controls before opening feature PRs.
