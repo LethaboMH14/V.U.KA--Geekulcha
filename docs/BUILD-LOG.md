@@ -187,3 +187,7 @@ Review required: Ipeleng and Lethabo must review authority and two-signer semant
 Follow-up: added `scripts/check-contracts.mjs` and invoked it from `.github/workflows/checks.yml`. The check validates the event envelope and required API/governance text without pretending to parse or execute an API implementation. This is a CI guardrail; it does not replace both-lead and domain-owner review.
 
 Prepared `docs/FALLBACK-HOTFIX.md` for WBS 7.2. It gives the team an ordered demo fallback, reversible hotfix rules and acceptance criteria for the later rehearsal. No live fallback or rollback was claimed because the application is not runnable yet.
+
+## 2026-09-14 | Codex assistant for Sibusiso | Sonke communication check
+
+Checked the public Sonke event page for Geekulcha Annual Hackathon 2026 and recorded it in `docs/SONKE-COMMUNICATION.md`. The page confirms 25–27 September 2026 in Centurion with a virtual option, the Build for Use theme, required PowerPoint sections including TRL 3, and that registration is closed. It says team IP belongs to the team in its FAQ; any sponsor/programme conflict still needs written organiser clarification. No login, magic link, form submission or message was made. This public page cannot verify our private workspace, team profile, acceptance or submission state.
