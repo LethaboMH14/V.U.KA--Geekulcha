@@ -185,3 +185,5 @@ Evidence: `node scripts/check-docs.mjs`, `node scripts/check-intake.mjs` and `gi
 Review required: Ipeleng and Lethabo must review authority and two-signer semantics; Mutarisi must review the API adapter shape; Khutso must review acceptance mapping. No transport, persistence or production endpoint is claimed.
 
 Follow-up: added `scripts/check-contracts.mjs` and invoked it from `.github/workflows/checks.yml`. The check validates the event envelope and required API/governance text without pretending to parse or execute an API implementation. This is a CI guardrail; it does not replace both-lead and domain-owner review.
+
+Prepared `docs/FALLBACK-HOTFIX.md` for WBS 7.2. It gives the team an ordered demo fallback, reversible hotfix rules and acceptance criteria for the later rehearsal. No live fallback or rollback was claimed because the application is not runnable yet.
