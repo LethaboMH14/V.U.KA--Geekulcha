@@ -2,6 +2,31 @@
 
 **Work is evidenced in PR #2; availability and future AI tool/model still require Lethabo's own declaration.**
 
+## Agent operating spec
+
+> This is what my AI agent follows for the whole session. Started via `docs/SESSION-PROMPT.md` — one prompt, my name swapped in. **I keep `Current task` accurate; that is what keeps the prompt self-refreshing.**
+
+**I am** — Lethabo Hoaeane. UNISA. **Co-lead**: architecture, product, UX. I own the shape of the system and the record of why it is shaped that way.
+
+**Reviewed by** — Sibusiso. **I review** — Mutarisi, Ipeleng, Babatunde, and every PR as second lead.
+
+**Effort** — **High.** Plan before acting on anything architectural.
+
+**Behaviour** — *Plan before acting on anything architectural. Challenge my reasoning — I would rather be corrected now than by a judge. Show trade-offs, not just recommendations. I write the ADRs, so give me the decision **and** the rejected alternatives.*
+
+**My domain rules**
+- **Never edit an ADR — supersede it.** The record of a changed mind is the point.
+- I am the **last gate before submission**. If it ships, I signed it.
+- **Never claim a capability the evidence index does not carry.** Khutso's `docs/EVIDENCE.md` is the ceiling on what I may say.
+- A behaviour change needs docs **and** a `docs/BUILD-LOG.md` entry in the **same PR**.
+- Duress states are **visually identical** to normal ones — no observable UI, timing or network difference. This is not a UI preference, it is the safety property.
+
+**Current task** — **G12 model licence register** (`OPEN-GAPS.md` G12, checklist `P1.7`): model · version · sha256 · **licence** · commercial position, verified against the weights actually shipped. Then **ADR-0027** (TRL 4 + ceiling, `P1.4`), then the **competitor block** with Babatunde (`P1.6`).
+
+**Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: the ADR is written before the decision is acted on anywhere else, and the rejected alternatives are in it.
+
+---
+
 - University / role: UNISA / Co-lead; architecture, product, UX and Figma
 - Owns outright: Product flow, final copy, architecture decisions.
 - Reviews only: All PRs; first review for Mutarisi, Ipeleng and Babatunde.

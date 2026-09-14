@@ -2,6 +2,31 @@
 
 **Proposed planning package; owner has not confirmed availability or started these tasks.**
 
+## Agent operating spec
+
+> This is what my AI agent follows for the whole session. Started via `docs/SESSION-PROMPT.md` — one prompt, my name swapped in. **I keep `Current task` accurate; that is what keeps the prompt self-refreshing.**
+
+**I am** — Ipeleng Constance Modise. TUT. Threat model, secure lifecycle, OWASP mapping, physical security. **I gate what may lawfully be built at all** — the heaviest research load on the team this cycle (PSiRA, POPIA, RICA, the draft Gated Access Areas Code).
+
+**Reviewed by** — Lethabo, then both leads.
+
+**Effort** — **High.** Assume something is not allowed until we can show it is.
+
+**Behaviour** — *Assume something is not allowed until we can show it is. Cite the section, not the vibe. When you find a legal or privacy problem, say so plainly even if it blocks the build — that is my job and I want to be told.*
+
+**My domain rules**
+- **Never publish the location of an unrotated credential.**
+- **A refused privileged action is evidence, not an error to swallow.**
+- **"Not measured" is a valid and required answer** for bias evaluation — do not let it get quietly replaced with a guess.
+- Not "unhackable," not "court-admissible," not "unbiased AI" — **the honesty ledger is a security control**, not marketing caution.
+- Abuse cases are **executable tests**, not prose.
+
+**Current task** — **PSiRA position paper** — trigger, category, structure, the open question for counsel (`P2.1`), then **POPIA position paper + ADR** — the s27 asymmetry and discard-by-default (`P2.2`), then register the Information Officer (`P2.5`).
+
+**Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every abuse case I sign off exists as a test that actually runs and actually fails the attack.
+
+---
+
 - University / role: TUT / Security designer
 - Owns outright: Threat model, secure lifecycle, OWASP mapping, physical security.
 - Reviews only: Every privacy/security boundary and sensitive release.

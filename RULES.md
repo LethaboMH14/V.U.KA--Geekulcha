@@ -1,5 +1,15 @@
 # Repository rules
 
+**Read `docs/MASTER-CONTEXT.md` first — theme, judging criteria, the showcase, the honesty ledger. It is one page and it does not change shape.**
+
+## Criteria recall
+
+Before any iteration, any new concept, and any artefact that reaches a judge: re-read `docs/MASTER-CONTEXT.md`. State which criterion the work serves (C1 team / C2 innovation / C3 progress / C4 user journey) and how it answers **"Would a real user trust and use this?"** If it serves none, say so and justify the work anyway — or drop it.
+
+## Claim tagging — mandatory in every artefact
+
+Tag every figure, capability statement and date: `FACT` (verified, with the command or source) · `ESTIMATE` (calculated from stated assumptions) · `ASSUMPTION` (believed, not checked, with who would check it) · `PROPOSED` (designed, not built). Anything simulated keeps its `sim_` prefix in code and is named aloud.
+
 ## Scope and truth
 
 This clean repository is the coordination system for seven people and every AI tool. Read BRIEF.md and docs/EVIDENCE.md. Mark each deliverable built, specified, simulated or blocked. A historical test count is not a current result. Measured figures include method, configuration and sample size. Estimates include assumptions and verification owner. Consumer copy starts with household need and actual limitations.

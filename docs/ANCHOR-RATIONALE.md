@@ -206,14 +206,64 @@ That last row is the mic drop. **You refused a blockchain feature because your o
 |---|---|---|
 | 1 | Batch the `evidence_chain` head into a Merkle root, hourly | ~half a day |
 | 2 | Ed25519 keypair per party (device / operator / security co.); each signs the event hash. Signatures in the tree, not on chain | ~1 day |
-| 3 | Post the root. **Hedera Consensus Service** — built for exactly this, ~3–5 s finality, ~$0.0001 per message. Or **OpenTimestamps** — free, anchors to Bitcoin, no wallet, no account | ~half a day |
+| 3 | Post the root. **Hedera Consensus Service** — built for exactly this, ~3–5 s finality, **permissioned-consensus, run by a Governing Council of up to 39 members**, fee paid in HBAR. Or **OpenTimestamps** — free, anchors to Bitcoin, genuinely no wallet, no account, no token | ~half a day |
 | 4 | Extend `evidence_integrity.py` to verify against the anchor, not just internal consistency | ~half a day |
 | 5 | `GET /v1/subjects/{id}/record` — the Musa endpoint | ~half a day |
 | 6 | A public Verify page: current root, anchor reference, record count, "verify independently" | ~half a day |
 
-**Cost line for the deck:** 24 roots/day × 30 days = 720 anchors/month. On Hedera at ~$0.0001 each that's **about $0.07 a month** — under R1.50. On OpenTimestamps it's free. Say the number; commercial viability is the clause being judged.
+**Cost line for the deck — corrected 14 September 2026.** 24 roots/day × 30 days = 720 anchors/month, regardless of network size — the same cost at 100 homes as at 100,000. **Hedera repriced `ConsensusSubmitMessage` from $0.0001 to $0.0008 in January 2026** (8×, first change since 2019); at the current price that is 720 × $0.0008 = $0.576/month ≈ **R9–10/month for the whole network**, not the previously stated R1.30 which used the stale pre-2026 price. On OpenTimestamps as primary anchor the honest figure is **~R0** — calendar operators absorb cost via donations. **Pick one system, state its current price, and say the number** — full reconstruction in `docs/EVIDENCE.md` "Anchoring cost". The structural point — fixed network cost, not per-user — is what commercial viability turns on, and it is unaffected by which digit is right.
 
 **And the deletion answer, in one sentence:** delete the payload and the embedding, keep the hash. *The record that a decision happened is permanent. The data about the person is not. The chain never held it, so deleting her data cannot break it.*
+
+---
+
+# The Blockchain for Impact Use track — surviving a judge who knows blockchain
+
+Our track's brief, verbatim: *"Putting Blockchain for practical and impactful use — teams are challenged to come up with commercially viable use cases."* Twenty teams took this track. Everything above answers the product question; this section answers the harder one — **does this survive a judge who has actually built on a chain?**
+
+## Why anchoring is the category that survived
+
+Gartner's 2024 Hype Cycle places NFTs, Web3, DEXs and blockchain-for-IoT in the trough of disillusionment; McKinsey's review of enterprise pilots found most "added little benefit beyond cloud solutions." **Hash-anchoring is not on either failure list.** Lead with that distinction: we deliberately built the boring sub-category that works, not the one that collapsed.
+
+**Pre-empt the comparison a prepared judge reaches for first: TradeLens.** IBM and Maersk launched it in 2018; it shut down in 2022, IBM's own statement citing that it "has not reached the level of commercial viability necessary to continue." Name it before they do, and explain why it does not apply to us: **TradeLens needed competing shipping lines to join a platform one rival controlled** — a consortium-adoption problem. We publish our own root hash publicly and need nobody's consortium buy-in; there is no second party whose cooperation our anchor depends on.
+
+## Precedents worth naming — real, dated, checkable
+
+- **Certificate Transparency (RFC 6962) / Google Trillian** — the same SHA-256 hash-chain-plus-Merkle-tree pattern, underpinning the entire web's TLS certificate ecosystem. Naming it signals we know the pattern has decades of production hardening behind it, not that we invented a novel primitive.
+- **El Salvador's government, 28 November 2025** — timestamped Ministry documents on Bitcoin via OpenTimestamps. A near-exact structural precedent, roughly ten months old at event time.
+- **WFP Building Blocks** — over $325m delivered to more than 1m refugees, 25m transactions, ~$3.5m saved in bank fees. Blockchain used as a coordination ledger, not a speculative asset.
+- **BanQu** — describes itself as the first non-cryptocurrency blockchain platform; deployed with AB InBev in Zambia and Uganda. The same no-token choice we made.
+- **Standard Bank ran Africa's first Hedera node, February 2021** — the strongest South-Africa-specific credibility anchor available if Hedera is the named system.
+
+**Do not cite** the Rwanda land registry as a clean blockchain success (the blockchain-specific component appears to have stalled at district-pilot stage) or the "Kenyan coffee farmers 90→7 days" statistic (traceable only to a secondary aggregator, not a primary source). Both are exactly the kind of half-checked precedent a blockchain-literate judge uses to test whether a team fact-checks its own sources — citing either would cost more credibility than it buys.
+
+## ECTA s15 supports the design, but has never been tested on it
+
+The Electronic Communications and Transactions Act, s15, directs a court to weigh *"the reliability of the manner in which the data message was generated, stored or communicated"* and *"the reliability of the manner in which the integrity of the data message was maintained."* A hash-chained, per-party-signed, publicly anchored record is a close-to-textbook attempt to maximise exactly those two factors.
+
+> **Say:** *"built to maximise the ECTA s15 statutory reliability factors."*
+> **Never say:** *"court-admissible"* — no South African case law has tested a blockchain-anchored record under s15, and the honesty ledger already forbids the stronger claim.
+
+## FSCA / SARB — reasoned inference, not clearance
+
+A Merkle root is not itself *"a digital representation of value that can be traded, transferred or stored electronically for payment, investment or utility purposes"* — the FAIS crypto-asset declaration's operative test — so it plausibly does not require that declaration. This is **our reading of the definition applied to what we anchor**, not a regulator's clearance. Say *"our reading is,"* never *"we are cleared."*
+
+## Three precision fixes before any of this reaches a slide
+
+1. **The R1.30/month figure** — corrected above and in `docs/EVIDENCE.md`. Fix the number before the structural argument, which is otherwise sound.
+2. **Stop calling Hedera simply "a public blockchain."** It is a **permissioned-consensus ledger run by a Governing Council of up to 39 members**. Still a legitimate, named choice — but blurring the distinction invites "so it's not really decentralised," and a judge who catches the blur trusts the rest of the pitch less.
+3. **Hedera mainnet fees are paid in HBAR.** State that plainly rather than let a judge find the tension with "we refused tokens" unprompted. OpenTimestamps genuinely needs no wallet, token or account — that claim holds without qualification.
+
+## Three attacks, with the answer to have ready verbatim
+
+**1. "Walk me through R1.30 — for which system, at what price?"**
+The most likely gotcha, because it is checkable live at the table. Answer: name the system, use the current price (§ above), and if challenged further, concede the earlier figure was wrong and explain how it was found and fixed — a corrected number defended openly outperforms a wrong one defended nervously.
+
+**2. "Why not just a private signed hash chain published somewhere? What does the public part actually buy you?"**
+Have this sentence exactly: **"It removes ourselves as the single trusted party over our own history."** This is the Wüst & Gervais *"Do You Need a Blockchain?"* (2018) test — a permissioned or private ledger run by parties to a dispute does not solve trust *for the person on the other side of that dispute* (Scenario 2 above is written for exactly this question). Blockchain-literate judges have generally internalised this framework; naming it, even implicitly, reads as fluency rather than a rehearsed line.
+
+**3. "Your pitch says no single-company dependency — but OpenTimestamps relies on two or three volunteer, donation-funded calendar servers, and at least one has been documented as slow to respond under load."**
+The honest answer exists and should only be claimed if actually implemented: **self-host a calendar, and run `ots upgrade` promptly** so timestamps become fully self-verifying against Bitcoin with no ongoing calendar dependency. Whether this is real by demo day is Sibusiso's call (`docs/CHECKLIST.md` P2.15) — **do not claim the mitigation unless it is built**, per the honesty ledger.
 
 ---
 

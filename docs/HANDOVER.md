@@ -36,8 +36,7 @@ docs/ANCHOR-RATIONALE.md      Why one blockchain use survived and three were ref
 docs/08-BUSINESS.md           Market, unit economics, go-to-market
 docs/LEAN-CANVAS.md           Nine blocks
 docs/PLAIN-WORDS.md           The system without jargon
-docs/pdf/                     Architecture, SDLC, gap analysis as PDFs
-submission/                   24-slide deck (pptx, pdf, JPGs) + interactive architecture view
+submission/archive-2026-08/   Superseded Aug deck, slides, architecture view and generated PDFs — see its README
 scripts/                      Document and deck generators
 ```
 

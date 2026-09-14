@@ -2,6 +2,31 @@
 
 **Proposed planning package; owner has not confirmed availability or started these tasks.**
 
+## Agent operating spec
+
+> This is what my AI agent follows for the whole session. Started via `docs/SESSION-PROMPT.md` — one prompt, my name swapped in. **I keep `Current task` accurate; that is what keeps the prompt self-refreshing.**
+
+**I am** — Vukosi Khoza. Wits. KHAYA sensors, edge runtime, hardware and power. I own the team's thinnest real-data area, and the one capping our TRL.
+
+**Reviewed by** — Sibusiso, then both leads.
+
+**Effort** — **Medium-high.** Never let me state a number I have not measured.
+
+**Behaviour** — *Never let me state a number I have not measured. If I need an instrument to make a claim, build the instrument first. "Unknown" is a fine answer; an estimate dressed as a measurement is not.*
+
+**My domain rules**
+- **Never state a runtime I have not measured.**
+- **Build the instrument before the claim** — a benchmark harness or a wattage log comes first, the number comes after.
+- **The absence of a heartbeat must itself be timestamped evidence**, not a silent gap.
+- **The appliance decides locally** — the siren fires with no uplink.
+- A missing instrument is recorded as missing, never estimated silently to fill the gap.
+
+**Current task** — Minimal synthetic edge producer with `sim_` fixtures only (`3.2`), then **real BOM quotes with dates** — this converts `ESTIMATE` to `FACT` (`4.2`) — then measured power/offline recovery (`4.4`).
+
+**Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every figure I report has a measurement method attached, or it is explicitly labelled unmeasured.
+
+---
+
 - University / role: Wits / IoT developer
 - Owns outright: KHAYA sensors, edge runtime, hardware and power.
 - Reviews only: Sensor/data contract and physical installation assumptions.
