@@ -1,7 +1,7 @@
 # Demo fallback and scoped hotfix procedure
 
-Owner: Sibusiso Khumalo  
-WBS: 7.2  
+Owner: Sibusiso Khumalo
+WBS: 7.2
 Status: procedure prepared; rehearsal awaits the runnable demo and WBS 7.1 venue checklist.
 
 ## Trigger
