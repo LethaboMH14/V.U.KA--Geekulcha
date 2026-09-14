@@ -40,6 +40,7 @@ No work by Lethabo Hoaeane is asserted. This package was created by the assistan
 - Original documents missing → Lethabo retrieves sanitised originals.
 - shared contract dispute → both leads.
 - unavailable user testers → Babatunde recruits with consent.
+- Blockchain for Impact assessment review requested → Lethabo confirms or revises the primary disputed-record journey, user-facing precedence explanation, subject-access/deletion experience and demo status labels in `docs/BLOCKCHAIN-FOR-IMPACT-ASSESSMENT.md`; no approval is inferred.
 
 Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
 
@@ -62,3 +63,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 ## Running log
 
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
+- 2026-09-14 — Codex assistant, at Sibusiso's request: flagged `docs/BLOCKCHAIN-FOR-IMPACT-ASSESSMENT.md` for Lethabo's architecture/product/UX review. This records a review request only; it does not assert that Lethabo has seen or approved it.

@@ -20,6 +20,8 @@ The proposed KHAYA bundle is **R299/month, modelled, not a quote**. Availability
 
 Read [the one-page brief](BRIEF.md), [RULES.md](RULES.md), [AGENTS.md](AGENTS.md), and your [team file](team/README.md). Follow [security setup](SECURITY.md) before committing. Run `node scripts/check-docs.mjs` to check the document contracts.
 
+For the selected competition category, read the [Blockchain for Impact assessment](docs/BLOCKCHAIN-FOR-IMPACT-ASSESSMENT.md). It explains where the public anchor is load-bearing, what blockchain cannot prove, the current implementation gaps and the minimum independently verifiable demonstration.
+
 Seven members across UNISA, Wits, University of Pretoria and TUT; Lethabo Hoaeane and Sibusiso Khumalo are joint leads. Full responsibilities and the proposed calendar are in [the operating plan](docs/audit/05-team-operating-system.md).
 
 Team SONAR · Geekulcha Annual Hackathon 2026 · Blockchain for Impact · Safety. Competition details are supplied by the audit brief and await comparison with original organiser materials. MIT licensed.

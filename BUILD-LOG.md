@@ -41,3 +41,31 @@ Needs/blockers: original credentials/data remediation, absent application/eviden
 Business handoff: no new household capability; this change makes intake and documentation errors easier to detect before feature work.
 
 Next: review and publish the approved branch through the documented workflow; no push, merge or visibility change performed during authoring.
+
+## 2026-09-14 SAST | Codex assistant acting at Sibusiso's request | GPT-6 | Blockchain for Impact category assessment | authored, Lethabo review pending
+
+Changed: added `docs/BLOCKCHAIN-FOR-IMPACT-ASSESSMENT.md`, linked it from README and added a review flag to Lethabo's team file. The assessment separates the load-bearing dispute/precedence use case from capabilities absent in this clean checkout, defines the minimum public-anchor demonstration, lists impact measures and records responsible claim boundaries. No human activity or approval is asserted.
+
+Evidence: repository inspection found the ANCHOR design in `docs/01-ARCHITECTURE.md`, the disputed-record journey in `docs/USER-JOURNEY.md`, the OpenTimestamps cost and proof limits in `docs/EVIDENCE.md`, and the clean-checkout limitation in `BRIEF.md`. Document and secret checks are recorded after this entry when run.
+
+Decision: none. Recommended pitch language and the proposed primary journey require Lethabo and both-lead review through the existing overlap protocol.
+
+Needs/blockers: Lethabo reviews the product story, subject experience and status labels; Sibusiso and Ipeleng settle the proof/export and privacy boundaries; the security intake gate remains authoritative and blocked. A real public timestamp, independent verifier and user/partner validation remain absent.
+
+Business handoff: the new assessment supplies bounded pitch language, forbidden claims, evidence status and impact measures for Babatunde; it does not create a new delivered capability.
+
+Next: Lethabo records review findings; both leads decide any proof/export contract change; implementation waits for the authorised intake gate.
+
+## 2026-09-14 16:12 SAST | Codex assistant acting at Sibusiso's request | GPT-6 | Blockchain for Impact assessment verification | partial; pre-existing document failures retained
+
+Changed: no capability change. Recorded verification of the assessment commit before publication.
+
+Evidence: `node scripts/check-intake.mjs` passed with “documentation/repository tooling only”; `.tools/gitleaks.exe dir --redact --config .gitleaks.toml .` scanned approximately 656.52 KB and found no leaks; `git diff --check` passed. `node scripts/check-docs.mjs` failed on pre-existing latency statements in `docs/00-SPEC.md`, `docs/01-ARCHITECTURE.md`, `docs/08-BUSINESS.md`, both ANCHOR rationale documents, `docs/PLAIN-WORDS.md`, `docs/TEAM.md`, `docs/TECH-STACK.md` and `docs/USER-JOURNEY.md` because sample size is absent from the same line. The new assessment was not listed as a failure.
+
+Decision: no bypass. Keep the assessment scoped; correct existing claim-lineage failures separately if they prevent the required repository workflow.
+
+Needs/blockers: Lethabo review remains pending. Existing document-contract failures need their evidence owner to add an actual sample size or state that it was not supplied; no value may be invented.
+
+Business handoff: not applicable; verification only.
+
+Next: commit through the configured hook; if the hook blocks, make only evidence-honest claim-lineage corrections required to restore it.
