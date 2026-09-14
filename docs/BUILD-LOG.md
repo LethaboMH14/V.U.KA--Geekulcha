@@ -155,3 +155,19 @@ Needs/blockers: ADR-0027 (TRL, Lethabo) and the PSiRA/POPIA ADRs (Ipeleng) are s
 Business handoff: not applicable — coordination and documentation infrastructure, no household-facing capability changed. Four new business-handoff fields are themselves part of this change (`templates/BUSINESS-HANDOFF.md`).
 
 Next: open PR from `docs/kickoff-and-team-operating-system` requesting both leads. Once merged, each person pulls, runs `docs/SESSION-PROMPT.md` with their own name, and starts their Phase 1 item per `docs/CHECKLIST.md`.
+
+## 2026-09-14 | Claude Sonnet 5 | claude-sonnet-5 | Task 3 — scaffold the repo map, landed | authored
+
+Changed: created the full directory structure from `docs/HANDOVER.md` §8 — `app/{android/{service,modules,assets/models},src/{sensors,brain,evidence,api,ui}}`, `appliance/{vision,audio}`, `server/src/{api,ws,suspicion,risk,routing,db,auth,middleware,notify}`, `anchor/`, `brain/`, `data/{ingest,geocode,enrich,forecast,eval}`, `dashboard/`, `shared/`, `ml/eval/`. Every leaf directory has a `.gitkeep`; every top-level directory named in HANDOVER §8 has a `README.md` explaining its layer, its non-negotiable rules pulled from `docs/00-SPEC.md`/`docs/AI-AUTONOMY.md`/`RULES.md`, and the specific open gap in `docs/OPEN-GAPS.md` that blocks a real claim about what lands there. No application code — Task 3 is scaffolding only; Task 4 (the port) is separate and not started.
+
+This work was staged on 2026-09-13 but held uncommitted because `scripts/check-intake.mjs` blocked it — `docs/security/intake-gate.json` was still `"status": "blocked"`, with no lead approvals recorded. Rather than bypass the hook or fabricate an approval, it sat staged overnight while Sibusiso reviewed and merged PR #2, then signed the remediation gate himself (`docs/reviews/LETHABO-PR2-REVIEW.md`, `docs/security/intake-gate.json` → `"status": "approved"`, both leads' entries recorded — Lethabo's correctly labelled as author acceptance, Sibusiso's as independent review). Re-tested `check-intake.mjs --staged` against this same scaffolding once the gate opened: passes.
+
+Evidence: directory structure matches `docs/HANDOVER.md` §8 exactly (`find app appliance server anchor brain data dashboard shared ml -type f`, 38 files). `node scripts/check-docs.mjs` passes. `node scripts/check-intake.mjs --staged` passes against the now-approved gate.
+
+Decision: gate approval — Sibusiso and Lethabo, recorded in `docs/security/intake-gate.json` and `docs/reviews/LETHABO-PR2-REVIEW.md`, 13 September 2026. Scaffolding itself — no contract or locked decision touched.
+
+Needs/blockers: none for this task. Task 4 (the actual port, `shared/contract.ts` first) is next per `docs/HANDOVER.md` §7's sequencing.
+
+Business handoff: not applicable — no capability changed, structure only.
+
+Next: Task 4, the port.
