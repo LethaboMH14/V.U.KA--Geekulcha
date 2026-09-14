@@ -8,7 +8,7 @@ Lethabo: architecture/product/UX. Sibusiso: service/record/CI. Babatunde: busine
 
 **Current reality:** this clean repository has planning and repository controls, no application or fabricated appliance. Historical results supplied in the audit brief are not reproduced here. Headline TRL 4 only with verified evidence; no bare TRL 5. Price R299/month is modelled, not a quote. Forecast loses to baseline. Face thresholds are uncalibrated; bias evaluation, independent pentest and privacy routes remain open.
 
-Before feature code: verify three exposed credentials revoked, reused password changed, old proprietary data remediated, local hook installed and CI gate proven. Port reviewed files individually; never import old history. Keep secrets, third-party claims data and personal media out. All simulations use `sim_`.
+Before feature code: consult the approved intake record in `docs/security/intake-gate.json` for the four exposure groups, reused password, proprietary-data remediation and scanner evidence. Install the hook in every clone and follow the PR review requirements; approval of intake does not approve an individual feature or contract. Port reviewed files individually; never import old history. Keep secrets, third-party claims data and personal media out. All simulations use `sim_`.
 
 Never bypass the human gate or two-distinct-person approvals for whitelisting, disarm, threshold changes and deletion. No generative decision about a person. No automated soft-evidence dispatch, remote unlock, injurious countermeasure or bounty. No public personal data; a timestamp is not proof an accusation is true.
 

@@ -8,8 +8,8 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: 1.3 complete; reviewing PR #2 and clearing team readiness.
-- Claimed files / contract versions: none; reserve before editing.
+- Current task / status: PR #2 merged as fa72f32; onboarding consistency review, then WBS 3.1 API/event contract.
+- Claimed files / contract versions: readiness review of team/START-HERE.md, SECURITY.md, BRIEF.md, docs/security/intake-gate.json and docs/BUILD-LOG.md; no application contract changes.
 - Last updated: 13 September 2026 during Sibusiso's review session.
 
 ## Sequenced work

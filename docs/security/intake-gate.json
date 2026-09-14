@@ -9,6 +9,6 @@
   },
   "lead_approvals": {
     "lethabo": "Authored and pushed the remediation and evidence record in PR #2 (head 7f5144f); this records author acceptance, not independent review.",
-    "sibusiso": "Approved 2026-09-13 after reviewing PR #2, remote CI, clean scans, predecessor README labelling and the evidence boundaries documented in this branch."
+    "sibusiso": "Sibusiso-K merged PR #2, including this gate record, as fa72f32 on 2026-09-13. Verified on the GitHub PR timeline. This is merge acceptance; GitHub still shows the requested formal review as awaiting, and no independent domain review is evidenced."
   }
 }

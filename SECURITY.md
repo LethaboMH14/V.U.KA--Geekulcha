@@ -1,6 +1,6 @@
 # Security setup and clean intake
 
-The application intake gate is **blocked** in [docs/security/intake-gate.json](docs/security/intake-gate.json). Account owners must revoke the three exposed credentials, change the reused password and provide redacted issuer evidence. Lethabo must verify removal of the proprietary dataset in old public repositories/history and controlled published copies; a new clean repo does not revoke old access or erase external copies. Both old READMEs need Built/Designed separation. No old repository remote/history may enter this checkout.
+The application intake gate is recorded as **approved** in [docs/security/intake-gate.json](docs/security/intake-gate.json), included in PR #2 merged by Sibusiso-K as `fa72f32`. The four exposure groups and reused-password remediation are account-holder confirmations recorded in `docs/BUILD-LOG.md`; clean scans establish repository cleanup, not issuer-side revocation. Preserve that distinction when reviewing the evidence. No old repository remote/history may enter this checkout.
 
 Do not paste credentials into a chat, issue, PR or this repository. Evidence references must point to an access-controlled review receipt or a sanitised report, not a secret. Both leads verify evidence and record their actual approvals before marking the JSON approved. A script cannot authenticate a human approval; branch reviews are necessary.
 

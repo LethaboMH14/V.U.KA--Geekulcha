@@ -141,3 +141,15 @@ Needs/blockers: the two remaining iOS system-chrome elements (status bar, home i
 Business handoff: not applicable — design tooling, no household-facing capability changed.
 
 Next: Mutarisi picks up the design file to build out the remaining 10 screens using the established token/component system; team uses the FigJam board's open-items area for live questions.
+
+## 2026-09-14 | Codex assistant for Sibusiso | readiness re-review
+
+Changed: corrected Khutso's start-page role to system analyst, aligned branch naming with RULES.md, made Mutarisi's contract dependency explicit, reconciled SECURITY.md/BRIEF.md with the merged intake record, and replaced inferred approval wording with the observed Sibusiso-K merge event. Every member has a role file and a first work item; each must still declare availability/tooling and verify their own GitHub/Figma access.
+
+Evidence: fetched origin/main at fa72f32; PR #2 is merged by Sibusiso-K and its GitHub timeline displayed six passed checks. Commit 4461459 displayed four passed checks, including Actions runs 34738102993 and 34738089475. The requested formal Sibusiso review still displayed awaiting, and no nonauthor domain review was shown. A merge is acceptance of the changes, not proof all required reviews happened. Follow RULES.md on subsequent PRs. The new feat/task3-scaffold-repo-map branch at fa2403f contains documentation and directory placeholders, not a runnable application; it is not yet on main.
+
+Needs/blockers: G17 remote branch protection remains unresolved. Individual member write/design access and availability have not been demonstrated. Application work must follow the contract dependencies, licensing review and manual nonauthor review rules. No new human approval or member availability is inferred by this entry.
+
+Business handoff: no household capability changed; this corrects team startup instructions. Next: reviewers accept the onboarding correction branch; team starts from main and the owner-specific work packages.
+
+Review note for scaffold branch fa2403f: server/README.md describes a claims fallback despite the SAPS-only intake plan, and describes grepping as the human-authority test although RULES.md explicitly requires behavioural bypass tests. Owners should reconcile these instructions before porting the server. shared/README.md also requires confirmation of the signatory rule for flag versus whitelist against the canonical specification; this review does not change that locked contract. These observations are branch review findings, not claims about implemented defects.
