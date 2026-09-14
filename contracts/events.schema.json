@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vuka.example/contracts/events.schema.json",
+  "title": "VUKA event envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "tenant_id", "source_time", "received_time", "payload", "simulated"],
+  "properties": {
+    "event_id": {"type": "string", "pattern": "^(sim_)?[A-Za-z0-9][A-Za-z0-9_-]{7,127}$"},
+    "event_type": {"type": "string", "enum": ["sighting.created", "tamper.detected", "duress.created", "entity.decision", "evidence.receipt"]},
+    "tenant_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "source_time": {"type": "string", "format": "date-time"},
+    "received_time": {"type": "string", "format": "date-time"},
+    "simulated": {"type": "boolean"},
+    "source_id": {"type": "string", "maxLength": 128},
+    "sequence": {"type": "integer", "minimum": 0},
+    "signature": {"type": "string"},
+    "payload": {"type": "object", "additionalProperties": true}
+  }
+}

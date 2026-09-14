@@ -1,0 +1,89 @@
+openapi: 3.1.0
+info:
+  title: VUKA UMOJA API
+  version: 0.1.0
+  description: Proposed frozen contract; endpoints are specified, not implemented in this clean repository.
+servers:
+  - url: http://localhost:8000
+security:
+  - bearerAuth: []
+paths:
+  /v1/sightings:
+    post:
+      operationId: createSightings
+      security: [{deviceSignature: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/SightingBatch'}}}}
+      responses: {'202': {description: Accepted}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '409': {$ref: '#/components/responses/Conflict'}}
+  /v1/entities/{id}:
+    get:
+      operationId: getEntity
+      parameters: [{$ref: '#/components/parameters/EntityId'}]
+      responses: {'200': {description: Entity, content: {application/json: {schema: {$ref: '#/components/schemas/Entity'}}}}, '404': {$ref: '#/components/responses/NotFound'}}
+  /v1/entities/{id}/verify:
+    post:
+      operationId: verifyEntity
+      parameters: [{$ref: '#/components/parameters/EntityId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/DecisionRequest'}}}}
+      responses: {'201': {description: Decision receipt, content: {application/json: {schema: {$ref: '#/components/schemas/Receipt'}}}}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}}
+  /v1/risk:
+    get:
+      operationId: getRisk
+      parameters: [{name: tenant_id, in: query, required: true, schema: {type: string}}, {name: cell_id, in: query, required: true, schema: {type: string}}]
+      responses: {'200': {description: Risk response, content: {application/json: {schema: {$ref: '#/components/schemas/RiskResponse'}}}}}
+  /v1/hotspots:
+    get: {operationId: getHotspots, responses: {'200': {description: Hotspots}}}
+  /v1/safest-route:
+    get: {operationId: getSafestRoute, responses: {'200': {description: Member route}}}
+  /v1/routes/patrol:
+    post: {operationId: planPatrolRoute, responses: {'200': {description: Patrol route}}}
+  /v1/evidence/integrity:
+    get: {operationId: verifyEvidenceIntegrity, responses: {'200': {description: Chain integrity}}}
+  /v1/anchor/latest:
+    get: {operationId: getLatestAnchor, responses: {'200': {description: Latest anchor}}}
+  /v1/subjects/{id}/record:
+    get: {operationId: getSubjectRecord, parameters: [{$ref: '#/components/parameters/SubjectId'}], responses: {'200': {description: Subject record}}}
+  /v1/subjects/{id}/data:
+    delete: {operationId: deleteSubjectData, parameters: [{$ref: '#/components/parameters/SubjectId'}], responses: {'202': {description: Accepted}, '403': {$ref: '#/components/responses/Forbidden'}}}
+  /ws/ops:
+    get: {summary: Operator WebSocket upgrade; operator events only, responses: {'101': {description: Switching protocols}}}
+  /ws/member:
+    get: {summary: Member WebSocket; must never receive operator events, responses: {'101': {description: Switching protocols}}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+    deviceSignature: {type: apiKey, in: header, name: X-Device-Signature}
+  parameters:
+    EntityId: {name: id, in: path, required: true, schema: {type: string, minLength: 1}}
+    SubjectId: {name: id, in: path, required: true, schema: {type: string, minLength: 1}}
+  responses:
+    BadRequest: {description: Invalid request}
+    Unauthorized: {description: Authentication or signature failed}
+    Forbidden: {description: Authority or tenant policy denied}
+    NotFound: {description: Resource not found}
+    Conflict: {description: Duplicate idempotency key, stale version or signer conflict}
+  schemas:
+    Sighting:
+      type: object
+      required: [event_id, tenant_id, source_time, payload]
+      properties: {event_id: {type: string}, tenant_id: {type: string}, source_time: {type: string, format: date-time}, payload: {type: object, additionalProperties: true}}
+    SightingBatch:
+      type: object
+      required: [events, idempotency_key]
+      properties: {idempotency_key: {type: string, minLength: 8, maxLength: 128}, events: {type: array, minItems: 1, maxItems: 500, items: {$ref: '#/components/schemas/Sighting'}}}
+    Entity:
+      type: object
+      required: [id, tenant_id, state, score]
+      properties: {id: {type: string}, tenant_id: {type: string}, state: {type: string, enum: [observed, watch_candidate, flagged, dismissed, whitelisted]}, score: {type: number}, score_as_of: {type: string, format: date-time}}
+    DecisionRequest:
+      type: object
+      required: [action, actor_id, reason, idempotency_key]
+      properties: {action: {type: string, enum: [flag, dismiss, whitelist]}, actor_id: {type: string}, co_signer_id: {type: string}, reason: {type: string, minLength: 1, maxLength: 2000}, idempotency_key: {type: string}}
+      description: flag and dismiss require an authenticated operator; whitelist requires two distinct authorised signers.
+    Receipt:
+      type: object
+      required: [receipt_id, event_hash, state]
+      properties: {receipt_id: {type: string}, event_hash: {type: string}, state: {type: string}}
+    RiskResponse:
+      type: object
+      required: [tier, score_as_of]
+      properties: {tier: {type: string, enum: [real, no_data]}, score: {type: number}, score_as_of: {type: string, format: date-time}}

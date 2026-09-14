@@ -165,3 +165,13 @@ Decision: WBS 1.3 acceptance is met. This verifies repository controls and clean
 Needs/blockers: WBS 3.1 API/event contract remains next and depends on the clean-intake evidence record. Branch protection remains G17.
 
 Business handoff: no household-facing capability changed; contributors can install and exercise the same controls before opening feature PRs.
+
+## 2026-09-14 | Codex assistant for Sibusiso | WBS 3.1 contract draft
+
+Changed: added `contracts/openapi.yaml` v0.1.0 and `contracts/events.schema.json`. The draft covers the specified UMOJA REST and WebSocket surfaces, tenant identifiers, idempotency keys, signed sighting ingestion, source/received timestamps, sequence numbers, explicit simulation, state values, human decision actions, two-signer fields, honest `real`/`no_data` risk output, evidence integrity, anchor and subject-rights routes, and member/operator channel separation.
+
+Evidence: shapes were derived from `docs/00-SPEC.md` §4.1–§4.3 and `docs/OVERLAPS.md`. `node scripts/check-docs.mjs`, `node scripts/check-intake.mjs`, Gitleaks directory/history scans and the security fixture suite pass. No endpoint implementation or runtime behaviour is claimed by these files.
+
+Review required: both leads plus Mutarisi, Vukosi and Khutso must review the proposed contract before it is marked accepted. Ipeleng must review authority, tenant and subject-rights implications. Any accepted change needs an ADR and synchronized consumers.
+
+Business handoff: this is a coordination contract only; it creates no household-facing capability.
