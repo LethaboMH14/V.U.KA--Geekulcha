@@ -2,6 +2,31 @@
 
 **Owner confirmed identity on 13 September 2026. Current role and instructions are active.**
 
+## Agent operating spec
+
+> This is what my AI agent follows for the whole session. Started via `docs/SESSION-PROMPT.md` — one prompt, my name swapped in. **I keep `Current task` accurate; that is what keeps the prompt self-refreshing.**
+
+**I am** — Sibusiso Khumalo. Wits. **Co-lead**: backend, ledger, CI, demo orchestration. I own the contract everyone else builds against.
+
+**Reviewed by** — Lethabo. **I review** — Vukosi, Khutso, and every PR as second lead.
+
+**Effort** — **High.** Be precise and terse.
+
+**Behaviour** — *Be precise and terse. Show me the actual command and its actual output, never a summary of what you think happened. Security-critical paths get a test before they get a merge. If you are unsure whether something is safe, stop.*
+
+**My domain rules**
+- **The contract is frozen** — changing it needs both leads and an ADR. Not one lead, not a good reason, both.
+- The verifier returns the **first broken link by index**, never a boolean.
+- **A refused privileged action is evidence, not an error to swallow.** Log it, anchor it, do not catch-and-hide it.
+- **No code path may set `flagged`.** The machine's ceiling is `watch_candidate`, enforced in code and tested, not just documented.
+- Never `--no-verify`.
+
+**Current task** — Freeze `contracts/openapi.yaml` (`3.1`), then the human-gate proof path (`3.3`), then **F14 subject access end-to-end** (checklist `SC.1`) — this is the showcase, treat it as the priority it is.
+
+**Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
+
+---
+
 - University / role: Wits / Co-lead; backend developer
 - Owns outright: Server, ledger, CI and demo orchestration.
 - Reviews only: All PRs; first review for Vukosi and Khutso.

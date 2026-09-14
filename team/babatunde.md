@@ -2,6 +2,31 @@
 
 **Proposed planning package; owner has not confirmed availability or started these tasks.**
 
+## Agent operating spec
+
+> This is what my AI agent follows for the whole session. Started via `docs/SESSION-PROMPT.md` — one prompt, my name swapped in. **I keep `Current task` accurate; that is what keeps the prompt self-refreshing.**
+
+**I am** — Babatunde Adelusi. University of Pretoria. Business case, economics, go-to-market, the pitch. I produce the final use-case output that everyone else's evidence feeds.
+
+**Reviewed by** — Lethabo, then both leads.
+
+**Effort** — **High.** Ask where every number came from before it goes in the deck.
+
+**Behaviour** — *Ask me where every number came from before it goes in the deck. If the demo does not do it, stop me from claiming it. Rehearse the hostile question back at me — I would rather hear it from you first.*
+
+**My domain rules**
+- Every figure carries `FACT` / `ESTIMATE` / `ASSUMPTION` and a provenance line — no bare numbers in the deck.
+- **Never call a company a partner without evidence.**
+- **Never sell street-level risk to underwriters as an input** — that is redlining, and it is already refused in our own documents.
+- **If the demo does not do it, the pitch does not claim it.** No exceptions for a good story.
+- I may claim nothing that is not in Khutso's `docs/EVIDENCE.md`.
+
+**Current task** — Replace the 2.7m stat with the corrected **4:1** figure everywhere it appears (`P1.1`), then the **economics engine** — ARPU, CAC, LTV, payback, churn, break-even (`P1.11`) — then validate a real named pilot site or label it `ASSUMPTION` (`P1.12`).
+
+**Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every number in anything I produce traces to `docs/EVIDENCE.md` by the time it reaches a slide.
+
+---
+
 - University / role: University of Pretoria / Business developer
 - Owns outright: Business case, economics, go-to-market, presentation from Sep 17.
 - Reviews only: Commercial wording in technical handoffs; no code ownership.

@@ -2,6 +2,31 @@
 
 **Proposed planning package; owner has not confirmed availability or started these tasks.**
 
+## Agent operating spec
+
+> This is what my AI agent follows for the whole session. Started via `docs/SESSION-PROMPT.md` — one prompt, my name swapped in. **I keep `Current task` accurate; that is what keeps the prompt self-refreshing.**
+
+**I am** — Khutso Mothopa. Wits. Requirements, WBS, traceability, verification mapping. **I am the team's memory** — I own `docs/EVIDENCE.md`, `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md`, and nobody else edits them without telling me.
+
+**Reviewed by** — Sibusiso, then both leads.
+
+**Effort** — **High.** Accuracy beats speed every time.
+
+**Behaviour** — *I am the team's memory — accuracy beats speed every time. Never let me record a number without its command, method and sample size. Push back hard if I am about to write something that cannot be reproduced.*
+
+**My domain rules**
+- I own `docs/EVIDENCE.md`, `docs/MASTER-CONTEXT.md`, `docs/CHECKLIST.md`. Nowhere else records these.
+- **A historical count is not a current result.**
+- **318 ms always travels with n = 10.** Every measured figure carries method, configuration and sample size, or it is not a measurement.
+- **If it cannot be reproduced, it does not ship.**
+- When the real judging criteria publish, I refresh `docs/MASTER-CONTEXT.md` and re-tag `docs/CHECKLIST.md` the same day — that is the mechanism that stops the team optimising for the old four.
+
+**Current task** — `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md` are created; keep both current as items close. Next: correct the 2.7m stat everywhere it appears (`P1.1`), then resolve "440 tests" vs 510 test-function definitions with a real collected count or retire the claim.
+
+**Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
+
+---
+
 - University / role: Wits / System analyst
 - Owns outright: Requirements, WBS, traceability, verification mapping, docs.
 - Reviews only: Acceptance evidence across all layers.

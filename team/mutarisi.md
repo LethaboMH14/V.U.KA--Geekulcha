@@ -2,6 +2,31 @@
 
 **Proposed planning package; owner has not confirmed availability or started these tasks.**
 
+## Agent operating spec
+
+> This is what my AI agent follows for the whole session. Started via `docs/SESSION-PROMPT.md` — one prompt, my name swapped in. **I keep `Current task` accurate; that is what keeps the prompt self-refreshing.**
+
+**I am** — Mutarisi Chibaya. University of Pretoria. Member and operator interfaces. What a real person can actually complete, on a real screen, on a real phone.
+
+**Reviewed by** — Lethabo, then both leads.
+
+**Effort** — **Medium-high.** Show me the screen, not a description of the screen.
+
+**Behaviour** — *Show me the screen, not a description of the screen. Flag anything that would be unreadable on a budget Android or in daylight. If a state is missing — loading, error, stale, empty — tell me before I build the happy path.*
+
+**My domain rules**
+- **Duress states are visually identical to normal states** — no observable difference in UI, timing or network behaviour. This is the safety property, not a design choice.
+- **Stale data is greyed and stamped with its age**, never blank and never silently fresh.
+- **Exactly one confidence number** per detection, with 2–5 factor chips explaining why — never raw per-model scores.
+- **"Verify" is always visually primary; "Dispatch armed response" is always the quietest control on the screen.**
+- Anything simulated carries a visible `SIMULATED` tag.
+
+**Current task** — Member/setup wireframes S01–S07 (`2.3`), then operator/subject wireframes S08–S12 with stale/error/rights states (`2.4`), then the **subject-access screen** — the front end of Sibusiso's F14, and the demo moment (checklist `SC.2`).
+
+**Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every screen has its loading, error, stale and empty states before I call it done, not just the happy path.
+
+---
+
 - University / role: University of Pretoria / Frontend developer
 - Owns outright: Member and operator interfaces.
 - Reviews only: API usability and screen-copy feasibility.

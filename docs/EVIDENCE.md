@@ -44,6 +44,30 @@ git -C <Vuka checkout>   grep -ohE "\b(it|test)\(" -- '*.ts' '*.tsx' '*.js'    #
 ```
 208 + 34 + 167 + 101 = **510 test-function definitions**, tracked files only. That is a *different measure* from "440 tests" — a collected pytest/vitest run count, which was not reproduced here because the two predecessor environments were not stood up to actually execute the suites. Until someone runs both suites and records the collected count, do not restate "440 tests" as a checkable figure; state either "510 test-function definitions found by `git grep`, command above" or run the suites and record what they collect.
 
+## Corrected market figures — 14 September 2026
+
+The live public profile states *"~2.7m registered security officers versus roughly 180k police"*. This compares a **cumulative-ever PSiRA registration count** against a **current SAPS headcount** — different measures, off by roughly 4×. Corrected:
+
+| | Figure | Source |
+|---|---|---|
+| Active private security officers | **~637,675** (as at 31 March 2025) | PSiRA 2024/25 Annual Report |
+| SAPS personnel | **155,231 sworn / 187,681 total** (March 2025) | SAPS |
+| Ratio | **≈ 4:1** | derived |
+| Private security industry revenue | **R87bn (2024)** — guarding R34.8bn · monitoring/surveillance R17.9bn · CIT R14.4bn · armed reaction R14.3bn | Stats SA |
+| Industry revenue by buyer | Business R66.3bn / households R11.6bn / **government R7bn** | Stats SA |
+
+`FACT`, cited. **Replace "2.7m vs 180k" everywhere it appears** — canvas, deck, public profile, docs — with the 4:1 figure and this citation. The corrected number does not need inflating to be a strong market statement; it survives being checked, which the old one did not.
+
+## Anchoring cost — the R1.30/month figure does not survive
+
+The existing R1.30/month figure (below, "Anchoring model") reconstructs as 720 batches/month × $0.0001 × ~R18/USD = R1.296 — a match too exact to be coincidence. That is **Hedera's pre-2026 `ConsensusSubmitMessage` price**.
+
+**Hedera repriced this operation from $0.0001 to $0.0008 in January 2026** — an 8× increase, the first price change since 2019, in effect eight months before this event. Recomputed at the current price: 720 × $0.0008 = $0.576/month ≈ **R9–10/month** at ~R16.24/USD. `FACT`, current pricing not yet independently re-verified against Hedera's published fee schedule at time of use — re-check before quoting.
+
+If **OpenTimestamps is the primary anchor**, as the architecture states, the honest end-user figure is **~R0** — the calendar operators absorb cost via donations, with the caveats already recorded below about service guarantees.
+
+**The number must match a named system at a current price before it reaches a slide.** The *structural* claim — batched, so cost is fixed per network rather than per user, identical at 100 homes or 100,000 — is unaffected by which digit is correct, and remains the strongest commercial-viability point for the blockchain track. See `docs/ANCHOR-RATIONALE.md` for the full blockchain-track argument.
+
 ## Supplied economic model — no supplier or customer quotes
 
 KHAYA R299/month; hardware R125/month = R3,000/24; cloud and anchor R12; support/operations R25; gross margin R137, reported 46%. Exact division R137/R299 = 45.8193979933…%, so 46% is the supplied rounded presentation value. Prototype BOM R3,900; target R3,000 at 1,000 units is an estimate.
