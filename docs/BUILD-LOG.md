@@ -183,3 +183,5 @@ Changed: added `server/governance.py`, a pure transition boundary for `observed`
 Evidence: `node scripts/check-docs.mjs`, `node scripts/check-intake.mjs` and `git diff --check` pass. Python test execution was attempted with `python` and `py -3`, but neither runtime is installed in this environment; run `python -m unittest discover -s server -p 'test_*.py'` in a Python-enabled clone before accepting WBS 3.3.
 
 Review required: Ipeleng and Lethabo must review authority and two-signer semantics; Mutarisi must review the API adapter shape; Khutso must review acceptance mapping. No transport, persistence or production endpoint is claimed.
+
+Follow-up: added `scripts/check-contracts.mjs` and invoked it from `.github/workflows/checks.yml`. The check validates the event envelope and required API/governance text without pretending to parse or execute an API implementation. This is a CI guardrail; it does not replace both-lead and domain-owner review.

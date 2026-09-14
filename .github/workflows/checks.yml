@@ -37,4 +37,5 @@ jobs:
         run: |
           node --version
           node scripts/check-docs.mjs
+          node scripts/check-contracts.mjs
           node scripts/check-intake.mjs
