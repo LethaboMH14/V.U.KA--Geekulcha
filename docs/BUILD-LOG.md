@@ -199,3 +199,43 @@ Needs/blockers: Lethabo must review the contract and approve or revise the actio
 Business handoff: not applicable; this is a handoff blocker record.
 
 Next: authenticate GitHub and open the PR; then provision the documented Python runtime or choose an explicitly approved CI-only verification path before WBS 3.3.
+## 2026-09-15 | Codex assistant on behalf of Khutso Mothopa | GPT-5 | role self-review | proposed, review pending
+
+Changed: `team/khutso.md` — recorded Khutso's evidence-based role feedback, reserved the role-review and build-log paths, reconciled the immediate P1.1/P1.3 evidence work with the formal WBS 1.4 proposed/not-started status, and stated the reviewer/dependency boundary. No product code, contract, approval, or completion status was changed.
+
+Evidence: current `main` is clean at `e2365f3`; `node scripts/check-docs.mjs` and `node scripts/check-intake.mjs` passed, while `node scripts/test-security.mjs` was not runnable because this clone has no installed Gitleaks. The review records the repository's existing stale-claim sweep and open evidence dependencies; no new measurement is asserted.
+
+Decision: none. This is a coordination and self-review entry requested by Khutso; all five sequenced WBS leaves remain proposed/not started and no human availability or approval is inferred.
+
+Needs/blockers: P1.1, P1.2 and P1.3 require the corrected claim sweep and personally checked source/command evidence. Clean-intake evidence depends on the account owners and both leads; predecessor test/TRL reproduction depends on Sibusiso; contract and subject-rights changes remain subject to `docs/OVERLAPS.md` and owner decisions.
+
+Business handoff: not applicable — no household capability changed. This entry serves C3 by making role accountability and evidence boundaries checkable; trust remains conditional on reproducible claims.
+
+Next: Sibusiso first review, then both leads review this PR. No merge is requested until the required reviews and checks are recorded.
+## 2026-09-15 | Codex assistant on behalf of Khutso Mothopa | GPT-5 | review correction — WBS 1.4 | proposed, re-review pending
+
+Changed: `team/khutso.md` — corrected WBS 1.4 from proposed/not started to done after Sibusiso identified the existing approved intake gate and both recorded lead approvals. Revised the role-review status language so the remaining four sequenced WBS leaves stay proposed/not started. No product code, contract, or other WBS completion status changed.
+
+Evidence: `docs/security/intake-gate.json` has `status: approved`, with non-empty `lethabo` and `sibusiso` lead-approval entries. Sibusiso's PR #5 review requested this factual correction; no new measurement or source claim is introduced.
+
+Decision: none. This is a review correction within PR #5, not a new governance decision.
+
+Needs/blockers: P1.1, P1.2 and P1.3 remain open; the remaining four sequenced WBS leaves require their own dependencies and acceptance evidence. Local Gitleaks remains unavailable, while the PR's remote secret scan is the relevant check.
+
+Business handoff: not applicable — no household capability changed. This correction serves C3 by keeping task status aligned with checkable evidence.
+
+Next: request Sibusiso's re-review, then both leads' review before merge.
+
+## 2026-09-15 | Claude (Sibusiso's session) | naming conflict — contracts/ vs shared/contract.ts | resolved, doc-only
+
+Changed: `shared/README.md` rewritten to state the frozen contract lives in `contracts/events.schema.json` + `contracts/openapi.yaml` (built under WBS 3.1 this same day), not the originally-planned `shared/contract.ts`, which is retired but the file kept as a pointer so nobody re-reserves it. Corrected the two `shared/contract.ts` references in `docs/HANDOVER.md` (the ownership table and the Task 4 port order) to point at `contracts/`.
+
+Evidence: `docs/OVERLAPS.md` already named `contracts/events.schema.json` and `contracts/openapi.yaml` as the shared surface before `shared/README.md` was ever written (PR #3, merged before PR #6 was opened) — `contracts/` was the older and now the actually-built location; `shared/contract.ts` was never created. Verified via `grep -rn "shared/contract" docs/ RULES.md AGENTS.md` — no remaining references after this change.
+
+Decision: keep the built, tested artifact (`contracts/`) and correct the docs to match it, rather than reformatting a working JSON/YAML contract into TypeScript to match a reservation that predates the actual build. Sibusiso's call, made explicitly when asked.
+
+Needs/blockers: this is a doc correction only; the contract itself remains implementation-proposed pending Lethabo's review and an ADR, per the existing WBS 3.1 entry above.
+
+Business handoff: not applicable — no capability changed, single source of truth restored.
+
+Next: Lethabo's review of the contract (action naming) and both-lead ADR sign-off, unchanged from the prior entry.
