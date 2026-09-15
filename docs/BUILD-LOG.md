@@ -588,3 +588,17 @@ Needs/blockers: Sibusiso to apply the F1 fix to PR #23 (small; I re-review immed
 Business handoff: not applicable — contract review and gap registration. Serves C2/C3 (a third cross-layer defect caught before freeze, this time in the frozen contract itself, with a reproducible proof).
 
 Next: re-review PR #23 after the fix; judging criteria Friday 19 Sep.
+
+## 2026-09-16 00:20 SAST | opencode / GLM | claude-sonnet-5 | PR #23 approved+merged; lead sign-off on contract recorded | authored, Lethabo directed
+
+Changed: re-reviewed Sibusiso's PR #23 after his F1 fix (`b6fc7f0`). Independently re-verified with `jsonschema` 4.25.1 `Draft202012Validator` against the branch's `contracts/openapi.yaml` — six cases: valid `SightingEvent` VALID; extra top-level field INVALID; missing `payload` INVALID; out-of-range `confidence` INVALID; `Sighting` extra field INVALID; valid `Sighting` VALID. The fix is exactly the recommended shape: `EventEnvelope` drops `additionalProperties: false`, `Sighting` keeps it (referenced directly as `payload`), `SightingEvent` enforces the closed shape once via `unevaluatedProperties: false`. `npm test` 11/11, `check-docs` passes. Approved and merged (ADR-0030 now on `main`; D3 closed, D2 decided 0-based). Then updated `docs/CONTRACT-APPROVAL-RECORD.md`: recorded **Lethabo's lead sign-off** on the contract (event shape, action naming, ADR-0030), dated 2026-09-15, with `ADR-0030 · b6fc7f0`. Left Sibusiso's second-lead row and the consumer-confirmation item pending, and marked the consumer item **blocked** — Vukosi's `appliance/agent.py` (PR #24) emits the envelope only and does not yet satisfy `SightingEvent`. Updated `P2.16` in `docs/CHECKLIST.md` and `team/lethabo.md`.
+
+Evidence: the six-case `jsonschema` run (output recorded in the PR #23 approval); `npm test` → 11/11; `node scripts/check-docs.mjs` → pass. All `FACT`.
+
+Decision: the contract's **lead** approval is now recorded; the contract is **not** frozen — two items remain, and I have left them explicit rather than inferring them: (1) Sibusiso's second-lead row (his own review and signature, which I must not write for him); (2) the consumer confirmation, which is genuinely blocked on the appliance emitting the `Sighting` payload. Recording my own sign-off while leaving his pending is the honest state — a contract frozen on one lead's signature would be exactly the kind of inferred approval the operating rules forbid.
+
+Needs/blockers: Sibusiso's second-lead sign-off; Vukosi (via Sibusiso, his first reviewer) to reconcile PR #24 with `SightingEvent`. Judging criteria publish Friday 19 Sep (P1.9). Ipeleng's security/legal items (P2.1 PSiRA, P2.2 POPIA, P2.5 IO registration, P2.6 Code of Conduct, P2.7 RICA) remain entirely undone with no authored work — flagged to the leads.
+
+Business handoff: not applicable — contract governance. Serves C2/C3 (the contract is now satisfiable and the ingest shape matches the architecture and the fusion).
+
+Next: chase the two remaining contract-freeze items; judging criteria Friday 19 Sep.

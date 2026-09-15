@@ -21,7 +21,7 @@
 - A behaviour change needs docs **and** a `docs/BUILD-LOG.md` entry in the **same PR**.
 - Duress states are **visually identical** to normal ones — no observable UI, timing or network difference. This is not a UI preference, it is the safety property.
 
-**Current task** — reviewed Sibusiso's PR #23 (ADR-0030, D3/D2): **requested changes** — `SightingEvent`'s `allOf` + `additionalProperties: false` is unsatisfiable (verified with `jsonschema`); fix supplied. Opened **D4** (purged claims dataset is a hard dependency of predecessor risk code) and **G23** (§1.3 figures are claims-derived; G7 closure wording unverified). Next: re-review #23 after the fix; judging criteria Friday 19 Sep.
+**Current task** — PR #23 (ADR-0030) **approved after independently re-verifying the F1 fix with `jsonschema`; merged.** Recorded **Lethabo's lead sign-off in `docs/CONTRACT-APPROVAL-RECORD.md`**. Contract freeze still blocked on Sibusiso's row + Vukosi's consumer confirmation (PR #24 emits envelope-only). Next: chase the freeze's remaining two items; judging criteria Friday 19 Sep.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: the ADR is written before the decision is acted on anywhere else, and the rejected alternatives are in it.
 
@@ -33,8 +33,8 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: PR #23 (ADR-0030) changes requested (unsatisfiable SightingEvent). D4 + G23 opened. Judging criteria Friday 19 Sep.
-- Claimed files / contract versions: `docs/PORT-DIVERGENCES.md`, `docs/OPEN-GAPS.md` (15 Sep); reserve before editing.
+- Current task / status: ADR-0030 merged; lead sign-off on the contract recorded. Remaining: second lead + consumer. Judging criteria Friday 19 Sep.
+- Claimed files / contract versions: `docs/CONTRACT-APPROVAL-RECORD.md` (15 Sep); reserve before editing.
 - Last updated: 15 September 2026.
 
 ## Sequenced work
