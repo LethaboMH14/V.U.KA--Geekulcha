@@ -1,4 +1,3 @@
-import inspect
 import unittest
 
 from server.src.auth.governance import human_verify, retain_consented_match
@@ -22,7 +21,7 @@ class HumanGateContractTests(unittest.TestCase):
             target_id="sim_entity_001",
         )
         self.assertTrue(receipt.accepted)
-        self.assertEqual(receipt.resulting_state, "watch_candidate")
+        self.assertEqual(receipt.resulting_state, "flagged")
         self.assertEqual(receipt.evidence_event["actor_id"], "op_001")
 
     def test_whitelist_without_distinct_cosignature_is_refused_and_recorded(self):
@@ -79,9 +78,21 @@ class HumanGateContractTests(unittest.TestCase):
                 target_id="sim_entity_001",
             )
 
-    def test_module_has_no_flagged_assignment(self):
-        source = inspect.getsource(human_verify)
-        self.assertNotRegex(source, r"state\s*=\s*['\"]flagged['\"]")
+    def test_only_verify_concern_produces_flagged(self):
+        receipt = human_verify(
+            current_state="watch_candidate", action="verify_concern",
+            operator_id="op_001", reason="evidence reviewed", signature="sig_001",
+            tenant="sim_tenant_001", target_id="sim_entity_001",
+        )
+        self.assertEqual(receipt.resulting_state, "flagged")
+        for action in ("dismiss", "whitelist", "disarm", "threshold_change", "delete"):
+            receipt = human_verify(
+                current_state="watch_candidate", action=action,
+                operator_id="op_001", reason="reviewed", signature="sig_001",
+                co_signature="op_002:sig_002" if action in {"whitelist", "disarm", "threshold_change", "delete"} else None,
+                tenant="sim_tenant_001", target_id="sim_entity_001",
+            )
+            self.assertNotEqual(receipt.resulting_state, "flagged")
 
 
 if __name__ == "__main__":

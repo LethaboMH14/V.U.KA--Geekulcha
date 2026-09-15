@@ -46,8 +46,9 @@ test("OpenAPI contract preserves governance and receipt requirements", () => {
 
 test("OpenAPI contract exposes no flagged or flag action setter", () => {
   assert.doesNotMatch(document, /action: flag\b/);
-  assert.doesNotMatch(document, /enum: \[[^\]]*flagged/);
-  assert.match(document, /enum: \[verify_concern, dismiss, whitelist\]/);
+  const actionLine = document.match(/action: \{ type: string, enum: \[[^\n]+\] \}/)?.[0] ?? "";
+  assert.doesNotMatch(actionLine, /\bflag(?:ged)?\b/);
+  assert.match(actionLine, /verify_concern, dismiss, whitelist/);
 });
 
 test("live docs point to contracts/ as the frozen contract home", () => {

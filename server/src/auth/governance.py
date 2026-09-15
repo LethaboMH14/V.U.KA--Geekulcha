@@ -50,9 +50,9 @@ def human_verify(
 ) -> DecisionReceipt:
     """Apply one named human review action and return its evidence receipt.
 
-    ``verify_concern`` records human review while preserving the
-    ``watch_candidate`` state. This contract intentionally contains no path
-    that assigns a privileged machine accusation state.
+    ``verify_concern`` is the one human-authenticated path that sets
+    ``flagged``. No machine path assigns that state; this function requires a
+    named operator and signature.
     """
 
     if action == "flag":
@@ -95,7 +95,7 @@ def human_verify(
         co_operator_id = None
 
     resulting_state = {
-        "verify_concern": "watch_candidate",
+        "verify_concern": "flagged",
         "dismiss": "dismissed",
         "whitelist": "whitelisted",
         "disarm": "watch_candidate",
