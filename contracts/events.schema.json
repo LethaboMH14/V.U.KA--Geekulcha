@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vuka.example/contracts/events.schema.json",
+  "title": "VUKA event envelope",
+  "description": "The v0.1.0 event shape crossing the edge, service and evidence boundaries.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "const": "0.1.0"
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "received_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sim_": {
+      "type": "boolean"
+    },
+    "freshness": {
+      "type": "string",
+      "enum": [
+        "fresh",
+        "stale",
+        "unknown"
+      ]
+    }
+  },
+  "required": [
+    "version",
+    "event_id",
+    "tenant",
+    "source_time",
+    "received_time",
+    "sim_",
+    "freshness"
+  ],
+  "additionalProperties": false
+}
