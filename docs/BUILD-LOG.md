@@ -279,3 +279,7 @@ Added `docs/POPIA-S57-DECISION-RECORD.md` to capture the open prior-authorisatio
 ### 2026-09-15 19:05 SAST — P2.11 stale-claim inventory
 
 Scanned active repository content for `R1.30`; remaining hits are recorded in `docs/ANCHOR-COST-SWEEP.md` with owner handoffs. Protected and shared files were not silently edited.
+
+### 2026-09-15 19:20 SAST — WBS 4.5 checkpoint preparation
+
+Added `docs/EVIDENCE-CHECKPOINT-RUNBOOK.md` defining entry gates, demonstration sequence, safety checks, scope-cut states, and dual-lead sign-off. The checkpoint itself has not run and no snapshot is tagged.
