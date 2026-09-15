@@ -295,3 +295,7 @@ Updated `team/sibusiso.md` so `Current task` and the running log reflect the pus
 ### 2026-09-15 19:55 SAST — Sibusiso review handoff
 
 Added `docs/SIBUSISO-REVIEW-HANDOFF.md` with the pushed commit inventory, verification results, and the four decisions required from leads and owners before the next gated implementation step.
+
+### 2026-09-15 20:10 SAST — P2.17 operator training checklist
+
+Added `docs/OPERATOR-TRAINING-CHECKLIST.md` covering machine-ceiling, refusal evidence, two-signature actions, verifier output, privacy boundaries, anchor states, and rollback rehearsal. Training evidence is not yet recorded.
