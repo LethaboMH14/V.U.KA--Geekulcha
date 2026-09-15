@@ -62,7 +62,7 @@
 
 | # | Item | Owner | Criterion | Due | State | Amended |
 |---|---|---|---|---|---|---|
-| P2.11 | 🔴 **Fix the R1.30/month anchoring figure before it reaches a slide.** It was computed off Hedera's pre-2026 price; Hedera repriced `ConsensusSubmitMessage` $0.0001 → $0.0008 in **January 2026**. Pick one system, show the arithmetic, use current prices | Babatunde, Sibusiso | C2, C3 | Sep 17 | ☐ | Added 14 Sep, Lethabo |
+| P2.11 | 🔴 **Fix the R1.30/month anchoring figure before it reaches a slide.** It was computed off Hedera's pre-2026 price; Hedera repriced `ConsensusSubmitMessage` $0.0001 → $0.0008 in **January 2026**. Pick one system, show the arithmetic, use current prices | Babatunde, Sibusiso | C2, C3 | Sep 17 | ◐ | Reconciliation in `docs/ANCHOR-COST-RECONCILIATION.md`; final system choice and repo-wide presentation sweep outstanding |
 | P2.12 | Stop calling Hedera *"a public blockchain"* — it is a **permissioned-consensus ledger run by a Governing Council of up to 39**. Still a legitimate choice; blurring it invites *"so it's not really decentralised"* | Babatunde | C2 | Sep 17 | ☐ | Added 14 Sep, Lethabo |
 | P2.13 | State that Hedera mainnet fees are **paid in HBAR**, rather than let a judge find the tension with *"we refused tokens."* OpenTimestamps genuinely needs no wallet, token or account — that claim holds | Babatunde | C2 | Sep 17 | ☐ | Added 14 Sep, Lethabo |
 | P2.14 | Rehearse the three blockchain attacks verbatim: *(a)* walk me through R1.30, *(b)* why not a private signed hash chain, *(c)* OpenTimestamps depends on volunteer calendar servers | Babatunde, Sibusiso | C2 | Sep 23 | ◐ | Rehearsal script in `docs/BLOCKCHAIN-ATTACK-REHEARSAL.md`; live evidence checkpoint still required |

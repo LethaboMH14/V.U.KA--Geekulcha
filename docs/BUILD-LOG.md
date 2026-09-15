@@ -267,3 +267,7 @@ Recorded the prototype decision in `docs/OTS-CALENDAR-DECISION.md`: self-hosting
 ### 2026-09-15 18:35 SAST — P2.14 blockchain attack rehearsal
 
 Added `docs/BLOCKCHAIN-ATTACK-REHEARSAL.md` with the three required objections, current cost qualification, independent-verification rationale, and an explicit deferred answer for public-calendar dependency. Live evidence checkpoint remains outstanding.
+
+### 2026-09-15 18:50 SAST — P2.11 anchoring-cost reconciliation
+
+Added `docs/ANCHOR-COST-RECONCILIATION.md` with the corrected Hedera arithmetic and the OpenTimestamps direct-fee qualification. P2.11 remains in progress until the team selects the demonstrated system and sweeps the stale figure from presentation material.
