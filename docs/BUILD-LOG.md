@@ -171,3 +171,30 @@ Needs/blockers: none for this task. Task 4 (the actual port, `shared/contract.ts
 Business handoff: not applicable — no capability changed, structure only.
 
 Next: Task 4, the port.
+
+## 2026-09-15 | Codex assistant on behalf of Khutso Mothopa | GPT-5 | role self-review | proposed, review pending
+
+Changed: `team/khutso.md` — recorded Khutso's evidence-based role feedback, reserved the role-review and build-log paths, reconciled the immediate P1.1/P1.3 evidence work with the formal WBS 1.4 proposed/not-started status, and stated the reviewer/dependency boundary. No product code, contract, approval, or completion status was changed.
+
+Evidence: current `main` is clean at `e2365f3`; `node scripts/check-docs.mjs` and `node scripts/check-intake.mjs` passed, while `node scripts/test-security.mjs` was not runnable because this clone has no installed Gitleaks. The review records the repository's existing stale-claim sweep and open evidence dependencies; no new measurement is asserted.
+
+Decision: none. This is a coordination and self-review entry requested by Khutso; all five sequenced WBS leaves remain proposed/not started and no human availability or approval is inferred.
+
+Needs/blockers: P1.1, P1.2 and P1.3 require the corrected claim sweep and personally checked source/command evidence. Clean-intake evidence depends on the account owners and both leads; predecessor test/TRL reproduction depends on Sibusiso; contract and subject-rights changes remain subject to `docs/OVERLAPS.md` and owner decisions.
+
+Business handoff: not applicable — no household capability changed. This entry serves C3 by making role accountability and evidence boundaries checkable; trust remains conditional on reproducible claims.
+
+Next: Sibusiso first review, then both leads review this PR. No merge is requested until the required reviews and checks are recorded.
+## 2026-09-15 | Codex assistant on behalf of Khutso Mothopa | GPT-5 | review correction — WBS 1.4 | proposed, re-review pending
+
+Changed: `team/khutso.md` — corrected WBS 1.4 from proposed/not started to done after Sibusiso identified the existing approved intake gate and both recorded lead approvals. Revised the role-review status language so the remaining four sequenced WBS leaves stay proposed/not started. No product code, contract, or other WBS completion status changed.
+
+Evidence: `docs/security/intake-gate.json` has `status: approved`, with non-empty `lethabo` and `sibusiso` lead-approval entries. Sibusiso's PR #5 review requested this factual correction; no new measurement or source claim is introduced.
+
+Decision: none. This is a review correction within PR #5, not a new governance decision.
+
+Needs/blockers: P1.1, P1.2 and P1.3 remain open; the remaining four sequenced WBS leaves require their own dependencies and acceptance evidence. Local Gitleaks remains unavailable, while the PR's remote secret scan is the relevant check.
+
+Business handoff: not applicable — no household capability changed. This correction serves C3 by keeping task status aligned with checkable evidence.
+
+Next: request Sibusiso's re-review, then both leads' review before merge.
