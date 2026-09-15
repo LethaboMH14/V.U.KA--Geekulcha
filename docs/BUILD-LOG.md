@@ -186,6 +186,66 @@ Business handoff: `templates/BUSINESS-HANDOFF.md` not changed; this defines inte
 
 Next: Lethabo and both leads review the proposed contract/ADR; then add OpenAPI semantic validation and proceed to WBS 3.3.
 
+## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | WBS 3.3 runtime check | blocked, no governance code added
+
+Changed: created and pushed branch `feat/sibusiso-3.3-human-gate` from the contract branch. Updated Sibusiso's current task to reflect the verified runtime blocker. No server or governance implementation was added.
+
+Evidence: `node --version` → `v24.18.0`. `python3 --version` returned command not recognized; `where.exe python3`, `where.exe python`, and `where.exe py` each reported no files found. `docs/TECH-STACK.md` specifies Python 3.11 with FastAPI + WebSockets for the server; Node is used for repository scripts and contract tests. The server scaffold remains README plus `.gitkeep` files.
+
+Decision: retain the documented Python/FastAPI stack. Do not substitute Node or add untested governance code to bypass the missing runtime.
+
+Needs/blockers: Sibusiso provisions Python 3.11 (or an explicitly approved CI-only runtime) before porting WBS 3.3. Lethabo and both leads still review and approve the WBS 3.1 contract/ADR. The branch is ready for a separate blocker PR.
+
+Business handoff: not applicable; no capability changed.
+
+Next: provision the documented runtime, then add human-gate tests before implementation; open a PR from `feat/sibusiso-3.3-human-gate`.
+
+## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | WBS 3.3 human-gate proof path | implemented, review pending
+
+Changed: added `server/src/auth/governance.py` as a small side-effect-free human-gate module and `test/governance_contract_test.py` with six standard-library unittest cases. Accepted review receipts identify the operator and resulting state; refused privileged attempts are returned as evidence; whitelist, disarm, threshold change and delete require two distinct operator signatures; `verify_concern` preserves `watch_candidate`. Updated `server/README.md` and Sibusiso's task record.
+
+Evidence: the initial test run failed with `ModuleNotFoundError: No module named 'server.src.auth.governance'` before implementation. After implementation, bundled Python `3.12.14` ran `python -m unittest test/governance_contract_test.py` with `Ran 6 tests ... OK`. System `python3`, `python`, `py` and pytest are unavailable; the repository's documented Python 3.11+ requirement is met by the bundled 3.12 interpreter. No anchor code or SC.1 implementation was touched.
+
+Decision: retain `verify_concern` rather than expose a `flag` action; this keeps the contract free of a privileged state setter and follows the session hard constraint. Lethabo and both leads must review/approve the contract and ADR before the contract is final.
+
+Needs/blockers: Lethabo reviews the human-gate semantics and proof wording; Ipeleng reviews signature and privacy boundaries. F14 subject access remains the next feature task and requires the anchor/proof implementation later in the sequence.
+
+Business handoff: not applicable; this is a tested governance boundary, not a household-facing release.
+
+Next: run full repository checks, push this branch, then open a separate PR for WBS 3.3 review.
+
+## 2026-09-15 17:50 SAST | Codex acting for Sibusiso | GPT-5 | G15 operator duty material | proposed, review pending
+
+Changed: added `docs/OPERATOR-DUTY.md` and checklist row P2.17. The card defines the human authority boundary, review procedure, refusal-as-evidence rule, two-distinct-signature handling, privacy restrictions, pre-pilot training evidence and demo acceptance. Updated G15 to distinguish drafted material from actual operator training.
+
+Evidence: documentation-only change; no operator, service partner, user or trainer activity is asserted. The card preserves `sim_` labels and does not claim legal approval, production readiness or completed training.
+
+Decision: none. Lethabo, Ipeleng and the responsible service partner must review the duty and privacy boundaries before pilot use.
+
+Needs/blockers: training completion evidence, named service operator, tenant authority and legal/security review remain outstanding. Anchor and SC.1 remain untouched under the session scope.
+
+Business handoff: not applicable; this is operational safety material supporting the human-gate capability.
+
+Next: Lethabo reviews product wording; Ipeleng reviews privacy/abuse boundaries; Sibusiso maintains the tested implementation and evidence receipt contract.
+
+## 2026-09-15 17:55 SAST | Codex acting for Sibusiso | GPT-5 | WBS 3.1 OpenAPI contract checks | implemented, review pending
+
+Changed: added `test/openapi-contract.test.mjs`, a zero-dependency structural contract test for the v3.1 OpenAPI document. It checks the documented path inventory, F14/F15 showcase markers, idempotency/pagination/receipt controls, first-broken-index wording, WebSocket separation and the absence of a `flag`/`flagged` setter.
+
+Evidence: `npm test` runs the existing security integration, three event-shape tests and the new OpenAPI checks. This test does not replace a full YAML/OpenAPI parser; semantic validation remains a CI/tooling follow-up when an approved dependency or validator is selected.
+
+Decision: none. The contract remains proposed pending Lethabo review, both-lead approval and an ADR.
+
+Needs/blockers: no anchor or SC.1 work was performed under the session scope. The OpenAPI action naming still requires the review recorded in PR #6.
+
+Business handoff: not applicable; contract verification only.
+
+Next: maintain the review branch and await Lethabo's contract decision before implementing dependent interfaces.
+
+### 2026-09-15 18:05 SAST — P2.3/G20 privacy boundary
+
+Added `docs/DISCARD-BY-DEFAULT-EMBEDDINGS.md` as proposed architecture: transient embeddings are compared only against the consented enrolment set and every non-match is discarded without retaining biometric payloads. Updated P2.3 and G20 to show the boundary is proposed; implementation evidence, privacy review and ADR remain outstanding. No anchor or SC.1 code was touched.
+
 ## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | PR handoff / WBS 3.3 readiness | blocked, no claim of PR creation
 
 Changed: attempted to create the requested GitHub pull request for `feat/sibusiso-3.1-contract-freeze`; no repository files changed by the attempt. Updated Sibusiso's blocker list with the authentication and runtime facts.
@@ -199,6 +259,54 @@ Needs/blockers: Lethabo must review the contract and approve or revise the actio
 Business handoff: not applicable; this is a handoff blocker record.
 
 Next: authenticate GitHub and open the PR; then provision the documented Python runtime or choose an explicitly approved CI-only verification path before WBS 3.3.
+
+### 2026-09-15 18:20 SAST — P2.15 OpenTimestamps calendar decision
+
+Recorded the prototype decision in `docs/OTS-CALENDAR-DECISION.md`: self-hosting and `ots upgrade` are deferred because they are not implemented or rehearsed. Public calendars remain a dependency; timestamp state must remain pending until independently verifiable. No anchor or SC.1 code was touched.
+
+### 2026-09-15 18:35 SAST — P2.14 blockchain attack rehearsal
+
+Added `docs/BLOCKCHAIN-ATTACK-REHEARSAL.md` with the three required objections, current cost qualification, independent-verification rationale, and an explicit deferred answer for public-calendar dependency. Live evidence checkpoint remains outstanding.
+
+### 2026-09-15 18:50 SAST — P2.11 anchoring-cost reconciliation
+
+Added `docs/ANCHOR-COST-RECONCILIATION.md` with the corrected Hedera arithmetic and the OpenTimestamps direct-fee qualification. P2.11 remains in progress until the team selects the demonstrated system and sweeps the stale figure from presentation material.
+
+### 2026-09-15 18:55 SAST — P2.4 s57 decision record
+
+Added `docs/POPIA-S57-DECISION-RECORD.md` to capture the open prior-authorisation question, required counsel findings, and the safe pre-pilot boundary. No legal conclusion or pilot approval is inferred.
+
+### 2026-09-15 19:05 SAST — P2.11 stale-claim inventory
+
+Scanned active repository content for `R1.30`; remaining hits are recorded in `docs/ANCHOR-COST-SWEEP.md` with owner handoffs. Protected and shared files were not silently edited.
+
+### 2026-09-15 19:20 SAST — WBS 4.5 checkpoint preparation
+
+Added `docs/EVIDENCE-CHECKPOINT-RUNBOOK.md` defining entry gates, demonstration sequence, safety checks, scope-cut states, and dual-lead sign-off. The checkpoint itself has not run and no snapshot is tagged.
+
+### 2026-09-15 19:35 SAST — WBS 7.2 fallback rehearsal preparation
+
+Added `docs/FALLBACK-HOTFIX-RUNBOOK.md` with a reversible isolated rehearsal, evidence capture, safety constraints, and acceptance criteria. No shared history was reset and no production rollback was performed.
+
+### 2026-09-15 19:45 SAST — Sibusiso operating record refresh
+
+Updated `team/sibusiso.md` so `Current task` and the running log reflect the pushed privacy, anchoring, rehearsal and readiness work. F14/SC.1 remains gated pending contract approval and session scope.
+
+### 2026-09-15 19:55 SAST — Sibusiso review handoff
+
+Added `docs/SIBUSISO-REVIEW-HANDOFF.md` with the pushed commit inventory, verification results, and the four decisions required from leads and owners before the next gated implementation step.
+
+### 2026-09-15 20:10 SAST — P2.17 operator training checklist
+
+Added `docs/OPERATOR-TRAINING-CHECKLIST.md` covering machine-ceiling, refusal evidence, two-signature actions, verifier output, privacy boundaries, anchor states, and rollback rehearsal. Training evidence is not yet recorded.
+
+### 2026-09-15 20:25 SAST — WBS 3.1 approval record
+
+Added `docs/CONTRACT-APPROVAL-RECORD.md` with the exact lead, second-lead, consumer, ADR, version, and commit fields required before the proposed contracts can be called frozen.
+
+### 2026-09-15 21:15 SAST — checklist ownership check
+
+Checked `team/khutso.md` for P2.16/P2.17 assignment collisions; none were present. Khutso remains the owner of `docs/CHECKLIST.md`, so the rows remain subject to his review even though no duplicate IDs were found.
 ## 2026-09-15 | Codex assistant on behalf of Khutso Mothopa | GPT-5 | role self-review | proposed, review pending
 
 Changed: `team/khutso.md` — recorded Khutso's evidence-based role feedback, reserved the role-review and build-log paths, reconciled the immediate P1.1/P1.3 evidence work with the formal WBS 1.4 proposed/not-started status, and stated the reviewer/dependency boundary. No product code, contract, approval, or completion status was changed.
@@ -225,6 +333,20 @@ Needs/blockers: P1.1, P1.2 and P1.3 remain open; the remaining four sequenced WB
 Business handoff: not applicable — no household capability changed. This correction serves C3 by keeping task status aligned with checkable evidence.
 
 Next: request Sibusiso's re-review, then both leads' review before merge.
+
+## 2026-09-17 | Sibusiso (Claude session) | reconcile duplicate P2.11/P2.15 work on this branch | merged main, deleted superseded files
+
+Changed: merged origin/main (Khutso's PR #5) into this branch — only conflict was the same append-only BUILD-LOG.md pattern as prior merges, resolved by keeping both chronologically. Deleted `docs/OTS-CALENDAR-DECISION.md`, `docs/ANCHOR-COST-RECONCILIATION.md`, `docs/ANCHOR-COST-SWEEP.md` — all three duplicated work already completed more thoroughly in PR #7 (P2.11, full repo sweep, closed) and PR #8 (P2.15, ADR-0028, an actual decision rather than "deferred"). Re-pointed `docs/CHECKLIST.md` P2.11 and P2.15 rows at PR #7/#8. Corrected `docs/BLOCKCHAIN-ATTACK-REHEARSAL.md` (P2.14), which linked to the now-deleted `docs/OTS-CALENDAR-DECISION.md` and stated the pre-correction R1.30 framing — updated both answers to match the swept figures and ADR-0028.
+
+Evidence: `node scripts/check-docs.mjs` passed. `npm test` → 8/8 pass (event contract, OpenAPI contract, security integration). `python -m unittest discover -s test -p "governance_contract_test.py"` → 8/8 pass (human gate + discard-by-default), confirming Codex's WBS 3.3 / P2.3 work survived the merge intact. Note: `where.exe python`/`py` found real installations (Python 3.13, 3.14, launcher) in this session's PATH, contradicting the earlier build-log entries reporting no Python available — environment-specific, not a repository fact; the bundled-3.12-workaround entries stay as an accurate record of what was true in that session.
+
+Decision: PR #7 and PR #8 are authoritative for P2.11/P2.15 — this branch's independent, weaker duplicates are removed rather than reconciled line-by-line, since neither added anything the merged versions don't already cover.
+
+Needs/blockers: PR #6, #7, #8 all still await Lethabo's review. This branch's WBS 3.3 (human gate) and P2.3 (discard-by-default) work is untouched by this reconciliation and ready for its own PR.
+
+Business handoff: not applicable — reconciliation and duplicate removal only.
+
+Next: open a PR for WBS 3.3 (server/src/auth/governance.py, test/governance_contract_test.py, test/openapi-contract.test.mjs) — real, tested progress that's been sitting unpushed.
 
 ## 2026-09-17 | Sibusiso (Claude session) | P2.11 / G22 | closed
 

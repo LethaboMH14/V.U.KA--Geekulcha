@@ -244,7 +244,7 @@ flowchart LR
 
 ### Why not waterfall
 
-We freeze **contracts** early, not **implementations**. The contract — `shared/contract.ts`, the API surface, the evidence-chain entry shape — is frozen so seven people can work without blocking on one another. Everything behind the contract stays soft and is rewritten freely. Several of the twenty-five ADRs are supersessions: the design moved, and the record shows exactly when and why.
+We freeze **contracts** early, not **implementations**. The contract — `contracts/events.schema.json` + `contracts/openapi.yaml`, the API surface, the evidence-chain entry shape — is frozen so seven people can work without blocking on one another. Everything behind the contract stays soft and is rewritten freely. Several of the twenty-five ADRs are supersessions: the design moved, and the record shows exactly when and why.
 
 ## 2.2 The gate model
 
@@ -389,7 +389,7 @@ flowchart TB
     style NEVER fill:#fde8e8,stroke:#c0392b
 ```
 
-**What is frozen** — change requires three signatures and an ADR: the API surface in Appendix A · the state machine in §4.8 · the evidence-chain entry shape in Appendix B · `shared/contract.ts` · the privacy invariants E1–E5.
+**What is frozen** — change requires three signatures and an ADR: the API surface in Appendix A · the state machine in §4.8 · the evidence-chain entry shape in Appendix B · `contracts/` · the privacy invariants E1–E5.
 
 **What is deliberately not frozen**: every model, every threshold, every weight, the database engine, the map library, the UI. These are expected to change, and the architecture is built so that they can.
 
@@ -400,7 +400,7 @@ Seven builders across four universities. Two joint leads, both of whom also carr
 | Builder | Owns | Named accountability |
 |---|---|---|
 | **Lethabo Hoaeane** · UNISA · *co-lead* | `docs/00-SPEC.md`, `app/`, `brain/`, the model manifest, UX | The architecture is coherent; the phone works offline |
-| **Sibusiso Khumalo** · Wits · *co-lead* | `server/`, `anchor/`, `shared/contract.ts`, CI, demo orchestration. **Nitpicks feasibility on every spec — flags anything infeasible *today*, in an ADR proposal, not later** | Nothing ships that cannot run; the chain verifies |
+| **Sibusiso Khumalo** · Wits · *co-lead* | `server/`, `anchor/`, `contracts/`, CI, demo orchestration. **Nitpicks feasibility on every spec — flags anything infeasible *today*, in an ADR proposal, not later** | Nothing ships that cannot run; the chain verifies |
 | **Mutarisi Chibaya** · Pretoria | `dashboard/`, member-facing screens | The operator can act in one screen; the member is never shown an ops event |
 | **Vukosi Khoza** · Wits | `appliance/` — sensors, edge runtime, power budget, tamper | The appliance survives a power cut and says so |
 | **Ipeleng Constance Modise** · TUT | `docs/07-SECURITY.md`, threat model, OWASP mapping, physical security | Every control has a test, and the insider is modelled as an adversary |
@@ -518,7 +518,7 @@ flowchart TB
     end
     subgraph SHARED["SHARED KERNEL — no I/O, no clock, no platform"]
         BRAIN["<b>brain/</b><br/>fusion · conflict K<br/>calibration<br/><i>pure functions</i>"]
-        CONTRACT["<b>shared/contract.ts</b><br/>FROZEN"]
+        CONTRACT["<b>contracts/</b><br/>FROZEN"]
     end
 
     VIGIL -->|"POST /v1/sightings<br/>signed · batched · replayable"| UMOJA
@@ -746,7 +746,7 @@ flowchart LR
     style FAIL fill:#fde8e8,stroke:#c0392b
 ```
 
-`shared/contract.ts` performs the same job for shapes rather than for maths, and is frozen for the same reason.
+`contracts/events.schema.json` and `contracts/openapi.yaml` perform the same job for shapes rather than for maths, and are frozen for the same reason.
 
 ## 3.8 Dependency rules
 
@@ -2316,7 +2316,7 @@ Two subsystems are **argued at 5**, not verified: the append-only evidence chain
 | Artefact | Policy |
 |---|---|
 | **API** | Path-versioned `/v1`. A breaking change requires a new path, sign-off from both leads, and an ADR. **Contracts freeze before implementation** |
-| **`shared/contract.ts`** | Frozen. Changing it requires all three signatures |
+| **`contracts/events.schema.json` + `contracts/openapi.yaml`** | Frozen. Changing them requires all three signatures |
 | **Chain entry schema** | **Append-only in spirit and in fact.** A field may be added; none may be removed or re-typed, because historical entries must remain verifiable **forever**. This is the strictest versioning constraint in the system |
 | **Models** | Registered by sha256 in a manifest. A new model is a new manifest entry, never an in-place replacement |
 | **Fusion parameters** | Versioned file. **The version used is recorded in the decision record**, so any past decision can be reproduced with the parameters that actually produced it |

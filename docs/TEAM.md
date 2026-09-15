@@ -98,7 +98,7 @@ Seven builders across four universities cannot work the way one co-located team 
 
 | Principle | Why it works here |
 |---|---|
-| **Contracts freeze before implementation** | `shared/contract.ts` and the frozen API surface mean nobody blocks waiting for someone else's decision. Each person builds against a signed contract, not a moving target |
+| **Contracts freeze before implementation** | `contracts/events.schema.json` and `contracts/openapi.yaml` plus the frozen API surface mean nobody blocks waiting for someone else's decision. Each person builds against a signed contract, not a moving target |
 | **Sequenced phases, not concurrent sprints** | Govern → Calibrate → Harden → Demo. One thing at a time, the whole team on it, done before the next begins |
 | **A pull request for everything** — code, docs, design | Review on every change means no single point of knowledge, which is the real risk when seven people meet in person for the first time on the 25th |
 | **Documentation in the same PR as behaviour** | *Docs-or-it-didn't-happen.* The written record is the handover |

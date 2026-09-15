@@ -246,14 +246,14 @@ components:
       additionalProperties: false
       properties:
         id: { type: string }
-        state: { type: string, enum: [observed, watch_candidate, dismissed, whitelisted] }
+        state: { type: string, enum: [observed, watch_candidate, flagged, dismissed, whitelisted] }
         freshness: { type: string, enum: [fresh, stale, unknown] }
     VerifyRequest:
       type: object
       required: [action, reason, signature]
       additionalProperties: false
       properties:
-        action: { type: string, enum: [verify_concern, dismiss, whitelist] }
+        action: { type: string, enum: [verify_concern, dismiss, whitelist, disarm, threshold_change, delete] }
         reason: { type: string, minLength: 1 }
         signature: { type: string, minLength: 1 }
         co_signature: { type: string, minLength: 1 }
