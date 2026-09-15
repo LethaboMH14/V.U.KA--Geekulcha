@@ -214,6 +214,20 @@ Business handoff: not applicable; this is a tested governance boundary, not a ho
 
 Next: run full repository checks, push this branch, then open a separate PR for WBS 3.3 review.
 
+## 2026-09-15 17:50 SAST | Codex acting for Sibusiso | GPT-5 | G15 operator duty material | proposed, review pending
+
+Changed: added `docs/OPERATOR-DUTY.md` and checklist row P2.17. The card defines the human authority boundary, review procedure, refusal-as-evidence rule, two-distinct-signature handling, privacy restrictions, pre-pilot training evidence and demo acceptance. Updated G15 to distinguish drafted material from actual operator training.
+
+Evidence: documentation-only change; no operator, service partner, user or trainer activity is asserted. The card preserves `sim_` labels and does not claim legal approval, production readiness or completed training.
+
+Decision: none. Lethabo, Ipeleng and the responsible service partner must review the duty and privacy boundaries before pilot use.
+
+Needs/blockers: training completion evidence, named service operator, tenant authority and legal/security review remain outstanding. Anchor and SC.1 remain untouched under the session scope.
+
+Business handoff: not applicable; this is operational safety material supporting the human-gate capability.
+
+Next: Lethabo reviews product wording; Ipeleng reviews privacy/abuse boundaries; Sibusiso maintains the tested implementation and evidence receipt contract.
+
 ## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | PR handoff / WBS 3.3 readiness | blocked, no claim of PR creation
 
 Changed: attempted to create the requested GitHub pull request for `feat/sibusiso-3.1-contract-freeze`; no repository files changed by the attempt. Updated Sibusiso's blocker list with the authentication and runtime facts.

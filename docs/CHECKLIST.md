@@ -68,6 +68,7 @@
 | P2.14 | Rehearse the three blockchain attacks verbatim: *(a)* walk me through R1.30, *(b)* why not a private signed hash chain, *(c)* OpenTimestamps depends on volunteer calendar servers | Babatunde, Sibusiso | C2 | Sep 23 | ☐ | Added 14 Sep, Lethabo |
 | P2.15 | **Decide and record:** do we self-host an OpenTimestamps calendar and run `ots upgrade` promptly? The answer to attack *(c)* is only valid if it is actually implemented | Sibusiso | C2, C3 | Sep 18 | ☐ | Added 14 Sep, Lethabo |
 | P2.16 | **WBS 3.1 contract freeze** — machine-readable v0.1.0 event schema, v3.1 OpenAPI surface, exact-shape tests and rejection tests; second-lead approval and ADR still required before calling the shared contract frozen | Sibusiso | C2, C3, C4 | Sep 15 | ◐ | Added 15 Sep, Sibusiso session |
+| P2.17 | **Human-gate operator duty card** — review procedure, refusal evidence, two-signature handling, privacy boundaries and pre-pilot training evidence | Lethabo, Sibusiso | C2, C3, C4 | Sep 21 | ◐ | Added 15 Sep, Sibusiso session |
 
 ---
 
