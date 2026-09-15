@@ -7,7 +7,7 @@ An operator is ready for a pilot only after a reviewer records each result with 
 - [ ] Demonstrate a refused single-signer whitelist and locate its refusal evidence.
 - [ ] Demonstrate two distinct signatures for whitelist, disarm, threshold change, and delete.
 - [ ] Explain that refusal evidence is retained and never hidden by error handling.
-- [ ] Demonstrate the first broken link returned by index from the verifier.
+- [ ] Demonstrate the first broken link returned by index from the verifier. *(Pre-demo: simulate — the anchor code is pending Task 5; use a synthetic `sim_` evidence bundle with a known break point.)*
 - [ ] Confirm no raw audio, images, embeddings, or personal data are exported to the public chain.
 - [ ] Explain pending versus independently verifiable anchor state.
 - [ ] Rehearse escalation, rollback, and the scoped-hotfix procedure.

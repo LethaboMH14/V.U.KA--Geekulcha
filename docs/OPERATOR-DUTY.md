@@ -64,11 +64,32 @@ The team must record completion evidence and the trainer. This document is not e
 
 The demo may claim this duty path only when a nonauthor reviewer can reproduce:
 
-- a named human review that remains at `watch_candidate` for `verify_concern`;
+- a named human review that transitions to `flagged` for `verify_concern`;
 - a dismissal with a reason;
 - a single-signature whitelist refusal whose event is retained;
 - a two-distinct-operator whitelist acceptance;
 - an invalid action refusal or rejection;
-- a receipt that distinguishes accepted, refused, pending and unconfirmed states.
+- a receipt that distinguishes accepted, refused, pending and unconfirmed states;
+- a subject-access pull via `GET /v1/subjects/{id}/record` demonstrating that a wrongly-reviewed concern is provably correctable.
 
 All demo records use `sim_` identifiers and are named as simulated. No production safety promise follows from this rehearsal.
+
+## Operator error and remedy
+
+An operator who verifies concern incorrectly — e.g. misreading evidence, reviewing the wrong entity, or failing to recognise a delivery pattern — creates a `flagged` event that is permanently recorded. The remedy is not deletion. The remedy is the **subject-access path**: the affected person (or their estate representative) pulls their own file, receives the full decision history with a verifiable proof, and the record shows:
+
+- the original `verify_concern` event and its operator;
+- any subsequent dismissal or correction by a second operator (two signatures required);
+- the complete chain from sighting to resolution.
+
+No row is removed. The correction is visible to the same public verifier that can check any other event. This is by design — a system that can hide its operator errors is a system nobody can trust to have none.
+
+## Escalation paths
+
+| Situation | Operator action | Next step |
+|---|---|---|
+| Subject disputes a review | Do not argue. Record the dispute as evidence. Point the subject to the member app's subject-access path (F14) | Estate/security company oversees remedy; VUKA's role is the record, not the adjudication |
+| Law enforcement requests access | Do not grant access. Refer to the service owner and security officer | The registered security company (PSiRA s20) is the party rendering the service; VUKA is their technology supplier. Ipeleng's PSiRA position paper (`P2.1`) governs |
+| Regulator inquiry (POPIA s51) | Preserve all records. Do not modify or delete. Notify Ipeleng (security owner) and the service owner | PSiRA-registered company responds; VUKA supplies the anchored evidence chain per the subject-access contract |
+| Raw audio or face image demand | Refuse and escalate to security owner | "Vectors not images" (`E2`) is architectural; the 3-second ring buffer records labels, never raw audio |
+| Receipt shows `pending`, `gap` or unconfirmed | Do not describe it as delivered. Record the state and queue for the next anchor cycle | `anchor/publish.py` confirms after `ots upgrade` (ADR-0028); until then, state the honest status |

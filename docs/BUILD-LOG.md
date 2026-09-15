@@ -452,3 +452,17 @@ Needs/blockers: three PRs (#9 G12 register, #11 ADR-0027, #13 competitor block) 
 Business handoff: `docs/SONKE-OVERVIEW.md` is the bridge between the architecture and the judges — it answers "who are you and why should anyone believe what you claim?" Serves all four criteria: C1 (team roster visible), C2 (the AI answer is the differentiator), C3 (corrected figures, TRL 4), C4 (Musa and Thandi are the real user journeys the organisers asked for).
 
 Next: support Ipeleng's PSiRA/POPIA position papers (P2.1–P2.4); judging criteria review Friday 19 Sep (P1.9 rules-lawyer); begin port (Task 4) after Sibusiso's PR reviews clear.
+
+## 2026-09-15 21:00 SAST | opencode / GLM | claude-sonnet-5 | operator training review + P1.8 closed | authored, Lethabo directed
+
+Changed: reviewed and corrected `docs/OPERATOR-DUTY.md` — fixed stale `verify_concern` claim (now transitions to `flagged` per Sibusiso's PR #10 F1 fix, not stays-at-`watch_candidate`), added operator error remedy section (subject-access path is the remedy, corrections visible on same chain) and escalation paths table (subject dispute, law enforcement, regulator, raw-data demands, pending states). Updated `docs/OPERATOR-TRAINING-CHECKLIST.md` item 6 (broken-link demo) to note simulation pending Task 5 anchor code. P1.8 closed (prizes confirmed FACT from Lead Facilitator email; deployment premise no longer contradicts 90-day assumption). Updated G15 to ◐ and P2.17 to ◐ in `docs/OPEN-GAPS.md` and `docs/CHECKLIST.md` — material reviewed and corrected, real training evidence still outstanding. Updated `team/lethabo.md`.
+
+Evidence: `verify_concern` → `flagged` confirmed in `server/src/auth/governance.py:98` and `test/governance_contract_test.py::test_only_verify_concern_produces_flagged`. The stale claim in OPERATOR-DUTY line 67 ("remains at watch_candidate") was from the pre-F1-fix draft in PR #10; corrected to match the fixed code now on main. `FACT`.
+
+Decision: the operator material is now internally consistent with the governance code. The training itself has not happened — the material is specification, not completion evidence. G15 closes when a real operator walks through the checklist with a reviewer and evidence is recorded. P1.8 closes because the organiser email resolved the prize uncertainty and the deployment assumption no longer requires external confirmation.
+
+Needs/blockers: real operator training evidence + service-partner approval still required before G15 can close. Sibusiso should verify the `verify_concern` → `flagged` change against his governance.py code. Quantum Tech strategy and port (Task 4) remain open.
+
+Business handoff: not applicable — the duty card is training specification, not a household-facing capability. Serves C2 (the operator training path makes the human gate checkable, not just claimed) and C3 (progress on G15 before Govern gate 21 Sep).
+
+Next: Quantum Tech bonus strategy with Sibusiso; Task 4 port — begin with brain/ (fusion.py port from BEACON predecessor).
