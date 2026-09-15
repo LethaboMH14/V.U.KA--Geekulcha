@@ -291,3 +291,7 @@ Added `docs/FALLBACK-HOTFIX-RUNBOOK.md` with a reversible isolated rehearsal, ev
 ### 2026-09-15 19:45 SAST — Sibusiso operating record refresh
 
 Updated `team/sibusiso.md` so `Current task` and the running log reflect the pushed privacy, anchoring, rehearsal and readiness work. F14/SC.1 remains gated pending contract approval and session scope.
+
+### 2026-09-15 19:55 SAST — Sibusiso review handoff
+
+Added `docs/SIBUSISO-REVIEW-HANDOFF.md` with the pushed commit inventory, verification results, and the four decisions required from leads and owners before the next gated implementation step.
