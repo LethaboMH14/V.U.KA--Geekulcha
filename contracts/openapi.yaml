@@ -235,8 +235,12 @@ components:
         boundary (docs/PORT-DIVERGENCES.md D3). Generic across event types --
         sim_/freshness/tenant attach the same way whether the payload is a
         sighting or a future event kind. Never carries domain fields itself.
+        No additionalProperties: false here -- the closed shape is enforced
+        once, at SightingEvent, via unevaluatedProperties (Lethabo, PR #23
+        F1: additionalProperties inside an allOf branch does not see the
+        other branch's properties, making the naive two-branch-both-closed
+        version unsatisfiable).
       required: [version, event_id, tenant, source_time, received_time, sim_, freshness]
-      additionalProperties: false
       properties:
         version: { const: '0.1.0' }
         event_id: { type: string, minLength: 1 }
@@ -272,9 +276,9 @@ components:
         - $ref: '#/components/schemas/EventEnvelope'
         - type: object
           required: [payload]
-          additionalProperties: false
           properties:
             payload: { $ref: '#/components/schemas/Sighting' }
+      unevaluatedProperties: false
     Entity:
       type: object
       required: [id, state, freshness]
