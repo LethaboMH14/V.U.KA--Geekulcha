@@ -334,7 +334,7 @@ Business handoff: not applicable — no household capability changed. This corre
 
 Next: request Sibusiso's re-review, then both leads' review before merge.
 
-## 2026-09-17 | Sibusiso (Claude session) | P2.15 | closed — ADR-0028
+## 2026-09-15 | Sibusiso (Claude session) | P2.15 | closed — ADR-0028
 
 Changed: decided and recorded whether to self-host an OpenTimestamps calendar (`docs/CHECKLIST.md` P2.15, owner Sibusiso). Decision: no. Recorded as `docs/adr.md` ADR-0028 — self-hosting a calendar server solves submission/verification-time dependency more expensively than necessary; the actual mitigation is (a) submitting every root to multiple public calendars (already the OTS client default) and (b) a scheduled `ots upgrade` pass in `anchor/publish.py` that converts pending timestamps to complete, self-verifying-against-Bitcoin proofs as soon as their confirmation lands. Corrected `docs/ANCHOR-RATIONALE.md`'s attack-3 rehearsed answer, which previously conflated "self-host a calendar" with "run `ots upgrade`" as one mitigation — they are different-weight commitments, and only the second is actually needed. Baked the decision into `anchor/README.md`'s `publish.py` row and non-negotiables so Task 5's implementer inherits the design without re-deriving it. Closed `docs/CHECKLIST.md` P2.15.
 
@@ -348,7 +348,7 @@ Business handoff: not applicable — no household capability changed, this close
 
 Next: P2.12/P2.13 (Hedera governance-model and HBAR-fee framing corrections, due Sep 17, still open) and Task 5 itself (`anchor/`, blocked behind WBS 3.3 in the port sequence).
 
-## 2026-09-17 | Sibusiso (Claude session) | reconcile duplicate P2.11/P2.15 work on this branch | merged main, deleted superseded files
+## 2026-09-15 | Sibusiso (Claude session) | reconcile duplicate P2.11/P2.15 work on this branch | merged main, deleted superseded files
 
 Changed: merged origin/main (Khutso's PR #5) into this branch — only conflict was the same append-only BUILD-LOG.md pattern as prior merges, resolved by keeping both chronologically. Deleted `docs/OTS-CALENDAR-DECISION.md`, `docs/ANCHOR-COST-RECONCILIATION.md`, `docs/ANCHOR-COST-SWEEP.md` — all three duplicated work already completed more thoroughly in PR #7 (P2.11, full repo sweep, closed) and PR #8 (P2.15, ADR-0028, an actual decision rather than "deferred"). Re-pointed `docs/CHECKLIST.md` P2.11 and P2.15 rows at PR #7/#8. Corrected `docs/BLOCKCHAIN-ATTACK-REHEARSAL.md` (P2.14), which linked to the now-deleted `docs/OTS-CALENDAR-DECISION.md` and stated the pre-correction R1.30 framing — updated both answers to match the swept figures and ADR-0028.
 
@@ -362,7 +362,7 @@ Business handoff: not applicable — reconciliation and duplicate removal only.
 
 Next: open a PR for WBS 3.3 (server/src/auth/governance.py, test/governance_contract_test.py, test/openapi-contract.test.mjs) — real, tested progress that's been sitting unpushed.
 
-## 2026-09-17 | Sibusiso (Claude session) | P2.11 / G22 | closed
+## 2026-09-15 | Sibusiso (Claude session) | P2.11 / G22 | closed
 
 Changed: swept the stale ~R1.30/month anchoring figure everywhere it still appeared live — `anchor/README.md`, `docs/00-SPEC.md` (N8, alternative/cadence rows), `docs/01-ARCHITECTURE.md` (9 occurrences across diagrams and tables), `docs/08-BUSINESS.md`, `docs/HANDOVER.md`, `docs/LEAN-CANVAS.md`, `docs/SDLC.md`, `docs/TECH-STACK.md` (Hedera per-message price). Picked OpenTimestamps as the named primary chain — it was already the diagrammed default throughout `docs/01-ARCHITECTURE.md` and named "Chain" (not "Alternative") in `docs/00-SPEC.md` and `docs/TECH-STACK.md`, so this corrects the cost line to match a decision already made, not a new one. Corrected figure: **~R0/month** (OpenTimestamps, public calendar servers), Hedera fallback recomputed at current price (`$0.0008/message`, repriced Jan 2026) ≈ **R9–10/month**. Closed `docs/CHECKLIST.md` P2.11 and `docs/OPEN-GAPS.md` G22; updated `docs/MASTER-CONTEXT.md`'s live-status table from `ESTIMATE`/"under review" to `FACT`.
 
@@ -494,3 +494,15 @@ Needs/blockers: the remaining port steps — `server/` (governance.py already la
 Business handoff: `templates/BUSINESS-HANDOFF.md` — the fusion engine is the architecture's core. Serves C3 (progress: working code, 20 passing tests, not a diagram) and C2 (the calibrated log-odds model with explicit conflict resolution is the differentiator from black-box ML systems).
 
 Next: continue port — `server/` (Sibusiso's domain), or `appliance/vision/` (Vukosi's domain). Judging criteria publish Friday 19 Sep.
+
+## 2026-09-15 | Sibusiso (Claude session) | date-header correction | fixed
+
+Changed: corrected a clerical date error found across five records — this session's own P2.11/P2.15 work (three `docs/BUILD-LOG.md` headers, `docs/CHECKLIST.md` P2.11/P2.15 close dates, `docs/OPEN-GAPS.md` G22) and ADR-0028's `Accepted` date were all misdated 17 September when the actual date was 15 September. Corrected all five to 2026-09-15. This is a typo fix, not a content or decision change — the substance of ADR-0028, the P2.11 sweep, and the G22 closure is unchanged; only the date header was wrong.
+
+Evidence: `date` on this machine at time of writing confirmed 2026-09-15. Found by cross-checking a system timestamp against what had been written into permanent records — worth a second pair of eyes catching this kind of error before it compounds (e.g., someone citing "the 17 Sep ADR" when searching by date).
+
+Decision: corrected in place rather than superseding, since this is a clerical date-header error, not a rewrite of any decision's content — `docs/adr.md`'s "never edit, only supersede" rule protects decisions from being rewritten to dodge accountability, which this isn't.
+
+Needs/blockers: none.
+
+Business handoff: not applicable — recordkeeping correction only.
