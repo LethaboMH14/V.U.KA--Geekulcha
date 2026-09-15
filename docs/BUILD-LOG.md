@@ -281,3 +281,25 @@ Needs/blockers: Babatunde to supply actual competitor pricing when he joins 17 S
 Business handoff: `templates/BUSINESS-HANDOFF.md` not changed; the competitor block is positioning, not a household-facing capability. Serves C2 (innovation: competitor-aware positioning is what the organisers asked for) and C4 (user journey: the structural unfair advantage is the answer to "would a real user trust this?" — their alternative is a WhatsApp group with no evidence and a camera network with no checkable record).
 
 Next: P1.5 — Sonke project overview rewrite (lead with the AI answer, four layers, corrected figures, TRL 4 with ceiling — due 16 Sep), and P1.8 — confirm prize/deployment premise with `sonke@geekulcha.dev`.
+
+## 2026-09-15 20:30 SAST | opencode / GLM | claude-sonnet-5 | P1.5 Sonke overview + P1.8 prize confirmation + organiser email | authored, Lethabo directed
+
+Changed: created `docs/SONKE-OVERVIEW.md` — the project overview for the Sonke workspace. Leads with Musa's and Thandi's real stories, not "AI-powered." States "the load-bearing parts contain no ML" in the opening. Follows with a four-layer table each answering "the AI answer" (KHAYA sensors, UMOJA server, the human gate, ANCHOR evidence chain — exactly the organiser's "not impressive to say AI-powered" instruction). Includes corrected figures (4:1 security-to-police, R87bn industry, R299 modelled, TRL 4 per ADR-0027), competitor-awareness reference, the honesty section (what we refuse to say), and team roster. Written for judge readability — judges read 150 project overviews; this one is structured for scanning. Updated P1.5 to ☑ in `docs/CHECKLIST.md`.
+
+Also updated **P1.8** (prize/deployment premise): the 15 Sep 2026 email from Tiyani Nghonyama (Lead Facilitator, Geekulcha Annual Hackathon) confirms **cash prizes for top 3 with Telkom support + international partnerships** — `FACT`. The "90-day deployment assumption" was based on a believed contradiction with the official page's "there will be cash prizes" statement; the email confirms prizes and the contradiction is resolved. Deployment premise remains `ASSUMPTION` pending response from `sonke@geekulcha.dev`. P1.8 status: ◐ (prizes confirmed, deployment still pending).
+
+Evidence: email from Tiyani Nghonyama, Lead Facilitator, 15 Sep 2026, read in full. Key organiser instructions validated our architecture: *"Stop saying 'Solution X is AI-powered'. Make your project overview reflect real-life stories, that's what makes your solution authentic. Use of AI is not impressive at this hackathon — we are looking for solutions that have a sense of reality and can be used after the hackathon."* The Sonke overview directly answers every clause of that instruction. `FACT`
+
+Decision: the Sonke overview is the public-facing summary — to be pasted into the Sonke workspace when edits are accepted. The README remains the technical orientation; the Sonke overview is the story. P1.5 is the capstone of Phase 1 corrections: all four Phase 1 items (G12/P1.7, ADR-0027/P1.4, competitor block/P1.6, Sonke overview/P1.5) are now closed or in PR review (three PRs awaiting Sibusiso).
+
+New organiser information from the email:
+- **150 teams continental** — Kenya, Botswana, Malawi declared competing. Competition scale larger than assumed.
+- **Quantum Tech — 5 bonus points** — new criterion not in Phase 1 plan. Team should discuss: VUKA's hash-chain architecture with Merkle-tree anchoring could be framed as "designed for post-quantum migration" (hash-based signature schemes are post-quantum candidates), but this is a stretch and requires team decision before claiming.
+- **Judging criteria to be published Friday 19 Sep** — P1.9 rules-lawyer dispatch triggers then. `docs/MASTER-CONTEXT.md` and all CHECKLIST criterion tags should be refreshed the same day.
+- **Schedule loaded Friday** — will need to adjust WBS dates if they conflict.
+
+Needs/blockers: three PRs (#9 G12 register, #11 ADR-0027, #13 competitor block) await Sibusiso's review. PR #10 (Sibusiso WBS 3.3) request-changes outstanding. P1.8 deployment premise confirmation with `sonke@geekulcha.dev` still pending. P1.9 rules-lawyer triggers Friday 19 Sep. Quantum Tech bonus — team discussion needed.
+
+Business handoff: `docs/SONKE-OVERVIEW.md` is the bridge between the architecture and the judges — it answers "who are you and why should anyone believe what you claim?" Serves all four criteria: C1 (team roster visible), C2 (the AI answer is the differentiator), C3 (corrected figures, TRL 4), C4 (Musa and Thandi are the real user journeys the organisers asked for).
+
+Next: support Ipeleng's PSiRA/POPIA position papers (P2.1–P2.4); judging criteria review Friday 19 Sep (P1.9 rules-lawyer); begin port (Task 4) after Sibusiso's PR reviews clear.
