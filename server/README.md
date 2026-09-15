@@ -2,7 +2,7 @@
 
 **The street.** Cloud service, entity graph, risk layer. Satisfies F7, F8, F10, E1 (`docs/00-SPEC.md` §3.3).
 
-**Empty scaffold.** No code lands here yet — see `docs/HANDOVER.md` Task 4 for port order (`shared/contract.ts` → `brain/` → `server/` → ...) and §1 for where the working version currently exists.
+The first tested server module is `src/auth/governance.py`, a side-effect-free human-gate proof path. The remaining server layers are still scaffolded; see `docs/HANDOVER.md` Task 4 for port order (`shared/contract.ts` → `brain/` → `server/` → ...).
 
 ## Structure
 

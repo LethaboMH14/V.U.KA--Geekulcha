@@ -89,7 +89,7 @@ Each requirement carries an ID used throughout this document and in test names.
 | **N5** | Per-inference latency, 2 GB Android device | ≤ 50 ms | meets | ✅ |
 | **N6** | Appliance runtime on battery | 48–72 h | design | 🔨 |
 | **N7** | On-chain footprint | ≤ 32 B / hour | by design | 🔨 |
-| **N8** | Anchoring cost, whole network | < R5 / month | **~R1.30** | 🔨 |
+| **N8** | Anchoring cost, whole network | < R5 / month | **~R0** (OTS primary; Hedera fallback ~R9–10, corrected 17 Sep) | 🔨 |
 | **N9** | False alerts surfaced per camera-week | ≤ 1 | in evaluation | 🔨 |
 | **N10** | Forecast skill vs naive baseline | beat it | **FAILS: MAE 0.484 vs 0.246** | ⚠️ OPEN GAP |
 
@@ -197,8 +197,8 @@ event → canonical JSON → SHA-256 with prev_hash → chain entry
 | Decision | Choice | Reason |
 |---|---|---|
 | Chain | **OpenTimestamps → Bitcoin** | Free, no wallet, no token, no account. Chosen for **longevity** — a claim may reach court in ten years, and if the chain you anchored to has died, your proof died with it |
-| Alternative | Hedera Consensus Service | ~3–5 s finality if low latency is ever needed; ~$0.0001 per message |
-| Cadence | Hourly | 720 anchors/month ≈ **R1.30 for the entire network**. Batched, therefore a **fixed** cost — identical at 100 homes or 100 000 |
+| Alternative | Hedera Consensus Service | ~3–5 s finality if low latency is ever needed; ~$0.0008 per message (repriced Jan 2026, 8x; was ~$0.0001) |
+| Cadence | Hourly | 720 anchors/month ≈ **~R0 on OpenTimestamps** (public calendar, primary system). Batched, therefore a **fixed** cost — identical at 100 homes or 100 000. Hedera fallback ≈ R9–10/month at current pricing |
 | On-chain payload | 32-byte root only | **E4.** No personal data, ever |
 | Signatures | Ed25519, one keypair per party | Device, operator, security company. Off-chain, inside the Merkle tree |
 | Destructive actions | **2-of-2 multi-signature** | F13. Whitelist, disarm, threshold, delete |
@@ -286,19 +286,27 @@ WS     /ws/member                     member room — MUST never receive ops eve
 
 ## 6 · Technology Readiness Level
 
-**Assessed TRL: 5.** *(System/subsystem model or prototype demonstrated in a relevant environment.)*
+**Assessed TRL: 4** *(technology validated in a laboratory environment)* — recorded as **ADR-0027**. Two subsystems — the append-only evidence chain and the on-device sensing path — are **argued at 5**; neither is verified at 5 in this repository.
 
-The submission template requests TRL 3. We are stating our actual level with evidence, because understating it would misrepresent the work — and misrepresentation is the one thing our honesty ledger forbids.
+The submission template requests TRL 3. We state our actual level with evidence, because understating it would misrepresent the work — and misrepresentation is the one thing our honesty ledger forbids.
 
 | Evidence | Supports |
 |---|---|
-| Integrated system running end-to-end across three machines over a public tunnel | TRL 5 |
-| Latency measured under load in the intended topology, not simulated | TRL 5 |
-| Real data through the full pipeline: 15,712 records, 709 geocoded, 678 precincts | TRL 4–5 |
-| On-device model shipped in an installable Android build | TRL 5 |
+| Integrated system running end-to-end across three machines over a public tunnel | TRL 4 — historical, predecessor-verified, not reproduced here |
+| Latency measured under load in the intended topology, not simulated | TRL 4 — historical, predecessor-verified, not reproduced here |
+| Real data through the full pipeline: 15,712 records, 709 geocoded, 678 precincts | TRL 4 — historical, predecessor-verified |
+| Evidence chain anchored and verified by an independent verifier over the public internet | Subsystem argued at TRL 5 — `ARGUED`, not verified here |
+| On-device model shipped in an installable Android build (`yamnet.tflite`, sha256 verified across both predecessors) | Subsystem argued at TRL 5 — `ARGUED`, not verified here |
 | 510 test-function definitions found in predecessor source; executed-suite count pending | Historical implementation evidence; current TRL still requires a named test record |
-| Hardware appliance not yet fabricated | caps at 5, not 6 |
-| No field deployment with real households | caps at 5, not 6 |
+
+### Why we are not claiming TRL 6
+
+| Blocker | Consequence |
+|---|---|
+| **KHAYA hardware is not fabricated** — G10 | The appliance is specified and costed, not built. This is the ceiling |
+| **Fusion weights not fitted on real data** — G1 | A hand-set cost matrix is a lab result |
+| **No independent penetration test** — G8 | Security is designed and self-tested, not externally validated |
+| **Bias evaluation not run** — G9 | Our own stated risk control is untested |
 
 **Question logged for the mentors:** is the template's TRL 3 a ceiling or a floor? We have asked rather than assumed.
 

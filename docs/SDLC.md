@@ -149,7 +149,7 @@ A gate is not a date. **A gate is a set of exit criteria, and the date is when w
 | Builder | Owns | Also |
 |---|---|---|
 | **A** — architecture, mobile, ML integration | `CLAUDE.md`, `docs/00-SPEC.md`, `app/`, `brain/`, model manifest | Pairs on ANCHOR signing |
-| **B** — backend, systems, security | `server/`, `anchor/`, `shared/contract.ts`, CI, demo orchestration | **Nitpicks feasibility on every spec — flags anything infeasible TODAY, in an ADR proposal, not later** |
+| **B** — backend, systems, security | `server/`, `anchor/`, `contracts/`, CI, demo orchestration | **Nitpicks feasibility on every spec — flags anything infeasible TODAY, in an ADR proposal, not later** |
 | **C** — data science, risk, business | `data/`, `ml/eval/`, business docs | The rand figures. Owns the forecast fix |
 
 B's second column is a defined role, not a personality trait. **Someone must be paid, in status, to say "that cannot be built by Tuesday."** Without that role, optimistic specs survive until the week they are due.
@@ -516,7 +516,7 @@ Detailed in `19-VUKA-System-Architecture.md` §11.5. The headline four:
 
 | Horizon | Position |
 |---|---|
-| **Cost** | Anchoring is **fixed at ~R1.30/month for the whole network at any size** (D9). The verifiability can never become an economic casualty of growth |
+| **Cost** | Anchoring is **fixed at ~R0/month for the whole network at any size** (OpenTimestamps primary; Hedera ~R9–10 fallback, corrected 17 Sep) (D9). The verifiability can never become an economic casualty of growth |
 | **Operations** | Edge-first compute; no video streaming by default; retention TTLs cap storage growth |
 | **Knowledge** | Append-only decision record; a PR for everything |
 | **If the company fails** | **Published anchor roots remain verifiable using public tools, with no cooperation from us.** A member's proof survives our death. This is a direct consequence of D8 and D11 |

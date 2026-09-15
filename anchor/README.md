@@ -30,4 +30,4 @@ Not immutability — the evidence chain already has that internally. **Precedenc
 
 ## Budgets this directory is measured against
 
-On-chain footprint ≤ 32 B/hour (N7); anchoring cost for the whole network < R5/month, modelled at ~R1.30 (N8); anchor liveness 100% of hours, enforced in CI once `verify.py` exists (`docs/00-SPEC.md` §2.2).
+On-chain footprint ≤ 32 B/hour (N7); anchoring cost for the whole network < R5/month, modelled at **~R0** on OpenTimestamps (primary, public calendar) — Hedera fallback ~R9–10/month at current pricing (N8, corrected 17 Sep, see `docs/EVIDENCE.md`); anchor liveness 100% of hours, enforced in CI once `verify.py` exists (`docs/00-SPEC.md` §2.2).
