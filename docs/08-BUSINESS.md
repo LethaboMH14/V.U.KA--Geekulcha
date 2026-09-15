@@ -118,7 +118,7 @@ Founder stipends R25,000–35,000 / month each ⚑. First support hire at ~500 h
 | POPIA legal review + Information Officer registration | R40,000 once |
 | Independent security assessment (OWASP Top 10 / API Top 10) | R60,000 — **potentially sponsored; CompTIA is an event partner** |
 | Penetration test before first paying household | included above |
-| PSiRA implications review | we integrate with armed response, we do not dispatch |
+| PSiRA implications review | ~~we integrate with armed response, we do not dispatch~~ — superseded 15 Sep: **the one-liner is insufficient** (`docs/PLAN.md` §C1). Position paper at `docs/PSIRA-POSITION.md` — partner-of-record structure; registration questions open pending counsel (`P2.1`) |
 
 ### Model and data
 

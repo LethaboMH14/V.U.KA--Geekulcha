@@ -602,3 +602,17 @@ Needs/blockers: Sibusiso's second-lead sign-off; Vukosi (via Sibusiso, his first
 Business handoff: not applicable — contract governance. Serves C2/C3 (the contract is now satisfiable and the ingest shape matches the architecture and the fusion).
 
 Next: chase the two remaining contract-freeze items; judging criteria Friday 19 Sep.
+
+## 2026-09-15, time not recorded | Ipeleng (via Cline assistant, VS Code agent) | model identifier not independently recorded | P2.1 | authored, review pending
+
+Changed: wrote `docs/PSIRA-POSITION.md` — the P2.1 deliverable (serves C2, C3; closes the documentation half of G19). Answers the four questions the checklist row asks: (1) trigger — the obligation attaches to rendering, not revenue or scale, so the Phase-1 pilot as planned (VUKA installs KHAYA and operates UMOJA's verification loop) already pulls it; (2) registration category — electronic-security-monitoring plus install/servicing of security equipment, with category IDs and fees flagged ⚑ for counsel (recorded research figures ~R7,900 business / ~R250 individual kept indicative only); (3) flag-gate reviewers — assumed to need individual registration until counsel says otherwise, with a proposed build consequence: `server/src/auth/operators` onboarding captures PSiRA number/grade/expiry as activation fields, gated like `docs/MODEL-LICENCES.md`; (4) contracting structure — the PSiRA-registered security company is the party rendering the monitoring/flag service, VUKA is its licensed technology supplier, tabled as three variants (partner operates the gate / VUKA operates under written delegation / VUKA self-registers for the pilot) with the fallback stated as the default until a partner is signed; plus six minimum contract clauses and counsel questions Q1–Q8. Swept the superseded "we integrate with armed response, we do not dispatch" one-liner in `docs/08-BUSINESS.md` (the exact line `docs/PLAN.md` §C1 called probably insufficient) and updated the P2.1/G19 status rows and `team/Ipeleng.md`. PR #28.
+
+Evidence: `node scripts/check-docs.mjs` passes on branch `docs/ipeleng-psira-position` (commit 5c98789). Statutory findings build on recorded team research (`docs/PLAN.md` §C1, `docs/OPEN-GAPS.md` G19, `docs/audit/02-economics.md`). Primary sources were unreachable from this environment (SAFLII 403, psira.co.za unreachable, gov.za attachment 404, search engines bot-walled) — the paper contains **no verbatim statutory quotes** and flags every exact-wording claim ⚑ for verification against the consolidated Act (paper §9); Q1 is whether the 2014 amendment's manufacture/import/supply/export limb of "security service" applies to VUKA-as-supplier.
+
+Decision: none adopted — the paper states a team position to operate under (reviewers registered, fallback = VUKA self-registers for the pilot) and records that live monitoring is blocked at G-gate until counsel reports. This is not legal advice and creates no compliance claim; the honesty ledger applies.
+
+Needs/blockers: counsel answers Q1–Q8 (evidence listed in the paper §7); Lethabo's review, then both leads, on PR #28; registration lead time must be added to the pilot calendar once Q3 returns.
+
+Business handoff: not applicable — no household capability changed. Serves C2/C3 by giving the pilot and the partner contract an explicit regulatory position instead of a marketing one-liner.
+
+Next: Ipeleng — `P2.2` POPIA position paper + ADR; `P2.5` Information Officer registration. Lethabo — review PR #28.
