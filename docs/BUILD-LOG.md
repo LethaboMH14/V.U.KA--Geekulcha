@@ -536,3 +536,17 @@ Needs/blockers: D3 resolution with Sibusiso + ADR. `P2.16` stays `◐` until the
 Business handoff: not applicable — contract governance. Serves C2/C3 (the defect is caught and named with the repository's own evidence, before it reaches a demo).
 
 Next: resolve D3 with Sibusiso; judging criteria Friday 19 Sep.
+
+## 2026-09-15 23:15 SAST | opencode / GLM | claude-sonnet-5 | G13 model cards written | authored, Lethabo directed
+
+Changed: created `docs/MODEL-CARDS.md` — one card per model on the `docs/SDLC.md` §17.4 template, plus a negative card for the non-ML fusion engine. Four model cards: **YAMNet** (acoustic; sha256 verified), **Ultralytics YOLOv8n** (object detection; AGPL-3.0), **InsightFace `buffalo_l`** (face embedding; non-commercial weights; G9 named explicitly), **fast-plate-ocr `cct-s-v2-global`** (plate text; the confidence floor recorded as a junk suppressor, not a true-positive filter). Each card states source (all pretrained — no model trained by this team, G5), input shape, intended use, out of scope, **known limitations / demographic performance = "not measured"**, calibrated = no, and where it sits in the decision path (perception only; a match/read is a lead for a human, never a verdict). Closed G13 in `docs/OPEN-GAPS.md`; added `P2.19` to `docs/CHECKLIST.md`; updated `team/lethabo.md`.
+
+Evidence: cards cross-reference `docs/MODEL-LICENCES.md` (G12). Model facts (`FACT`): YAMNet sha256 `10c95ea3…c317de`; YOLOv8 `yolov8n.pt`, autodownloaded, pins unknown; InsightFace `buffalo_l` 512-d, cosine thresholds 0.55/0.65 are **targets**; fast-plate-ocr `cct-s-v2-global`, `MIN_CHAR_PROB = 0.50` validated as a junk suppressor (4/4 junk rejected) with **no correctly-read plates in the sample** (`BEACON/vision/plate_ocr.py` docstring). The plate-card limitation is the predecessor's own published honest limit, carried forward verbatim. `FACT`
+
+Decision: the model cards state **"not measured"** in every demographic-performance row — the honesty ledger's required and acceptable answer (`docs/MASTER-CONTEXT.md` §6). No precision, accuracy, read-rate or demographic figure is claimed anywhere. The face card is the most important: it names G9 and records that the system's own stated control (bias evaluation) is untested. This is deliberate — a judge who sees the team state the limits of its own models is likelier to believe the claims it does make.
+
+Needs/blockers: none. The cards are specification/limitation documentation, not measurements; no external input is required. Input shape is tagged `ESTIMATE` until read from the interpreter at port time (per the §17.4 template's own instruction).
+
+Business handoff: `templates/BUSINESS-HANDOFF.md` not changed; this is model governance. Serves C2 (the non-ML fusion card and the stated limits are the differentiator) and C3 (G13 closed before Align).
+
+Next: judging criteria publish Friday 19 Sep (P1.9 rules-lawyer); resolve D3 with Sibusiso.
