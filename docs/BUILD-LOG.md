@@ -522,3 +522,17 @@ Needs/blockers: D3 resolution with Sibusiso (contract owner) + ADR — both lead
 Business handoff: not applicable — contract governance. Serves C2 (a second real cross-layer defect caught by inspection, not by a live demo failure) and C3 (the port proceeds against a written contract with its divergences named).
 
 Next: resolve D3 with Sibusiso; judging criteria publish Friday 19 Sep (P1.9 rules-lawyer).
+
+## 2026-09-15 22:55 SAST | opencode / GLM | claude-sonnet-5 | D3 strengthened — the contract contradicts the repo's own architecture | authored, Lethabo directed
+
+Changed: strengthened `docs/PORT-DIVERGENCES.md` D3 with a second finding and a recommendation. The contract's `Sighting` (7-field transport envelope) contradicts this repository's **own** architecture: `docs/01-ARCHITECTURE.md:2581` defines `Sighting` = *"One detection event: (entity, camera, hex, ts, modality, confidence)"*, and `:1431` says the same. `docs/00-SPEC.md:222` describes `POST /v1/sightings` as *"single or batch ingest; signature required."* So the contract is the odd one out — against both the predecessor payload **and** the architecture's definition. Added a **Recommendation (proposed for Sibusiso's decision)**: align the contract to the architecture — make `Sighting` the detection event per §2581, and rename the 7-field object as the transport envelope (`EventEnvelope`/`SightingEvent`) that carries it. Added the rejected alternatives with reasons (collapsing transport+domain loses consistent `sim_`/`freshness` meaning; reshaping the payload to 7 fields deletes the fields fusion needs).
+
+Evidence: `docs/01-ARCHITECTURE.md:1431,2581`; `docs/00-SPEC.md:222`; `contracts/openapi.yaml` `Sighting`; `contracts/events.schema.json`. All `FACT`.
+
+Decision: none made — the recommendation is proposed, not adopted. D3 remains Sibusiso's contract decision plus both leads (an ADR if the wire shape changes). Recording the architecture evidence makes the decision cheap: the repository already says what `Sighting` means.
+
+Needs/blockers: D3 resolution with Sibusiso + ADR. `P2.16` stays `◐` until then.
+
+Business handoff: not applicable — contract governance. Serves C2/C3 (the defect is caught and named with the repository's own evidence, before it reaches a demo).
+
+Next: resolve D3 with Sibusiso; judging criteria Friday 19 Sep.
