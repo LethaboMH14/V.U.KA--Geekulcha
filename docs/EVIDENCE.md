@@ -92,6 +92,7 @@ Use `sim_` for simulated event identifiers and spoken demo labels. Never imply t
 | Dataset removal from old public repositories/history/caches where controlled | Lethabo | Sep 13 | Repository and hosting remediation record; no old remote or data copied |
 | Clean file-by-file port permission and scanning | Sibusiso | Sep 14 | Both leads sign remediation gate |
 | Historical tests, latency method, ADR-0025 and component names | Sibusiso | Sep 16 | Sanitised scripts/results and reviewer reproduction |
+| Model licence register (G12) — model provenance, sha256, licence and commercial risk | Lethabo | Sep 15 | `docs/MODEL-LICENCES.md`: YAMNet sha256 verified across repos; two HIGH risks named; register published |
 | Sonke roster and organiser criteria | Khutso | Sep 14 | Private-source comparison recorded without publishing personal screenshots |
 | Original deck and documents for stale-text correction | Lethabo | Sep 16 | File/slide inventory and checked replacements |
 | Household/partner interviews and named pilot area | Babatunde | Sep 18 | Consent-safe notes and actual recruitment capacity |

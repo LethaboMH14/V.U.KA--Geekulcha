@@ -239,3 +239,17 @@ Needs/blockers: this is a doc correction only; the contract itself remains imple
 Business handoff: not applicable — no capability changed, single source of truth restored.
 
 Next: Lethabo's review of the contract (action naming) and both-lead ADR sign-off, unchanged from the prior entry.
+
+## 2026-09-15 18:30 SAST | opencode / GLM | claude-sonnet-5 | G12 closed — model licence register | authored, Lethabo directed
+
+Changed: created `docs/MODEL-LICENCES.md` — the full G12 model licence register, verified against the two predecessor repos (`BEACON`, `Team-Sonar---Vuka-`) cloned fresh read-only. All four model packages plus both ML runtimes inventoried with sha256 where available, licence type, commercial position, and risk classification. Closed G12 in `docs/OPEN-GAPS.md`, ticked P1.7 in `docs/CHECKLIST.md`, updated `team/lethabo.md` current task. Approved PR #6 (Sibusiso's WBS 3.1 contract freeze) with a finding: `flagged` missing from Entity state enum in `contracts/openapi.yaml`.
+
+Evidence: YAMNet TFLite sha256 verified identical across both repos (`10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de`). BEACON requirements inspected — YOLOv8 (`ultralytics>=8.2`, yolov8n.pt), InsightFace (`insightface>=0.7`, buffalo_l), fast-plate-ocr (`>=0.3`, cct-s-v2-global), ai-edge-litert (`>=2.1`), onnxruntime (`>=1.17`). EasyOCR confirmed not used (explicitly commented out in requirements.txt, zero imports). fast-plate-ocr licence confirmed MIT on PyPI. Three models auto-download weights at runtime with unpinned versions — sha256 not verifiable from repo alone; flagged as unresolved.
+
+Decision: Lethabo approved PR #6 (contract freeze) with M1 finding for Sibusiso to fix `flagged` enum before ADR freeze. The model register finds two HIGH risks: InsightFace buffalo_l weights are non-commercial-research-only (incompatible with VUKA's commercial target), and YOLOv8 AGPL-3.0 is incompatible with VUKA's MIT licence unless (a) a commercial Ultralytics licence is obtained, (b) a non-copyleft detector is substituted, or (c) the server is released under AGPL-3.0. Both risks are published in the register; they are not resolved by this entry.
+
+Needs/blockers: no blocker from this entry. The two licensing risks are published but unresolved — they must be addressed before deployment, not before the hackathon demo per `docs/HANDOVER.md`. P1.4 ADR-0027 and P1.6 competitor block remain open (due 16 Sep).
+
+Business handoff: not applicable — no household capability changed. The register serves C3 (progress) by closing the flagged G12 gap before G0 (16 Sep), and C2 (innovation) by demonstrating that VUKA knows the difference between "we use this model" and "we have checked whether we may."
+
+Next: ADR-0027 (TRL 4 + ceiling), then competitor block with Babatunde (`docs/CHECKLIST.md` P1.4, P1.6).
