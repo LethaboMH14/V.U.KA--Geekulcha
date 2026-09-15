@@ -616,3 +616,17 @@ Needs/blockers: counsel answers Q1–Q8 (evidence listed in the paper §7); Leth
 Business handoff: not applicable — no household capability changed. Serves C2/C3 by giving the pilot and the partner contract an explicit regulatory position instead of a marketing one-liner.
 
 Next: Ipeleng — `P2.2` POPIA position paper + ADR; `P2.5` Information Officer registration. Lethabo — review PR #28.
+
+## 2026-09-16 00:50 SAST | opencode / GLM | claude-sonnet-5 | PR #28 approved+merged; Lean Canvas PSiRA line swept | authored, Lethabo directed
+
+Changed: reviewed and approved Ipeleng's PR #28 — `docs/PSIRA-POSITION.md`, the `P2.1` deliverable (four answers: trigger, registration category, flag-gate reviewers, contracting structure; six minimum contract clauses; counsel questions Q1–Q8; provenance log honestly recording the primary-source access failure). Verified the cited sources exist (`docs/PLAN.md` §C1 at `:118`; PSiRA references in `docs/audit/02-economics.md`), the `docs/08-BUSINESS.md` supersession preserves the record, G19 moved to ◐ with the counsel gate stated, and `team/ipeleng.md` was updated with the tool declared. Then fixed the one instance her sweep missed: `docs/LEAN-CANVAS.md:298` still carried *"PSiRA implications reviewed: we integrate with armed response, we do not dispatch"* — the exact claim the paper declares insufficient, in a judge-facing canvas. Replaced with a pointer to the paper and the open counsel questions.
+
+Evidence: `git grep -in "do not dispatch"` over the PR branch — the only live-doc instance outside the superseded/strike-through/historical records was `docs/LEAN-CANVAS.md:298`. `docs/PLAN.md`'s mention is the record that called the claim insufficient (kept); `BRIEF.md`/`RULES.md`/`01-ARCHITECTURE.md` "dispatch" hits are the autonomy boundary (refusing machine dispatch), a different subject. All `FACT`.
+
+Decision: approved with one finding, then fixed the finding myself rather than blocking the PR on a one-line sweep miss — the paper is Ipeleng's deliverable and it is complete; the missed line is a mechanical sweep item in a file I have edited before. The Lean Canvas now agrees with the position paper: the one-liner is gone everywhere a judge can read it.
+
+Needs/blockers: `P2.1` documentation half is closed; the counsel questions (Q1–Q8) remain open and gate go-to-market messaging and live monitoring. Ipeleng's `P2.2` (POPIA paper + ADR) and `P2.5` (IO registration) are next; PR #27 (her PR #10 review) still carries my changes-requested and is not reworked.
+
+Business handoff: the Lean Canvas is judge-facing — this closes the gap between what the canvas claims and what the position paper says. Serves C2 (the compliance story is now real, not a one-liner) and C3 (G19 documentation half closed before go-to-market).
+
+Next: Ipeleng — `P2.2` POPIA paper + ADR, `P2.5` IO registration, and the PR #27 rework. Judging criteria Friday 19 Sep.
