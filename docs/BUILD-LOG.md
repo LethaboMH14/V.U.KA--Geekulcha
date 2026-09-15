@@ -242,6 +242,10 @@ Business handoff: not applicable; contract verification only.
 
 Next: maintain the review branch and await Lethabo's contract decision before implementing dependent interfaces.
 
+### 2026-09-15 18:05 SAST — P2.3/G20 privacy boundary
+
+Added `docs/DISCARD-BY-DEFAULT-EMBEDDINGS.md` as proposed architecture: transient embeddings are compared only against the consented enrolment set and every non-match is discarded without retaining biometric payloads. Updated P2.3 and G20 to show the boundary is proposed; implementation evidence, privacy review and ADR remain outstanding. No anchor or SC.1 code was touched.
+
 ## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | PR handoff / WBS 3.3 readiness | blocked, no claim of PR creation
 
 Changed: attempted to create the requested GitHub pull request for `feat/sibusiso-3.1-contract-freeze`; no repository files changed by the attempt. Updated Sibusiso's blocker list with the authentication and runtime facts.
