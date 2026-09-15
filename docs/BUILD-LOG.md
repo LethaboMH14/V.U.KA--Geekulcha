@@ -263,3 +263,7 @@ Next: authenticate GitHub and open the PR; then provision the documented Python 
 ### 2026-09-15 18:20 SAST — P2.15 OpenTimestamps calendar decision
 
 Recorded the prototype decision in `docs/OTS-CALENDAR-DECISION.md`: self-hosting and `ots upgrade` are deferred because they are not implemented or rehearsed. Public calendars remain a dependency; timestamp state must remain pending until independently verifiable. No anchor or SC.1 code was touched.
+
+### 2026-09-15 18:35 SAST — P2.14 blockchain attack rehearsal
+
+Added `docs/BLOCKCHAIN-ATTACK-REHEARSAL.md` with the three required objections, current cost qualification, independent-verification rationale, and an explicit deferred answer for public-calendar dependency. Live evidence checkpoint remains outstanding.
