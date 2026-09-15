@@ -12,6 +12,8 @@ F2-F5 are TODO stubs — the escalation ladder needs claims-peak histogram, near
 
 Both VIGIL (on-device) and UMOJA (server-side risk) need the identical fusion math to agree. Putting it in one pure-function module with no side effects means **one golden fixture is the referee for both** — `docs/HANDOVER.md` §6.
 
+> ⚠️ **ADR-0029 — the server consumes this module; it does not implement its own.** The predecessor (`BEACON`) drifted: `brain/fusion.py` (log-odds, `watch_candidate`) was orphaned while the server used a divergent `server/src/suspicion/scorer.py` (additive weights, state `candidate`), and `server/src/suspicion/entity_resolution.py` was a second copy of `brain/entity_resolution.py`. Porting `server/` **must not** copy `scorer.py` or the server's `entity_resolution.py`. The server imports `brain/fusion.py`, calls `recompute()`, and persists the result. The state vocabulary is the frozen contract's — `observed`, `watch_candidate`, `flagged`, `dismissed`, `whitelisted`; `candidate` is not a valid state anywhere.
+
 ## The fusion, formally (`docs/00-SPEC.md` §3.1)
 
 ```
