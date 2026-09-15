@@ -644,3 +644,17 @@ Needs/blockers: Sibusiso is the first reviewer; both leads review before merge. 
 Business handoff: not applicable — this is a synthetic producer and queue/replay foundation; it changes no household-facing capability and makes no hardware or sensing claim.
 
 Next: Sibusiso reviews `feat/vukosi-3.2-edge-producer`; after approval, merge via PR, then proceed to WBS 4.2 only with an actual measurement instrument and dated BOM sources.
+
+## 2026-09-15 | Codex assistant | GPT-5 | WBS 3.2 protocol correction | recorded, review pending
+
+Changed: recorded an append-only process correction in `team/vukosi.md` and this log. The WBS/path declaration was entered after implementation began, rather than before the first edit as required by RULES/AGENTS. The implementation PR remains reviewable and no contract or other shared interface was changed. The affected paths are now explicitly listed in the personal file and PR #24.
+
+Evidence: `git log -1 --oneline` → `0aaa590 feat(appliance): add synthetic edge producer`; PR #24 is open with `secret-scan:SUCCESS` and `document-contracts:SUCCESS`; `git status --short --branch` is clean relative to the branch's remote after the prior commit. This entry is a correction, not a claim that the original sequencing was compliant.
+
+Decision: no product or contract decision; process correction only.
+
+Needs/blockers: reviewers should note the sequencing miss when assessing protocol compliance. Sibusiso remains first reviewer, followed by both leads. Owner availability remains unconfirmed.
+
+Business handoff: not applicable — no capability or commercial claim changed.
+
+Next: push this correction as a follow-up commit to PR #24 and request reviewers to consider the complete append-only record.
