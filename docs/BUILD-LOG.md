@@ -283,3 +283,7 @@ Scanned active repository content for `R1.30`; remaining hits are recorded in `d
 ### 2026-09-15 19:20 SAST — WBS 4.5 checkpoint preparation
 
 Added `docs/EVIDENCE-CHECKPOINT-RUNBOOK.md` defining entry gates, demonstration sequence, safety checks, scope-cut states, and dual-lead sign-off. The checkpoint itself has not run and no snapshot is tagged.
+
+### 2026-09-15 19:35 SAST — WBS 7.2 fallback rehearsal preparation
+
+Added `docs/FALLBACK-HOTFIX-RUNBOOK.md` with a reversible isolated rehearsal, evidence capture, safety constraints, and acceptance criteria. No shared history was reset and no production rollback was performed.
