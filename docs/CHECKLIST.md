@@ -67,6 +67,7 @@
 | P2.13 | State that Hedera mainnet fees are **paid in HBAR**, rather than let a judge find the tension with *"we refused tokens."* OpenTimestamps genuinely needs no wallet, token or account — that claim holds | Babatunde | C2 | Sep 17 | ☐ | Added 14 Sep, Lethabo |
 | P2.14 | Rehearse the three blockchain attacks verbatim: *(a)* walk me through R1.30, *(b)* why not a private signed hash chain, *(c)* OpenTimestamps depends on volunteer calendar servers | Babatunde, Sibusiso | C2 | Sep 23 | ☐ | Added 14 Sep, Lethabo |
 | P2.15 | ~~Decide and record: self-host an OpenTimestamps calendar?~~ **CLOSED 17 September 2026 — ADR-0028.** No self-hosted calendar; the actual mitigation is multi-calendar submission (OTS client default) plus a scheduled `ots upgrade` pass in `anchor/publish.py`, both ordinary client logic, not infrastructure. `docs/ANCHOR-RATIONALE.md` attack-3 answer corrected to match. Implementation still pending Task 5 (`anchor/` not started) — do not claim the mitigation live until `anchor/publish.py` actually runs it | Sibusiso | Sep 18 | ☑ | Closed 17 Sep, Sibusiso |
+| P2.16 | **WBS 3.1 contract freeze** — machine-readable v0.1.0 event schema, v3.1 OpenAPI surface, exact-shape tests and rejection tests; second-lead approval and ADR still required before calling the shared contract frozen | Sibusiso | C2, C3, C4 | Sep 15 | ◐ | Added 15 Sep, Sibusiso session |
 
 ---
 
