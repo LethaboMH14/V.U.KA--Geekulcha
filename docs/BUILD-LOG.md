@@ -186,6 +186,20 @@ Business handoff: `templates/BUSINESS-HANDOFF.md` not changed; this defines inte
 
 Next: Lethabo and both leads review the proposed contract/ADR; then add OpenAPI semantic validation and proceed to WBS 3.3.
 
+## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | WBS 3.3 runtime check | blocked, no governance code added
+
+Changed: created and pushed branch `feat/sibusiso-3.3-human-gate` from the contract branch. Updated Sibusiso's current task to reflect the verified runtime blocker. No server or governance implementation was added.
+
+Evidence: `node --version` → `v24.18.0`. `python3 --version` returned command not recognized; `where.exe python3`, `where.exe python`, and `where.exe py` each reported no files found. `docs/TECH-STACK.md` specifies Python 3.11 with FastAPI + WebSockets for the server; Node is used for repository scripts and contract tests. The server scaffold remains README plus `.gitkeep` files.
+
+Decision: retain the documented Python/FastAPI stack. Do not substitute Node or add untested governance code to bypass the missing runtime.
+
+Needs/blockers: Sibusiso provisions Python 3.11 (or an explicitly approved CI-only runtime) before porting WBS 3.3. Lethabo and both leads still review and approve the WBS 3.1 contract/ADR. The branch is ready for a separate blocker PR.
+
+Business handoff: not applicable; no capability changed.
+
+Next: provision the documented runtime, then add human-gate tests before implementation; open a PR from `feat/sibusiso-3.3-human-gate`.
+
 ## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | PR handoff / WBS 3.3 readiness | blocked, no claim of PR creation
 
 Changed: attempted to create the requested GitHub pull request for `feat/sibusiso-3.1-contract-freeze`; no repository files changed by the attempt. Updated Sibusiso's blocker list with the authentication and runtime facts.

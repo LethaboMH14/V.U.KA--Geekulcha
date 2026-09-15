@@ -21,7 +21,7 @@
 - **No code path may set `flagged`.** The machine's ceiling is `watch_candidate`, enforced in code and tested, not just documented.
 - Never `--no-verify`.
 
-**Current task** — WBS 3.1 contract freeze: `contracts/events.schema.json` and `contracts/openapi.yaml` are implemented with tests; second-lead approval and ADR are pending. Next: human-gate proof path (`3.3`), then **F14 subject access end-to-end** (checklist `SC.1`).
+**Current task** — WBS 3.3 human-gate proof path is blocked pending the documented Python 3.11/FastAPI runtime. Node v24.18.0 is available for repository scripts and contract tests, but is not the selected server stack. Once Python is provisioned, add security tests before governance code; then proceed to **F14 subject access end-to-end** (checklist `SC.1`).
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
