@@ -27,9 +27,9 @@ paths:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/Sighting'
+                - $ref: '#/components/schemas/SightingEvent'
                 - type: array
-                  items: { $ref: '#/components/schemas/Sighting' }
+                  items: { $ref: '#/components/schemas/SightingEvent' }
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -228,10 +228,19 @@ components:
     Page: { name: page, in: query, required: false, schema: { type: integer, minimum: 1, default: 1 } }
     PageSize: { name: page_size, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
   schemas:
-    Sighting:
+    EventEnvelope:
       type: object
+      description: >-
+        The versioned wire envelope crossing the edge/service/evidence
+        boundary (docs/PORT-DIVERGENCES.md D3). Generic across event types --
+        sim_/freshness/tenant attach the same way whether the payload is a
+        sighting or a future event kind. Never carries domain fields itself.
+        No additionalProperties: false here -- the closed shape is enforced
+        once, at SightingEvent, via unevaluatedProperties (Lethabo, PR #23
+        F1: additionalProperties inside an allOf branch does not see the
+        other branch's properties, making the naive two-branch-both-closed
+        version unsatisfiable).
       required: [version, event_id, tenant, source_time, received_time, sim_, freshness]
-      additionalProperties: false
       properties:
         version: { const: '0.1.0' }
         event_id: { type: string, minLength: 1 }
@@ -240,6 +249,36 @@ components:
         received_time: { type: string, format: date-time }
         sim_: { type: boolean }
         freshness: { type: string, enum: [fresh, stale, unknown] }
+    Sighting:
+      type: object
+      description: >-
+        One detection event (docs/01-ARCHITECTURE.md:1431,2581) -- the domain
+        payload fusion consumes. Never the wire envelope; see EventEnvelope.
+      required: [camera_id, hex_id, ts, modality, confidence]
+      additionalProperties: false
+      properties:
+        camera_id: { type: string, minLength: 1 }
+        hex_id: { type: string, minLength: 1 }
+        ts: { type: string, format: date-time }
+        modality: { type: string, minLength: 1 }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        entity_id: { type: [string, 'null'] }
+        kind: { type: [string, 'null'] }
+        bbox: { type: [array, 'null'], items: { type: number }, minItems: 4, maxItems: 4 }
+        plate_text: { type: [string, 'null'] }
+        plate_quality: { type: [number, 'null'], minimum: 0, maximum: 1 }
+        embedding_ref: { type: [string, 'null'] }
+    SightingEvent:
+      description: >-
+        A Sighting delivered inside its EventEnvelope. What POST
+        /v1/sightings actually accepts -- resolves D3, docs/PORT-DIVERGENCES.md.
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          required: [payload]
+          properties:
+            payload: { $ref: '#/components/schemas/Sighting' }
+      unevaluatedProperties: false
     Entity:
       type: object
       required: [id, state, freshness]
@@ -289,6 +328,9 @@ components:
         event_hash: { type: string }
     IntegrityResult:
       type: object
+      description: >-
+        first_broken_index is 0-based (ADR-0030 D2) -- the index of the first
+        entry in the chain that fails verification, or null if intact.
       required: [is_intact, first_broken_index, detail]
       additionalProperties: false
       properties:

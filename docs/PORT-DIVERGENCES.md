@@ -19,7 +19,7 @@
 
 ---
 
-## D2 — Evidence-integrity response shape  ·  **OPEN — correction required in the `server/` port**
+## D2 — Evidence-integrity response shape  ·  **DECIDED — 0-based index, ADR-0030 §D2. Field mapping still applies at port time**
 
 | | |
 |---|---|
@@ -31,7 +31,7 @@
 
 ---
 
-## D3 — Sighting / event ingest shape  ·  **OPEN — blocks the `server/` port and the contract freeze**
+## D3 — Sighting / event ingest shape  ·  **CLOSED — ADR-0030 (15 Sep)**
 
 | | |
 |---|---|
@@ -64,4 +64,4 @@
 
 When a port step reads a predecessor file and finds a mismatch with the contract, add a row here before porting the file. Keep each entry to: the contract, the predecessor, the divergence, the correction, the evidence. If the correction changes a frozen interface, it needs an ADR, not just this row.
 
-*Opened 15 Sep 2026. D1 closed by ADR-0029. D2 and D3 are corrections for the `server/` port — D3 is the material one and touches `P2.16`; D3's second finding (the contract contradicts this repository's own `01-ARCHITECTURE.md` §2581 definition of `Sighting`) was added later the same day. D4 is a security/compliance guard: the purged proprietary claims dataset is a hard dependency of predecessor risk/suspicion code and must not be re-introduced by the port.*
+*Opened 15 Sep 2026. D1 closed by ADR-0029. D3 closed the same day by ADR-0030, which accepted Lethabo's recommendation exactly as proposed: `contracts/openapi.yaml`'s bare 7-field schema renamed `EventEnvelope`, a new `Sighting` schema added for the domain payload per `01-ARCHITECTURE.md` §2581, composed as `SightingEvent` (envelope + payload) for `POST /v1/sightings`, then corrected same-ADR when Lethabo's own PR #23 review found the naive two-branch-`additionalProperties: false` version was unsatisfiable (`unevaluatedProperties: false` fixes it — see ADR-0030). `contracts/events.schema.json` needed no change — it was already correctly envelope-only and never claimed to be `Sighting`. D2's index-base question is decided (0-based, matching the contract's existing `minimum: 0`) in the same ADR; the field-name mapping (`broken_at_seq` → `first_broken_index`) still applies whenever `server/`'s evidence-integrity endpoint is actually ported, since no such endpoint exists in this repository yet. D4 is a security/compliance guard: the purged proprietary claims dataset is a hard dependency of predecessor risk/suspicion code and must not be re-introduced by the port.*

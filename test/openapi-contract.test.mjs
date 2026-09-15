@@ -54,3 +54,36 @@ test("OpenAPI contract exposes no flagged or flag action setter", () => {
 test("live docs point to contracts/ as the frozen contract home", () => {
   for (const content of [architecture, sdlc, team]) assert.doesNotMatch(content, /shared\/contract\.ts/);
 });
+
+// NOTE (Lethabo, PR #23 N1): the tests below are text/structure assertions over
+// the YAML source, not JSON Schema instance validation -- they can pass against a
+// schema that is structurally present but semantically unsatisfiable (this repo has
+// no YAML-parsing dependency; adding one, or a Python/jsonschema step, is a bigger
+// change than this fix and isn't wired into CI's document-contracts job either way --
+// CI currently runs only secret-scan and document-contracts, not npm test at all).
+// SightingEvent's actual satisfiability (F1: the allOf/additionalProperties
+// interaction) is verified manually and reproducibly instead:
+//   python -c "
+//     import yaml; from jsonschema import Draft202012Validator
+//     doc = yaml.safe_load(open('contracts/openapi.yaml'))
+//     # resolve $ref, build SightingEvent, assert a full envelope+payload instance
+//     # validates, an extra top-level field is rejected, and a missing payload is
+//     # rejected. See docs/BUILD-LOG.md 2026-09-15 'D3 F1' entry for the exact
+//     # commands and output this was last confirmed against."
+test("Sighting is the domain event, not the transport envelope (ADR-0030, D3)", () => {
+  assert.match(document, /^    EventEnvelope:$/m);
+  assert.match(document, /^    Sighting:$/m);
+  assert.match(document, /^    SightingEvent:$/m);
+  const sightingBlock = document.slice(document.indexOf("    Sighting:"), document.indexOf("    SightingEvent:"));
+  assert.match(sightingBlock, /camera_id/);
+  assert.match(sightingBlock, /hex_id/);
+  assert.match(sightingBlock, /modality/);
+  assert.match(sightingBlock, /confidence/);
+  assert.doesNotMatch(sightingBlock, /event_id/);
+  assert.match(document, /\$ref: '#\/components\/schemas\/SightingEvent'/);
+  assert.doesNotMatch(document, /\$ref: '#\/components\/schemas\/Sighting'\n/);
+});
+
+test("IntegrityResult documents a 0-based first_broken_index (ADR-0030, D2)", () => {
+  assert.match(document, /first_broken_index is 0-based/);
+});
