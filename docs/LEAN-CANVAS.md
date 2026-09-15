@@ -295,7 +295,9 @@ COMPLIANCE & ASSURANCE — non-negotiable, and it is a moat
 · Independent security assessment against OWASP Top 10 / API Top 10: ~R60,000 ⚑
   (potentially sponsored — CompTIA is an event partner)
 · Penetration test before any paid deployment
-· PSiRA implications reviewed: we integrate with armed response, we do not dispatch
+· PSiRA: position paper written (`docs/PSIRA-POSITION.md`) — the Phase-1 pilot
+  already pulls the rendering trigger; partner-of-record structure proposed;
+  registration questions open pending counsel (Q1–Q8) ⚑
 
 MODEL & DATA
 · Labelled acoustic dataset collection (recorded glass, staged approaches, ambient
