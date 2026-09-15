@@ -253,3 +253,17 @@ Needs/blockers: no blocker from this entry. The two licensing risks are publishe
 Business handoff: not applicable — no household capability changed. The register serves C3 (progress) by closing the flagged G12 gap before G0 (16 Sep), and C2 (innovation) by demonstrating that VUKA knows the difference between "we use this model" and "we have checked whether we may."
 
 Next: ADR-0027 (TRL 4 + ceiling), then competitor block with Babatunde (`docs/CHECKLIST.md` P1.4, P1.6).
+
+## 2026-09-15 19:40 SAST | opencode / GLM | claude-sonnet-5 | ADR-0027 — TRL settled at 4 | authored, Lethabo directed
+
+Changed: appended **ADR-0027** to `docs/adr.md` — the TRL decision: system **TRL 4** (validated in a laboratory, in the predecessor codebase, historical evidence), two subsystems **argued at 5** (the append-only evidence chain; the on-device sensing path — `yamnet.tflite` sha256 verified across both predecessors 15 Sep 2026), four reasons not at 6 (G10 hardware, G1 fusion weights, G8 pentest, G9 bias eval), ceiling named. Swept the two contradicting positions: `docs/00-SPEC.md` §6 ("Assessed TRL: 5" → 4, evidence table reframed with historical tags) and `docs/01-ARCHITECTURE.md` §11.1 ("We state TRL 5" → 4, criteria table reframed, ladder diagram now highlights T4, G-10 rows aligned). Fixed a stale citation found during the sweep: `01-ARCHITECTURE` §11.1 cited "ADR-0025" for the TRL-5 position, but ADR-0025 is the ported Discovery Safety Revamp bundle — no ADR ever recorded a TRL position; §12.4's ADR index listed six decisions (0020–0025) that do not exist at those numbers (superseded by ADR-0026's renumbering) — the index now lists actual ADRs and says so. Tick `P1.4` in `docs/CHECKLIST.md`, updated `team/lethabo.md`.
+
+Evidence: `git grep -n "TRL" docs/ README.md BRIEF.md` run before and after — the three contradictory positions (00-SPEC "Assessed TRL: 5", 01-ARCHITECTURE "We state TRL 5", EVIDENCE "do not publish TRL 5 as locally verified") now resolve to one position: 4, subsystems argued at 5, four reasons not at 6, ADR-0027. Latency figure (318 ms p95, n = 10) kept as historical, not reproduced here, per `docs/EVIDENCE.md`.
+
+Decision: ADR-0027 is the single TRL record. Consumer-facing copy states "TRL 4, met and verified" with "in the predecessor codebase" attached (as `README.md` already does). Internal records carry the reproduction caveat: the port (Task 4) and Khutso's evidence reproduction (3.5, due 19 Sep) must re-establish the results before any local-verification wording is used. A later ADR is required to move the number.
+
+Needs/blockers: none from this entry. PR #10 (Sibusiso, WBS 3.3) requested changes — the `flagged` state-machine divergence must be resolved by Sibusiso (conform code to record, or propose the ADR superseding the state machine first). PR #9 (G12 register) awaits Sibusiso's review. PRs #7/#8 await Sibusiso merging main. ADR-0028 (OTS calendar) is claimed by PR #8 — number reserved, not written.
+
+Business handoff: `templates/BUSINESS-HANDOFF.md` not changed; TRL 4 + ceiling is already the business-facing claim in `README.md` — this entry makes it the only TRL position in the repo. Serves C3 (progress: the number a judge can believe) and C2 (innovation: publishing four reasons not at 6 is the differentiator).
+
+Next: the competitor block with Babatunde (`docs/CHECKLIST.md` P1.6, due 16 Sep) — the top unmet organiser instruction.
