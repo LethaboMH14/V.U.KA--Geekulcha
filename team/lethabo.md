@@ -21,7 +21,7 @@
 - A behaviour change needs docs **and** a `docs/BUILD-LOG.md` entry in the **same PR**.
 - Duress states are **visually identical** to normal ones — no observable UI, timing or network difference. This is not a UI preference, it is the safety property.
 
-**Current task** — **`docs/PORT-DIVERGENCES.md` opened** — registers predecessor-vs-contract mismatches before porting. D1 closed (ADR-0029); **D3 blocks the contract freeze** (`Sighting` missing the fusion's domain fields). Next: resolve D3 with Sibusiso (ADR), judging criteria Friday 19 Sep.
+**Current task** — **G13 model cards written** — `docs/MODEL-CARDS.md` (all "not measured" rows stated; non-ML fusion card included). `docs/PORT-DIVERGENCES.md` D3 (contract vs the repo's own architecture) parked on Sibusiso. Next: judging criteria Friday 19 Sep (P1.9); resolve D3 with Sibusiso.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: the ADR is written before the decision is acted on anywhere else, and the rejected alternatives are in it.
 
@@ -33,8 +33,8 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: ADR-0029 written (single fusion source). Judging criteria review Friday 19 Sep.
-- Claimed files / contract versions: `docs/adr.md` (ADR-0029), `docs/PORT-DIVERGENCES.md`, `brain/README.md`, `docs/HANDOVER.md` Task 4 (15 Sep); reserve before editing.
+- Current task / status: G13 model cards closed. D3 parked on Sibusiso. Judging criteria Friday 19 Sep.
+- Claimed files / contract versions: `docs/MODEL-CARDS.md` (15 Sep); reserve before editing.
 - Last updated: 15 September 2026.
 
 ## Sequenced work
