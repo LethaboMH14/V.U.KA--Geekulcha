@@ -303,6 +303,10 @@ Added `docs/OPERATOR-TRAINING-CHECKLIST.md` covering machine-ceiling, refusal ev
 ### 2026-09-15 20:25 SAST — WBS 3.1 approval record
 
 Added `docs/CONTRACT-APPROVAL-RECORD.md` with the exact lead, second-lead, consumer, ADR, version, and commit fields required before the proposed contracts can be called frozen.
+
+### 2026-09-15 21:15 SAST — checklist ownership check
+
+Checked `team/khutso.md` for P2.16/P2.17 assignment collisions; none were present. Khutso remains the owner of `docs/CHECKLIST.md`, so the rows remain subject to his review even though no duplicate IDs were found.
 ## 2026-09-15 | Codex assistant on behalf of Khutso Mothopa | GPT-5 | role self-review | proposed, review pending
 
 Changed: `team/khutso.md` — recorded Khutso's evidence-based role feedback, reserved the role-review and build-log paths, reconciled the immediate P1.1/P1.3 evidence work with the formal WBS 1.4 proposed/not-started status, and stated the reviewer/dependency boundary. No product code, contract, approval, or completion status was changed.
