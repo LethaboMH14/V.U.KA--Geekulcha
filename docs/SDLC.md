@@ -149,7 +149,7 @@ A gate is not a date. **A gate is a set of exit criteria, and the date is when w
 | Builder | Owns | Also |
 |---|---|---|
 | **A** — architecture, mobile, ML integration | `CLAUDE.md`, `docs/00-SPEC.md`, `app/`, `brain/`, model manifest | Pairs on ANCHOR signing |
-| **B** — backend, systems, security | `server/`, `anchor/`, `shared/contract.ts`, CI, demo orchestration | **Nitpicks feasibility on every spec — flags anything infeasible TODAY, in an ADR proposal, not later** |
+| **B** — backend, systems, security | `server/`, `anchor/`, `contracts/`, CI, demo orchestration | **Nitpicks feasibility on every spec — flags anything infeasible TODAY, in an ADR proposal, not later** |
 | **C** — data science, risk, business | `data/`, `ml/eval/`, business docs | The rand figures. Owns the forecast fix |
 
 B's second column is a defined role, not a personality trait. **Someone must be paid, in status, to say "that cannot be built by Tuesday."** Without that role, optimistic specs survive until the week they are due.
