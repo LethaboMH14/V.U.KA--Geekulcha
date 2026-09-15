@@ -466,3 +466,17 @@ Needs/blockers: real operator training evidence + service-partner approval still
 Business handoff: not applicable — the duty card is training specification, not a household-facing capability. Serves C2 (the operator training path makes the human gate checkable, not just claimed) and C3 (progress on G15 before Govern gate 21 Sep).
 
 Next: Quantum Tech bonus strategy with Sibusiso; Task 4 port — begin with brain/ (fusion.py port from BEACON predecessor).
+
+## 2026-09-15 21:20 SAST | opencode / GLM | claude-sonnet-5 | Quantum Tech bonus strategy | authored, Lethabo directed, Sibusiso verification pending
+
+Changed: created `docs/QUANTUM-TECH.md` — the honest Quantum Tech bonus strategy. Maps VUKA's four cryptographic primitives (SHA-256, Merkle trees, Ed25519, HMAC) to their quantum resistance properties. The architectural argument: the anchored hash chain proves integrity independently of the signature layer; migrating Ed25519 to a post-quantum scheme (SPHINCS+, LMS/XMSS) is a signature-layer upgrade that preserves the entire anchored history. Includes: a 1-paragraph Sonke-ready summary; a "What we claim" table (all `FACT`/`ESTIMATE`/`ARGUED`); a "What we do NOT claim" table (five refused claims — "quantum-resistant," "post-quantum ready," "uses quantum computing," "SHA-256 fully quantum-proof," quantum-AI/sensing — because the organisers explicitly warned against overclaiming); Sibusiso's 5-point cryptographic verification checklist; an implementation demo option (SPHINCS+ Python, 30-minute demo proving the verifier accepts both Ed25519 and PQ signatures); and a team decision gate. Added B1 row to `docs/CHECKLIST.md` under a new "Bonus — Quantum Tech" section. Updated `team/lethabo.md`.
+
+Evidence: SHA-256 quantum resistance analysis (Grover's algorithm: quadratic speedup, 2^256 → 2^128, NIST SP 800-208 consensus on 128-bit post-quantum security level). Merkle trees are structurally identical to SPHINCS+/LMS/XMSS hash-based signatures — `FACT`. Ed25519 is an elliptic-curve signature; Shor's algorithm breaks it — `FACT`. The architecture decoupling argument (chain integrity vs. operator identity) draws from `docs/ANCHOR-RATIONALE.md` and the two-showcase design. `ARGUED`.
+
+Decision: none — this is proposed analysis, not an approved positioning. The team must decide whether to claim the 5 bonus points. Sibusiso must verify the cryptographic claims (SHA-256 at Grover-reduced security, Ed25519→PQ migration feasibility, verifier signature-dependency). Both leads must approve before any Quantum Tech claim appears on Sonke or in the demo. If approved: update `docs/SONKE-OVERVIEW.md` with the quantum paragraph and extend `docs/BLOCKCHAIN-ATTACK-REHEARSAL.md` with the post-quantum section. If not: the document stays as analysis; 5 points are not claimed.
+
+Needs/blockers: Sibusiso's cryptographic verification (5-item checklist in the doc). Team decision on explain vs. implement. The implementation demo (SPHINCS+ in Python) is 30 minutes of work if the team commits to it.
+
+Business handoff: not applicable — this is positioning strategy, not a household-facing capability. Serves bonus criterion (Quantum Tech) if the team proceeds; serves C2 (innovation) regardless by demonstrating a differentiator no other team will have prepared.
+
+Next: Task 4 port — begin with brain/ (fusion.py port from BEACON predecessor). Sibusiso to verify Quantum Tech claims. Judging criteria Friday 19 Sep.
