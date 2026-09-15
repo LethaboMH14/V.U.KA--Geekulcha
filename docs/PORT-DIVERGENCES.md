@@ -47,8 +47,21 @@
 
 ---
 
+## D4 — Proprietary claims-data dependency  ·  **OPEN — port must not re-introduce the purged dataset**
+
+| | |
+|---|---|
+| **This repository's rule** | `RULES.md`: *"Do not commit … third-party claims data."* Gap **G7** (closed 13 Sep 2026) removed `Gradhack_Insure_Data.xlsx`, `claims_cleaned.csv` and `claims_cleaned.xlsx` from every branch of both predecessors. |
+| **Predecessor** | The removed dataset is a **hard dependency** of code that would otherwise be ported: `server/src/db/models.py:176` defines a `Claim` model (table `claims`, `claim_date`, `hex_id`); `server/scripts/load_claims.py` reads `Gradhack_Insure_Data.xlsx` (`pd.read_excel`); `server/src/risk/forecast.py` and `server/src/suspicion/scorer.py:177` (factor F3, crime correlation) query `Claim`; `server/alembic/versions/001_initial_schema.py` creates the `claims` table; several `server/tests/` seed `Claim` rows; `hotspot_pipeline/` (`build_hotspots.py`, `clean_claims_data.py`, `integrate_saps.py`, `build_saps_only.py`) and `data_prep/` (`clean_claims_data.py`, `predictive_model.py`) build hotspots/forecasts from it. |
+| **Divergence** | Porting these files — or the `Claim` model and its schema — re-introduces a dependency on the third-party dataset that was deliberately purged. The clean repo is meant to re-base the risk layer on public SAPS data (`docs/00-SPEC.md` §1.3, §7). |
+| **Correction** | The port **does not carry** the `claims` table, `load_claims.py`, or any path that reads `Claim`. `scorer.py` is already excluded (ADR-0029); F3 (crime correlation) and the `risk/` forecast are re-based on public SAPS data — the relevant predecessor sources are `saps_ingestion.py`, `inspect_saps.py` and `hotspot_pipeline/build_saps_only.py`, which use public SAPS figures and must pass a **provenance/licence review** (`RULES.md`) before being ported. Until re-based, F3 stays a documented stub (as `brain/fusion.py` already has it) and the forecast keeps its published "loses to a constant baseline" caveat (G2). |
+| **Why it matters** | This is a **security/compliance** port guard, not a naming nit. A ported `Claim` model with an empty table is harmless; a ported loader pointed at the purged dataset, or a test that seeds proprietary rows, is the G7 exposure returning through the code path. The distinction the port must preserve: **public SAPS aggregates are allowed; the third-party claim records are not.** |
+| **Evidence** | `git grep` over both read-only predecessor checkouts, 15 Sep 2026: `Gradhack_Insure_Data` / `claims_cleaned` / `.xlsx` matches in `BEACON` (28 files incl. `server/`, `hotspot_pipeline/`, `data_prep/`) and `Team-Sonar---Vuka-` (`vuka/data-pipeline/`). `BEACON/server/src/db/models.py:176-198`; `BEACON/server/scripts/load_claims.py:2,21,36-37`; `BEACON/server/src/suspicion/scorer.py:177`. `FACT` |
+
+---
+
 ## Adding to this register
 
 When a port step reads a predecessor file and finds a mismatch with the contract, add a row here before porting the file. Keep each entry to: the contract, the predecessor, the divergence, the correction, the evidence. If the correction changes a frozen interface, it needs an ADR, not just this row.
 
-*Opened 15 Sep 2026. D1 closed by ADR-0029. D2 and D3 are corrections for the `server/` port — D3 is the material one and touches `P2.16`. D3's second finding (the contract contradicts this repository's own `01-ARCHITECTURE.md` §2581 definition of `Sighting`) was added later the same day.*
+*Opened 15 Sep 2026. D1 closed by ADR-0029. D2 and D3 are corrections for the `server/` port — D3 is the material one and touches `P2.16`; D3's second finding (the contract contradicts this repository's own `01-ARCHITECTURE.md` §2581 definition of `Sighting`) was added later the same day. D4 is a security/compliance guard: the purged proprietary claims dataset is a hard dependency of predecessor risk/suspicion code and must not be re-introduced by the port.*
