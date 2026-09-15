@@ -259,3 +259,7 @@ Needs/blockers: Lethabo must review the contract and approve or revise the actio
 Business handoff: not applicable; this is a handoff blocker record.
 
 Next: authenticate GitHub and open the PR; then provision the documented Python runtime or choose an explicitly approved CI-only verification path before WBS 3.3.
+
+### 2026-09-15 18:20 SAST — P2.15 OpenTimestamps calendar decision
+
+Recorded the prototype decision in `docs/OTS-CALENDAR-DECISION.md`: self-hosting and `ots upgrade` are deferred because they are not implemented or rehearsed. Public calendars remain a dependency; timestamp state must remain pending until independently verifiable. No anchor or SC.1 code was touched.
