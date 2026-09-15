@@ -287,3 +287,7 @@ Added `docs/EVIDENCE-CHECKPOINT-RUNBOOK.md` defining entry gates, demonstration 
 ### 2026-09-15 19:35 SAST — WBS 7.2 fallback rehearsal preparation
 
 Added `docs/FALLBACK-HOTFIX-RUNBOOK.md` with a reversible isolated rehearsal, evidence capture, safety constraints, and acceptance criteria. No shared history was reset and no production rollback was performed.
+
+### 2026-09-15 19:45 SAST — Sibusiso operating record refresh
+
+Updated `team/sibusiso.md` so `Current task` and the running log reflect the pushed privacy, anchoring, rehearsal and readiness work. F14/SC.1 remains gated pending contract approval and session scope.

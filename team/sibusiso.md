@@ -21,7 +21,7 @@
 - **No code path may set `flagged`.** The machine's ceiling is `watch_candidate`, enforced in code and tested, not just documented.
 - Never `--no-verify`.
 
-**Current task** — WBS 3.3 human-gate proof path implemented and tested in `server/src/auth/governance.py` using the documented Python 3.11+ stack; bundled Python 3.12.14 was used because system Python is absent. Next: **F14 subject access end-to-end** (checklist `SC.1`), after Lethabo reviews the contract/ADR boundary.
+**Current task** — WBS 3.3 human-gate proof path implemented and tested in `server/src/auth/governance.py`; P2.3/G20 embedding boundary, P2.4 s57 decision record, P2.11 cost reconciliation, P2.14 rehearsal script, P2.15 calendar decision, WBS 4.5 checkpoint runbook and WBS 7.2 fallback runbook are prepared and pushed. Next: obtain Lethabo/second-lead contract approval and coordinate owner reviews; F14/SC.1 remains gated.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -90,3 +90,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 - 2026-09-13 — Sibusiso confirmed identity and requested full readiness/review. Reviewed Lethabo's PR #2 evidence, corrected the gate/calendar/role record and retained unresolved product work as explicitly assigned gaps.
 - 2026-09-15 — Codex acting for Sibusiso: created the v0.1.0 event schema, zero-dependency Node test harness, exact-shape acceptance/rejection tests and proposed OpenAPI v3.1 contract. Second-lead approval and ADR remain pending; no approval is inferred.
 - 2026-09-15 — Codex acting for Sibusiso: implemented the bounded WBS 3.3 human-gate proof path and six standard-library unittest cases. Refused privileged attempts return evidence receipts; destructive actions require distinct co-signers; no `flagged` assignment exists.
+- 2026-09-15 — Codex acting for Sibusiso: added tested discard-by-default embedding matching, s57 decision record, anchoring-cost reconciliation and sweep inventory, blockchain attack rehearsal, OpenTimestamps decision, evidence-checkpoint runbook and fallback/hotfix runbook. Remaining approvals and live rehearsals are explicitly open.
