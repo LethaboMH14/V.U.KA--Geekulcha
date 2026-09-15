@@ -200,6 +200,20 @@ Business handoff: not applicable; no capability changed.
 
 Next: provision the documented runtime, then add human-gate tests before implementation; open a PR from `feat/sibusiso-3.3-human-gate`.
 
+## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | WBS 3.3 human-gate proof path | implemented, review pending
+
+Changed: added `server/src/auth/governance.py` as a small side-effect-free human-gate module and `test/governance_contract_test.py` with six standard-library unittest cases. Accepted review receipts identify the operator and resulting state; refused privileged attempts are returned as evidence; whitelist, disarm, threshold change and delete require two distinct operator signatures; `verify_concern` preserves `watch_candidate`. Updated `server/README.md` and Sibusiso's task record.
+
+Evidence: the initial test run failed with `ModuleNotFoundError: No module named 'server.src.auth.governance'` before implementation. After implementation, bundled Python `3.12.14` ran `python -m unittest test/governance_contract_test.py` with `Ran 6 tests ... OK`. System `python3`, `python`, `py` and pytest are unavailable; the repository's documented Python 3.11+ requirement is met by the bundled 3.12 interpreter. No anchor code or SC.1 implementation was touched.
+
+Decision: retain `verify_concern` rather than expose a `flag` action; this keeps the contract free of a privileged state setter and follows the session hard constraint. Lethabo and both leads must review/approve the contract and ADR before the contract is final.
+
+Needs/blockers: Lethabo reviews the human-gate semantics and proof wording; Ipeleng reviews signature and privacy boundaries. F14 subject access remains the next feature task and requires the anchor/proof implementation later in the sequence.
+
+Business handoff: not applicable; this is a tested governance boundary, not a household-facing release.
+
+Next: run full repository checks, push this branch, then open a separate PR for WBS 3.3 review.
+
 ## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | PR handoff / WBS 3.3 readiness | blocked, no claim of PR creation
 
 Changed: attempted to create the requested GitHub pull request for `feat/sibusiso-3.1-contract-freeze`; no repository files changed by the attempt. Updated Sibusiso's blocker list with the authentication and runtime facts.

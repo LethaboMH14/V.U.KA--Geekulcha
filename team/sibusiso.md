@@ -21,7 +21,7 @@
 - **No code path may set `flagged`.** The machine's ceiling is `watch_candidate`, enforced in code and tested, not just documented.
 - Never `--no-verify`.
 
-**Current task** — WBS 3.3 human-gate proof path is blocked pending the documented Python 3.11/FastAPI runtime. Node v24.18.0 is available for repository scripts and contract tests, but is not the selected server stack. Once Python is provisioned, add security tests before governance code; then proceed to **F14 subject access end-to-end** (checklist `SC.1`).
+**Current task** — WBS 3.3 human-gate proof path implemented and tested in `server/src/auth/governance.py` using the documented Python 3.11+ stack; bundled Python 3.12.14 was used because system Python is absent. Next: **F14 subject access end-to-end** (checklist `SC.1`), after Lethabo reviews the contract/ADR boundary.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -64,7 +64,7 @@ Sibusiso requested and owns this review. Local security-hook tests, clean reposi
 - cloud quota failure → use approved local rehearsal path.
 - second-lead contract approval and ADR → Lethabo reviews the proposed event/OpenAPI shapes before they are called frozen.
 - PR publication → GitHub CLI reports `gh auth login` is required; branch is pushed and the manual PR URL is available.
-- WBS 3.3 runtime → server scaffold is empty and neither `python` nor `py` is installed locally; do not add untested Python governance code.
+- WBS 3.3 runtime → system Python is absent, but bundled Python 3.12.14 is available and was used for the tested governance module; pytest remains unavailable, so tests use standard-library unittest.
 
 Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
 
@@ -89,3 +89,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster.
 - 2026-09-13 — Sibusiso confirmed identity and requested full readiness/review. Reviewed Lethabo's PR #2 evidence, corrected the gate/calendar/role record and retained unresolved product work as explicitly assigned gaps.
 - 2026-09-15 — Codex acting for Sibusiso: created the v0.1.0 event schema, zero-dependency Node test harness, exact-shape acceptance/rejection tests and proposed OpenAPI v3.1 contract. Second-lead approval and ADR remain pending; no approval is inferred.
+- 2026-09-15 — Codex acting for Sibusiso: implemented the bounded WBS 3.3 human-gate proof path and six standard-library unittest cases. Refused privileged attempts return evidence receipts; destructive actions require distinct co-signers; no `flagged` assignment exists.
