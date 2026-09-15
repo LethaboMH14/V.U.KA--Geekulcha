@@ -189,7 +189,7 @@ For each file: copy, read it, remove anything that fails §3, confirm no secret,
 
 > ⚠️ **`server/` is not a file copy — see ADR-0029.** Do **not** port `server/src/suspicion/scorer.py` or `server/src/suspicion/entity_resolution.py`. The predecessor carried two divergent fusion models and two copies of the plate matcher; this repository has **one** (`brain/fusion.py`, `brain/entity_resolution.py`). The server imports `brain/` and persists `recompute()`'s result. The state vocabulary is the frozen contract's (`observed` / `watch_candidate` / `flagged` / `dismissed` / `whitelisted`); the predecessor's `candidate` is not a valid state. Any ported server test asserting `"candidate"` is rewritten, not accepted.
 >
-> 📋 **Check `docs/PORT-DIVERGENCES.md` before porting any `server/` file.** It registers every known mismatch between predecessor code and the frozen contract, with the correction. Currently open: **D2** (evidence-integrity response field names) and **D3** (the contract's `Sighting` is missing the domain fields the fusion needs — a material defect that blocks the contract freeze).
+> 📋 **Check `docs/PORT-DIVERGENCES.md` before porting any `server/` file.** It registers every known mismatch between predecessor code and the frozen contract, with the correction. Currently open: **D2** (evidence-integrity response field names), **D3** (the contract's `Sighting` is missing the domain fields the fusion needs — a material defect that blocks the contract freeze), and **D4** (the purged proprietary claims dataset is a hard dependency of predecessor risk/suspicion code — do not re-introduce the `claims` table, `load_claims.py`, or any path that reads `Claim`).
 
 ### Task 5 — `anchor/` — the new work
 
