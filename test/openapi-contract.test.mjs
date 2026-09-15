@@ -54,3 +54,21 @@ test("OpenAPI contract exposes no flagged or flag action setter", () => {
 test("live docs point to contracts/ as the frozen contract home", () => {
   for (const content of [architecture, sdlc, team]) assert.doesNotMatch(content, /shared\/contract\.ts/);
 });
+
+test("Sighting is the domain event, not the transport envelope (ADR-0030, D3)", () => {
+  assert.match(document, /^    EventEnvelope:$/m);
+  assert.match(document, /^    Sighting:$/m);
+  assert.match(document, /^    SightingEvent:$/m);
+  const sightingBlock = document.slice(document.indexOf("    Sighting:"), document.indexOf("    SightingEvent:"));
+  assert.match(sightingBlock, /camera_id/);
+  assert.match(sightingBlock, /hex_id/);
+  assert.match(sightingBlock, /modality/);
+  assert.match(sightingBlock, /confidence/);
+  assert.doesNotMatch(sightingBlock, /event_id/);
+  assert.match(document, /\$ref: '#\/components\/schemas\/SightingEvent'/);
+  assert.doesNotMatch(document, /\$ref: '#\/components\/schemas\/Sighting'\n/);
+});
+
+test("IntegrityResult documents a 0-based first_broken_index (ADR-0030, D2)", () => {
+  assert.match(document, /first_broken_index is 0-based/);
+});

@@ -550,3 +550,17 @@ Needs/blockers: none. The cards are specification/limitation documentation, not 
 Business handoff: `templates/BUSINESS-HANDOFF.md` not changed; this is model governance. Serves C2 (the non-ML fusion card and the stated limits are the differentiator) and C3 (G13 closed before Align).
 
 Next: judging criteria publish Friday 19 Sep (P1.9 rules-lawyer); resolve D3 with Sibusiso.
+
+## 2026-09-15 | Sibusiso (Claude session) | D3/D2 resolved — ADR-0030 | contract updated
+
+Changed: resolved `docs/PORT-DIVERGENCES.md` D3 (blocking, contract owner's decision) and D2 (index-base decision) as ADR-0030. `contracts/openapi.yaml`'s `Sighting` schema — previously the bare 7-field wire envelope, contradicting both `brain/fusion.py`'s actual field usage and `docs/01-ARCHITECTURE.md`'s own definition of `Sighting` as the domain event — renamed to `EventEnvelope`; a new `Sighting` schema added for the domain payload (`camera_id`, `hex_id`, `ts`, `modality`, `confidence` required; `entity_id`, `kind`, `bbox`, `plate_text`, `plate_quality`, `embedding_ref` optional, matching the predecessor's field set Lethabo evidenced); composed as `SightingEvent` for `POST /v1/sightings`. Accepted Lethabo's D3 recommendation exactly as proposed, including his rejection of the two alternatives. `contracts/events.schema.json` needed no change — it was already envelope-only, never named `Sighting`. `IntegrityResult.first_broken_index` documented as 0-based (D2), matching the schema's existing `minimum: 0`. Updated `docs/PORT-DIVERGENCES.md` (D2/D3 status) and `docs/CHECKLIST.md` P2.16.
+
+Evidence: verified against real code before writing the fix, not just Lethabo's register — `contracts/openapi.yaml`'s old `Sighting` schema confirmed to be the bare envelope; `docs/01-ARCHITECTURE.md`'s domain-event definition confirmed at the cited lines; `brain/fusion.py`'s `factor_f1_recurrence` confirmed to read `s["camera_id"]`. After the fix: full YAML parse via Python's `yaml.safe_load` (no YAML-parsing dependency exists in this zero-dependency repo, so this was a one-off check, not added as a test) confirms `EventEnvelope`/`Sighting`/`SightingEvent` all present, `Sighting`'s required fields exactly `[camera_id, confidence, hex_id, modality, ts]`, `POST /v1/sightings`'s request body now references `SightingEvent`. `npm test` → 11/11 (2 new tests added). `node scripts/check-docs.mjs` passes.
+
+Decision: accepted as contract owner, per `docs/PORT-DIVERGENCES.md`'s own framing ("proposed for Sibusiso's decision"). Not yet a joint freeze — `docs/CHECKLIST.md` P2.16 stays `◐`, Lethabo's second-lead sign-off on this specific ADR is still outstanding per `docs/OVERLAPS.md`, distinct from his earlier F1 sign-off on the governance code.
+
+Needs/blockers: Lethabo's review of ADR-0030 before `P2.16`/the contract can be called jointly frozen. D2's field-name mapping (`broken_at_seq` → `first_broken_index`) still applies whenever `server/`'s evidence-integrity endpoint is actually ported — no such endpoint exists in this repository yet.
+
+Business handoff: not applicable — contract correction, no household capability changed. Serves C3 (a real defect caught and fixed before the port, not after a demo failure).
+
+Next: Lethabo reviews ADR-0030; then the `server/` port (Task 4) can proceed against a contract that can actually carry what fusion needs.
