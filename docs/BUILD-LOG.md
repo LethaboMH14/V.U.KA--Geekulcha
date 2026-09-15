@@ -343,3 +343,16 @@ Needs/blockers: PR #6, #7, #8 all still await Lethabo's review. This branch's WB
 Business handoff: not applicable — reconciliation and duplicate removal only.
 
 Next: open a PR for WBS 3.3 (server/src/auth/governance.py, test/governance_contract_test.py, test/openapi-contract.test.mjs) — real, tested progress that's been sitting unpushed.
+## 2026-09-15 | Claude (Sibusiso's session) | naming conflict — contracts/ vs shared/contract.ts | resolved, doc-only
+
+Changed: `shared/README.md` rewritten to state the frozen contract lives in `contracts/events.schema.json` + `contracts/openapi.yaml` (built under WBS 3.1 this same day), not the originally-planned `shared/contract.ts`, which is retired but the file kept as a pointer so nobody re-reserves it. Corrected the two `shared/contract.ts` references in `docs/HANDOVER.md` (the ownership table and the Task 4 port order) to point at `contracts/`.
+
+Evidence: `docs/OVERLAPS.md` already named `contracts/events.schema.json` and `contracts/openapi.yaml` as the shared surface before `shared/README.md` was ever written (PR #3, merged before PR #6 was opened) — `contracts/` was the older and now the actually-built location; `shared/contract.ts` was never created. Verified via `grep -rn "shared/contract" docs/ RULES.md AGENTS.md` — no remaining references after this change.
+
+Decision: keep the built, tested artifact (`contracts/`) and correct the docs to match it, rather than reformatting a working JSON/YAML contract into TypeScript to match a reservation that predates the actual build. Sibusiso's call, made explicitly when asked.
+
+Needs/blockers: this is a doc correction only; the contract itself remains implementation-proposed pending Lethabo's review and an ADR, per the existing WBS 3.1 entry above.
+
+Business handoff: not applicable — no capability changed, single source of truth restored.
+
+Next: Lethabo's review of the contract (action naming) and both-lead ADR sign-off, unchanged from the prior entry.
