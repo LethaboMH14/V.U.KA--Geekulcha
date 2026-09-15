@@ -171,3 +171,17 @@ Needs/blockers: none for this task. Task 4 (the actual port, `shared/contract.ts
 Business handoff: not applicable — no capability changed, structure only.
 
 Next: Task 4, the port.
+
+## 2026-09-15 16:30 SAST | Codex acting for Sibusiso | GPT-5 | WBS 3.1 / G14 | implementation proposed; second-lead review pending
+
+Changed: created `contracts/events.schema.json` v0.1.0 with exactly the frozen event properties plus the explicit version, `additionalProperties: false`, and no privileged state field. Added zero-dependency `package.json` using `node --test` and `test/events-contract.test.mjs` with exact-shape acceptance and rejection tests. Added `contracts/openapi.yaml` v3.1 for only the endpoints in `docs/00-SPEC.md` §4, including roles/security, errors, pagination, idempotency, receipt states, WebSocket separation and F14/F15 showcase markers. The review action enum intentionally contains `verify_concern`, `dismiss` and `whitelist`; it does not expose a `flagged` setter.
+
+Evidence: `node --test test/events-contract.test.mjs` → 3 tests passed; `npm test` → 4 tests passed (the existing security integration test plus the three event tests). OpenAPI text was inspected for the specified paths and absence of `flagged`/`flag` action values; a YAML parser is not installed, so semantic YAML validation remains outstanding.
+
+Decision: Sibusiso approved the runner and instructed continuation. The contracts are implementation-proposed, not jointly frozen: Lethabo's review and a versioned ADR are required by `RULES.md` before consumers rely on them as immutable.
+
+Needs/blockers: Vukosi may build against the exact v0.1.0 event envelope; his needs field was updated. Lethabo must review the verify action naming and F14/F15 contract; Ipeleng must review signature, deletion and privacy boundaries. No anchor code or SC.1 implementation was touched.
+
+Business handoff: `templates/BUSINESS-HANDOFF.md` not changed; this defines interfaces and test evidence, not a household-facing capability.
+
+Next: Lethabo and both leads review the proposed contract/ADR; then add OpenAPI semantic validation and proceed to WBS 3.3.

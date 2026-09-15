@@ -21,7 +21,7 @@
 - **No code path may set `flagged`.** The machine's ceiling is `watch_candidate`, enforced in code and tested, not just documented.
 - Never `--no-verify`.
 
-**Current task** — Freeze `contracts/openapi.yaml` (`3.1`), then the human-gate proof path (`3.3`), then **F14 subject access end-to-end** (checklist `SC.1`) — this is the showcase, treat it as the priority it is.
+**Current task** — WBS 3.1 contract freeze: `contracts/events.schema.json` and `contracts/openapi.yaml` are implemented with tests; second-lead approval and ADR are pending. Next: human-gate proof path (`3.3`), then **F14 subject access end-to-end** (checklist `SC.1`).
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -33,8 +33,7 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: 1.3 complete; reviewing PR #2 and clearing team readiness.
-- Claimed files / contract versions: none; reserve before editing.
+- Claimed files / contract versions: `contracts/events.schema.json` v0.1.0; `contracts/openapi.yaml` v0.1.0 proposed pending both-lead approval; `package.json`; `test/events-contract.test.mjs`.
 - Last updated: 13 September 2026 during Sibusiso's review session.
 
 ## Sequenced work
@@ -63,6 +62,7 @@ Sibusiso requested and owns this review. Local security-hook tests, clean reposi
 
 - Collected predecessor test count remains unverified → owners must run both suites before repeating “440 tests”.
 - cloud quota failure → use approved local rehearsal path.
+- second-lead contract approval and ADR → Lethabo reviews the proposed event/OpenAPI shapes before they are called frozen.
 
 Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
 
@@ -86,3 +86,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster.
 - 2026-09-13 — Sibusiso confirmed identity and requested full readiness/review. Reviewed Lethabo's PR #2 evidence, corrected the gate/calendar/role record and retained unresolved product work as explicitly assigned gaps.
+- 2026-09-15 — Codex acting for Sibusiso: created the v0.1.0 event schema, zero-dependency Node test harness, exact-shape acceptance/rejection tests and proposed OpenAPI v3.1 contract. Second-lead approval and ADR remain pending; no approval is inferred.
