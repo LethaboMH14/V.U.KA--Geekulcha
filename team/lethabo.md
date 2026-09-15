@@ -21,7 +21,7 @@
 - A behaviour change needs docs **and** a `docs/BUILD-LOG.md` entry in the **same PR**.
 - Duress states are **visually identical** to normal ones — no observable UI, timing or network difference. This is not a UI preference, it is the safety property.
 
-**Current task** — **Task 4 port started** — `brain/fusion.py` + `brain/entity_resolution.py` + 20 tests ported from BEACON predecessor and passing. Quantum Tech strategy written (Sibusiso verification pending). Next: continue port (server/), judging criteria Friday 19 Sep.
+**Current task** — **ADR-0029 written** (single fusion source; server port guard) after discovering the predecessor's two divergent fusion models. `brain/` ported and passing (20/20). Quantum Tech strategy written (Sibusiso verification pending). Next: judging criteria Friday 19 Sep; support Sibusiso's `server/` port against ADR-0029.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: the ADR is written before the decision is acted on anywhere else, and the rejected alternatives are in it.
 
@@ -33,8 +33,8 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: Operator training reviewed. Quantum Tech strategy + port next.
-- Claimed files / contract versions: `docs/OPERATOR-DUTY.md`, `docs/OPERATOR-TRAINING-CHECKLIST.md` (15 Sep); reserve before editing.
+- Current task / status: ADR-0029 written (single fusion source). Judging criteria review Friday 19 Sep.
+- Claimed files / contract versions: `docs/adr.md` (ADR-0029), `brain/README.md`, `docs/HANDOVER.md` Task 4 (15 Sep); reserve before editing.
 - Last updated: 15 September 2026.
 
 ## Sequenced work
@@ -95,3 +95,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 - 2026-09-15 — opencode (GLM): closed P1.6 competitor block — `docs/COMPETITORS.md` with five competitors (Vumacam, Flock, ShotSpotter, community WhatsApp, Fidelity ADT), Vumacam IR complaint as live precedent, structural unfair advantage. Updated LEAN-CANVAS UVP with competitor-awareness line. Next: P1.5 Sonke project overview (due 16 Sep).
 
 - 2026-09-15 — opencode (GLM): reviewed and corrected operator training material — fixed stale `verify_concern` claim (now transitions to `flagged` per PR #10 F1 fix), added operator error remedy and escalation paths, closed P1.8 (prizes confirmed), updated G15 and P2.17 tracking. Next: Quantum Tech strategy, port Task 4.
+- 2026-09-15 — opencode (GLM): wrote ADR-0029 after inspecting the BEACON predecessor — it carried two divergent fusion models (`brain/fusion.py` log-odds/`watch_candidate` orphaned; `server/src/suspicion/scorer.py` additive/`candidate` in use) and a duplicate server copy of `entity_resolution.py`. Decision: one fusion source (`brain/`), server delegates; state vocabulary is the contract's. Port guard added to `brain/README.md` and `docs/HANDOVER.md`. Next: support `server/` port against ADR-0029; judging criteria Friday 19 Sep.
