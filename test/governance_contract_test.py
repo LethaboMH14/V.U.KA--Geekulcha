@@ -1,10 +1,16 @@
 import inspect
 import unittest
 
-from server.src.auth.governance import human_verify
+from server.src.auth.governance import human_verify, retain_consented_match
 
 
 class HumanGateContractTests(unittest.TestCase):
+    def test_nonmatch_embedding_is_discarded(self):
+        self.assertIsNone(retain_consented_match((9, 9), enrolled_embeddings=[(1, 2)]))
+
+    def test_consented_embedding_is_retained(self):
+        embedding = (1, 2)
+        self.assertEqual(embedding, retain_consented_match(embedding, enrolled_embeddings=[embedding]))
     def test_verify_concern_requires_named_human_and_keeps_machine_ceiling(self):
         receipt = human_verify(
             current_state="watch_candidate",

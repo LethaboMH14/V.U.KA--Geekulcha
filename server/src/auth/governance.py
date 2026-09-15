@@ -115,3 +115,8 @@ def human_verify(
             "co_actor_id": co_operator_id,
         },
     )
+def retain_consented_match(embedding, *, enrolled_embeddings):
+    """Return a consented match marker; non-matches are discarded by default."""
+    if embedding is None:
+        return None
+    return embedding if any(embedding == candidate for candidate in enrolled_embeddings) else None
