@@ -2,7 +2,11 @@
 
 Pure functions. No I/O, no clock, no platform calls, no exceptions. Satisfies F2 (`docs/00-SPEC.md` §3.1).
 
-**Empty scaffold.** No code lands here yet — see `docs/HANDOVER.md` Task 4. This directory and `app/src/brain/fusion/` are ported **together**, from the same golden fixture, so a web/native discrepancy is caught by a shared test rather than discovered live.
+**Port landed 15 Sep 2026.** `fusion.py` (Entity, recompute, human_verify, F1 recurrence, F6 modal corroboration) and `entity_resolution.py` (confusion-aware Levenshtein, plate matching) ported from the BEACON predecessor per `docs/HANDOVER.md` Task 4. Ported with sanitization: `verify_concern` naming aligned to the v0.1.0 frozen contract; BEACON docstrings updated to VUKA references. 20 pytest tests pass (Python 3.11, pytest 8.0). `FACT`
+
+F2-F5 are TODO stubs — the escalation ladder needs claims-peak histogram, near-repeat kernel, dwell baseline and road-graph data before those factors can be implemented. `OPEN-GAPS.md` G4.
+
+## Why this directory is separate from `app/` and `server/`
 
 ## Why this directory is separate from `app/` and `server/`
 

@@ -21,7 +21,7 @@
 - A behaviour change needs docs **and** a `docs/BUILD-LOG.md` entry in the **same PR**.
 - Duress states are **visually identical** to normal ones — no observable UI, timing or network difference. This is not a UI preference, it is the safety property.
 
-**Current task** — Operator training reviewed (PR #15). **Quantum Tech strategy** written — `docs/QUANTUM-TECH.md` with honest claim, Sibusiso verification checklist, and implementation demo option. Awaiting Sibusiso's cryptographic verification and team decision. Next: **Task 4 port** — begin brain/ (fusion engine) from BEACON predecessor. Judging criteria Friday 19 Sep (P1.9).
+**Current task** — **Task 4 port started** — `brain/fusion.py` + `brain/entity_resolution.py` + 20 tests ported from BEACON predecessor and passing. Quantum Tech strategy written (Sibusiso verification pending). Next: continue port (server/), judging criteria Friday 19 Sep.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: the ADR is written before the decision is acted on anywhere else, and the rejected alternatives are in it.
 
