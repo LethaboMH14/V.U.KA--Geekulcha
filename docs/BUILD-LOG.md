@@ -271,3 +271,7 @@ Added `docs/BLOCKCHAIN-ATTACK-REHEARSAL.md` with the three required objections, 
 ### 2026-09-15 18:50 SAST — P2.11 anchoring-cost reconciliation
 
 Added `docs/ANCHOR-COST-RECONCILIATION.md` with the corrected Hedera arithmetic and the OpenTimestamps direct-fee qualification. P2.11 remains in progress until the team selects the demonstrated system and sweeps the stale figure from presentation material.
+
+### 2026-09-15 18:55 SAST — P2.4 s57 decision record
+
+Added `docs/POPIA-S57-DECISION-RECORD.md` to capture the open prior-authorisation question, required counsel findings, and the safe pre-pilot boundary. No legal conclusion or pilot approval is inferred.
