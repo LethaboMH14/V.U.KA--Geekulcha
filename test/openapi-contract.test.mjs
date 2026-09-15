@@ -3,6 +3,9 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const document = await readFile(new URL("../contracts/openapi.yaml", import.meta.url), "utf8");
+const architecture = await readFile(new URL("../docs/01-ARCHITECTURE.md", import.meta.url), "utf8");
+const sdlc = await readFile(new URL("../docs/SDLC.md", import.meta.url), "utf8");
+const team = await readFile(new URL("../docs/TEAM.md", import.meta.url), "utf8");
 
 const requiredPaths = [
   "/v1/sightings:",
@@ -45,4 +48,8 @@ test("OpenAPI contract exposes no flagged or flag action setter", () => {
   assert.doesNotMatch(document, /action: flag\b/);
   assert.doesNotMatch(document, /enum: \[[^\]]*flagged/);
   assert.match(document, /enum: \[verify_concern, dismiss, whitelist\]/);
+});
+
+test("live docs point to contracts/ as the frozen contract home", () => {
+  for (const content of [architecture, sdlc, team]) assert.doesNotMatch(content, /shared\/contract\.ts/);
 });
