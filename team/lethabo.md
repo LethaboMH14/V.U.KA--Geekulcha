@@ -21,7 +21,7 @@
 - A behaviour change needs docs **and** a `docs/BUILD-LOG.md` entry in the **same PR**.
 - Duress states are **visually identical** to normal ones — no observable UI, timing or network difference. This is not a UI preference, it is the safety property.
 
-**Current task** — G12 model licence register **complete** (closed 15 Sep — `docs/MODEL-LICENCES.md`). Next: **ADR-0027** (TRL 4 + ceiling, `P1.4`, due 16 Sep), then the **competitor block** with Babatunde (`P1.6`, due 16 Sep).
+**Current task** — **ADR-0027 complete** (TRL 4 + ceiling, `P1.4`, closed 15 Sep). Next: the **competitor block** with Babatunde (`P1.6`, due 16 Sep) — the top unmet organiser instruction.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: the ADR is written before the decision is acted on anywhere else, and the rejected alternatives are in it.
 
@@ -33,8 +33,8 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: G12 complete. ADR-0027 (TRL 4 + ceiling, P1.4, due 16 Sep) is next.
-- Claimed files / contract versions: `docs/MODEL-LICENCES.md` (this session); reserve before editing.
+- Current task / status: ADR-0027 (TRL) complete. Competitor block (P1.6) is next.
+- Claimed files / contract versions: `docs/MODEL-LICENCES.md` (15 Sep); reserve before editing.
 - Last updated: 15 September 2026.
 
 ## Sequenced work
@@ -89,3 +89,5 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster.
 - 2026-09-13 — PR #2 work reviewed by Sibusiso. Accepted: remediation record, ADR consolidation, wireframe references and coordination scaffolding. Corrections required: evidence wording, gate record, calendar alignment and stale personal status. Next: G12 model licence register.
 - 2026-09-15 — opencode (GLM): reviewed and approved PR #6 (Sibusiso's WBS 3.1 contract freeze) with M1 finding. Closed G12: wrote `docs/MODEL-LICENCES.md`, verified YAMNet TFLite sha256 across predecessor repos, inventoried all four model packages + two runtimes, published two HIGH licensing risks (InsightFace buffalo_l non-commercial-research-only, YOLOv8 AGPL-3.0). Tick P1.7. Next: ADR-0027 (TRL).
+
+- 2026-09-15 — opencode (GLM): closed G12 (model licence register, PR #9, pending Sibusiso review); reviewed PR #10 with a request-changes finding (frozen state machine divergence — `flagged`); wrote ADR-0027 settling TRL at 4 with two subsystems argued at 5 and the four reasons not at 6, swept `00-SPEC` §6 and `01-ARCHITECTURE` §11.1, fixed the stale §12.4 ADR index. Next: competitor block with Babatunde.
