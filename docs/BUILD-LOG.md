@@ -630,3 +630,17 @@ Needs/blockers: `P2.1` documentation half is closed; the counsel questions (Q1�
 Business handoff: the Lean Canvas is judge-facing — this closes the gap between what the canvas claims and what the position paper says. Serves C2 (the compliance story is now real, not a one-liner) and C3 (G19 documentation half closed before go-to-market).
 
 Next: Ipeleng — `P2.2` POPIA paper + ADR, `P2.5` IO registration, and the PR #27 rework. Judging criteria Friday 19 Sep.
+
+## 2026-09-15 | Codex assistant | GPT-5 | WBS 3.2 — synthetic edge producer | implementation on branch, review pending
+
+Changed: `appliance/agent.py` now constructs only the exact v0.1.0 event envelope from `contracts/events.schema.json` and enforces visibly synthetic `sim_` identifiers, `sim_: true`, UTC `Z` timestamps and the allowed freshness values. `EventQueue` appends flushed JSONL lines, reloads FIFO state, stops visibly on malformed content, and removes entries only after an injected consumer acknowledges them. Added `appliance/tests/test_agent.py` and three `sim_` fixtures covering schema shape, privileged-field rejection, restart/FIFO behaviour, acknowledgement boundaries and unchanged malformed queues. Updated `appliance/README.md` with the implementation boundary and explicit non-claims. Updated `team/vukosi.md` with the assistant-run status review; owner availability remains unconfirmed.
+
+Evidence: `python -m unittest discover -s appliance/tests -p 'test_*.py' -v` → **7/7 passed** (Python 3.12.11). `python -m pytest appliance/tests -v` was attempted but could not run because this clone has no pytest module; the equivalent standard-library suite is the recorded focused result. `node --test test/events-contract.test.mjs test/openapi-contract.test.mjs` → **8/8 passed**. `node scripts/check-docs.mjs` → passed. `node scripts/check-intake.mjs` → passed. `node scripts/test-security.mjs .tools/gitleaks.exe` → passed. `.tools/gitleaks.exe dir --redact --config .gitleaks.toml .` → no leaks found. `.tools/gitleaks.exe git --redact --config .gitleaks.toml --log-opts='--all'` → no leaks found. `git diff --check` → passed.
+
+Decision: no contract change. The implementation consumes the merged v0.1.0 envelope without adding fields. The repository's `docs/CONTRACT-APPROVAL-RECORD.md` still records approval as pending; Sibusiso/Lethabo must reconcile that governance record before the contract is called fully frozen.
+
+Needs/blockers: Sibusiso is the first reviewer; both leads review before merge. No live server consumer exists, so direct schema validation is the current acceptance boundary. Power-loss, disk-corruption, concurrent-writer and full-disk cases remain untested and are not claimed. Human owner availability and equipment remain unconfirmed.
+
+Business handoff: not applicable — this is a synthetic producer and queue/replay foundation; it changes no household-facing capability and makes no hardware or sensing claim.
+
+Next: Sibusiso reviews `feat/vukosi-3.2-edge-producer`; after approval, merge via PR, then proceed to WBS 4.2 only with an actual measurement instrument and dated BOM sources.

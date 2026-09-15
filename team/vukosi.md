@@ -31,11 +31,11 @@
 - Owns outright: KHAYA sensors, edge runtime, hardware and power.
 - Reviews only: Sensor/data contract and physical installation assumptions.
 - Lead / escalation: Sibusiso, then both leads.
-- AI tool / model: UNDECLARED — owner must enter actual values.
+- AI tool / model: Codex / GPT-5 (assistant-run in this session; owner confirmation pending).
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: 3.2, proposed, not started.
-- Claimed files / contract versions: none; reserve before editing.
-- Last updated: 12 September 2026 by Codex assistant as a planning assignment.
+- Current task / status: 3.2, implementation present on `feat/vukosi-3.2-edge-producer`; PR and reviewer approval pending. Focused producer suite passes 7/7 with `unittest`.
+- Claimed files / contract versions: `appliance/agent.py`, `appliance/tests/`, `appliance/README.md`; consumes `contracts/events.schema.json` v0.1.0 without changing it.
+- Last updated: 15 September 2026 by Codex assistant at the user's request; owner availability remains unconfirmed.
 
 ## Sequenced work
 
@@ -56,13 +56,21 @@ All hours and dates below are ASSUMPTIONS, subject to availability and gates.
 
 ## Changed this session
 
-No work by Vukosi Khoza is asserted. This package was created by the assistant. No files are reserved and no PR exists.
+2026-09-15 — Codex assistant, at the user's request, implemented WBS 3.2 on `feat/vukosi-3.2-edge-producer`. This records assistant work, not unverified human activity. Added a schema-shaped synthetic producer, JSONL queue/replay, fixtures and focused tests. No sensor, hardware, power, tamper, or live-consumer capability is claimed.
+
+## Role self-review — 2026-09-15
+
+- Current task matches the assignment: WBS 3.2 is the first implementation slice, followed by BOM/power measurement (4.2), offline/power recovery (4.4), and venue kit (6.2).
+- This session used Codex / GPT-5. The human owner's preferred tool/model is not independently confirmed.
+- Availability remains **unconfirmed**; no hours or dates are treated as accepted commitments.
+- The implementation scope matches reality for this checkout: `appliance/` has no real sensors, fabricated appliance, power instrument, or live server consumer. The queue demonstrates synthetic file replay only.
+- The contract is consumed exactly as merged. The repository's `docs/CONTRACT-APPROVAL-RECORD.md` still says approval is pending; Sibusiso/Lethabo must reconcile that record before the contract is described as fully frozen.
 
 ## Needs and blockers
 
 - No appliance → Lethabo procurement decision.
 - no UPS measurement → borrow test equipment through team.
-- event contract frozen at v0.1.0 in `contracts/events.schema.json`, merged to main via PR #6 (Lethabo approved) — build against the exact fields and rejection rules. `test/events-contract.test.mjs` is the pattern to mirror for your own producer's output tests. No live server consumer exists yet (server/ is still scaffold-only) — validate against the schema directly until one does.
+- event envelope v0.1.0 is merged in `contracts/events.schema.json`, with Lethabo's PR #6 approval and Sibusiso's implementation instruction; the approval record still requires reconciliation before calling the contract fully frozen. Build against the exact fields and rejection rules. `test/events-contract.test.mjs` is the pattern mirrored by the producer tests. No live server consumer exists yet — validate against the schema directly until one does.
 
 Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
 
