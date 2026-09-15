@@ -198,3 +198,17 @@ Needs/blockers: P1.1, P1.2 and P1.3 remain open; the remaining four sequenced WB
 Business handoff: not applicable — no household capability changed. This correction serves C3 by keeping task status aligned with checkable evidence.
 
 Next: request Sibusiso's re-review, then both leads' review before merge.
+
+## 2026-09-17 | Sibusiso (Claude session) | P2.15 | closed — ADR-0028
+
+Changed: decided and recorded whether to self-host an OpenTimestamps calendar (`docs/CHECKLIST.md` P2.15, owner Sibusiso). Decision: no. Recorded as `docs/adr.md` ADR-0028 — self-hosting a calendar server solves submission/verification-time dependency more expensively than necessary; the actual mitigation is (a) submitting every root to multiple public calendars (already the OTS client default) and (b) a scheduled `ots upgrade` pass in `anchor/publish.py` that converts pending timestamps to complete, self-verifying-against-Bitcoin proofs as soon as their confirmation lands. Corrected `docs/ANCHOR-RATIONALE.md`'s attack-3 rehearsed answer, which previously conflated "self-host a calendar" with "run `ots upgrade`" as one mitigation — they are different-weight commitments, and only the second is actually needed. Baked the decision into `anchor/README.md`'s `publish.py` row and non-negotiables so Task 5's implementer inherits the design without re-deriving it. Closed `docs/CHECKLIST.md` P2.15.
+
+Evidence: `anchor/` contains only `README.md` — Task 5 has not started, so this is a design decision made ahead of implementation, not a retrofit. `node scripts/check-docs.mjs` passed.
+
+Decision: made unilaterally by Sibusiso, within his explicit authority — `docs/ANCHOR-RATIONALE.md`'s original text already named this "Sibusiso's call" before this session touched it. Does not require both-lead sign-off under `docs/OVERLAPS.md` (it is not a change to `contracts/` or any frozen shape), but Lethabo can review since it touches `docs/ANCHOR-RATIONALE.md`, a shared evidence/deck surface.
+
+Needs/blockers: this is a design decision, not an implementation. `anchor/publish.py` (Task 5) must actually build multi-calendar submission and the `ots upgrade` schedule before the attack-3 answer can be claimed live in any demo or deck — per the honesty ledger, state "pending calendar aggregation" honestly until then.
+
+Business handoff: not applicable — no household capability changed, this closes an open decision blocking honest claim-making about the anchor's reliability story.
+
+Next: P2.12/P2.13 (Hedera governance-model and HBAR-fee framing corrections, due Sep 17, still open) and Task 5 itself (`anchor/`, blocked behind WBS 3.3 in the port sequence).

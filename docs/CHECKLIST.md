@@ -66,7 +66,7 @@
 | P2.12 | Stop calling Hedera *"a public blockchain"* — it is a **permissioned-consensus ledger run by a Governing Council of up to 39**. Still a legitimate choice; blurring it invites *"so it's not really decentralised"* | Babatunde | C2 | Sep 17 | ☐ | Added 14 Sep, Lethabo |
 | P2.13 | State that Hedera mainnet fees are **paid in HBAR**, rather than let a judge find the tension with *"we refused tokens."* OpenTimestamps genuinely needs no wallet, token or account — that claim holds | Babatunde | C2 | Sep 17 | ☐ | Added 14 Sep, Lethabo |
 | P2.14 | Rehearse the three blockchain attacks verbatim: *(a)* walk me through R1.30, *(b)* why not a private signed hash chain, *(c)* OpenTimestamps depends on volunteer calendar servers | Babatunde, Sibusiso | C2 | Sep 23 | ☐ | Added 14 Sep, Lethabo |
-| P2.15 | **Decide and record:** do we self-host an OpenTimestamps calendar and run `ots upgrade` promptly? The answer to attack *(c)* is only valid if it is actually implemented | Sibusiso | C2, C3 | Sep 18 | ☐ | Added 14 Sep, Lethabo |
+| P2.15 | ~~Decide and record: self-host an OpenTimestamps calendar?~~ **CLOSED 17 September 2026 — ADR-0028.** No self-hosted calendar; the actual mitigation is multi-calendar submission (OTS client default) plus a scheduled `ots upgrade` pass in `anchor/publish.py`, both ordinary client logic, not infrastructure. `docs/ANCHOR-RATIONALE.md` attack-3 answer corrected to match. Implementation still pending Task 5 (`anchor/` not started) — do not claim the mitigation live until `anchor/publish.py` actually runs it | Sibusiso | Sep 18 | ☑ | Closed 17 Sep, Sibusiso |
 
 ---
 

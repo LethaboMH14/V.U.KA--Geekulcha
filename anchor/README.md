@@ -11,11 +11,13 @@
 | `chain.py` | Prev-hash chain. Ports the hashing/pointer logic from `server/src/db` once that lands |
 | `sign.py` | Ed25519 per-party keypairs — one each for device, operator, security company |
 | `merkle.py` | Hourly batching → one 32-byte root. **Nothing else goes on chain, ever** (E4) |
-| `publish.py` | OpenTimestamps client, chosen over a permissioned chain for longevity — see `docs/ANCHOR-RATIONALE.md` |
+| `publish.py` | OpenTimestamps client, chosen over a permissioned chain for longevity — see `docs/ANCHOR-RATIONALE.md`. **Must submit to multiple public calendars and schedule a prompt `ots upgrade` pass (ADR-0028) — no self-hosted calendar** |
 | `verify.py` | Integrity + anchor verification. **Returns the first broken link by index, not a boolean** — this is a frozen contract (`docs/00-SPEC.md` §4.2) |
 | `subject.py` | Subject access (F14) + deletion that removes the payload and retains the hash (F15) |
 
 ## Non-negotiable, before any code lands here
+
+- **No self-hosted OpenTimestamps calendar (ADR-0028).** `publish.py` submits every root to multiple public calendars and runs `ots upgrade` promptly once a Bitcoin confirmation lands, so the proof becomes self-verifying without ongoing calendar dependency. Do not claim this mitigation live in any deck/demo until it is actually implemented and running.
 
 - **Canonical serialisation is not a style choice.** `event_hash = SHA256(json.dumps(entry, sort_keys=True))`. `sort_keys=True` is what lets a stranger reproduce the hash independently — this is the entire point of the anchor.
 - **`verify.py` returns the first broken link, not pass/fail.** A boolean tells an operator something is wrong; an index tells them what and where.
