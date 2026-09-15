@@ -299,3 +299,7 @@ Added `docs/SIBUSISO-REVIEW-HANDOFF.md` with the pushed commit inventory, verifi
 ### 2026-09-15 20:10 SAST — P2.17 operator training checklist
 
 Added `docs/OPERATOR-TRAINING-CHECKLIST.md` covering machine-ceiling, refusal evidence, two-signature actions, verifier output, privacy boundaries, anchor states, and rollback rehearsal. Training evidence is not yet recorded.
+
+### 2026-09-15 20:25 SAST — WBS 3.1 approval record
+
+Added `docs/CONTRACT-APPROVAL-RECORD.md` with the exact lead, second-lead, consumer, ADR, version, and commit fields required before the proposed contracts can be called frozen.
