@@ -89,7 +89,7 @@ Each requirement carries an ID used throughout this document and in test names.
 | **N5** | Per-inference latency, 2 GB Android device | ≤ 50 ms | meets | ✅ |
 | **N6** | Appliance runtime on battery | 48–72 h | design | 🔨 |
 | **N7** | On-chain footprint | ≤ 32 B / hour | by design | 🔨 |
-| **N8** | Anchoring cost, whole network | < R5 / month | **~R1.30** | 🔨 |
+| **N8** | Anchoring cost, whole network | < R5 / month | **~R0** (OTS primary; Hedera fallback ~R9–10, corrected 17 Sep) | 🔨 |
 | **N9** | False alerts surfaced per camera-week | ≤ 1 | in evaluation | 🔨 |
 | **N10** | Forecast skill vs naive baseline | beat it | **FAILS: MAE 0.484 vs 0.246** | ⚠️ OPEN GAP |
 
@@ -197,8 +197,8 @@ event → canonical JSON → SHA-256 with prev_hash → chain entry
 | Decision | Choice | Reason |
 |---|---|---|
 | Chain | **OpenTimestamps → Bitcoin** | Free, no wallet, no token, no account. Chosen for **longevity** — a claim may reach court in ten years, and if the chain you anchored to has died, your proof died with it |
-| Alternative | Hedera Consensus Service | ~3–5 s finality if low latency is ever needed; ~$0.0001 per message |
-| Cadence | Hourly | 720 anchors/month ≈ **R1.30 for the entire network**. Batched, therefore a **fixed** cost — identical at 100 homes or 100 000 |
+| Alternative | Hedera Consensus Service | ~3–5 s finality if low latency is ever needed; ~$0.0008 per message (repriced Jan 2026, 8x; was ~$0.0001) |
+| Cadence | Hourly | 720 anchors/month ≈ **~R0 on OpenTimestamps** (public calendar, primary system). Batched, therefore a **fixed** cost — identical at 100 homes or 100 000. Hedera fallback ≈ R9–10/month at current pricing |
 | On-chain payload | 32-byte root only | **E4.** No personal data, ever |
 | Signatures | Ed25519, one keypair per party | Device, operator, security company. Off-chain, inside the Merkle tree |
 | Destructive actions | **2-of-2 multi-signature** | F13. Whitelist, disarm, threshold, delete |

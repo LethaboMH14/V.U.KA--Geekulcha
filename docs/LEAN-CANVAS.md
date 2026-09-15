@@ -278,11 +278,11 @@ HARDWARE — the KHAYA appliance
 CLOUD & RUNNING COSTS — small on purpose, because inference is on-device
 · Azure/AWS at ~1,000 homes: R10,000–15,000/month ⚑ (relay, database, short clips)
 · Marginal cloud cost per household: ~R12/month
-· THE BLOCKCHAIN: 24 roots/day × 30 = 720 anchors/month. On Hedera at ~$0.0001 each
-  that is about R1.30 PER MONTH — for the entire network, at any size. On
-  OpenTimestamps it is free.
+· THE BLOCKCHAIN: 24 roots/day × 30 = 720 anchors/month. Primary chain is
+  OpenTimestamps → Bitcoin: free public calendar servers, ∼R0/month for the
+  entire network. Corrected 17 Sep — see docs/EVIDENCE.md 'Anchoring cost'.
   This is the cost line to say out loud: the anchor is BATCHED, so it is a FIXED
-  cost, not a per-user one. At 100 homes or 100,000 homes it is the same R1.30. A
+  cost, not a per-user one. At 100 homes or 100,000 homes it is the same number. A
   blockchain that gets cheaper per user the more users you have is what
   "commercially viable" actually means.
 
@@ -370,6 +370,6 @@ WHAT WE REFUSE TO SELL
 
 1. **Verify the ⚑ figures.** The hardware BOM and the SA market numbers are estimates. The PSiRA officer count especially — your own business case already flagged it as needing verification. A judge who catches an invented figure will discount everything else, and your whole position is that you don't invent figures.
 
-2. **The R1.30 anchoring cost is your single best commercial line in that bucket.** Say it slowly: *"Our blockchain costs one rand thirty a month. For the whole network. Because we batch, it is a fixed cost — at a hundred homes or a hundred thousand it is the same number."* Three rivals will be explaining gas fees.
+2. **The near-zero anchoring cost is your single best commercial line in that bucket.** Say it slowly: *"Our blockchain costs about zero rand a month on OpenTimestamps, our primary chain. For the whole network. Because we batch, it is a fixed cost — at a hundred homes or a hundred thousand it is the same number."* Three rivals will be explaining gas fees.
 
 3. **"What we refuse to sell" belongs in the canvas, not just the deck.** Cutting the underwriting line out of your own business case — and saying you cut it — is the strongest possible proof that the ethics are load-bearing rather than decorative.

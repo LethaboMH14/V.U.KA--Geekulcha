@@ -516,7 +516,7 @@ Detailed in `19-VUKA-System-Architecture.md` §11.5. The headline four:
 
 | Horizon | Position |
 |---|---|
-| **Cost** | Anchoring is **fixed at ~R1.30/month for the whole network at any size** (D9). The verifiability can never become an economic casualty of growth |
+| **Cost** | Anchoring is **fixed at ~R0/month for the whole network at any size** (OpenTimestamps primary; Hedera ~R9–10 fallback, corrected 17 Sep) (D9). The verifiability can never become an economic casualty of growth |
 | **Operations** | Edge-first compute; no video streaming by default; retention TTLs cap storage growth |
 | **Knowledge** | Append-only decision record; a PR for everything |
 | **If the company fails** | **Published anchor roots remain verifiable using public tools, with no cooperation from us.** A member's proof survives our death. This is a direct consequence of D8 and D11 |

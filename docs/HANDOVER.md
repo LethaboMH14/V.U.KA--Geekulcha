@@ -107,7 +107,7 @@ If a change makes the system more capable but less checkable, it is the wrong ch
 
 - KHAYA bundle R299/month → hardware amortised R125, cloud and anchor R12, support R25 → **gross margin R137, 46%**.
 - Prototype BOM R3,900, modelled R3,000 at 1,000 units. **Estimate.**
-- Anchoring: 720 anchors/month, **~R1.30/month for the entire network** — fixed, not per user.
+- Anchoring: 720 anchors/month, **~R0/month for the entire network** on OpenTimestamps (primary; Hedera ~R9–10 fallback, corrected 17 Sep) — fixed, not per user.
 
 **What currently fails — never soften these**
 

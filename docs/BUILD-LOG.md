@@ -226,6 +226,19 @@ Business handoff: not applicable — no household capability changed. This corre
 
 Next: request Sibusiso's re-review, then both leads' review before merge.
 
+## 2026-09-17 | Sibusiso (Claude session) | P2.11 / G22 | closed
+
+Changed: swept the stale ~R1.30/month anchoring figure everywhere it still appeared live — `anchor/README.md`, `docs/00-SPEC.md` (N8, alternative/cadence rows), `docs/01-ARCHITECTURE.md` (9 occurrences across diagrams and tables), `docs/08-BUSINESS.md`, `docs/HANDOVER.md`, `docs/LEAN-CANVAS.md`, `docs/SDLC.md`, `docs/TECH-STACK.md` (Hedera per-message price). Picked OpenTimestamps as the named primary chain — it was already the diagrammed default throughout `docs/01-ARCHITECTURE.md` and named "Chain" (not "Alternative") in `docs/00-SPEC.md` and `docs/TECH-STACK.md`, so this corrects the cost line to match a decision already made, not a new one. Corrected figure: **~R0/month** (OpenTimestamps, public calendar servers), Hedera fallback recomputed at current price (`$0.0008/message`, repriced Jan 2026) ≈ **R9–10/month**. Closed `docs/CHECKLIST.md` P2.11 and `docs/OPEN-GAPS.md` G22; updated `docs/MASTER-CONTEXT.md`'s live-status table from `ESTIMATE`/"under review" to `FACT`.
+
+Evidence: the reconstruction itself (720 × $0.0008 = $0.576/month ≈ R9–10 at ~R16.24/USD) was already done and correct in `docs/EVIDENCE.md` and `docs/ANCHOR-RATIONALE.md` on 14 September — this entry is the sweep applying that correction everywhere the old number was still live, not a new calculation. Left `docs/ANCHOR-RATIONALE.md`'s rehearsed-attack section and `docs/CHECKLIST.md` P2.14 untouched — both intentionally quote the old wrong number as the gotcha question a judge might ask, not as a live claim. Left `docs/PLAN.md`, `docs/EVIDENCE.md`, `docs/audit/*`, `docs/BUILD-LOG.md`'s own prior entries and `submission/archive-2026-08/README.md` untouched — historical/planning record, not live claims. `node scripts/check-docs.mjs` passed; `git diff --stat` confirms every table's pipe count is unchanged (no row broken).
+
+Decision: OpenTimestamps as primary is not a new decision — `docs/00-SPEC.md`'s own "Chain" row and every architecture diagram already named it as such, with Hedera consistently listed as "Alternative"/"fallback." This closes the gap between what the architecture already decided and what the cost line stated.
+
+Needs/blockers: the ~R0 figure for OpenTimestamps assumes public volunteer calendar servers, which is the subject of `docs/CHECKLIST.md` P2.15 (self-host a calendar and run `ots upgrade`, still open, due Sep 18) and the third rehearsed attack in `docs/ANCHOR-RATIONALE.md`. If P2.15 is not resolved before demo day, the ~R0 figure still holds (it's the cost, not the reliability claim) but the "no single point of failure" framing needs the honest caveat already written in `docs/ANCHOR-RATIONALE.md` attack 3.
+
+Business handoff: not applicable — no household capability changed, cost figure correction only.
+
+Next: P2.15 (self-host OTS calendar decision, due Sep 18) and P2.12/P2.13 (Hedera governance-model and HBAR-fee framing, due Sep 17, still open).
 ## 2026-09-15 | Claude (Sibusiso's session) | naming conflict — contracts/ vs shared/contract.ts | resolved, doc-only
 
 Changed: `shared/README.md` rewritten to state the frozen contract lives in `contracts/events.schema.json` + `contracts/openapi.yaml` (built under WBS 3.1 this same day), not the originally-planned `shared/contract.ts`, which is retired but the file kept as a pointer so nobody re-reserves it. Corrected the two `shared/contract.ts` references in `docs/HANDOVER.md` (the ownership table and the Task 4 port order) to point at `contracts/`.
