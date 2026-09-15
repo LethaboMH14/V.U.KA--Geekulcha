@@ -33,7 +33,7 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: 1.4, proposed, not started.
+- Current task / status: 1.4, done; intake gate approved with both lead approvals recorded in `docs/security/intake-gate.json`.
 - Claimed files / contract versions: `team/khutso.md` (role self-review) and `docs/BUILD-LOG.md` (append-only review record); no contract version change.
 - Last updated: 12 September 2026 by Codex assistant as a planning assignment.
 
@@ -57,7 +57,7 @@ All hours and dates below are ASSUMPTIONS, subject to availability and gates.
 
 ## Changed this session
 
-2026-09-15 — Codex assistant, acting at Khutso Mothopa's request, prepared this role review on `docs/khutso-role-feedback`. No substantive WBS leaf is marked complete; the PR records feedback and coordination only.
+2026-09-15 — Codex assistant, acting at Khutso Mothopa's request, prepared this role review on `docs/khutso-role-feedback`. WBS 1.4 is complete based on the approved intake gate and recorded lead approvals; the remaining four sequenced leaves are not marked complete. The PR records feedback and coordination only.
 
 ## Role review and self-feedback — 2026-09-15
 
@@ -70,7 +70,7 @@ All hours and dates below are ASSUMPTIONS, subject to availability and gates.
 ### What I need to improve
 
 - P1.1, P1.2, and P1.3 remain open while stale market, anchoring, ADR, test-count, and TRL claims still appear in current documents or the deck generator. I must not mark any of them done until each replacement has a personally checked command or source and an exact sweep result.
-- The operating-spec “next” task (P1.1) and the formal WBS status (1.4 proposed/not started) are not reconciled. I will keep the formal WBS status proposed until availability, dependencies, and acceptance evidence are confirmed; the evidence corrections are the next bounded review activity.
+- WBS 1.4 is complete: the intake gate is approved and both lead approvals are recorded in `docs/security/intake-gate.json`. P1.1 remains the next bounded evidence activity; the remaining four sequenced WBS leaves stay proposed/not started until their own dependencies and acceptance evidence are confirmed.
 - My acceptance role depends on inputs I do not own: remediation receipts from the account owners, reproducible predecessor test/TRL evidence from Sibusiso, and contract/privacy decisions from the relevant owners. I should record those as blockers, not infer completion from a green document check.
 
 ### Feedback to the team
@@ -79,7 +79,7 @@ Please route evidence requests through the named owner and require the command, 
 
 ### Status and boundary
 
-This is a role review, not evidence that a WBS leaf or product capability is complete. Availability remains unconfirmed, all five sequenced WBS leaves remain proposed/not started, and no approval is inferred. The work serves C3 by making the acceptance state and blockers checkable; a real user should trust the project only when its claims remain reproducible under this scrutiny.
+This is a role review, not evidence that a product capability is complete. WBS 1.4 is complete from the recorded intake-gate evidence; availability remains unconfirmed and the remaining four sequenced WBS leaves remain proposed/not started. No approval is inferred beyond the recorded gate. The work serves C3 by making the acceptance state and blockers checkable; a real user should trust the project only when its claims remain reproducible under this scrutiny.
 
 ## Needs and blockers
 

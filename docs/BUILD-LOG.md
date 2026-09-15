@@ -185,3 +185,16 @@ Needs/blockers: P1.1, P1.2 and P1.3 require the corrected claim sweep and person
 Business handoff: not applicable — no household capability changed. This entry serves C3 by making role accountability and evidence boundaries checkable; trust remains conditional on reproducible claims.
 
 Next: Sibusiso first review, then both leads review this PR. No merge is requested until the required reviews and checks are recorded.
+## 2026-09-15 | Codex assistant on behalf of Khutso Mothopa | GPT-5 | review correction — WBS 1.4 | proposed, re-review pending
+
+Changed: `team/khutso.md` — corrected WBS 1.4 from proposed/not started to done after Sibusiso identified the existing approved intake gate and both recorded lead approvals. Revised the role-review status language so the remaining four sequenced WBS leaves stay proposed/not started. No product code, contract, or other WBS completion status changed.
+
+Evidence: `docs/security/intake-gate.json` has `status: approved`, with non-empty `lethabo` and `sibusiso` lead-approval entries. Sibusiso's PR #5 review requested this factual correction; no new measurement or source claim is introduced.
+
+Decision: none. This is a review correction within PR #5, not a new governance decision.
+
+Needs/blockers: P1.1, P1.2 and P1.3 remain open; the remaining four sequenced WBS leaves require their own dependencies and acceptance evidence. Local Gitleaks remains unavailable, while the PR's remote secret scan is the relevant check.
+
+Business handoff: not applicable — no household capability changed. This correction serves C3 by keeping task status aligned with checkable evidence.
+
+Next: request Sibusiso's re-review, then both leads' review before merge.
