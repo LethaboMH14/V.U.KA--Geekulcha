@@ -21,7 +21,7 @@
 - Not "unhackable," not "court-admissible," not "unbiased AI" — **the honesty ledger is a security control**, not marketing caution.
 - Abuse cases are **executable tests**, not prose.
 
-**Current task** — **PSiRA position paper** — trigger, category, structure, the open question for counsel (`P2.1`), then **POPIA position paper + ADR** — the s27 asymmetry and discard-by-default (`P2.2`), then register the Information Officer (`P2.5`).
+**Current task** — **PSiRA position paper written 15 Sep** (`P2.1`) — `docs/PSIRA-POSITION.md` on PR #28: trigger (the Phase-1 pilot already pulls it), registration category (monitoring + install/servicing; IDs and fees ⚑ for counsel), flag-gate reviewers (assume registered until counsel says no), partner-of-record contracting structure with three variants, Q1–Q8 for counsel. Next: **POPIA position paper + ADR** — the s27 asymmetry and discard-by-default (`P2.2`), then register the Information Officer (`P2.5`).
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every abuse case I sign off exists as a test that actually runs and actually fails the attack.
 
@@ -57,7 +57,7 @@ All hours and dates below are ASSUMPTIONS, subject to availability and gates.
 
 ## Changed this session
 
-No work by Ipeleng Constance Modise is asserted. This package was created by the assistant. No files are reserved and no PR exists.
+2026-09-15: Ipeleng (via Cline assistant) wrote the P2.1 PSiRA position paper, `docs/PSIRA-POSITION.md` — trigger, registration category, flag-gate reviewer position, partner-of-record contracting structure (three variants + fallback), six minimum contract clauses, counsel questions Q1–Q8, downstream consequences for P2.2–P2.6. Swept the superseded "we do not dispatch" one-liner in `docs/08-BUSINESS.md` and the G19/P2.1 status rows. PR #28; merge and counsel review pending.
 
 ## Needs and blockers
 
@@ -86,3 +86,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 ## Running log
 
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
+- 2026-09-15 — Ipeleng (via Cline assistant): wrote `docs/PSIRA-POSITION.md` (`P2.1`, PR #28). Position: the obligation attaches to *rendering*, not revenue or scale — the Phase-1 pilot already triggers it; registration required in the electronic-monitoring category plus install/servicing; flag-gate reviewers assumed to need individual registration until counsel says otherwise; partner-of-record structure with three variants (fallback: VUKA self-registers for the pilot); six minimum contract clauses; counsel questions Q1–Q8. Primary sources unreachable this session (SAFLII 403, psira.co.za down, gov.za 404) — no verbatim statutory quotes; all wording flagged ⚑ (paper §9). Not legal advice; live monitoring blocked at G-gate until counsel reports. Next: `P2.2` POPIA paper + ADR.
