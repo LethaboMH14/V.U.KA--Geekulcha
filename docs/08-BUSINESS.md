@@ -100,7 +100,7 @@ Risk-layer data licence to municipalities and provincial community-safety units 
 |---|---|
 | Cloud at ~1,000 homes (relay, DB, short clips) | R10,000–15,000 / month |
 | Marginal cloud per household | ~R12 / month |
-| **Anchoring — entire network, any size** | **~R1.30 / month** |
+| **Anchoring — entire network, any size** | **~R0 / month** (OTS primary; Hedera ~R9–10 fallback, corrected 17 Sep) |
 
 > **The line to say out loud on stage:**
 > *"Our blockchain costs one rand thirty a month. For the whole network. Because we batch every household into one hourly root, it is a **fixed** cost — at a hundred homes or a hundred thousand it is the same number. A chain that gets cheaper per user as you grow is what 'commercially viable' actually means."*
@@ -206,7 +206,7 @@ Disputes resolved using an anchored record · claims settlement time (weeks → 
 
 | Risk | Mitigation |
 |---|---|
-| **Judged on blockchain depth** in a bucket of blockchain-literate teams | Our chain is minimal *by design*, and minimalism is what makes it commercially viable. R1.30/month, no wallet, no personal data. We frame the discipline as the achievement |
+| **Judged on blockchain depth** in a bucket of blockchain-literate teams | Our chain is minimal *by design*, and minimalism is what makes it commercially viable. ~R0/month (OpenTimestamps primary), no wallet, no personal data. We frame the discipline as the achievement |
 | POPIA blocks public-sector adoption | **G3 is in the current build cycle.** Retention TTL, subject-access, deletion route — and the anchor makes our posture stronger than most commercial systems |
 | Hardware supply and cost | Software-first: VIGIL needs no hardware at all. KHAYA is phase 2 |
 | Security company sees us as a competitor | We sell *through* them and improve their unit economics. We never dispatch |

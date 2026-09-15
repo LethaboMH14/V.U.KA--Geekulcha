@@ -164,7 +164,7 @@ flowchart LR
     R["Decision record<br/>stays private, on our server"] -->|"SHA-256"| H["Leaf hash"]
     H --> M["Hourly Merkle tree<br/>of every record that hour"]
     M --> ROOT["<b>32-byte root</b>"]
-    ROOT -->|"OpenTimestamps"| BTC["Bitcoin<br/>no wallet · no token<br/>no account<br/>~R1.30/month for<br/>the whole network"]
+    ROOT -->|"OpenTimestamps"| BTC["Bitcoin<br/>no wallet · no token<br/>no account<br/>~R0/month for<br/>the whole network<br/>(OTS primary)"]
     style R fill:#e6f7f1,stroke:#1baf7a
     style ROOT fill:#eeeafa,stroke:#4a3aa7
     style BTC fill:#fff7e6,stroke:#d68910
@@ -939,7 +939,7 @@ sequenceDiagram
     P->>OTS: Submit root
     OTS-->>P: Incomplete timestamp proof
     OTS->>BTC: Aggregate with other submissions
-    Note over OTS,BTC: Cost is fixed per hour,<br/>NOT per user. This is what<br/>makes it about R1.30 a month<br/>for the entire network,<br/>at any network size.
+    Note over OTS,BTC: Cost is fixed per hour,<br/>NOT per user. This is what<br/>makes it about ~R0 a month<br/>for the entire network,<br/>at any network size (OTS primary;<br/>Hedera ~R9–10 fallback).
     BTC-->>OTS: Block confirms
     P->>P: Upgrade proof to complete
     P->>C: Store proof next to the batch
@@ -956,7 +956,7 @@ flowchart LR
     subgraph N2["100 000 members"]
         A2["~5 000 000 records/hour"] --> R2["1 root<br/>32 bytes"]
     end
-    R1 --> COST["<b>Identical on-chain cost</b><br/>~R1.30 / month<br/>for the whole network"]
+    R1 --> COST["<b>Identical on-chain cost</b><br/>~R0 / month<br/>for the whole network (OTS)"]
     R2 --> COST
     style COST fill:#e8f8f0,stroke:#1baf7a,stroke-width:2px
 ```
@@ -1627,7 +1627,7 @@ An inclusion proof is `log₂(n)` hashes. For a batch of a million records that 
 | Requirement | OpenTimestamps → Bitcoin | Hedera Consensus Service | A chain we run |
 |---|---|---|---|
 | No wallet, no token, no account | ✅ | ⚠️ account required | ✅ |
-| Cost at network scale | **~R1.30 / month, total** | Low but per-message | Infrastructure cost |
+| Cost at network scale | **~R0 / month, total** (OTS primary) | Low but per-message | Infrastructure cost |
 | **Longevity — a claim may reach a court in ten years** | ✅ the strongest bet available | ⚠️ younger, corporate governance | ❌ dies with the company |
 | Latency to finality | ~1 hour | seconds | instant |
 | **Verifier does not need us** | ✅ | ✅ | ❌ **fatal** |
@@ -1684,7 +1684,7 @@ Steps 1–4 use **public tools only**. That is the acceptance criterion for the 
 | Component | Cost | Scales with |
 |---|---|---|
 | One OTS submission per hour | Aggregated across all OTS users | Nothing |
-| 24 roots per day, 720 per month | **~R1.30 / month for the entire network** | **Nothing** |
+| 24 roots per day, 720 per month | **~R0 / month for the entire network** (OTS primary; Hedera ~R9–10 fallback, corrected 17 Sep) | **Nothing** |
 | Per member | **R0.00** | — |
 | Per record | **R0.00** | — |
 
@@ -1803,7 +1803,7 @@ flowchart TB
 
 ## 8.5 The KHAYA appliance
 
-📋 **SPECIFIED — not fabricated.** This is gap G-10 and it is the reason we assess TRL 5 rather than 6.
+📋 **SPECIFIED — not fabricated.** This is gap G-10 and it is the ceiling reason we assess TRL 4 rather than 6 (ADR-0027).
 
 | Item | Spec | Budget |
 |---|---|---|
@@ -1993,7 +1993,7 @@ The last row is the one worth pausing on. In most systems, human unavailability 
 | Per-inference, 2 GB Android device | ≤ 50 ms | meets | bench |
 | Appliance battery runtime | 48–72 h | design | ⚠️ hardware not fabricated |
 | On-chain footprint | ≤ 32 B / hour | by design | `anchor/merkle.py` |
-| Anchoring cost, whole network | < R5 / month | **~R1.30** | invoice |
+| Anchoring cost, whole network | < R5 / month | **~R0** (OTS primary) | invoice |
 | Anchor liveness | 100 % of hours | — | `anchor/verify.py` in CI |
 | Dual-signature compliance | 100 % | — | contract test |
 | False alerts / camera-week | ≤ 1 | in eval | `ml/eval/fa_budget.py` |
@@ -2161,7 +2161,7 @@ Every requirement traces to a decision, a component, a test and a status. **Noth
 | **N4** | Inference on a 2 GB Android device | ≤ 50 ms | ✅ | bench |
 | **N5** | Appliance battery runtime | 48–72 h | 📋 **not fabricated — G-10** | hardware test |
 | **N6** | On-chain footprint | ≤ 32 B / hour | ✅ by design | `anchor/merkle.py` |
-| **N7** | Anchoring cost, whole network | < R5 / month | ✅ **~R1.30** | invoice |
+| **N7** | Anchoring cost, whole network | < R5 / month | ✅ **~R0** (OTS primary) | invoice |
 | **N8** | False alerts per camera-week | ≤ 1 | 🔨 in eval | `ml/eval/fa_budget.py` |
 | **N9** | Anchor liveness | 100 % of hours | 🔨 | `anchor/verify.py` in CI |
 | **N10** | Graceful degradation, stale marked stale | — | ✅ | §9.5 |
@@ -2267,27 +2267,30 @@ Two gates on this chain are unusual and both are deliberate:
 
 ```mermaid
 flowchart LR
-    T1["TRL 1<br/>principles<br/>observed"] --> T2["TRL 2<br/>concept<br/>formulated"] --> T3["TRL 3<br/>proof of<br/>concept"] --> T4["TRL 4<br/>validated in<br/>lab"] --> T5["TRL 5<br/><b>validated in<br/>relevant env</b>"] --> T6["TRL 6<br/>demonstrated in<br/>relevant env"] --> T7["TRL 7<br/>prototype in<br/>operational env"] --> T8["TRL 8"] --> T9["TRL 9"]
-    style T5 fill:#ece9f7,stroke:#4a3aa7,stroke-width:3px
+    T1["TRL 1<br/>principles<br/>observed"] --> T2["TRL 2<br/>concept<br/>formulated"] --> T3["TRL 3<br/>proof of<br/>concept"] --> T4["TRL 4<br/><b>validated in<br/>lab</b>"] --> T5["TRL 5<br/>validated in<br/>relevant env"] --> T6["TRL 6<br/>demonstrated in<br/>relevant env"] --> T7["TRL 7<br/>prototype in<br/>operational env"] --> T8["TRL 8"] --> T9["TRL 9"]
+    style T4 fill:#ece9f7,stroke:#4a3aa7,stroke-width:3px
+    style T5 fill:#fff7e0,stroke:#d4a017,stroke-dasharray:4 3
     style T6 fill:#fff7e0,stroke:#d4a017,stroke-dasharray:4 3
     style T7 fill:#f5f5f5,stroke:#999,stroke-dasharray:4 3
 ```
 
-**We state TRL 5, and here is the evidence rather than the assertion.** The submission template offers TRL 3; claiming less than we can show would be its own kind of dishonesty, so ADR-0025 records the deviation and the reasoning.
+**We state TRL 4, and here is the evidence rather than the assertion.** The submission template offers TRL 3; claiming less than we can show would be its own kind of dishonesty — and claiming more than this repository verifies would be worse. **ADR-0027** records the position, the reasoning, and the two subsystems argued at 5.
 
-| TRL 5 criterion | Our evidence | Verifiable how |
+| TRL 4 criterion | Our evidence | Verifiable how |
 |---|---|---|
-| Components integrated, not isolated | Four layers, end-to-end pipeline, ~33 600 LOC across the repository | Read it |
-| Validated in a **relevant** environment | Real SAPS quarterly data, 15 712 claims, 709 geocoded suburbs, live Eskom and weather feeds | Run the pipeline |
-| Measured against a budget | Detection → alert p95 **318 ms** (n = 10) against a 2 000 ms budget | `scripts/latency.py` |
+| Components integrated, not isolated | Four layers, end-to-end pipeline, ~33 600 LOC across the predecessor repositories | Read it |
+| Validated in a **laboratory** environment | Real SAPS quarterly data, 15 712 claims, 709 geocoded suburbs, live Eskom and weather feeds — historical, predecessor-verified, not reproduced in this repository | Run the pipeline after the port |
+| Measured against a budget | Detection → alert p95 **318 ms** (n = 10) against a 2 000 ms budget — historical, not reproduced here | `scripts/latency.py` |
 | Automated verification source exists | **510 test-function definitions found**; executed-suite count pending | CI |
-| Decisions are documented and traceable | **25 ADRs**, 224 predecessor `origin/main` commits, append-only build log | `docs/adr.md` |
+| Decisions are documented and traceable | **27 ADRs**, 224 predecessor `origin/main` commits, append-only build log | `docs/adr.md` |
 
-### ⚠️ Why we are **not** claiming TRL 6
+Two subsystems are **argued at 5**, not verified: the append-only evidence chain (relevant environment: the public internet with an independent verifier) and the on-device sensing path (the acoustic model ships in an Android build — sha256 verified across both predecessors, 15 Sep 2026). Both arguments are `ARGUED` until the port reproduces them here.
+
+### ⚠️ Why we are **not** claiming TRL 6 — recorded in ADR-0027
 
 | Blocker | Consequence |
 |---|---|
-| **KHAYA hardware is not fabricated** — G-10 | The appliance is specified and costed, not built. That caps us honestly at 5 |
+| **KHAYA hardware is not fabricated** — G-10 | The appliance is specified and costed, not built. This is the ceiling: it caps the system at 4, with two subsystems argued at 5 |
 | **Fusion weights not fitted on real data** — G-1 | A calibrated system that has not been calibrated on the operating distribution is a lab result |
 | **No independent penetration test** — G-8 | Security is designed and self-tested, not externally validated |
 | **Bias evaluation not run** — G-9 | Our own stated risk control is untested |
@@ -2340,7 +2343,7 @@ flowchart TB
         direction TB
         F1["1 000 users<br/>→ 1 root / hour"]
         F2["100 000 users<br/>→ 1 root / hour"]
-        F3["<b>~R1.30 / month,<br/>whole network,<br/>at any size</b>"]
+        F3["<b>~R0 / month,<br/>whole network,<br/>at any size (OTS)</b>"]
         F1 --> F2 --> F3
     end
     style PER fill:#fde8e8,stroke:#c0392b
@@ -2351,7 +2354,7 @@ flowchart TB
 
 | Cost line | Position |
 |---|---|
-| Anchoring | **~R1.30/month total**, fixed regardless of scale |
+| Anchoring | **~R0/month total** (OTS primary), fixed regardless of scale |
 | Compute | Edge-first. The phone and the appliance do the inference; the server coordinates |
 | Storage | Embeddings, not media. Retention TTLs cap growth |
 | Appliance BOM | R3 900 prototype → ~R3 000 at 1 000 units ⚑ *estimate, not a supplier quote* |
@@ -2462,7 +2465,7 @@ Distinct from the open-gap register: **risks are things that might go wrong; gap
 | **G-7** | A third party's dataset was tracked in a public MIT repository | C | **G0** |
 | **G-8** | No independent penetration test | B | G5 |
 | **G-9** | **Bias evaluation not run** on the face pipeline — our stated answer to FRVT differentials is untested | A | G5 |
-| **G-10** | Appliance hardware not fabricated. Caps us at TRL 5, not 6 | A | post |
+| **G-10** | Appliance hardware not fabricated. Caps the system at TRL 4, not 6 — ADR-0027 | A | post |
 
 Two more this document surfaced, now on the register:
 
@@ -2510,14 +2513,10 @@ Append-only. Never edited — superseded. `docs/adr.md`.
 | 0005 | **Dempster-Shafer rejected** for fusion; calibrated log-odds with explicit conflict K adopted (Zadeh's paradox) | Accepted |
 | 0006 | POPIA obligations recorded as undischarged | Accepted |
 | 0007 | **No generative model** in any determination path about a person | Accepted |
-| 0020 | Rename to VUKA / VIGIL / UMOJA / KHAYA / ANCHOR. Supersedes the BEACON naming | This cycle |
-| 0021 | **Public anchor chosen over a permissioned chain.** Records the "a private chain does not solve trust *for the member*" reasoning (D11) | This cycle |
-| 0022 | **Two-of-two signatures** on destructive admin actions. Records the whitelist finding as the motivating vulnerability | This cycle |
-| 0023 | **Deletion semantics** — payload removed, hash retained. The POPIA answer | This cycle |
-| 0024 | **Autonomy boundary** — perception vs consequence. Records the refused features and why | This cycle |
-| 0025 | **TRL stated as 5**, not the template's 3, with the evidence | This cycle |
+| 0026 | **ADR numbering collision resolved** — BEACON 0001–0007 kept, Team-Sonar-Vuka renumbered 0008–0025 | Accepted |
+| 0027 | **TRL settled at 4** — two subsystems argued at 5, four reasons not at 6, ceiling named | Accepted |
 
-*(25 ADRs exist in the repository; the table lists those load-bearing for this document.)*
+*(27 ADRs exist in the repository; the table lists those load-bearing for this document. Naming, the public anchor, two-of-two signatures, deletion semantics and the autonomy boundary are recorded in prose across this document and the D-decisions, not as numbered ADRs — a pre-port plan to number them 0020–0025 was superseded by ADR-0026's renumbering, so this index previously listed decisions that do not exist at those numbers.)*
 
 ---
 

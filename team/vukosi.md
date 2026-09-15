@@ -62,7 +62,7 @@ No work by Vukosi Khoza is asserted. This package was created by the assistant. 
 
 - No appliance → Lethabo procurement decision.
 - no UPS measurement → borrow test equipment through team.
-- event contract frozen at v0.1.0 in `contracts/events.schema.json` → build against the exact fields and rejection rules; OpenAPI remains proposed pending both-lead approval. Sibusiso owns the contract review path.
+- event contract frozen at v0.1.0 in `contracts/events.schema.json`, merged to main via PR #6 (Lethabo approved) — build against the exact fields and rejection rules. `test/events-contract.test.mjs` is the pattern to mirror for your own producer's output tests. No live server consumer exists yet (server/ is still scaffold-only) — validate against the schema directly until one does.
 
 Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
 

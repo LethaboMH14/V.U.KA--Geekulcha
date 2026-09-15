@@ -141,7 +141,7 @@ Superseded numbers still live in old artefacts. These are the current ones. Full
 | Detection → alert render | **318 ms p95, 273 ms p50, n = 10**, budget 2,000 ms | `FACT` — historical, not reproduced in this checkout |
 | Crime forecast | **Loses to a constant baseline: MAE 0.484 vs 0.246** | `FACT` — **published regardless, never softened** |
 | TRL | **4**, with two subsystems argued at 5 and the ceiling named | `ASSESSED` — ADR-0027 |
-| Anchoring cost | **Under review — the old R1.30/month figure does not survive.** See `docs/EVIDENCE.md` | `ESTIMATE` |
+| Anchoring cost | **Corrected 17 Sep: ~R0/month on OpenTimestamps (primary), ~R9–10/month Hedera fallback.** See `docs/EVIDENCE.md` | `FACT` (current pricing not independently re-verified at time of use) |
 
 > 🔴 **Dead numbers. If you see these anywhere, they are wrong:** "2.7m security officers vs 180k police" · "27 ADRs" · "440 tests" · bare "TRL 5" · "R1.30/month" without a named system and current price.
 

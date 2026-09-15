@@ -74,7 +74,7 @@ Every row includes **why this and not the obvious alternative.** A stack list pr
 | Signatures | **Ed25519**, one keypair per party | Small, fast, well-audited. Device / operator / security company each sign their own assertions, so a revision is visible as a revision |
 | Batching | **Hourly Merkle tree** | One root covers every household. This is the economic design: batching makes the cost **fixed**, not per-user |
 | Public chain | **OpenTimestamps → Bitcoin** | Free, no wallet, no token, no account — and chosen for **longevity**. A claim may reach court in ten years; if the chain you anchored to has died, your proof died with it |
-| Alternative | **Hedera Consensus Service** | ~3–5 s finality, ~$0.0001/message, purpose-built for tamper-proof event ordering. Our fallback if low latency ever matters |
+| Alternative | **Hedera Consensus Service** | ~3–5 s finality, ~$0.0008/message (repriced Jan 2026, 8x; was ~$0.0001), purpose-built for tamper-proof event ordering. Our fallback if low latency ever matters |
 | **Rejected** | ~~Private / permissioned chain alone~~ | A chain whose validators are the insurer, the security company and us does **not** solve the trust problem *for the member* — the parties in the dispute would be running the nodes. A private layer is fine for throughput; the **anchor must be public** |
 | **Rejected** | ~~Alerts on-chain~~ | Our relay is 318 ms (n = 10). The fastest chain is ~2 s. Consensus in the alert path costs lives and buys nothing |
 | **Rejected** | ~~Tokens, smart-contract auto-dispatch, gate unlock~~ | The first is decoration; the second and third violate **ADR-0002** — no machine-alone consequence on probabilistic inference |

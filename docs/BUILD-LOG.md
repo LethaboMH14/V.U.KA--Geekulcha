@@ -347,6 +347,20 @@ Needs/blockers: PR #6, #7, #8 all still await Lethabo's review. This branch's WB
 Business handoff: not applicable — reconciliation and duplicate removal only.
 
 Next: open a PR for WBS 3.3 (server/src/auth/governance.py, test/governance_contract_test.py, test/openapi-contract.test.mjs) — real, tested progress that's been sitting unpushed.
+
+## 2026-09-17 | Sibusiso (Claude session) | P2.11 / G22 | closed
+
+Changed: swept the stale ~R1.30/month anchoring figure everywhere it still appeared live — `anchor/README.md`, `docs/00-SPEC.md` (N8, alternative/cadence rows), `docs/01-ARCHITECTURE.md` (9 occurrences across diagrams and tables), `docs/08-BUSINESS.md`, `docs/HANDOVER.md`, `docs/LEAN-CANVAS.md`, `docs/SDLC.md`, `docs/TECH-STACK.md` (Hedera per-message price). Picked OpenTimestamps as the named primary chain — it was already the diagrammed default throughout `docs/01-ARCHITECTURE.md` and named "Chain" (not "Alternative") in `docs/00-SPEC.md` and `docs/TECH-STACK.md`, so this corrects the cost line to match a decision already made, not a new one. Corrected figure: **~R0/month** (OpenTimestamps, public calendar servers), Hedera fallback recomputed at current price (`$0.0008/message`, repriced Jan 2026) ≈ **R9–10/month**. Closed `docs/CHECKLIST.md` P2.11 and `docs/OPEN-GAPS.md` G22; updated `docs/MASTER-CONTEXT.md`'s live-status table from `ESTIMATE`/"under review" to `FACT`.
+
+Evidence: the reconstruction itself (720 × $0.0008 = $0.576/month ≈ R9–10 at ~R16.24/USD) was already done and correct in `docs/EVIDENCE.md` and `docs/ANCHOR-RATIONALE.md` on 14 September — this entry is the sweep applying that correction everywhere the old number was still live, not a new calculation. Left `docs/ANCHOR-RATIONALE.md`'s rehearsed-attack section and `docs/CHECKLIST.md` P2.14 untouched — both intentionally quote the old wrong number as the gotcha question a judge might ask, not as a live claim. Left `docs/PLAN.md`, `docs/EVIDENCE.md`, `docs/audit/*`, `docs/BUILD-LOG.md`'s own prior entries and `submission/archive-2026-08/README.md` untouched — historical/planning record, not live claims. `node scripts/check-docs.mjs` passed; `git diff --stat` confirms every table's pipe count is unchanged (no row broken).
+
+Decision: OpenTimestamps as primary is not a new decision — `docs/00-SPEC.md`'s own "Chain" row and every architecture diagram already named it as such, with Hedera consistently listed as "Alternative"/"fallback." This closes the gap between what the architecture already decided and what the cost line stated.
+
+Needs/blockers: the ~R0 figure for OpenTimestamps assumes public volunteer calendar servers, which is the subject of `docs/CHECKLIST.md` P2.15 (self-host a calendar and run `ots upgrade`, still open, due Sep 18) and the third rehearsed attack in `docs/ANCHOR-RATIONALE.md`. If P2.15 is not resolved before demo day, the ~R0 figure still holds (it's the cost, not the reliability claim) but the "no single point of failure" framing needs the honest caveat already written in `docs/ANCHOR-RATIONALE.md` attack 3.
+
+Business handoff: not applicable — no household capability changed, cost figure correction only.
+
+Next: P2.15 (self-host OTS calendar decision, due Sep 18) and P2.12/P2.13 (Hedera governance-model and HBAR-fee framing, due Sep 17, still open).
 ## 2026-09-15 | Claude (Sibusiso's session) | naming conflict — contracts/ vs shared/contract.ts | resolved, doc-only
 
 Changed: `shared/README.md` rewritten to state the frozen contract lives in `contracts/events.schema.json` + `contracts/openapi.yaml` (built under WBS 3.1 this same day), not the originally-planned `shared/contract.ts`, which is retired but the file kept as a pointer so nobody re-reserves it. Corrected the two `shared/contract.ts` references in `docs/HANDOVER.md` (the ownership table and the Task 4 port order) to point at `contracts/`.
@@ -360,3 +374,67 @@ Needs/blockers: this is a doc correction only; the contract itself remains imple
 Business handoff: not applicable — no capability changed, single source of truth restored.
 
 Next: Lethabo's review of the contract (action naming) and both-lead ADR sign-off, unchanged from the prior entry.
+
+## 2026-09-15 18:30 SAST | opencode / GLM | claude-sonnet-5 | G12 closed — model licence register | authored, Lethabo directed
+
+Changed: created `docs/MODEL-LICENCES.md` — the full G12 model licence register, verified against the two predecessor repos (`BEACON`, `Team-Sonar---Vuka-`) cloned fresh read-only. All four model packages plus both ML runtimes inventoried with sha256 where available, licence type, commercial position, and risk classification. Closed G12 in `docs/OPEN-GAPS.md`, ticked P1.7 in `docs/CHECKLIST.md`, updated `team/lethabo.md` current task. Approved PR #6 (Sibusiso's WBS 3.1 contract freeze) with a finding: `flagged` missing from Entity state enum in `contracts/openapi.yaml`.
+
+Evidence: YAMNet TFLite sha256 verified identical across both repos (`10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de`). BEACON requirements inspected — YOLOv8 (`ultralytics>=8.2`, yolov8n.pt), InsightFace (`insightface>=0.7`, buffalo_l), fast-plate-ocr (`>=0.3`, cct-s-v2-global), ai-edge-litert (`>=2.1`), onnxruntime (`>=1.17`). EasyOCR confirmed not used (explicitly commented out in requirements.txt, zero imports). fast-plate-ocr licence confirmed MIT on PyPI. Three models auto-download weights at runtime with unpinned versions — sha256 not verifiable from repo alone; flagged as unresolved.
+
+Decision: Lethabo approved PR #6 (contract freeze) with M1 finding for Sibusiso to fix `flagged` enum before ADR freeze. The model register finds two HIGH risks: InsightFace buffalo_l weights are non-commercial-research-only (incompatible with VUKA's commercial target), and YOLOv8 AGPL-3.0 is incompatible with VUKA's MIT licence unless (a) a commercial Ultralytics licence is obtained, (b) a non-copyleft detector is substituted, or (c) the server is released under AGPL-3.0. Both risks are published in the register; they are not resolved by this entry.
+
+Needs/blockers: no blocker from this entry. The two licensing risks are published but unresolved — they must be addressed before deployment, not before the hackathon demo per `docs/HANDOVER.md`. P1.4 ADR-0027 and P1.6 competitor block remain open (due 16 Sep).
+
+Business handoff: not applicable — no household capability changed. The register serves C3 (progress) by closing the flagged G12 gap before G0 (16 Sep), and C2 (innovation) by demonstrating that VUKA knows the difference between "we use this model" and "we have checked whether we may."
+
+Next: ADR-0027 (TRL 4 + ceiling), then competitor block with Babatunde (`docs/CHECKLIST.md` P1.4, P1.6).
+
+## 2026-09-15 19:40 SAST | opencode / GLM | claude-sonnet-5 | ADR-0027 — TRL settled at 4 | authored, Lethabo directed
+
+Changed: appended **ADR-0027** to `docs/adr.md` — the TRL decision: system **TRL 4** (validated in a laboratory, in the predecessor codebase, historical evidence), two subsystems **argued at 5** (the append-only evidence chain; the on-device sensing path — `yamnet.tflite` sha256 verified across both predecessors 15 Sep 2026), four reasons not at 6 (G10 hardware, G1 fusion weights, G8 pentest, G9 bias eval), ceiling named. Swept the two contradicting positions: `docs/00-SPEC.md` §6 ("Assessed TRL: 5" → 4, evidence table reframed with historical tags) and `docs/01-ARCHITECTURE.md` §11.1 ("We state TRL 5" → 4, criteria table reframed, ladder diagram now highlights T4, G-10 rows aligned). Fixed a stale citation found during the sweep: `01-ARCHITECTURE` §11.1 cited "ADR-0025" for the TRL-5 position, but ADR-0025 is the ported Discovery Safety Revamp bundle — no ADR ever recorded a TRL position; §12.4's ADR index listed six decisions (0020–0025) that do not exist at those numbers (superseded by ADR-0026's renumbering) — the index now lists actual ADRs and says so. Tick `P1.4` in `docs/CHECKLIST.md`, updated `team/lethabo.md`.
+
+Evidence: `git grep -n "TRL" docs/ README.md BRIEF.md` run before and after — the three contradictory positions (00-SPEC "Assessed TRL: 5", 01-ARCHITECTURE "We state TRL 5", EVIDENCE "do not publish TRL 5 as locally verified") now resolve to one position: 4, subsystems argued at 5, four reasons not at 6, ADR-0027. Latency figure (318 ms p95, n = 10) kept as historical, not reproduced here, per `docs/EVIDENCE.md`.
+
+Decision: ADR-0027 is the single TRL record. Consumer-facing copy states "TRL 4, met and verified" with "in the predecessor codebase" attached (as `README.md` already does). Internal records carry the reproduction caveat: the port (Task 4) and Khutso's evidence reproduction (3.5, due 19 Sep) must re-establish the results before any local-verification wording is used. A later ADR is required to move the number.
+
+Needs/blockers: none from this entry. PR #10 (Sibusiso, WBS 3.3) requested changes — the `flagged` state-machine divergence must be resolved by Sibusiso (conform code to record, or propose the ADR superseding the state machine first). PR #9 (G12 register) awaits Sibusiso's review. PRs #7/#8 await Sibusiso merging main. ADR-0028 (OTS calendar) is claimed by PR #8 — number reserved, not written.
+
+Business handoff: `templates/BUSINESS-HANDOFF.md` not changed; TRL 4 + ceiling is already the business-facing claim in `README.md` — this entry makes it the only TRL position in the repo. Serves C3 (progress: the number a judge can believe) and C2 (innovation: publishing four reasons not at 6 is the differentiator).
+
+Next: the competitor block with Babatunde (`docs/CHECKLIST.md` P1.6, due 16 Sep) — the top unmet organiser instruction.
+
+## 2026-09-15 20:10 SAST | opencode / GLM | claude-sonnet-5 | P1.6 — competitor block | authored, Lethabo directed
+
+Changed: created `docs/COMPETITORS.md` — the competitor awareness document the organisers instructed. Five competitors mapped: **Vumacam** (2,000+ ANPR cameras, Fidelity ADT partnership, 9.68m plates/day — active Information Regulator complaint by Intelwatch/Right2Know as live SA precedent), **Flock** (ALPR false-positive precedent, registered-owner lookups, no checkable evidence), **ShotSpotter** (Cape Town Lavender Hill deployment, published 30–50% false-positive rates, evidence challenged in US courts), **community WhatsApp groups** (the most widely deployed SA safety infrastructure — closed broadcast, no evidence, no decay), and **Fidelity ADT** (largest armed response — trust-me model, no independently checkable record). Each competitor maps a documented criticism to a VUKA mechanism with the design reference. Separate section on structural unfair advantage (public anchor — the anti-Flock argument as a mechanism). Honesty section: what we do not claim (pricing pending Babatunde, "prevents crime" refused, no "worse than" comparisons). Updated LEAN-CANVAS UVP with competitor-awareness line referencing the new doc. Ticked P1.6 in `docs/CHECKLIST.md`, updated `team/lethabo.md`.
+
+Evidence: `docs/PLAN.md` §B2 already contained a Vumacam mapping table as a precursor; the PLAN.md "repo-wide grep returns zero" claim written on 14 Sep was stale by the time the PLAN author wrote the Vumacam references into the same file. P1.6 now has a dedicated consumer-facing document; PLAN.md B2's status note will be corrected in a later clean-sweep pass (Khutso P1.9). Pricing data (Fidelity ADT/Vumacam actual monthly rates) remains Babatunde's P1.13, due 18 Sep.
+
+Decision: the competitor block follows the organiser instruction "make the UVP show competitor awareness" by matching every documented criticism to a named VUKA mechanism, naming competitors by name, conceding what they do better (scale, revenue, commercial channels), and refusing the marketing trap of claiming "better." The Intelwatch/Right2Know IR complaint against Vumacam is the strongest single piece of evidence: an active legal challenge to exactly the product class VUKA competes in, and VUKA's design answers every documented concern in the complaint. `FACT`.
+
+Needs/blockers: Babatunde to supply actual competitor pricing when he joins 17 Sep (P1.13). The competitor block is architectural and positioning; the economic argument (compare R299 modelled to actual Vumacam/ADT rates) belongs in the business case, not here.
+
+Business handoff: `templates/BUSINESS-HANDOFF.md` not changed; the competitor block is positioning, not a household-facing capability. Serves C2 (innovation: competitor-aware positioning is what the organisers asked for) and C4 (user journey: the structural unfair advantage is the answer to "would a real user trust this?" — their alternative is a WhatsApp group with no evidence and a camera network with no checkable record).
+
+Next: P1.5 — Sonke project overview rewrite (lead with the AI answer, four layers, corrected figures, TRL 4 with ceiling — due 16 Sep), and P1.8 — confirm prize/deployment premise with `sonke@geekulcha.dev`.
+
+## 2026-09-15 20:30 SAST | opencode / GLM | claude-sonnet-5 | P1.5 Sonke overview + P1.8 prize confirmation + organiser email | authored, Lethabo directed
+
+Changed: created `docs/SONKE-OVERVIEW.md` — the project overview for the Sonke workspace. Leads with Musa's and Thandi's real stories, not "AI-powered." States "the load-bearing parts contain no ML" in the opening. Follows with a four-layer table each answering "the AI answer" (KHAYA sensors, UMOJA server, the human gate, ANCHOR evidence chain — exactly the organiser's "not impressive to say AI-powered" instruction). Includes corrected figures (4:1 security-to-police, R87bn industry, R299 modelled, TRL 4 per ADR-0027), competitor-awareness reference, the honesty section (what we refuse to say), and team roster. Written for judge readability — judges read 150 project overviews; this one is structured for scanning. Updated P1.5 to ☑ in `docs/CHECKLIST.md`.
+
+Also updated **P1.8** (prize/deployment premise): the 15 Sep 2026 email from Tiyani Nghonyama (Lead Facilitator, Geekulcha Annual Hackathon) confirms **cash prizes for top 3 with Telkom support + international partnerships** — `FACT`. The "90-day deployment assumption" was based on a believed contradiction with the official page's "there will be cash prizes" statement; the email confirms prizes and the contradiction is resolved. Deployment premise remains `ASSUMPTION` pending response from `sonke@geekulcha.dev`. P1.8 status: ◐ (prizes confirmed, deployment still pending).
+
+Evidence: email from Tiyani Nghonyama, Lead Facilitator, 15 Sep 2026, read in full. Key organiser instructions validated our architecture: *"Stop saying 'Solution X is AI-powered'. Make your project overview reflect real-life stories, that's what makes your solution authentic. Use of AI is not impressive at this hackathon — we are looking for solutions that have a sense of reality and can be used after the hackathon."* The Sonke overview directly answers every clause of that instruction. `FACT`
+
+Decision: the Sonke overview is the public-facing summary — to be pasted into the Sonke workspace when edits are accepted. The README remains the technical orientation; the Sonke overview is the story. P1.5 is the capstone of Phase 1 corrections: all four Phase 1 items (G12/P1.7, ADR-0027/P1.4, competitor block/P1.6, Sonke overview/P1.5) are now closed or in PR review (three PRs awaiting Sibusiso).
+
+New organiser information from the email:
+- **150 teams continental** — Kenya, Botswana, Malawi declared competing. Competition scale larger than assumed.
+- **Quantum Tech — 5 bonus points** — new criterion not in Phase 1 plan. Team should discuss: VUKA's hash-chain architecture with Merkle-tree anchoring could be framed as "designed for post-quantum migration" (hash-based signature schemes are post-quantum candidates), but this is a stretch and requires team decision before claiming.
+- **Judging criteria to be published Friday 19 Sep** — P1.9 rules-lawyer dispatch triggers then. `docs/MASTER-CONTEXT.md` and all CHECKLIST criterion tags should be refreshed the same day.
+- **Schedule loaded Friday** — will need to adjust WBS dates if they conflict.
+
+Needs/blockers: three PRs (#9 G12 register, #11 ADR-0027, #13 competitor block) await Sibusiso's review. PR #10 (Sibusiso WBS 3.3) request-changes outstanding. P1.8 deployment premise confirmation with `sonke@geekulcha.dev` still pending. P1.9 rules-lawyer triggers Friday 19 Sep. Quantum Tech bonus — team discussion needed.
+
+Business handoff: `docs/SONKE-OVERVIEW.md` is the bridge between the architecture and the judges — it answers "who are you and why should anyone believe what you claim?" Serves all four criteria: C1 (team roster visible), C2 (the AI answer is the differentiator), C3 (corrected figures, TRL 4), C4 (Musa and Thandi are the real user journeys the organisers asked for).
+
+Next: support Ipeleng's PSiRA/POPIA position papers (P2.1–P2.4); judging criteria review Friday 19 Sep (P1.9 rules-lawyer); begin port (Task 4) after Sibusiso's PR reviews clear.
