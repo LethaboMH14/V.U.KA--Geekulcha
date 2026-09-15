@@ -228,6 +228,20 @@ Business handoff: not applicable; this is operational safety material supporting
 
 Next: Lethabo reviews product wording; Ipeleng reviews privacy/abuse boundaries; Sibusiso maintains the tested implementation and evidence receipt contract.
 
+## 2026-09-15 17:55 SAST | Codex acting for Sibusiso | GPT-5 | WBS 3.1 OpenAPI contract checks | implemented, review pending
+
+Changed: added `test/openapi-contract.test.mjs`, a zero-dependency structural contract test for the v3.1 OpenAPI document. It checks the documented path inventory, F14/F15 showcase markers, idempotency/pagination/receipt controls, first-broken-index wording, WebSocket separation and the absence of a `flag`/`flagged` setter.
+
+Evidence: `npm test` runs the existing security integration, three event-shape tests and the new OpenAPI checks. This test does not replace a full YAML/OpenAPI parser; semantic validation remains a CI/tooling follow-up when an approved dependency or validator is selected.
+
+Decision: none. The contract remains proposed pending Lethabo review, both-lead approval and an ADR.
+
+Needs/blockers: no anchor or SC.1 work was performed under the session scope. The OpenAPI action naming still requires the review recorded in PR #6.
+
+Business handoff: not applicable; contract verification only.
+
+Next: maintain the review branch and await Lethabo's contract decision before implementing dependent interfaces.
+
 ## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | PR handoff / WBS 3.3 readiness | blocked, no claim of PR creation
 
 Changed: attempted to create the requested GitHub pull request for `feat/sibusiso-3.1-contract-freeze`; no repository files changed by the attempt. Updated Sibusiso's blocker list with the authentication and runtime facts.
