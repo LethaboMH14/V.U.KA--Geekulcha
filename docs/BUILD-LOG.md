@@ -275,3 +275,7 @@ Added `docs/ANCHOR-COST-RECONCILIATION.md` with the corrected Hedera arithmetic 
 ### 2026-09-15 18:55 SAST — P2.4 s57 decision record
 
 Added `docs/POPIA-S57-DECISION-RECORD.md` to capture the open prior-authorisation question, required counsel findings, and the safe pre-pilot boundary. No legal conclusion or pilot approval is inferred.
+
+### 2026-09-15 19:05 SAST — P2.11 stale-claim inventory
+
+Scanned active repository content for `R1.30`; remaining hits are recorded in `docs/ANCHOR-COST-SWEEP.md` with owner handoffs. Protected and shared files were not silently edited.
