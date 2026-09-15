@@ -188,6 +188,8 @@ Order: `contracts/` (frozen 15 Sep — see `shared/README.md`) → `brain/` → 
 For each file: copy, read it, remove anything that fails §3, confirm no secret, commit with a message that says what it does. **Contract tests first** — they assert exact request and response shapes, not status codes. `brain/` and `app/src/brain/fusion/` are pure functions with no I/O, no clock and no platform calls, so one golden fixture is the referee for both web and native.
 
 > ⚠️ **`server/` is not a file copy — see ADR-0029.** Do **not** port `server/src/suspicion/scorer.py` or `server/src/suspicion/entity_resolution.py`. The predecessor carried two divergent fusion models and two copies of the plate matcher; this repository has **one** (`brain/fusion.py`, `brain/entity_resolution.py`). The server imports `brain/` and persists `recompute()`'s result. The state vocabulary is the frozen contract's (`observed` / `watch_candidate` / `flagged` / `dismissed` / `whitelisted`); the predecessor's `candidate` is not a valid state. Any ported server test asserting `"candidate"` is rewritten, not accepted.
+>
+> 📋 **Check `docs/PORT-DIVERGENCES.md` before porting any `server/` file.** It registers every known mismatch between predecessor code and the frozen contract, with the correction. Currently open: **D2** (evidence-integrity response field names) and **D3** (the contract's `Sighting` is missing the domain fields the fusion needs — a material defect that blocks the contract freeze).
 
 ### Task 5 — `anchor/` — the new work
 

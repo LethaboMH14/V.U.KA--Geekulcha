@@ -508,3 +508,17 @@ Needs/blockers: the `server/` port (Task 4) is now explicitly **more than a file
 Business handoff: not applicable — architecture governance, not a household capability. Serves C2 (a real cross-layer bug caught before it was ported) and C3 (the port is now evidence-driven and checkable).
 
 Next: support Sibusiso's `server/` port against ADR-0029; judging criteria publish Friday 19 Sep (P1.9 rules-lawyer).
+
+## 2026-09-15 22:40 SAST | opencode / GLM | claude-sonnet-5 | port-divergence register opened — D3 blocks the contract freeze | authored, Lethabo directed
+
+Changed: created `docs/PORT-DIVERGENCES.md` — the register for mismatches between predecessor code and this repository's frozen contract, found while reading predecessor files before porting. Three entries. **D1** (closed, ADR-0029): the two fusion models and the `watch_candidate`/`candidate` state split. **D2** (open): `GET /v1/evidence/integrity` — the contract requires `first_broken_index` with `additionalProperties: false`, the predecessor returns `broken_at_seq`/`broken_at_id`/`total_events`; the port must map the field and resolve 1-based vs 0-based indexing. **D3** (open, material): the contract's `Sighting` is a 7-field envelope (`version`, `event_id`, `tenant`, `source_time`, `received_time`, `sim_`, `freshness`, `additionalProperties: false`) and carries **none** of the domain fields the system consumes — `brain/fusion.py` reads `camera_id`, `hex_id`, a timestamp; `scorer.py` reads `kind`, `modality`, `confidence`. Against the contract as written, `POST /v1/sightings` cannot accept a sighting the fusion can use. Linked the register from `docs/HANDOVER.md` Task 4; updated `P2.16` (contract freeze) to mark it blocked on D3; updated `team/lethabo.md`.
+
+Evidence: read-only predecessor inspection, 15 Sep 2026. `contracts/openapi.yaml` `Sighting` + `POST /v1/sightings` and `contracts/events.schema.json`; `BEACON/server/src/api/sightings.py:48-68` (`SightingCreate`); `brain/fusion.py:64-79` (reads `camera_id`, `hex_id`, `ts`); `BEACON/server/src/db/evidence_integrity.py:27-33`; `BEACON/server/src/api/entities.py:392-404`. All `FACT`.
+
+Decision: the register is the port's checkable gate — no `server/` file is ported before its divergence is logged. **D3 is material and needs a decision, not an assumption**: either extend `Sighting` to carry the domain fields, or nest a domain schema under the envelope (keeping transport separate from payload). That choice goes in the contract and an ADR, and it must be taken **before** `Sighting` is called frozen. This is exactly the kind of cross-layer finding that makes the contract freeze (`P2.16`) worth doing before the port, not after.
+
+Needs/blockers: D3 resolution with Sibusiso (contract owner) + ADR — both leads. D2 is a straightforward correction in the port. The contract freeze (`P2.16`) stays `◐` until D3 is resolved. Sibusiso is active on `fix/sibusiso-date-correction`.
+
+Business handoff: not applicable — contract governance. Serves C2 (a second real cross-layer defect caught by inspection, not by a live demo failure) and C3 (the port proceeds against a written contract with its divergences named).
+
+Next: resolve D3 with Sibusiso; judging criteria publish Friday 19 Sep (P1.9 rules-lawyer).
