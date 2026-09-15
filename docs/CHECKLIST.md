@@ -72,6 +72,12 @@
 | P2.16 | **WBS 3.1 contract freeze** — machine-readable v0.1.0 event schema, v3.1 OpenAPI surface, exact-shape tests and rejection tests; second-lead approval and ADR still required before calling the shared contract frozen | Sibusiso | C2, C3, C4 | Sep 15 | ◐ | Added 15 Sep, Sibusiso session |
 | P2.17 | **Human-gate operator duty card** — review procedure, refusal evidence, two-signature handling, privacy boundaries and pre-pilot training evidence | Lethabo, Sibusiso | C2, C3, C4 | Sep 21 | ◐ | Reviewed 15 Sep — `duty card corrected` (`verify_concern` now transitions to `flagged` per PR #10 fix), operator error + escalation paths added. Real training evidence still required |
 
+## Bonus — Quantum Tech (5 points, announced 15 Sep)
+
+| # | Item | Owner | Criterion | Due | State | Amended |
+|---|---|---|---|---|---|---|
+| B1 | **Quantum Tech strategy** — explain/implement quantum technologies. Honest angle: hash-chain + Merkle-tree primitives (SHA-256) as post-quantum foundation; Ed25519→PQ migration path designed; architecture decouples anchoring from signing. Sibusiso to verify cryptographic claims, team to decide explain vs implement | Lethabo, Sibusiso | bonus | — | ◐ | Added 15 Sep — `docs/QUANTUM-TECH.md` written with claim boundaries, Sibusiso verification checklist, and implementation demo option. Team decision pending |
+
 ---
 
 ## The operating system — the four additions that make seven people work as one
