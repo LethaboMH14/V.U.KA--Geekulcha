@@ -185,3 +185,17 @@ Needs/blockers: Vukosi may build against the exact v0.1.0 event envelope; his ne
 Business handoff: `templates/BUSINESS-HANDOFF.md` not changed; this defines interfaces and test evidence, not a household-facing capability.
 
 Next: Lethabo and both leads review the proposed contract/ADR; then add OpenAPI semantic validation and proceed to WBS 3.3.
+
+## 2026-09-15 17:35 SAST | Codex acting for Sibusiso | GPT-5 | PR handoff / WBS 3.3 readiness | blocked, no claim of PR creation
+
+Changed: attempted to create the requested GitHub pull request for `feat/sibusiso-3.1-contract-freeze`; no repository files changed by the attempt. Updated Sibusiso's blocker list with the authentication and runtime facts.
+
+Evidence: `gh pr create --base main --head feat/sibusiso-3.1-contract-freeze ...` returned `gh auth login` / `GH_TOKEN` required. The branch remains pushed at commit `495e547`. `py -V` and `py -3 -c "import sys; print(sys.version)"` both returned that the command was not recognized. The server scaffold contains only README and `.gitkeep` files; no governance implementation is present to test.
+
+Decision: no bypass of GitHub authentication and no untested runtime selection. The PR can be opened from the pushed branch at `https://github.com/LethaboMH14/V.U.KA--Geekulcha/compare/main...feat/sibusiso-3.1-contract-freeze?expand=1` after an authenticated GitHub session.
+
+Needs/blockers: Lethabo must review the contract and approve or revise the action naming; both leads must approve the contract and ADR. Python 3.11 or an approved local/CI runtime is needed before WBS 3.3 governance code is ported and tested.
+
+Business handoff: not applicable; this is a handoff blocker record.
+
+Next: authenticate GitHub and open the PR; then provision the documented Python runtime or choose an explicitly approved CI-only verification path before WBS 3.3.

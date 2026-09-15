@@ -63,6 +63,8 @@ Sibusiso requested and owns this review. Local security-hook tests, clean reposi
 - Collected predecessor test count remains unverified → owners must run both suites before repeating “440 tests”.
 - cloud quota failure → use approved local rehearsal path.
 - second-lead contract approval and ADR → Lethabo reviews the proposed event/OpenAPI shapes before they are called frozen.
+- PR publication → GitHub CLI reports `gh auth login` is required; branch is pushed and the manual PR URL is available.
+- WBS 3.3 runtime → server scaffold is empty and neither `python` nor `py` is installed locally; do not add untested Python governance code.
 
 Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
 
