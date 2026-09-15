@@ -62,7 +62,7 @@ No work by Vukosi Khoza is asserted. This package was created by the assistant. 
 
 - No appliance → Lethabo procurement decision.
 - no UPS measurement → borrow test equipment through team.
-- event contract unresolved → Sibusiso and both leads.
+- event contract frozen at v0.1.0 in `contracts/events.schema.json` → build against the exact fields and rejection rules; OpenAPI remains proposed pending both-lead approval. Sibusiso owns the contract review path.
 
 Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
 

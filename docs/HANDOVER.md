@@ -131,7 +131,7 @@ Seven builders, four universities. Full roster and evidence in `TEAM.md`.
 | | University | Owns |
 |---|---|---|
 | **Lethabo Hoaeane** *(co-lead)* | UNISA | Architecture, product, UX, the spec, the ADRs, final review |
-| **Sibusiso Khumalo** *(co-lead)* | Wits | `server/`, `anchor/`, `shared/contract.ts`, CI, demo orchestration |
+| **Sibusiso Khumalo** *(co-lead)* | Wits | `server/`, `anchor/`, `contracts/` (frozen 15 Sep, superseded `shared/contract.ts`), CI, demo orchestration |
 | **Mutarisi Chibaya** | Pretoria | `dashboard/`, member-facing screens |
 | **Vukosi Khoza** | Wits | `appliance/` — sensors, edge runtime, power, tamper |
 | **Ipeleng Constance Modise** | TUT | Threat model, OWASP mapping, SSDLC, physical security |
@@ -183,7 +183,7 @@ Create the structure in §8 with `.gitkeep` and `README.md` stubs so people can 
 
 ### Task 4 — Port, layer by layer
 
-Order: `shared/contract.ts` → `brain/` → `server/` → `app/` → `appliance/` → `data/` → `dashboard/`.
+Order: `contracts/` (frozen 15 Sep — see `shared/README.md`) → `brain/` → `server/` → `app/` → `appliance/` → `data/` → `dashboard/`.
 
 For each file: copy, read it, remove anything that fails §3, confirm no secret, commit with a message that says what it does. **Contract tests first** — they assert exact request and response shapes, not status codes. `brain/` and `app/src/brain/fusion/` are pure functions with no I/O, no clock and no platform calls, so one golden fixture is the referee for both web and native.
 
