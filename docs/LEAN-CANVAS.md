@@ -111,6 +111,8 @@ It forgets you at a seven-day half-life, with nobody required to clear you.
 It never forgets what it did.
 ```
 
+> **Competitor awareness.** Every existing SA safety network — Vumacam's 2,000 cameras, Fidelity ADT's patrol fleet, the WhatsApp group on your street — operates on a *trust-me* model: the evidence is owned by the provider, and nobody can verify it without their cooperation. VUKA publishes a hash chain a stranger can verify without our help. The full mapping — every documented criticism of an incumbent matched to a VUKA mechanism — is at `docs/COMPETITORS.md`.
+
 ---
 
 ## 4 · UNFAIR ADVANTAGE
