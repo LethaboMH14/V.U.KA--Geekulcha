@@ -810,8 +810,14 @@ Evidence: `node scripts/check-docs.mjs` passes on branch `docs/ipeleng-psira-pos
 
 Decision: none adopted — D-IO-1 (head designation) and the organisation-identity question are logged for both leads; this document prepares a statutory step and creates no compliance claim; the honesty ledger applies.
 
-Needs/blockers: leads' conversation to fix items 1–4 of `docs/POPIA-IO-REGISTRATION.md` §6 (head designation, organisation legal identity, contact email, optional deputy); the designated IO records the submission in §7 (channel, field list, reference); Lethabo's review, then both leads, on PR #28.
+Needs/blockers: leads' conversation to fix items 1–4 of `docs/POPIA-IO-REGISTRATION.md` §6 (head designation, organisation legal identity, contact email, optional deputy); the designated IO records the submission in §7 (channel, field list, reference); Lethabo's review, then both leads, on PR #30.
 
 Business handoff: not applicable — no household capability changed. Serves C3: the cheapest statutory gate is now a single leads' conversation plus a 30-minute form, with the liability consequence and the IO's inherited duties on record.
 
 Next: Ipeleng — `P2.6` draft Gated Access Areas Code review; `P2.7` RICA position. Leads — D-IO-1 designation and organisation identity for the IO submission. Sibusiso — `P2.3` discard-by-default implementation test. Lethabo — review PR #28.
+Next: Ipeleng — `P2.6` draft Gated Access Areas Code review; `P2.7` RICA position. Leads — D-IO-1 designation and organisation identity for the IO submission. Sibusiso — `P2.3` discard-by-default implementation test. Lethabo — review PR #30.
+
+## 2026-09-16, time not recorded | Ipeleng (via Cline assistant, VS Code agent) | model identifier not independently recorded | P2.2+P2.5 shipping vehicle | correction entry
+
+Correction: while verifying the P2.5 push it emerged that PR #28 was merged on 16 Sep — Lethabo's 00:50 SAST entry above records the review and the merge — and its merge head was the P2.1 commit `87d3464`. The P2.2 commits pushed in the prior session (45a8abc paper + ADR sweep, a9a5f2c team log) therefore landed on the branch after the merge point and were never on `main`; the P2.5 push continued the same branch, and the P2.2 status row's "merge pending" note was stale the moment it was written. Fix: merged `origin/main` into the branch (the concurrent BUILD-LOG appends — Lethabo's and Ipeleng's — are both retained per the log rule), and opened **PR #30** as the successor vehicle carrying P2.2 (POPIA paper + ADR-0031) and P2.5 (IO registration path): https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/30. Live pointers updated from #28 to #30 in `docs/CHECKLIST.md` (P2.2/P2.3/P2.5 rows; the P2.1 row corrected to "merged 16 Sep"), this file's P2.5 entry, `team/ipeleng.md`'s current-task and changed-this-session sections, and the footers of both POPIA documents. Append-only entries (running log, the P2.1/P2.2 BUILD-LOG entries) are left as authored — their "PR #28" mentions record the vehicle as known then; follow the links above, not the old numbers. No document content changed beyond pointers; no compliance claim made.
+
