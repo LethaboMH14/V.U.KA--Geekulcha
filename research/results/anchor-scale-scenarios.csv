@@ -1,0 +1,4 @@
+scenario,homes,events_per_home_per_day_assumption,events_per_day,mean_events_per_hour,retained_bytes_per_event_assumption,offchain_gb_per_month_decimal,offchain_gb_per_year_decimal,merkle_proof_levels,approx_merkle_path_bytes,public_roots_per_month,hedera_baseline_submit_fee_usd_month
+Honest pilot,100,10,1000,41.67,672,0.0202,0.2453,6,192,720,0.576
+Security partner,5000,10,50000,2083.33,672,1.008,12.264,12,384,720,0.576
+National network,100000,10,1000000,41666.67,672,20.16,245.28,16,512,720,0.576
