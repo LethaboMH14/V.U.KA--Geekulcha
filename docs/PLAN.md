@@ -486,12 +486,14 @@ One document, assembled last, consuming everyone's verified evidence:
 
 | Item | Due | Note |
 |---|---|---|
-| 1.1 verify credential remediation | Sep 13 | ✅ four rotated, both repos purged |
+| 1.1 verify credential remediation | Sep 13 | ✅ four rotated, both repos purged; verification record 16 Sep (`docs/audit/09`) — holder-chat review pending |
 | 4.1 lawful data/rights + deletion controls | Sep 15 | now carries the s27 finding |
 | **NEW** PSiRA position paper | Sep 16 | trigger · category · structure · the open question for counsel |
 | **NEW** POPIA position paper + ADR | Sep 17 | discard-by-default is an **architecture** decision |
 | **NEW** register the Information Officer | Sep 17 | |
+| **NEW** Gated Access Areas Code review | Sep 17 | design floor adopted (`ADR-0032`); draft text not corroborated on reachable sources — Gazette retrieval to counsel |
 | 4.3 operator/tenant/duress abuse cases | Sep 19 | as **executable tests** |
+| **NEW** RICA position | Sep 19 | written (`docs/RICA-POSITION.md`) — statute not readable this session (official PDF reachable but binary), all statutory characterisations ⚑ + five counsel questions; the two bright lines are specified architecture constraints (not yet implemented code): **audio never persists** · **never attach an audio clip as evidence** |
 | 6.3 review release for privacy + secrets | Sep 22 | |
 | 7.5 close temporary demo access | Sep 27 | |
 

@@ -18,14 +18,15 @@ const read = p => {
 const audit = [
  ['01-alignment.md',2500],['02-economics.md',3500],['03-user-journeys.md',4000],
  ['04-production-readiness.md',5000],['05-team-operating-system.md',Infinity],
- ['06-business-translation.md',3500],['07-red-team.md',3000],['08-consolidation.md',2000]
+ ['06-business-translation.md',3500],['07-red-team.md',3000],['08-consolidation.md',2000],
+ ['09-credential-remediation-verification.md',1500,false] // 16 Sep addendum; verifies repo events, not the supplied §11 — its source-check record is its own §6
 ];
-const docs = new Map(audit.map(([f,limit]) => {
+const docs = new Map(audit.map(([f,limit,sourceCheck=true]) => {
   const t=read(`docs/audit/${f}`);
   const body=f.startsWith('02') ? t.split('## Calculations appendix')[0] : t;
   const words=body.trim().split(/\s+/).length;
   assert(words<=limit,`${f}: ${words} words exceeds ${limit}`);
-  assert(t.includes('§11'),`${f}: missing source-check record`);
+  if (sourceCheck) assert(t.includes('§11'),`${f}: missing source-check record`);
   console.log(`${f}: ${words} whitespace-delimited words`);
   return [f,t];
 }));
