@@ -10,5 +10,6 @@ Read in order. Each document was checked against the supplied §11 before drafti
 6. [Business translation](06-business-translation.md)
 7. [Adversarial review](07-red-team.md)
 8. [Consolidation](08-consolidation.md)
+9. [Credential and password remediation verification](09-credential-remediation-verification.md) — added 16 Sep; independent-assurance record for WBS 1.1
 
 Source priority: observable checkout facts for implementation status; supplied brief for historical claims and team roles; linked official sources for current external facts; explicitly labelled assumptions for proposals. Missing originals are never silently treated as verified. Criterion tags: C1 team, C2 innovation/impact, C3 research/wireframes/architecture, C4 easy user flow; I internal.

@@ -486,7 +486,7 @@ One document, assembled last, consuming everyone's verified evidence:
 
 | Item | Due | Note |
 |---|---|---|
-| 1.1 verify credential remediation | Sep 13 | ✅ four rotated, both repos purged |
+| 1.1 verify credential remediation | Sep 13 | ✅ four rotated, both repos purged; verification record 16 Sep (`docs/audit/09`) — holder-chat review pending |
 | 4.1 lawful data/rights + deletion controls | Sep 15 | now carries the s27 finding |
 | **NEW** PSiRA position paper | Sep 16 | trigger · category · structure · the open question for counsel |
 | **NEW** POPIA position paper + ADR | Sep 17 | discard-by-default is an **architecture** decision |

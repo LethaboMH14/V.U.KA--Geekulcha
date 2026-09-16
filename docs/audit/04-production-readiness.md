@@ -1,6 +1,6 @@
 # Production readiness (C3, C4; security operations I)
 
-**Not ready for deployment.** No application code exists here. Controls below are specified, not operating. Paths in the security table are proposed implementation locations, not evidence. Production remains blocked by credential/data remediation, privacy routes, hardware measurements, response contracts and independent assurance.
+**Not ready for deployment.** No application code exists here. Controls below are specified, not operating. Paths in the security table are proposed implementation locations, not evidence. Credential/data remediation was completed and forensically verified 13 Sep (`docs/OPEN-GAPS.md` G6/G7; verification record `09-credential-remediation-verification.md`); production remains blocked by privacy routes, hardware measurements, response contracts and independent assurance.
 
 ## 1. Deployment topology
 

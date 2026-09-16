@@ -132,7 +132,7 @@ Unchecked means proposed/not accepted, including tasks partially prepared by thi
 
 ### Ipeleng Constance Modise
 
-- [ ] 1.1 — Sep 13 — Verify credential/password remediation [I]; depends none.
+- [ ] 1.1 — Sep 13 — Verify credential/password remediation [I]; depends none. (Verification record written 16 Sep: `docs/audit/09-credential-remediation-verification.md` — forensic corroboration accepted; leaf closes on Ipeleng's live review of the 13 Sep holder chat confirmations, record §4.)
 - [ ] 4.1 — Sep 15 — Specify lawful data/rights and deletion controls [C3,C4]; depends 2.1.
 - [ ] 4.3 — Sep 19 — Exercise operator, tenant and duress abuse cases [C3,C4]; depends 3.3,4.1.
 - [ ] 6.3 — Sep 22 — Review proposed release for privacy and secrets [I]; depends 4.3,4.5.
