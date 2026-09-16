@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - When the real judging criteria publish, I refresh `docs/MASTER-CONTEXT.md` and re-tag `docs/CHECKLIST.md` the same day — that is the mechanism that stops the team optimising for the old four.
 
-**Current task** — `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md` are created; keep both current as items close. Next: correct the 2.7m stat everywhere it appears (`P1.1`), then resolve "440 tests" vs 510 test-function definitions with a real collected count or retire the claim.
+**Current task** — `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md` are created; keep both current as items close. P1.1's repository-controlled surfaces are corrected and its external public-profile portion remains blocked pending owner confirmation. Next after closure: resolve "440 tests" vs 510 test-function definitions with a real collected count or retire the claim (`P1.3`).
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -33,7 +33,7 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: 1.4, done; intake gate approved with both lead approvals recorded in `docs/security/intake-gate.json`.
+- Current task / status: P1.1 partial/blocked; repository-controlled surfaces are corrected, but the external public-profile update is unverified. WBS 1.4 is done with intake gate approved and both lead approvals recorded in `docs/security/intake-gate.json`. P1.3 follows closure; P1.2 remains a shared Khutso/Babatunde check.
 - Claimed files / contract versions: `team/khutso.md` (role self-review) and `docs/BUILD-LOG.md` (append-only review record); no contract version change.
 - Last updated: 12 September 2026 by Codex assistant as a planning assignment.
 
@@ -54,6 +54,20 @@ All hours and dates below are ASSUMPTIONS, subject to availability and gates.
 - Inputs: Roster/criteria from Lethabo; actual test results from builders.
 - Outputs: Acceptance map and evidence index to everyone.
 - See docs/OVERLAPS.md; do not silently change a shared version.
+
+## P1.1 task declaration — 2026-09-16
+
+Criterion: **C2 (innovation and creativity) and C3 (progress of solution profile)**. Trust answer: a real user can trust the market context only when the comparison uses like-for-like measures, carries its source and date, and has no stale live claim left in a judge-facing surface.
+
+Bounded work: replace the stale private-security-versus-police comparison in `docs/08-BUSINESS.md` and `docs/LEAN-CANVAS.md`; do not rewrite historical evidence, task descriptions or the dead-number warning that explicitly records the correction. Update the P1.1 checklist state and append the exact sweep to `docs/BUILD-LOG.md`. No contract, security, or product code is in scope.
+
+Acceptance evidence: `docs/EVIDENCE.md` remains the checked source for **~637,675 active private-security officers (31 March 2025)** and **155,231 sworn / 187,681 total SAPS personnel (March 2025)**, with derived **≈4:1** ratio; a tracked-file sweep lists only intentionally retained historical/task references; `node scripts/check-docs.mjs`, `node scripts/check-intake.mjs` and `git diff --check` pass. Sibusiso reviews first, followed by both leads.
+
+Blockers: the public-profile paste target is not editable from this repository; `docs/SONKE-OVERVIEW.md` is already corrected. Any external Sonke update remains a handoff, not an invented completion claim.
+
+## P1.1 repository portion — 2026-09-16
+
+Outcome: the two current judge-facing stale claims were corrected in `docs/08-BUSINESS.md` and `docs/LEAN-CANVAS.md` using the checked figures and provenance in `docs/EVIDENCE.md`. The sweep intentionally retains historical/task references in `docs/EVIDENCE.md`, `docs/PLAN.md`, `docs/BUILD-LOG.md`, `docs/MASTER-CONTEXT.md`, `docs/CHECKLIST.md`, `team/babatunde.md` and the archived submission, because rewriting those would destroy the correction trail or task definition. P1.1 remains partial until the external public-profile update is confirmed by its owner.
 
 ## Changed this session
 

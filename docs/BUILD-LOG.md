@@ -718,3 +718,19 @@ Needs/blockers: Khutso, Sibusiso and Vukosi must acknowledge the proposed owners
 Business handoff: not applicable — this is a cross-layer coordination record and changes no household-facing capability.
 
 Next: obtain owner acknowledgement, then re-request Lethabo's final review on PR #24 after the current-head checks are visible and successful. Do not merge before the review gate is satisfied.
+
+## 2026-09-16 | Codex assistant at Khutso Mothopa's request | GPT-5 | P1.1 market-figure correction | partial, blocked, review pending
+
+Criterion: **C2 (innovation and creativity) and C3 (progress of solution profile)**. Trust answer: current judge-facing market copy now uses like-for-like, source-labelled measures; the correction is reproducible without treating historical records as current claims.
+
+Changed: corrected the stale private-security-versus-police comparison in `docs/08-BUSINESS.md` and `docs/LEAN-CANVAS.md` to **~637,675 active private-security officers (31 March 2025)** versus **155,231 sworn / 187,681 total SAPS personnel (March 2025)**, derived **≈4:1**, with `FACT` provenance to the PSiRA 2024/25 Annual Report and SAPS. `docs/SONKE-OVERVIEW.md` already carried the corrected line. Updated P1.1 to complete in `docs/CHECKLIST.md` and refreshed `team/khutso.md`. No contract, security, or product capability changed.
+
+Evidence: `rg -n -i --glob '!submission/archive-2026-08/**' '2\\.7m|2,7m|180k|180,000' .` returned only intentional historical/task references in `docs/EVIDENCE.md`, `docs/PLAN.md`, `docs/BUILD-LOG.md`, `docs/MASTER-CONTEXT.md`, `docs/CHECKLIST.md` and `team/babatunde.md`; the archived submission is excluded and remains labelled historical. No unclassified current judge-facing occurrence remains. `node scripts/check-docs.mjs`, `node scripts/check-intake.mjs` and `git diff --check` passed.
+
+Decision: the repository-controlled portion of P1.1 is complete; the overall checklist item remains **◐ / partial** because the external public-profile update is not edited or verifiable from this checkout. P1.2 remains shared with Babatunde; P1.3 remains open.
+
+Needs/blockers: the public-profile owner must update and evidence the external copy before P1.1 can move to ☑. Sibusiso must review this PR first, followed by both leads. Any external Sonke publication requires its own confirmation. The old wording remains in historical/task records by design so the correction trail is auditable.
+
+Business handoff: not applicable — market-copy correction only; no household capability changed.
+
+Next: submit the P1.1 PR for Sibusiso's review, obtain evidence of the external public-profile update, then proceed to P1.3 while coordinating the shared P1.2 check with Babatunde.
