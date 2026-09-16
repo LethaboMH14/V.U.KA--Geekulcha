@@ -763,3 +763,28 @@ Needs/blockers: Sibusiso must review this coordination PR before any merge, foll
 Business handoff: not applicable — coordination only; no household capability changed.
 
 Next: submit this PR for Sibusiso's review, then both leads' review. Do not merge until those reviews and the contract consumer evidence are recorded.
+## 2026-09-16 | Sibusiso (Claude session) | P2.16 second-lead sign-off | signed
+
+Changed: completed the second-lead row in `docs/CONTRACT-APPROVAL-RECORD.md` — reviewed `contracts/events.schema.json` and `contracts/openapi.yaml` against `docs/00-SPEC.md`, re-verified ADR-0030's `EventEnvelope`/`Sighting`/`SightingEvent` shape with `jsonschema`'s `Draft202012Validator` (the same check used to fix PR #23's F1), and confirmed `governance.py`'s `REVIEW_ACTIONS`/`DESTRUCTIVE_ACTIONS` still match `openapi.yaml`'s `VerifyRequest.action` enum exactly. Also ticked the redundant "second lead independently reviewed" checklist row, which restates the same fact under a role label rather than a name. Updated `docs/CHECKLIST.md` P2.16 to reflect both lead rows signed, one item remaining.
+
+Evidence: `contracts/openapi.yaml:295` action enum — `verify_concern, dismiss, whitelist, disarm, threshold_change, delete`, matches `server/src/auth/governance.py:12-13`'s `DESTRUCTIVE_ACTIONS`/`REVIEW_ACTIONS` exactly. jsonschema re-run against current `main` (`f1246ae`): valid `SightingEvent` instance passes, extra top-level field rejected, missing `payload` rejected — same three cases verified when F1 was originally fixed.
+
+Decision: consumer-confirmation row deliberately left unticked — PR #24 documents envelope-only scope honestly, but "documented as a known gap" is not the same as "confirmed," per the checklist's own wording. Left as an open decision (emit the payload, or explicitly accept envelope-only as frozen) rather than defaulting either way.
+
+Needs/blockers: consumer confirmation is the sole remaining item before `P2.16`/the contract can be called frozen. Owned jointly with Khutso per PR #24's own BUILD-LOG entry.
+
+Business handoff: not applicable — contract governance, no household capability changed.
+
+Next: resolve the SightingEvent payload question with Khutso/Vukosi; then the contract is fully frozen.
+
+## 2026-09-16 | Sibusiso (Claude session) | P2.16 sign-off evidence correction | fixed
+
+Changed: two accuracy fixes to the P2.16 sign-off from Lethabo's PR #33 review. (1) The approval-record row cited "events.schema.json/openapi.yaml current state" as evidence, which is a mutable reference, not a fixed one -- replaced with the exact commit reviewed, `f1246ae`, matching what the checklist's own header requires ("approval date and commit SHA are recorded below"). (2) Every reference to PR #24 as "approved, mergeable" was imprecise -- it is Sibusiso-approved and technically mergeable, but Lethabo's latest review on it is CHANGES_REQUESTED, so it is not fully approved. Corrected in docs/CONTRACT-APPROVAL-RECORD.md and docs/CHECKLIST.md to state that precisely.
+
+Evidence: `gh pr view 24 --json reviewDecision` confirmed CHANGES_REQUESTED before making this fix, not assumed. `node scripts/check-docs.mjs` passes.
+
+Decision: fixed rather than defended -- both findings were correct on inspection.
+
+Needs/blockers: unchanged from the prior entry -- consumer confirmation is still the sole remaining item before P2.16/the contract is frozen. PR #33 itself still needs its own nonauthor/domain review and verifiable required checks before merge, per Lethabo's review.
+
+Business handoff: not applicable -- recordkeeping correction only.
