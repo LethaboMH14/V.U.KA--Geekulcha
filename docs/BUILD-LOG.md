@@ -672,3 +672,17 @@ Needs/blockers: PR #24 requires the refreshed branch checks and formal rereview 
 Business handoff: not applicable — documentation and test-boundary clarification only; no household-facing capability changed.
 
 Next: commit and push this follow-up, request rereview on PR #24, and wait for formal approvals before merge. Payload integration must be planned separately with Sibusiso/Khutso.
+
+## 2026-09-16 | Codex assistant | GPT-5 | WBS 3.2 handoff | follow-up pushed and rereview requested
+
+Changed: committed follow-up `6279d39` (`docs(appliance): clarify ingest boundary after review`) and force-updated `feat/vukosi-3.2-edge-producer` with `--force-with-lease` after the successful rebase. Re-requested Sibusiso-K and LethaboMH14 on PR #24 and posted the review-resolution summary there.
+
+Evidence: working tree is clean; PR #24 is OPEN and CLEAN. GitHub `document-contracts` and `secret-scan` checks both completed SUCCESS on the refreshed head. Local evidence remains 7/7 producer tests, 10/10 contract tests, docs/intake/security checks passed, Gitleaks clean, and `git diff --check` passed.
+
+Decision: implementation is ready for formal reviewer decisions; no merge was performed. WBS 3.2 remains envelope-only, and the `SightingEvent` payload/consumer-confirmation follow-up remains outside this leaf.
+
+Needs/blockers: formal approvals and contract consumer confirmation are still pending. Unmeasured power-loss, disk-corruption, concurrent-writer and full-disk behaviours remain explicitly unclaimed.
+
+Business handoff: not applicable — this records repository/PR state only.
+
+Next: Sibusiso and Lethabo review PR #24; contract/server owners separately plan payload integration and update the approval/checklist records.

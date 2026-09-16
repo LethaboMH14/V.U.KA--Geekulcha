@@ -33,7 +33,7 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: Codex / GPT-5 (assistant-run in this session; owner confirmation pending).
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: 3.2, implementation present on `feat/vukosi-3.2-edge-producer`; PR and reviewer approval pending. Focused producer suite passes 7/7 with `unittest`.
+- Current task / status: 3.2, implementation present on `feat/vukosi-3.2-edge-producer`; PR #24 is open and clean after rebase, GitHub checks pass, and formal rereview is requested from Sibusiso and Lethabo. Focused producer suite passes 7/7 with `unittest`.
 - Claimed files / contract versions: `appliance/agent.py`, `appliance/tests/`, `appliance/README.md`; consumes `contracts/events.schema.json` v0.1.0 without changing it.
 - Last updated: 15 September 2026 by Codex assistant at the user's request; owner availability remains unconfirmed.
 
