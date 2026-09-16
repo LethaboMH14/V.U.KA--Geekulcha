@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - When the real judging criteria publish, I refresh `docs/MASTER-CONTEXT.md` and re-tag `docs/CHECKLIST.md` the same day — that is the mechanism that stops the team optimising for the old four.
 
-**Current task** — `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md` are created; keep both current as items close. P1.1's repository-controlled surfaces are corrected (merged via PR #35) and its external public-profile portion remains blocked pending owner confirmation. P2.16's proposed ownership and evidence boundary are coordinated without calling the contract frozen. Next: resolve "440 tests" vs 510 test-function definitions with a real collected count or retire the claim (`P1.3`).
+**Current task** — `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md` are created; keep both current as items close. P1.1's repository-controlled surfaces are corrected (merged via PR #35) and its external public-profile portion remains blocked pending owner confirmation. P1.2 (industry size) and P1.3 (ADR count — corrected 27→32 since the original "→25" instruction had itself gone stale; "440 tests" retired repo-wide, this clean repo's own 37-test suite now actually run and recorded) closed 16 Sep. P2.16's proposed ownership and evidence boundary are coordinated without calling the contract frozen. Next: P1.9 — re-tag everything the day the real judging criteria publish.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 

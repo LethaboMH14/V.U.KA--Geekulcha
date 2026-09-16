@@ -136,7 +136,7 @@ Superseded numbers still live in old artefacts. These are the current ones. Full
 |---|---|---|
 | Private security officers vs SAPS | **~637,675 active vs 155,231 sworn / 187,681 total ≈ 4:1** | `FACT` — PSiRA 2024/25 Annual Report; SAPS Mar 2025 |
 | Private security industry size | **R87bn (2024)** — government segment **R7bn** | `FACT` — Stats SA |
-| ADRs | **25** | `FACT` — command in `docs/EVIDENCE.md` |
+| ADRs | **32** | `FACT` — `git grep -c "^## ADR-" docs/adr.md`. (25 were confirmed from the two predecessor repos in July; 7 more — ADR-0026–0032 — were authored during this hackathon) |
 | Tests | **510 test-function definitions** found by `git grep` | `FACT` — *"440 tests" has no reproducing command; do not restate it* |
 | Detection → alert render | **318 ms p95, 273 ms p50, n = 10**, budget 2,000 ms | `FACT` — historical, not reproduced in this checkout |
 | Crime forecast | **Loses to a constant baseline: MAE 0.484 vs 0.246** | `FACT` — **published regardless, never softened** |

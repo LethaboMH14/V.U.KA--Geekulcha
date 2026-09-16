@@ -280,7 +280,7 @@ WS     /ws/member                     member room — MUST never receive ops eve
 | E6 calibration | `ml/eval/calibration.py` — reliability diagram, ECE | ⚠️ harness exists, **not yet run on real data** |
 | F13 dual signature | abuse-case suite: *a single operator must NOT be able to whitelist* | 🔨 to be written |
 
-**Total: 440 test cases.** Contract tests assert exact request/response **shapes**, not status codes.
+**"440 test cases" does not reproduce** — this table describes the predecessor projects' verification history (file names like `fusion.test.ts` are not ported into this clean repo). The reproducible predecessor figure is **510 test-function definitions**, found by `git grep`, not a collected-suite run — exact commands in `docs/EVIDENCE.md`. This clean repo's own suite (distinct from the above, newly built here) currently collects **37 tests, all passing** — also recorded in `docs/EVIDENCE.md`. Contract tests assert exact request/response **shapes**, not status codes.
 
 ---
 

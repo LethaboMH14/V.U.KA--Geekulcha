@@ -2282,7 +2282,7 @@ flowchart LR
 | Validated in a **laboratory** environment | Real SAPS quarterly data, 15 712 claims, 709 geocoded suburbs, live Eskom and weather feeds — historical, predecessor-verified, not reproduced in this repository | Run the pipeline after the port |
 | Measured against a budget | Detection → alert p95 **318 ms** (n = 10) against a 2 000 ms budget — historical, not reproduced here | `scripts/latency.py` |
 | Automated verification source exists | **510 test-function definitions found**; executed-suite count pending | CI |
-| Decisions are documented and traceable | **27 ADRs**, 224 predecessor `origin/main` commits, append-only build log | `docs/adr.md` |
+| Decisions are documented and traceable | **32 ADRs**, 224 predecessor `origin/main` commits, append-only build log | `docs/adr.md` |
 
 Two subsystems are **argued at 5**, not verified: the append-only evidence chain (relevant environment: the public internet with an independent verifier) and the on-device sensing path (the acoustic model ships in an Android build — sha256 verified across both predecessors, 15 Sep 2026). Both arguments are `ARGUED` until the port reproduces them here.
 
@@ -2516,7 +2516,7 @@ Append-only. Never edited — superseded. `docs/adr.md`.
 | 0026 | **ADR numbering collision resolved** — BEACON 0001–0007 kept, Team-Sonar-Vuka renumbered 0008–0025 | Accepted |
 | 0027 | **TRL settled at 4** — two subsystems argued at 5, four reasons not at 6, ceiling named | Accepted |
 
-*(27 ADRs exist in the repository; the table lists those load-bearing for this document. Naming, the public anchor, two-of-two signatures, deletion semantics and the autonomy boundary are recorded in prose across this document and the D-decisions, not as numbered ADRs — a pre-port plan to number them 0020–0025 was superseded by ADR-0026's renumbering, so this index previously listed decisions that do not exist at those numbers.)*
+*(32 ADRs exist in the repository as of ADR-0032 (`git grep -c "^## ADR-" docs/adr.md`); the table lists those load-bearing for this document. Naming, the public anchor, two-of-two signatures, deletion semantics and the autonomy boundary are recorded in prose across this document and the D-decisions, not as numbered ADRs — a pre-port plan to number them 0020–0025 was superseded by ADR-0026's renumbering, so this index previously listed decisions that do not exist at those numbers.)*
 
 ---
 

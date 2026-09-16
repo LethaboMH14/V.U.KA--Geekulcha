@@ -44,6 +44,18 @@ git -C <Vuka checkout>   grep -ohE "\b(it|test)\(" -- '*.ts' '*.tsx' '*.js'    #
 ```
 208 + 34 + 167 + 101 = **510 test-function definitions**, tracked files only. That is a *different measure* from "440 tests" — a collected pytest/vitest run count, which was not reproduced here because the two predecessor environments were not stood up to actually execute the suites. Until someone runs both suites and records the collected count, do not restate "440 tests" as a checkable figure; state either "510 test-function definitions found by `git grep`, command above" or run the suites and record what they collect.
 
+## This clean repo's own test suite — 16 September 2026, collected count
+
+Separate from the predecessor figures above — this is not "440" or "510," it's this repo's own suite, newly built here, actually collected and run:
+
+```
+node --test test/events-contract.test.mjs test/openapi-contract.test.mjs   # → 10 tests, 10 pass
+python3 -m unittest discover -s appliance/tests -p 'test_*.py'             # → 7 tests, 7 pass
+python3 -m pytest brain/tests/                                             # → 20 tests, 20 pass
+```
+
+**37 tests collected, 37 passing**, across `test/events-contract.test.mjs`, `test/openapi-contract.test.mjs`, `appliance/tests/test_agent.py`, `brain/tests/test_entity_resolution.py`, `brain/tests/test_fusion.py`. This number will grow as more of the port lands — re-run the three commands above rather than trusting this snapshot once new test files exist.
+
 ## Corrected market figures — 14 September 2026
 
 The live public profile states *"~2.7m registered security officers versus roughly 180k police"*. This compares a **cumulative-ever PSiRA registration count** against a **current SAPS headcount** — different measures, off by roughly 4×. Corrected:

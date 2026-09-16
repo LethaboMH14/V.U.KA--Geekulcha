@@ -125,7 +125,8 @@ cannot retroactively insert entries into a public chain. Features are copyable.
 Provable history is not.
 
 2. SIX WEEKS OF SHIPPED WORK THAT PREDATES THIS HACKATHON.
-~33,600 lines, 440 test cases, 25 accepted architecture decision records, ~6,800
+~33,600 lines, 510 test-function definitions (git grep count, not a collected-suite
+run), 25 accepted architecture decision records, ~6,800
 lines of architecture documentation, and a measured p95 latency of 318ms against a
 2,000ms budget. All committed in July, all in public repos, all timestamped. No team
 compresses that into a weekend.
