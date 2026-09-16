@@ -4,6 +4,12 @@
 
 **Current status — FACT for this branch, pending review.** WBS 3.2 adds a minimal synthetic edge producer in `agent.py`. It is a local contract and offline-replay exercise, not the real sensor appliance. Vision, audio, hardware and signed heartbeat work remain separate porting or measurement tasks.
 
+**Transport boundary — FACT.** This producer emits the reusable `EventEnvelope`
+only. The current `POST /v1/sightings` contract accepts `SightingEvent`, which is
+the envelope plus a required `Sighting` payload. This WBS does not construct that
+payload and must not be presented as live server-ingest capability. Payload
+construction and consumer confirmation are a tracked cross-layer follow-up.
+
 ## Structure
 
 ```

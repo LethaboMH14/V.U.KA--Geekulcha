@@ -658,3 +658,17 @@ Needs/blockers: reviewers should note the sequencing miss when assessing protoco
 Business handoff: not applicable — no capability or commercial claim changed.
 
 Next: push this correction as a follow-up commit to PR #24 and request reviewers to consider the complete append-only record.
+
+## 2026-09-16 | Codex assistant | GPT-5 | WBS 3.2 review follow-up | rebase and review findings addressed, rereview pending
+
+Changed: rebased `feat/vukosi-3.2-edge-producer` onto current `origin/main` (`f1246ae`), preserving all append-only mainline log entries and replaying the two existing WBS 3.2 commits. Updated `appliance/README.md` to state the transport-envelope-only boundary: `POST /v1/sightings` accepts `SightingEvent` (envelope plus required `Sighting` payload), which this WBS intentionally does not construct. Added the payload consumer-confirmation blocker to `team/vukosi.md`. Strengthened `appliance/tests/test_agent.py` to assert that injected clock values map to `source_time` and `received_time` in order.
+
+Evidence: `git rebase origin/main` completed successfully after one `docs/BUILD-LOG.md` append-only conflict; all mainline entries were retained. `python -m unittest discover -s appliance/tests -p 'test_*.py' -v` → **7/7 passed**. `node --test test/events-contract.test.mjs test/openapi-contract.test.mjs` → **10/10 passed**. `node scripts/check-docs.mjs` → passed. `node scripts/check-intake.mjs` → passed. `node scripts/test-security.mjs .tools/gitleaks.exe` → passed. `.tools/gitleaks.exe dir --redact --config .gitleaks.toml .` → no leaks found. `git diff --check` → passed.
+
+Decision: retain WBS 3.2 as an envelope-only synthetic producer; do not silently expand it to `SightingEvent`. Payload construction and server consumer confirmation are a separate cross-layer follow-up owned by the relevant contract/server owners. The minor clock finding is addressed by an explicit deterministic mapping assertion; the contract itself does not require `received_time` to be later than `source_time`.
+
+Needs/blockers: PR #24 requires the refreshed branch checks and formal rereview by Sibusiso and both leads. The contract approval record's consumer item remains blocked until either payload emission is implemented or the follow-up scope is recorded by its owners. Power-loss, disk-corruption, concurrent-writer and full-disk cases remain untested and are not claimed.
+
+Business handoff: not applicable — documentation and test-boundary clarification only; no household-facing capability changed.
+
+Next: commit and push this follow-up, request rereview on PR #24, and wait for formal approvals before merge. Payload integration must be planned separately with Sibusiso/Khutso.

@@ -71,6 +71,7 @@ All hours and dates below are ASSUMPTIONS, subject to availability and gates.
 - No appliance → Lethabo procurement decision.
 - no UPS measurement → borrow test equipment through team.
 - event envelope v0.1.0 is merged in `contracts/events.schema.json`, with Lethabo's PR #6 approval and Sibusiso's implementation instruction; the approval record still requires reconciliation before calling the contract fully frozen. Build against the exact fields and rejection rules. `test/events-contract.test.mjs` is the pattern mirrored by the producer tests. No live server consumer exists yet — validate against the schema directly until one does.
+- Consumer confirmation remains a separate cross-layer blocker: current `POST /v1/sightings` accepts `SightingEvent` (the envelope plus required `Sighting` payload), while WBS 3.2 intentionally emits the envelope only. Sibusiso/Khutso must track and resolve payload construction; this producer must not be described as live-ingest ready.
 
 Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
 

@@ -59,6 +59,9 @@ class SyntheticEdgeProducerTests(unittest.TestCase):
             self.assertIs(event["sim_"], True)
             self.assertTrue(str(event["event_id"]).startswith("sim_"))
             self.assertTrue(str(event["tenant"]).startswith("sim_"))
+            self.assertEqual(event["source_time"], "2026-09-16T10:00:00Z")
+            self.assertEqual(event["received_time"], "2026-09-16T10:00:01Z")
+            self.assertLess(str(event["source_time"]), str(event["received_time"]))
 
     def test_valid_fixture_is_accepted(self) -> None:
         event = json.loads(
