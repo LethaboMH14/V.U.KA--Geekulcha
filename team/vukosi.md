@@ -37,6 +37,14 @@
 - Claimed files / contract versions: `appliance/agent.py`, `appliance/tests/`, `appliance/README.md`; consumes `contracts/events.schema.json` v0.1.0 without changing it.
 - Last updated: 16 September 2026 by Codex assistant at the user's request; owner availability remains unconfirmed.
 
+## Merge-gate follow-up declaration — 2026-09-16
+
+Criterion: **C3 (progress of solution profile)**. Trust answer: the follow-up makes the boundary and future acceptance test independently checkable without claiming that payload integration is already built.
+
+Intended shared-file edits: `docs/OVERLAPS.md` (coordination claim), `docs/CHECKLIST.md` (P2.16 follow-up reference), and `docs/BUILD-LOG.md` (append-only evidence). No contract file or production access is in scope.
+
+Ownership is **PROPOSED**, pending acknowledgement: Vukosi owns future synthetic `SightingEvent` payload emission; Sibusiso owns server-consumer confirmation; Khutso maintains the checklist/evidence record. This session records the follow-up only and does not implement payload emission or mark the consumer gate complete.
+
 ## Sequenced work
 
 All hours and dates below are ASSUMPTIONS, subject to availability and gates.

@@ -702,3 +702,19 @@ Needs/blockers: Sibusiso's second-lead review, Lethabo's formal review and consu
 Business handoff: not applicable — this is a documentation/protocol audit and does not change household capability.
 
 Next: await both formal reviewer decisions on PR #24; do not merge until required approvals and the contract consumer gate are resolved.
+
+## 2026-09-16 | Codex assistant | GPT-5 | WBS 3.2 merge-gate follow-up | ownership and checklist reference recorded
+
+Criterion: **C3 (progress of solution profile)**. Trust answer: reviewers can see the exact boundary between the tested local envelope queue and the future live-ingest payload, with an acceptance test named before implementation begins.
+
+Changed: recorded the active coordination claim in `docs/OVERLAPS.md` and extended checklist row `P2.16` in `docs/CHECKLIST.md`. The follow-up is **PROPOSED** pending acknowledgement: Vukosi owns future synthetic `SightingEvent` payload emission; Sibusiso owns server-consumer confirmation; Khutso maintains the checklist/evidence record. The approval-record consumer item remains unchecked until a synthetic `SightingEvent` fixture is accepted by the consumer contract.
+
+Evidence: no contract file, production access or appliance capability changed. PR #24 remains the implementation reference; its current-head checks are green. This entry records scope and acceptance only; payload integration is not implemented or measured.
+
+Decision: retain WBS 3.2 as envelope-only and track payload integration separately. No human acknowledgement or approval is inferred from this proposed ownership record.
+
+Needs/blockers: Khutso, Sibusiso and Vukosi must acknowledge the proposed ownership split; Sibusiso's second-lead contract row and Lethabo's final PR review remain pending. Power-loss, disk-corruption, concurrent-writer and full-disk behaviour remain untested.
+
+Business handoff: not applicable — this is a cross-layer coordination record and changes no household-facing capability.
+
+Next: obtain owner acknowledgement, then re-request Lethabo's final review on PR #24 after the current-head checks are visible and successful. Do not merge before the review gate is satisfied.
