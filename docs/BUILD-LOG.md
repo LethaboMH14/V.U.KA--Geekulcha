@@ -886,3 +886,17 @@ Needs/blockers: Sibusiso to resolve D (conform code to duty card, or ADR superse
 Business handoff: not applicable — review is a governance artefact, no consumer-facing change.
 
 Next: Sibusiso resolves D and H and re-requests review. Ipeleng starts P2.1 (PSiRA position paper). Judging criteria review Friday 19 Sep (P1.9).
+
+## 2026-09-16 SAST | Ipeleng Constance Modise (via Cline assistant) | model: Claude Sonnet 4.5 | PR #10 security review rework — false findings retracted | corrections recorded, verdict corrected
+
+Changed: rewrote `docs/reviews/IPELENG-PR10-REVIEW.md` (branch `docs/ipeleng-pr10-review`, PR #27) after Lethabo's request-changes and Sibusiso's concurrence: findings D, H (blocking) and A, B, C, E, J, K retracted with per-finding evidence; G narrowed; I kept reframed; new finding R added — `retain_consented_match` (governance.py:118) has no production caller, so the discard-by-default boundary is demonstrated but not wired into ingest. Updated `team/ipeleng.md` (current task, changed-this-session, running log).
+
+Evidence: `git show origin/main:server/src/auth/governance.py`. `git grep -n "retained_with_consent|retain_consented_match|candidate/approve" origin/main` — the state and endpoint cited by A/B/C/E/J do not exist anywhere; only the function and its test do. `git grep -in "cannot be overridden|flags back to watch" origin/main` — zero matches, so D's cited contradiction does not exist. `python -m unittest discover -s test -p "governance_contract_test.py"` — 8 tests OK including `test_consented_embedding_is_retained`; H's claim that `==` compares identity is wrong Python (`==` invokes `__eq__`, content equality). PR #10 merged 2026-09-15, so no finding is a merge blocker.
+
+Decision: verdict corrected from APPROVE with findings (2 blocking) to APPROVE with notes (no blocking). The retracted findings remain visible in the file's correction record rather than being deleted — the review history stays explainable. No approvals fabricated.
+
+Needs/blockers: R is owned by Sibusiso's P2.3 remainder (implementation test + G3 retention-bound check); the duress gap stays with WBS 4.3; G is hygiene for a refusal-reason enum.
+
+Business handoff: not applicable — governance correction, no consumer-facing change.
+
+Next: Sibusiso wires the boundary per P2.3. Ipeleng back to P2.5 (IO registration — blocked on leads' D-IO-1 designation and org legal identity), then counsel items P2.6/P2.7/P2.4.

@@ -2,67 +2,66 @@
 
 **Reviewer:** Ipeleng Constance Modise
 **Date:** 2026-09-15
-**Branch reviewed:** `feat/sibusiso-3.3-human-gate`
-**Verdict:** APPROVE with findings
+**Corrected:** 2026-09-16 — rework after Lethabo's request-changes on PR #27
+**Branch reviewed:** `feat/sibusiso-3.3-human-gate` (merged as PR #10, 2026-09-15)
+**Verdict:** APPROVE with notes — no blocking findings
 
 ## Scope
 
 Security review of Sibusiso's PR #10 — WBS 3.3 human-gate / operator approval path. Focus: privacy boundaries (POPIA), privilege-escalation surfaces, audit-trail integrity, and whether the operator flow can be abused to bypass consent.
 
-## Findings
+## Correction record
 
-### 🔴 D — OPERATOR-DUTY contradicts governance code
+The 15 Sep version of this review carried findings that do not describe the code they cite. Lethabo's review on PR #27 refuted them against `origin/main` with grep evidence; Sibusiso confirmed the two blocking findings do not hold. This rework retracts every ungrounded finding, keeps the two that survive, and adds the one real gap the original missed. The retracted findings stay visible below with per-finding evidence — nothing is deleted.
 
-`docs/OPERATOR-DUTY.md` says an operator's approval decision is **final and cannot be overridden**. `governance.py` implements the opposite: the machine state machine retains the right to flag a candidate back to `watch` state after operator approval. This is a real divergence, not a wording nit — whichever way it resolves, the other artefact must change. Blocks merge.
+Evidence base for this rework (run 16 Sep): `git show origin/main:server/src/auth/governance.py`; targeted `git grep` against `origin/main`; `python -m unittest discover -s test -p "governance_contract_test.py"` — 8 tests, all pass.
 
-**Owner:** Sibusiso. Fix: conform code to the duty card, or propose an ADR superseding the state machine first.
+## Retracted findings
 
-### 🔴 H — Wrong comparison operator in `retain_consented_match`
+| # | Original claim | Why retracted | Evidence |
+|---|---|---|---|
+| D (was blocking) | OPERATOR-DUTY.md says approval is "final and cannot be overridden"; governance.py "flags back to watch" after approval | Neither cited text exists in any tracked file | `git grep -in "cannot be overridden\|flags back to watch" origin/main` → zero matches |
+| H (was blocking) | `embedding == candidate` compares object identity, not content, so a consented match is never retained | Wrong about Python: `==` invokes `__eq__` (content equality); `is` is identity. The consented-match test passes | `test/governance_contract_test.py` — `test_consented_embedding_is_retained` passes (8/8 OK) |
+| A | New `retained_with_consent` state needs an ADR | The state does not exist. Actual states: `watch_candidate`, `flagged`, `dismissed`, `whitelisted` | `git grep -n "retained_with_consent" origin/main` → zero matches |
+| B | Retention period for `retained_with_consent` unspecified | Cited state does not exist | same as A |
+| C | No test for consent withdrawal | Withdrawal path for a state that does not exist | same as A |
+| E | Audit event for the `retained_with_consent` transition lacks a timestamp | Cited transition does not exist | same as A |
+| J | `/candidate/approve` response schema does not document the new state | The endpoint does not exist | `git grep -n "candidate/approve" origin/main` → zero matches |
+| K | `retain_consented_match` lacks a docstring | Stale: the merged function carries a docstring stating the boundary | `git show origin/main:server/src/auth/governance.py` |
 
-`governance.py` line 118 uses `embedding == candidate` — this compares object identity, not content, so it returns False even for byte-identical lists. The discard-by-default boundary silently never retains a consented match, which is a **fail-safe** behaviour but is not the documented behaviour and is not a deliberate design choice. Blocks merge because the code does not do what the record claims it does.
+F was already removed in the original version — the POPIA s57 analysis is Ipeleng's own P2.1/P2.2 deliverable, not Sibusiso's merge blocker — and stays removed.
 
-**Owner:** Sibusiso. Fix: replace with `list(embedding) == list(candidate)` or a proper deep-equality check, and add a test that proves the retained state is reached when consent is given.
+## Surviving findings
 
-### 🟡 A — PR introduces new retained state without an ADR
+### 🟡 G — Operator-supplied refusal reason is free text (narrowed)
 
-The PR adds a `retained_with_consent` state. This is a new privacy boundary — the state machine now has two long-lived personal-data states (`retained`, `retained_with_consent`). An ADR should record why two states are needed rather than one. Non-blocking; flag for the ADR review pass.
+The refusal event is properly structured — `action`, `actor_id`, `target_type`, `target_id`, `requested_action`, `detail` — but the operator-supplied `reason` is a free-text string. Free-text reasons cannot be counted or trended across refusals. Recommend a closed `reason_code` enum beside the free-text reason so refusal evidence stays queryable. Non-blocking.
 
-### 🟡 B — Retention period for `retained_with_consent` not specified
+### 🟡 I — Duress path not distinguished (kept, reframed)
 
-The PR says the state is "retained with consent" but does not say for how long, or what happens when consent is withdrawn. POPIA s11(1)(a) requires consent to be the lawful basis — a state with no expiry and no withdrawal path is not a consent state, it is just a longer-lived retention. Needs a retention period and a documented withdrawal path.
+The human-gate path does not distinguish a duress approval from a genuine one. WBS 4.3 owns duress abuse cases, and the plan rule is that duress states must be visually identical to normal ones. Out of scope for PR #10 and non-blocking — but it stays a recorded gap, not silently inherited. Owner: WBS 4.3.
 
-### 🟡 C — No test for consent withdrawal
+## New finding
 
-The PR adds tests for entering `retained_with_consent` but none for leaving it. If withdrawal is untested, the withdrawal path is a documented-only control. Abuse cases are executable tests, not prose.
+### 🟡 R — `retain_consented_match` has no production caller (the real gap the original missed)
 
-### 🟢 E — Minor: audit log entry lacks a timestamp field
+The function is defined (`governance.py:118`) and tested, but nothing in the server imports it: the discard-by-default boundary is demonstrated, not wired. An ingest path that receives embeddings today does not route them through this gate.
 
-The audit event emitted on state transition to `retained_with_consent` carries no timestamp field. If it relies on the outer log wrapper, that is fine — but the field should be named in the schema so the wrapper is not silently dropped later.
+**Owner:** Sibusiso — this is exactly the P2.3 remainder: wire the boundary into the ingest path and prove by test that non-consented embeddings are discarded there, plus the G3 retention-bound check.
 
-### 🟢 F — Skipped (Ipeleng's own task)
+**Port-time note (Lethabo):** for real embeddings (numpy arrays), `==` is element-wise and `any()` over the result is fragile and slow — use `np.array_equal` or a cosine-similarity threshold with tolerance when the boundary is wired in.
 
-Finding F — the POPIA s57 analysis gap — is identified during review but is **Ipeleng's own task** under P2.1/P2.2, not Sibusiso's. Removed as a merge blocker. The analysis will be delivered in the POPIA position paper.
+## What holds (verified against main)
 
-### 🟡 G — Refusal logging writes free text, not structured refusal reason
-
-`governance.py` logs a refusal as a free-text string in the audit event. Free-text refusals cannot be counted, cannot be trended, and cannot be used as evidence in a review pass ("refused action is evidence, not an error to swallow" — but only if it is queryable evidence). Needs a refusal-reason enum.
-
-### 🟡 I — Duress code path not covered by this PR
-
-`OPERATOR-DUTY.md` mentions duress as an operator obligation, and WBS 4.3 owns duress abuse cases, but this PR's human-gate path does not distinguish a duress approval from a genuine one. If an operator under duress can approve a retained-with-consent transition, the consent state is forgeable under coercion. Out of scope for this PR but must be recorded as a known gap before merge — not silently inherited.
-
-### 🟢 J — openapi.yaml response for retained_with_consent transition undocumented
-
-The `/candidate/approve` operation's 200 response schema does not mention that the response body may now carry a `retained_with_consent` state. Any consumer building against the OpenAPI contract will not know this state exists.
-
-### 🟢 K — `retain_consented_match` lacks a docstring
-
-The function is the consent boundary itself and has no docstring. Given the honesty-ledger rule, the boundary function should state what it does, what lawful basis it relies on (POPIA s11(1)(a)), and what it refuses.
+- The human gate is real: `verify_concern` is the only path to `flagged`, and it requires a named operator, reason and signature.
+- The two-signature rule holds: destructive actions refuse when the co-signature is missing, malformed, or belongs to the same operator.
+- A refused attempt returns evidence (`human_verify_refused`) instead of being swallowed — the refusal-is-evidence design holds.
+- The machine ceiling holds: no machine path assigns `flagged`.
 
 ## Verdict
 
-**APPROVE with findings** — 2 blocking (D, H), 4 medium (A, B, C, G, I), 3 low (E, J, K).
+**APPROVE with notes** — no blocking findings.
 
-The architecture is sound: the human gate is real, the discard-by-default boundary is the right shape, and the two-signature rule holds. D and H must be fixed before merge — D because a duty card that contradicts the code is a governance failure, H because the code does not do what the record claims. The rest are non-blocking and can be picked up in the follow-on passes (A in the ADR review, B/C in the POPIA paper, G/I as recorded gaps, E/J/K as low-effort hygiene).
+PR #10 merged 2026-09-15, so nothing here blocks anything. The architecture holds: two-signature rule, refusal-as-evidence, machine ceiling. Two hygiene items (G, I) and one real gap (R — the boundary is not yet wired into ingest) carry forward. R is owned by P2.3, not by a re-review of this PR.
 
-**Next:** Sibusiso resolves D and H, then re-requests review.
+**Next:** Sibusiso wires the discard-by-default boundary into ingest (P2.3 implementation test + G3 retention-bound check). This rework answers Lethabo's PR #27 change request; no re-review of PR #10 is needed.
