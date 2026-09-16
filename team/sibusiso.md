@@ -21,7 +21,7 @@
 - **No code path may set `flagged`.** The machine's ceiling is `watch_candidate`, enforced in code and tested, not just documented.
 - Never `--no-verify`.
 
-**Current task** — WBS 3.3 human-gate proof path implemented and tested in `server/src/auth/governance.py`; P2.3/G20 embedding boundary, P2.4 s57 decision record, P2.11 cost reconciliation, P2.14 rehearsal script, P2.15 calendar decision, WBS 4.5 checkpoint runbook and WBS 7.2 fallback runbook are prepared and pushed. Next: obtain Lethabo/second-lead contract approval and coordinate owner reviews; F14/SC.1 remains gated.
+**Current task** — **P2.3 discard-by-default boundary implemented 16 Sep** — `server/src/api/ingest.py` wires `retain_consented_match` into the ingest path (non-match persists no biometric data by construction; retained record carries the consent reference and the 7-day retention bound), nine acceptance tests in `test/ingest_boundary_test.py`, ADR-0033 proposed (numbered past PR #30's reserved ADR-0031/0032). This closes PR #27 review finding R. Next: Lethabo/second-lead acceptance of ADR-0033; P2.4 s57 decision record, P2.11 cost reconciliation, P2.14 rehearsal script, P2.15 calendar decision, WBS 4.5 checkpoint runbook and WBS 7.2 fallback runbook remain prepared and pushed; F14/SC.1 remains gated.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -31,7 +31,7 @@
 - Owns outright: Server, ledger, CI and demo orchestration.
 - Reviews only: All PRs; first review for Vukosi and Khutso.
 - Lead / escalation: Both leads for contract changes.
-- AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
+- AI tool / model: Cline assistant (Claude Sonnet 4.5) for the 16 September P2.3 implementation session; Codex / GPT-6 for the 13 September review session.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
 - Claimed files / contract versions: `contracts/events.schema.json` v0.1.0; `contracts/openapi.yaml` v0.1.0 proposed pending both-lead approval; `package.json`; `test/events-contract.test.mjs`.
 - Last updated: 13 September 2026 during Sibusiso's review session.
@@ -55,6 +55,8 @@ All hours and dates below are ASSUMPTIONS, subject to availability and gates.
 - See docs/OVERLAPS.md; do not silently change a shared version.
 
 ## Changed this session
+
+2026-09-16: Sibusiso (via Cline assistant) implemented the P2.3 discard-by-default boundary — `server/src/api/ingest.py` (`receive_sensor_embedding`) makes `retain_consented_match` a production caller, `test/ingest_boundary_test.py` proves the three acceptance properties from `docs/DISCARD-BY-DEFAULT-EMBEDDINGS.md` plus the G3 retention-bound check, and ADR-0033 records the decision as Proposed pending both-lead acceptance. Closes the finding-R gap from the PR #10 review rework.
 
 Sibusiso requested and owns this review. Local security-hook tests, clean repository/history scans and PR #2's successful remote checks were reviewed. The intake gate records Sibusiso's approval with those evidence references; this branch contains the resulting corrections.
 
@@ -91,3 +93,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 - 2026-09-15 — Codex acting for Sibusiso: created the v0.1.0 event schema, zero-dependency Node test harness, exact-shape acceptance/rejection tests and proposed OpenAPI v3.1 contract. Second-lead approval and ADR remain pending; no approval is inferred.
 - 2026-09-15 — Codex acting for Sibusiso: implemented the bounded WBS 3.3 human-gate proof path and six standard-library unittest cases. Refused privileged attempts return evidence receipts; destructive actions require distinct co-signers; no `flagged` assignment exists.
 - 2026-09-15 — Codex acting for Sibusiso: added tested discard-by-default embedding matching, s57 decision record, anchoring-cost reconciliation and sweep inventory, blockchain attack rehearsal, OpenTimestamps decision, evidence-checkpoint runbook and fallback/hotfix runbook. Remaining approvals and live rehearsals are explicitly open.
+- 2026-09-16 — Sibusiso (via Cline assistant): wired the discard-by-default boundary into the ingest path — `server/src/api/ingest.py` compares each transient sensor embedding only against the consented enrolment set for the stated tenant and purpose; non-matches persist no biometric data by construction; the retained record carries the consent reference and a 7-day retention bound (conservative end of the recorded 7–30 day direction of travel). Nine acceptance tests in `test/ingest_boundary_test.py` incl. the G3 retention-bound check; ADR-0033 proposed (numbered past PR #30's reserved ADR-0031/0032). This closes the finding-R gap from the PR #10 review rework (`retain_consented_match` now has a production caller). Ambiguous matches are refused, not guessed. Next: Lethabo's ADR-0033 acceptance; the real numpy-vector comparison per the module's port note happens at the Task 4 port.
