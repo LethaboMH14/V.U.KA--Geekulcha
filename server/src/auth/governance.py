@@ -120,3 +120,11 @@ def retain_consented_match(embedding, *, enrolled_embeddings):
     if embedding is None:
         return None
     return embedding if any(embedding == candidate for candidate in enrolled_embeddings) else None
+
+
+def embedding_match_evidence(embedding, *, enrolled_embeddings, consent_ref: str):
+    """Return biometric-free evidence for a consented match, or no evidence."""
+    retained = retain_consented_match(embedding, enrolled_embeddings=enrolled_embeddings)
+    if retained is None:
+        return None
+    return {"event": "embedding_match", "consent_ref": consent_ref, "matched": True}

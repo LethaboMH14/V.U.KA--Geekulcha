@@ -1,6 +1,6 @@
 import unittest
 
-from server.src.auth.governance import human_verify, retain_consented_match
+from server.src.auth.governance import embedding_match_evidence, human_verify, retain_consented_match
 
 
 class HumanGateContractTests(unittest.TestCase):
@@ -10,6 +10,20 @@ class HumanGateContractTests(unittest.TestCase):
     def test_consented_embedding_is_retained(self):
         embedding = (1, 2)
         self.assertEqual(embedding, retain_consented_match(embedding, enrolled_embeddings=[embedding]))
+
+    def test_nonmatch_discard_is_total(self):
+        embedding = ["sim_embedding", 9]
+        result = retain_consented_match(embedding, enrolled_embeddings=[["sim_embedding", 1]])
+        self.assertIsNone(result)
+        self.assertNotIn(embedding, [result])
+
+    def test_match_evidence_contains_no_biometric_payload(self):
+        embedding = ["sim_embedding", 1]
+        evidence = embedding_match_evidence(
+            embedding, enrolled_embeddings=[embedding], consent_ref="sim_consent_001"
+        )
+        self.assertEqual(evidence, {"event": "embedding_match", "consent_ref": "sim_consent_001", "matched": True})
+        self.assertNotIn("sim_embedding", str(evidence))
     def test_verify_concern_requires_named_human_and_keeps_machine_ceiling(self):
         receipt = human_verify(
             current_state="watch_candidate",

@@ -307,6 +307,10 @@ Added `docs/CONTRACT-APPROVAL-RECORD.md` with the exact lead, second-lead, consu
 ### 2026-09-15 21:15 SAST — checklist ownership check
 
 Checked `team/khutso.md` for P2.16/P2.17 assignment collisions; none were present. Khutso remains the owner of `docs/CHECKLIST.md`, so the rows remain subject to his review even though no duplicate IDs were found.
+
+### 2026-09-16 09:20 SAST — P2.3 discard-boundary acceptance coverage
+
+Confirmed `server/src/db/` contains only `.gitkeep`; no persistence layer exists. Took path (b) from ADR-0031/Ipeleng PR #27 finding R: added total-discard and biometric-free match-evidence unit tests plus a small evidence helper. P2.3 remains partial; an across-persistence-boundary test requires a real storage layer.
 ## 2026-09-15 | Codex assistant on behalf of Khutso Mothopa | GPT-5 | role self-review | proposed, review pending
 
 Changed: `team/khutso.md` — recorded Khutso's evidence-based role feedback, reserved the role-review and build-log paths, reconciled the immediate P1.1/P1.3 evidence work with the formal WBS 1.4 proposed/not-started status, and stated the reviewer/dependency boundary. No product code, contract, approval, or completion status was changed.
