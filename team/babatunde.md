@@ -21,7 +21,7 @@
 - **If the demo does not do it, the pitch does not claim it.** No exceptions for a good story.
 - I may claim nothing that is not in Khutso's `docs/EVIDENCE.md`.
 
-**Current task** — Replace the 2.7m stat with the corrected **4:1** figure everywhere it appears (`P1.1`), then the **economics engine** — ARPU, CAC, LTV, payback, churn, break-even (`P1.11`) — then validate a real named pilot site or label it `ASSUMPTION` (`P1.12`).
+**Current task** — `docs/09-ECONOMICS.md` + `scripts/economics_engine.py` landed 17 Sep: gross margin reproduced by code (R137/mo, 45.82%), VAT crossover computed (~641 subscribers/yr, P1.10 closed), CAC/LTV/churn/payback/burn/runway formulas built but explicitly report `NOT YET MEASURED` since no pilot spend or cohort data exists (P1.11 half-closed — real numbers need a real pilot). Channel cost left as a labelled `ASSUMPTION` (20%, no partner agreed). Remaining: validate a real named pilot site or label it `ASSUMPTION` (`P1.12`) — requires actual outreach, not done here.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every number in anything I produce traces to `docs/EVIDENCE.md` by the time it reaches a slide.
 

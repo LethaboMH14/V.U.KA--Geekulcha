@@ -34,8 +34,8 @@
 
 | # | Item | Owner | Criterion | Due | State | Amended |
 |---|---|---|---|---|---|---|
-| P1.10 | Add **VAT and channel cost** to the R137 margin. *(VAT registration is only compulsory above R2.3m turnover from 1 Apr 2026 — at pilot scale this is a disclosure, not a cost)* | Babatunde | C2 | Sep 18 | ☐ | Added 14 Sep, Lethabo |
-| P1.11 | Build the **economics engine**: ARPU · gross and contribution margin · CAC · LTV · LTV:CAC · payback · churn · burn · runway · break-even month. None of these exist anywhere in the repo today | Babatunde | C2, C3 | Sep 18 | ☐ | Added 14 Sep, Lethabo |
+| P1.10 | Add **VAT and channel cost** to the R137 margin. *(VAT registration is only compulsory above R2.3m turnover from 1 Apr 2026 — at pilot scale this is a disclosure, not a cost)* | Babatunde | C2 | Sep 18 | ☑ | Added 14 Sep, Lethabo. Closed 17 Sep: `docs/09-ECONOMICS.md` + `scripts/economics_engine.py` — crossover computed at ~641 subscribers/yr; channel cost left as labelled `ASSUMPTION` (no partner rate agreed, P1.13 open) |
+| P1.11 | Build the **economics engine**: ARPU · gross and contribution margin · CAC · LTV · LTV:CAC · payback · churn · burn · runway · break-even month. None of these exist anywhere in the repo today | Babatunde | C2, C3 | Sep 18 | ◐ | Added 14 Sep, Lethabo. Closed 17 Sep for the computable half: gross margin (R137, 45.82%) reproduced by code; CAC/LTV/churn/payback/burn/runway formulas built in `scripts/economics_engine.py` but explicitly report `NOT YET MEASURED` — no pilot spend or cohort data exists to fill them. Real numbers require an actual pilot |
 | P1.12 | Name a **real estate or residents' association** with consenting contact capacity — or label the funnel `ASSUMPTION` in full. *"The 764 hotspots are not 764 customers"* | Babatunde | C2, C4 | Sep 18 | ☐ | Added 14 Sep, Lethabo |
 | P1.13 | Competitor pricing — Fidelity ADT / Vumacam actual monthly rates, to position R299 | Babatunde | C2 | Sep 18 | ☐ | Added 14 Sep, Lethabo |
 
