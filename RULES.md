@@ -2,6 +2,18 @@
 
 **Read `docs/MASTER-CONTEXT.md` first — theme, judging criteria, the showcase, the honesty ledger. It is one page and it does not change shape.**
 
+## A finding stated in a comment is not enforced until it's a rule
+
+If a PR review comment, a chat, or any thread states something that should never happen again — a naming decision, a process fix, a claim that turned out false — **it does not stay a comment.** It goes into this file, `AGENTS.md`, or the relevant standing doc in the same PR or the next one. A comment thread gets archived and the next session — any person, any tool, any model tier — repeats the mistake because nothing it reads told it otherwise. This is not optional housekeeping; it is the only reason a shared repo works better than a shared chat log.
+
+## Every task: research, real data, business reasoning
+
+Every `docs/build-log/entries/` file (see below) states what you actually checked before doing the work, the real data or competitor precedent it's grounded in, and one sentence on how it moves money — or "not applicable" with why, said deliberately, not defaulted past. See `docs/build-log/TEMPLATE.md`. This applies to research, docs and business work exactly as much as it already applies to UI work under `AGENTS.md`'s quality contract.
+
+## Model routing
+
+Route work by how expensive it is to be wrong and how checkable the answer is, not by habit — see `docs/AGENT-ROUTING.md`: bounded execution → your tool's cheap/fast model; checking that output against evidence and the rules → your tool's strongest model; merging to `main` → the repo gate below, never a model alone.
+
 ## Criteria recall
 
 Before any iteration, any new concept, and any artefact that reaches a judge: re-read `docs/MASTER-CONTEXT.md`. State which criterion the work serves (C1 team / C2 innovation / C3 progress / C4 user journey) and how it answers **"Would a real user trust and use this?"** If it serves none, say so and justify the work anyway — or drop it.
@@ -30,8 +42,8 @@ Branches: `docs/<topic>`, `feat/<owner>-<wbs-id>`, `fix/<owner>-<topic>`, `hotfi
 
 Lethabo is first reviewer for Mutarisi, Ipeleng and Babatunde; Sibusiso for Vukosi and Khutso. Both remain final reviewers. GitHub branch protection must require the CI jobs and nonauthor approvals; a written rule is not proof that remote settings are enabled.
 
-Weekend hotfix: prefer rollback or disable the broken demo path. A minimal patch gets synchronous second-person review, security scan and focused verification before merge; leads record the exception scope and follow-up in docs/BUILD-LOG.md. No “deadline” exception for secrets, privacy or human-authority boundaries; if review is unavailable, use the verified fallback.
+Weekend hotfix: prefer rollback or disable the broken demo path. A minimal patch gets synchronous second-person review, security scan and focused verification before merge; leads record the exception scope and follow-up as a new `docs/build-log/entries/` file. No “deadline” exception for secrets, privacy or human-authority boundaries; if review is unavailable, use the verified fallback.
 
 ## Coordination
 
-Before editing shared files, declare the WBS task and affected paths in your team file. Check docs/OVERLAPS.md. Contract changes require a proposed diff and both leads' decision. Update your file, docs/BUILD-LOG.md and a business handoff for each meaningful change. Record blockers with owner and needed evidence, not secrets. Append corrections to the build log; never rewrite another person's history. Tools/models are declared by the actual person; agents must not fabricate human activity or approvals.
+Before editing shared files, declare the WBS task and affected paths in your team file. Check docs/OVERLAPS.md. Contract changes require a proposed diff and both leads' decision. Update your file, add a new file in `docs/build-log/entries/` (never edit `docs/BUILD-LOG.md` — it's frozen; see `docs/build-log/README.md`) and a business handoff for each meaningful change. Record blockers with owner and needed evidence, not secrets. A correction is always a new build-log entry file; never rewrite another person's history. Tools/models are declared by the actual person; agents must not fabricate human activity or approvals. `.github/CODEOWNERS` auto-requests your reviewer on matching paths — being requested is not the same as being reviewed; read the diff.

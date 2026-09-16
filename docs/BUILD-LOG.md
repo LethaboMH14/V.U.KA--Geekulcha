@@ -1,4 +1,8 @@
-# Shared build log
+# Shared build log — FROZEN 16 September 2026
+
+> 🔴 **This file no longer takes new entries.** Every entry below is real and kept exactly as written — nothing here is edited or removed. New entries go in **`docs/build-log/entries/`**, one file per entry — see `docs/build-log/README.md` for why and the exact convention.
+>
+> This file existed as one shared file everyone appended to. On 16 September five PRs landed within about 25 minutes and four of them hit a real conflict on this exact file — every PR's diff ends at the same line. The entries never disagreed; the file structure just made every concurrent PR collide here. Splitting into one file per entry makes that structurally impossible: two people writing two different files can't conflict on the third.
 
 Append-only factual record. Mandatory at every meaningful code, document, interface, configuration, test-evidence or status change; also every blocker, handoff and decision. Fix mistakes with a new correction entry. Do not store secrets, personal incident data or fabricated human actions. If multiple people append concurrently, retain all entries during merge.
 
