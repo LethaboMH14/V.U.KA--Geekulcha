@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - When the real judging criteria publish, I refresh `docs/MASTER-CONTEXT.md` and re-tag `docs/CHECKLIST.md` the same day — that is the mechanism that stops the team optimising for the old four.
 
-**Current task** — `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md` are created; keep both current as items close. P1.1's repository-controlled surfaces are corrected and its external public-profile portion remains blocked pending owner confirmation. Next after closure: resolve "440 tests" vs 510 test-function definitions with a real collected count or retire the claim (`P1.3`).
+**Current task** — `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md` are created; keep both current as items close. P1.1's repository-controlled surfaces are corrected (merged via PR #35) and its external public-profile portion remains blocked pending owner confirmation. P2.16's proposed ownership and evidence boundary are coordinated without calling the contract frozen. Next: resolve "440 tests" vs 510 test-function definitions with a real collected count or retire the claim (`P1.3`).
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -33,7 +33,7 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: P1.1 partial/blocked; repository-controlled surfaces are corrected, but the external public-profile update is unverified. WBS 1.4 is done with intake gate approved and both lead approvals recorded in `docs/security/intake-gate.json`. P1.3 follows closure; P1.2 remains a shared Khutso/Babatunde check.
+- Current task / status: P1.1 partial/blocked; repository-controlled surfaces are corrected (merged via PR #35), but the external public-profile update is unverified. WBS 1.4 is done with intake gate approved and both lead approvals recorded in `docs/security/intake-gate.json`. P2.16 coordination in progress with the ownership/evidence split recorded, while contract freeze remains pending consumer confirmation and Sibusiso's second-lead evidence. P1.3 follows closure; P1.2 remains a shared Khutso/Babatunde check.
 - Claimed files / contract versions: `team/khutso.md` (role self-review) and `docs/BUILD-LOG.md` (append-only review record); no contract version change.
 - Last updated: 12 September 2026 by Codex assistant as a planning assignment.
 
@@ -68,6 +68,14 @@ Blockers: the public-profile paste target is not editable from this repository; 
 ## P1.1 repository portion — 2026-09-16
 
 Outcome: the two current judge-facing stale claims were corrected in `docs/08-BUSINESS.md` and `docs/LEAN-CANVAS.md` using the checked figures and provenance in `docs/EVIDENCE.md`. The sweep intentionally retains historical/task references in `docs/EVIDENCE.md`, `docs/PLAN.md`, `docs/BUILD-LOG.md`, `docs/MASTER-CONTEXT.md`, `docs/CHECKLIST.md`, `team/babatunde.md` and the archived submission, because rewriting those would destroy the correction trail or task definition. P1.1 remains partial until the external public-profile update is confirmed by its owner.
+## P2.16 coordination declaration — 2026-09-16
+
+Criterion: **C3 (progress of solution profile)**, with C2/C4 protected by keeping the contract boundary explicit. Trust answer: a real user can trust this coordination only if the proposed ownership split is visible, the consumer gate remains blocked until its evidence exists, and no envelope-only producer is described as live ingest.
+
+Bounded work: coordinate the P2.16 follow-up only. Intended shared-file edits: `docs/OVERLAPS.md`, `docs/CHECKLIST.md`, and `docs/BUILD-LOG.md`. No contract schema or production code is in scope. Acceptance evidence: the P2.16 row and `docs/CONTRACT-APPROVAL-RECORD.md` continue to show the contract as not frozen; the ownership split names Vukosi for future synthetic `SightingEvent` payload emission, Sibusiso for server-consumer confirmation, and Khutso for the evidence/checklist record; document, intake and whitespace checks pass.
+
+Blockers: the consumer-confirmation checkbox remains unchecked because `appliance/agent.py` emits only the transport envelope; Sibusiso's second-lead approval is also pending. This acknowledgement is recorded by the Codex assistant at Khutso's request and is not a human signature, contract approval, or claim that P2.16 is complete. Sibusiso remains first reviewer, followed by both leads.
+
 
 ## Changed this session
 
