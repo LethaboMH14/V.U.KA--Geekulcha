@@ -491,6 +491,7 @@ One document, assembled last, consuming everyone's verified evidence:
 | **NEW** PSiRA position paper | Sep 16 | trigger · category · structure · the open question for counsel |
 | **NEW** POPIA position paper + ADR | Sep 17 | discard-by-default is an **architecture** decision |
 | **NEW** register the Information Officer | Sep 17 | |
+| **NEW** Gated Access Areas Code review | Sep 17 | design floor adopted (`ADR-0032`); draft text not corroborated on reachable sources — Gazette retrieval to counsel |
 | 4.3 operator/tenant/duress abuse cases | Sep 19 | as **executable tests** |
 | 6.3 review release for privacy + secrets | Sep 22 | |
 | 7.5 close temporary demo access | Sep 27 | |
