@@ -1,0 +1,9 @@
+{
+  "version": "0.1.0",
+  "event_id": "sim_event_fixture_001",
+  "tenant": "sim_tenant_fixture_001",
+  "source_time": "2026-09-16T10:00:00Z",
+  "received_time": "2026-09-16T10:00:01Z",
+  "sim_": true,
+  "freshness": "fresh"
+}

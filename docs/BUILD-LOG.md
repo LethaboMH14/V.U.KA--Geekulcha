@@ -644,3 +644,90 @@ Needs/blockers: ADR-0033 needs Lethabo's acceptance (contract-adjacent decision,
 Business handoff: the pilot can now state that a face embedding is discarded the moment it does not match an enrolled, consenting resident for the stated tenant and purpose — the claim is enforced in code and tested, not aspirational. Serves C2 (the compliance story is executable) and C3 (G3 retention-bounded retained records).
 
 Next: Lethabo reviews ADR-0033 and the boundary tests. Sibusiso's remaining prepared items (P2.11, P2.14, P2.15, WBS 4.5, WBS 7.2) await their review slots; F14/SC.1 remains gated. Judging criteria review Friday 19 Sep (P1.9).
+## 2026-09-15 | Codex assistant | GPT-5 | WBS 3.2 — synthetic edge producer | implementation on branch, review pending
+
+Changed: `appliance/agent.py` now constructs only the exact v0.1.0 event envelope from `contracts/events.schema.json` and enforces visibly synthetic `sim_` identifiers, `sim_: true`, UTC `Z` timestamps and the allowed freshness values. `EventQueue` appends flushed JSONL lines, reloads FIFO state, stops visibly on malformed content, and removes entries only after an injected consumer acknowledges them. Added `appliance/tests/test_agent.py` and three `sim_` fixtures covering schema shape, privileged-field rejection, restart/FIFO behaviour, acknowledgement boundaries and unchanged malformed queues. Updated `appliance/README.md` with the implementation boundary and explicit non-claims. Updated `team/vukosi.md` with the assistant-run status review; owner availability remains unconfirmed.
+
+Evidence: `python -m unittest discover -s appliance/tests -p 'test_*.py' -v` → **7/7 passed** (Python 3.12.11). `python -m pytest appliance/tests -v` was attempted but could not run because this clone has no pytest module; the equivalent standard-library suite is the recorded focused result. `node --test test/events-contract.test.mjs test/openapi-contract.test.mjs` → **8/8 passed**. `node scripts/check-docs.mjs` → passed. `node scripts/check-intake.mjs` → passed. `node scripts/test-security.mjs .tools/gitleaks.exe` → passed. `.tools/gitleaks.exe dir --redact --config .gitleaks.toml .` → no leaks found. `.tools/gitleaks.exe git --redact --config .gitleaks.toml --log-opts='--all'` → no leaks found. `git diff --check` → passed.
+
+Decision: no contract change. The implementation consumes the merged v0.1.0 envelope without adding fields. The repository's `docs/CONTRACT-APPROVAL-RECORD.md` still records approval as pending; Sibusiso/Lethabo must reconcile that governance record before the contract is called fully frozen.
+
+Needs/blockers: Sibusiso is the first reviewer; both leads review before merge. No live server consumer exists, so direct schema validation is the current acceptance boundary. Power-loss, disk-corruption, concurrent-writer and full-disk cases remain untested and are not claimed. Human owner availability and equipment remain unconfirmed.
+
+Business handoff: not applicable — this is a synthetic producer and queue/replay foundation; it changes no household-facing capability and makes no hardware or sensing claim.
+
+Next: Sibusiso reviews `feat/vukosi-3.2-edge-producer`; after approval, merge via PR, then proceed to WBS 4.2 only with an actual measurement instrument and dated BOM sources.
+
+## 2026-09-15 | Codex assistant | GPT-5 | WBS 3.2 protocol correction | recorded, review pending
+
+Changed: recorded an append-only process correction in `team/vukosi.md` and this log. The WBS/path declaration was entered after implementation began, rather than before the first edit as required by RULES/AGENTS. The implementation PR remains reviewable and no contract or other shared interface was changed. The affected paths are now explicitly listed in the personal file and PR #24.
+
+Evidence: `git log -1 --oneline` → `0aaa590 feat(appliance): add synthetic edge producer`; PR #24 is open with `secret-scan:SUCCESS` and `document-contracts:SUCCESS`; `git status --short --branch` is clean relative to the branch's remote after the prior commit. This entry is a correction, not a claim that the original sequencing was compliant.
+
+Decision: no product or contract decision; process correction only.
+
+Needs/blockers: reviewers should note the sequencing miss when assessing protocol compliance. Sibusiso remains first reviewer, followed by both leads. Owner availability remains unconfirmed.
+
+Business handoff: not applicable — no capability or commercial claim changed.
+
+Next: push this correction as a follow-up commit to PR #24 and request reviewers to consider the complete append-only record.
+
+## 2026-09-16 | Codex assistant | GPT-5 | WBS 3.2 review follow-up | rebase and review findings addressed, rereview pending
+
+Changed: rebased `feat/vukosi-3.2-edge-producer` onto current `origin/main` (`f1246ae`), preserving all append-only mainline log entries and replaying the two existing WBS 3.2 commits. Updated `appliance/README.md` to state the transport-envelope-only boundary: `POST /v1/sightings` accepts `SightingEvent` (envelope plus required `Sighting` payload), which this WBS intentionally does not construct. Added the payload consumer-confirmation blocker to `team/vukosi.md`. Strengthened `appliance/tests/test_agent.py` to assert that injected clock values map to `source_time` and `received_time` in order.
+
+Evidence: `git rebase origin/main` completed successfully after one `docs/BUILD-LOG.md` append-only conflict; all mainline entries were retained. `python -m unittest discover -s appliance/tests -p 'test_*.py' -v` → **7/7 passed**. `node --test test/events-contract.test.mjs test/openapi-contract.test.mjs` → **10/10 passed**. `node scripts/check-docs.mjs` → passed. `node scripts/check-intake.mjs` → passed. `node scripts/test-security.mjs .tools/gitleaks.exe` → passed. `.tools/gitleaks.exe dir --redact --config .gitleaks.toml .` → no leaks found. `git diff --check` → passed.
+
+Decision: retain WBS 3.2 as an envelope-only synthetic producer; do not silently expand it to `SightingEvent`. Payload construction and server consumer confirmation are a separate cross-layer follow-up owned by the relevant contract/server owners. The minor clock finding is addressed by an explicit deterministic mapping assertion; the contract itself does not require `received_time` to be later than `source_time`.
+
+Needs/blockers: PR #24 requires the refreshed branch checks and formal rereview by Sibusiso and both leads. The contract approval record's consumer item remains blocked until either payload emission is implemented or the follow-up scope is recorded by its owners. Power-loss, disk-corruption, concurrent-writer and full-disk cases remain untested and are not claimed.
+
+Business handoff: not applicable — documentation and test-boundary clarification only; no household-facing capability changed.
+
+Next: commit and push this follow-up, request rereview on PR #24, and wait for formal approvals before merge. Payload integration must be planned separately with Sibusiso/Khutso.
+
+## 2026-09-16 | Codex assistant | GPT-5 | WBS 3.2 handoff | follow-up pushed and rereview requested
+
+Changed: committed follow-up `6279d39` (`docs(appliance): clarify ingest boundary after review`) and force-updated `feat/vukosi-3.2-edge-producer` with `--force-with-lease` after the successful rebase. Re-requested Sibusiso-K and LethaboMH14 on PR #24 and posted the review-resolution summary there.
+
+Evidence: working tree is clean; PR #24 is OPEN and CLEAN. GitHub `document-contracts` and `secret-scan` checks both completed SUCCESS on the refreshed head. Local evidence remains 7/7 producer tests, 10/10 contract tests, docs/intake/security checks passed, Gitleaks clean, and `git diff --check` passed.
+
+Decision: implementation is ready for formal reviewer decisions; no merge was performed. WBS 3.2 remains envelope-only, and the `SightingEvent` payload/consumer-confirmation follow-up remains outside this leaf.
+
+Needs/blockers: formal approvals and contract consumer confirmation are still pending. Unmeasured power-loss, disk-corruption, concurrent-writer and full-disk behaviours remain explicitly unclaimed.
+
+Business handoff: not applicable — this records repository/PR state only.
+
+Next: Sibusiso and Lethabo review PR #24; contract/server owners separately plan payload integration and update the approval/checklist records.
+
+## 2026-09-16 | Codex assistant | GPT-5 | WBS 3.2 protocol audit | documentation alignment, formal review pending
+
+Criterion: **C3 (progress of solution profile)**. Trust answer: a reviewer can reproduce the synthetic queue/replay evidence and see exactly where live-ingest, hardware and power claims stop; no household capability is claimed from unmeasured work.
+
+Changed: audited the required reading order, bounded WBS declaration, overlap register, branch/PR workflow, claim labels, evidence commands, security/intake gates, business-handoff rule, reviewer requirements and append-only logging. Corrected the stale `team/vukosi.md` update date. Updated PR #24's description to match the rebased branch, current 10/10 contract evidence, current rollback guidance and pending formal approvals.
+
+Evidence: `git status --short --branch` is clean and tracks `origin/feat/vukosi-3.2-edge-producer`; PR #24 is OPEN and CLEAN with `document-contracts` and `secret-scan` SUCCESS. No contract or production-access change was made. The original sequencing miss remains preserved in the prior correction entry; it is not relabelled as compliant.
+
+Decision: protocol obligations currently within this WBS are satisfied or explicitly recorded as pending. No self-approval, merge, fabricated measurement, reviewer approval or hardware claim was made.
+
+Needs/blockers: Sibusiso's second-lead review, Lethabo's formal review and consumer confirmation in `docs/CONTRACT-APPROVAL-RECORD.md` remain pending. Payload integration belongs to the contract/server owners; power-loss, disk-corruption, concurrent-writer and full-disk behaviour remain untested.
+
+Business handoff: not applicable — this is a documentation/protocol audit and does not change household capability.
+
+Next: await both formal reviewer decisions on PR #24; do not merge until required approvals and the contract consumer gate are resolved.
+
+## 2026-09-16 | Codex assistant | GPT-5 | WBS 3.2 merge-gate follow-up | ownership and checklist reference recorded
+
+Criterion: **C3 (progress of solution profile)**. Trust answer: reviewers can see the exact boundary between the tested local envelope queue and the future live-ingest payload, with an acceptance test named before implementation begins.
+
+Changed: recorded the active coordination claim in `docs/OVERLAPS.md` and extended checklist row `P2.16` in `docs/CHECKLIST.md`. The follow-up is **PROPOSED** pending acknowledgement: Vukosi owns future synthetic `SightingEvent` payload emission; Sibusiso owns server-consumer confirmation; Khutso maintains the checklist/evidence record. The approval-record consumer item remains unchecked until a synthetic `SightingEvent` fixture is accepted by the consumer contract.
+
+Evidence: no contract file, production access or appliance capability changed. PR #24 remains the implementation reference; its current-head checks are green. This entry records scope and acceptance only; payload integration is not implemented or measured.
+
+Decision: retain WBS 3.2 as envelope-only and track payload integration separately. No human acknowledgement or approval is inferred from this proposed ownership record.
+
+Needs/blockers: Khutso, Sibusiso and Vukosi must acknowledge the proposed ownership split; Sibusiso's second-lead contract row and Lethabo's final PR review remain pending. Power-loss, disk-corruption, concurrent-writer and full-disk behaviour remain untested.
+
+Business handoff: not applicable — this is a cross-layer coordination record and changes no household-facing capability.
+
+Next: obtain owner acknowledgement, then re-request Lethabo's final review on PR #24 after the current-head checks are visible and successful. Do not merge before the review gate is satisfied.

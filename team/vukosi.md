@@ -31,11 +31,19 @@
 - Owns outright: KHAYA sensors, edge runtime, hardware and power.
 - Reviews only: Sensor/data contract and physical installation assumptions.
 - Lead / escalation: Sibusiso, then both leads.
-- AI tool / model: UNDECLARED — owner must enter actual values.
+- AI tool / model: Codex / GPT-5 (assistant-run in this session; owner confirmation pending).
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: 3.2, proposed, not started.
-- Claimed files / contract versions: none; reserve before editing.
-- Last updated: 12 September 2026 by Codex assistant as a planning assignment.
+- Current task / status: 3.2, implementation present on `feat/vukosi-3.2-edge-producer`; PR #24 is open and clean after rebase, GitHub checks pass, and formal rereview is requested from Sibusiso and Lethabo. Focused producer suite passes 7/7 with `unittest`.
+- Claimed files / contract versions: `appliance/agent.py`, `appliance/tests/`, `appliance/README.md`; consumes `contracts/events.schema.json` v0.1.0 without changing it.
+- Last updated: 16 September 2026 by Codex assistant at the user's request; owner availability remains unconfirmed.
+
+## Merge-gate follow-up declaration — 2026-09-16
+
+Criterion: **C3 (progress of solution profile)**. Trust answer: the follow-up makes the boundary and future acceptance test independently checkable without claiming that payload integration is already built.
+
+Intended shared-file edits: `docs/OVERLAPS.md` (coordination claim), `docs/CHECKLIST.md` (P2.16 follow-up reference), and `docs/BUILD-LOG.md` (append-only evidence). No contract file or production access is in scope.
+
+Ownership is **PROPOSED**, pending acknowledgement: Vukosi owns future synthetic `SightingEvent` payload emission; Sibusiso owns server-consumer confirmation; Khutso maintains the checklist/evidence record. This session records the follow-up only and does not implement payload emission or mark the consumer gate complete.
 
 ## Sequenced work
 
@@ -56,13 +64,22 @@ All hours and dates below are ASSUMPTIONS, subject to availability and gates.
 
 ## Changed this session
 
-No work by Vukosi Khoza is asserted. This package was created by the assistant. No files are reserved and no PR exists.
+2026-09-15 — Codex assistant, at the user's request, implemented WBS 3.2 on `feat/vukosi-3.2-edge-producer`. This records assistant work, not unverified human activity. Added a schema-shaped synthetic producer, JSONL queue/replay, fixtures and focused tests. No sensor, hardware, power, tamper, or live-consumer capability is claimed.
+
+## Role self-review — 2026-09-15
+
+- Current task matches the assignment: WBS 3.2 is the first implementation slice, followed by BOM/power measurement (4.2), offline/power recovery (4.4), and venue kit (6.2).
+- This session used Codex / GPT-5. The human owner's preferred tool/model is not independently confirmed.
+- Availability remains **unconfirmed**; no hours or dates are treated as accepted commitments.
+- The implementation scope matches reality for this checkout: `appliance/` has no real sensors, fabricated appliance, power instrument, or live server consumer. The queue demonstrates synthetic file replay only.
+- The contract is consumed exactly as merged. The repository's `docs/CONTRACT-APPROVAL-RECORD.md` still says approval is pending; Sibusiso/Lethabo must reconcile that record before the contract is described as fully frozen.
 
 ## Needs and blockers
 
 - No appliance → Lethabo procurement decision.
 - no UPS measurement → borrow test equipment through team.
-- event contract frozen at v0.1.0 in `contracts/events.schema.json`, merged to main via PR #6 (Lethabo approved) — build against the exact fields and rejection rules. `test/events-contract.test.mjs` is the pattern to mirror for your own producer's output tests. No live server consumer exists yet (server/ is still scaffold-only) — validate against the schema directly until one does.
+- event envelope v0.1.0 is merged in `contracts/events.schema.json`, with Lethabo's PR #6 approval and Sibusiso's implementation instruction; the approval record still requires reconciliation before calling the contract fully frozen. Build against the exact fields and rejection rules. `test/events-contract.test.mjs` is the pattern mirrored by the producer tests. No live server consumer exists yet — validate against the schema directly until one does.
+- Consumer confirmation remains a separate cross-layer blocker: current `POST /v1/sightings` accepts `SightingEvent` (the envelope plus required `Sighting` payload), while WBS 3.2 intentionally emits the envelope only. Sibusiso/Khutso must track and resolve payload construction; this producer must not be described as live-ingest ready.
 
 Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
 
@@ -85,3 +102,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 ## Running log
 
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
+- 2026-09-15 — Protocol correction: the WBS/path declaration for 3.2 was recorded in this file after implementation began, rather than before the first edit as RULES/AGENTS require. The paths are now explicit (`appliance/agent.py`, `appliance/tests/`, `appliance/README.md`, `team/vukosi.md`, `docs/BUILD-LOG.md`); no shared contract was edited. This correction is assistant-authored and included in PR #24.
