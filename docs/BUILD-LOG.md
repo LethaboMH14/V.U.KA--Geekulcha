@@ -748,3 +748,18 @@ Needs/blockers: the external public-profile owner must provide update evidence b
 Business handoff: not applicable — audit-record correction only.
 
 Next: request Sibusiso's review of this correction, then request Lethabo's re-review after Sibusiso's decision.
+## 2026-09-16 | Codex assistant at Khutso Mothopa's request | GPT-5 | P2.16 coordination acknowledgement | proposed, review pending
+
+Criterion: **C3 (progress of solution profile)**, with C2/C4 protected by keeping the transport-versus-domain boundary explicit. Trust answer: a real user can trust this record only if the proposed owners, acceptance fixture and blocked consumer gate remain visible; envelope-only output is not presented as live ingest.
+
+Changed: recorded Khutso's coordination acknowledgement for the proposed P2.16 follow-up in `team/khutso.md`, `docs/OVERLAPS.md` and `docs/CHECKLIST.md`. Vukosi remains the proposed owner of future synthetic `SightingEvent` payload emission, Sibusiso remains the proposed owner of server-consumer confirmation, and Khutso maintains the checklist/evidence record. No contract schema, production code, approval record, or P2.16 completion status changed.
+
+Evidence: the latest mainline is `2b34d23`; PR #24 merged on 2026-09-16 with `secret-scan` and `document-contracts` checks successful. The merged `appliance/README.md` still states that the producer emits the `EventEnvelope` only, while `docs/CONTRACT-APPROVAL-RECORD.md` leaves the consumer checkbox and Sibusiso's second-lead row unchecked. Acceptance remains a synthetic `SightingEvent` fixture accepted by the consumer contract.
+
+Decision: the ownership split remains **PROPOSED**. This entry was recorded by the Codex assistant at Khutso's explicit request; it is not a human signature, reviewer approval, consumer confirmation, contract freeze, or product-capability claim.
+
+Needs/blockers: Sibusiso must review this coordination PR before any merge, followed by both leads. Vukosi's payload fixture and Sibusiso's consumer confirmation remain required before P2.16 can move from ◐ to complete. No power-loss, disk-corruption, concurrent-writer or full-disk behaviour is claimed.
+
+Business handoff: not applicable — coordination only; no household capability changed.
+
+Next: submit this PR for Sibusiso's review, then both leads' review. Do not merge until those reviews and the contract consumer evidence are recorded.
