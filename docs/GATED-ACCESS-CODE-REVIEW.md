@@ -2,7 +2,7 @@
 
 > Serves **C2, C3** — `docs/CHECKLIST.md` `P2.6` (due 17 Sep, owner Ipeleng). Advances `docs/OPEN-GAPS.md` **G21**. Companion decision: **ADR-0032** in `docs/adr.md`.
 >
-> **Status: team position, not legal advice.** One finding comes before the analysis, because the honesty ledger outranks the plan: **the draft Code of Conduct for Gated Access Areas could not be found in any source reachable this session.** The Information Regulator's own site search returns zero results for "Gated Access Areas" and for "access control"; its codes-of-conduct page lists no 2026 entries; a web search for the exact title returns nothing. Everything below that characterises the draft's content therefore stays ⚑ and traces to recorded team research, not to the instrument itself. The analysis and the decision still stand — §5 explains why the decision is safe under *either* outcome.
+> **Status: team position, not legal advice.** One finding comes before the analysis, because the honesty ledger outranks the plan: **the draft Code of Conduct for Gated Access Areas could not be found in any source reachable this session.** The Information Regulator's own site search returns zero results for "Gated Access Areas" and for "access control"; its codes-of-conduct page lists no 2026 entries; a web search for the exact title returns nothing. Everything below that characterises the draft's content therefore stays ⚑ and traces to recorded team research, not to the instrument itself. The analysis and the decision still stand — §5 explains why the *direction* is safe under *either* outcome.
 
 ---
 
@@ -61,23 +61,23 @@ The architecture is graded against the draft *as the record remembers it* (all �
 
 ---
 
-## 5 · The decision — ADR-0032, and why it stands under either outcome
+## 5 · The proposed decision — ADR-0032, and why the direction stands under either outcome
 
-**ADR-0032** (in `docs/adr.md`) adopts the recorded direction of travel as a **binding design floor**:
+**ADR-0032** (in `docs/adr.md`) proposes the recorded direction of travel as the **internal design floor** — status *Proposed*, binding only on both-lead acceptance:
 
-1. **Gate-domain retained data: ≤ 30 days, auto-overwrite**, unless a case-linked exception is recorded and reviewable (the case+90 and 12-month rows above stay visible parameters, not defaults).
+1. **Gate-domain retained data: ≤ 30 days, auto-overwrite.** *Gate-domain retained data* means personal information collected for operating the gated-access function itself — gate-adjacent camera footage, ID/biometric scans, embeddings with no linked incident, access-event records — and **not** case-linked evidence created after a reported incident. The 30-day figure is a **team-chosen conservative internal default, not an independently compelled legal bound** (the draft is unverifiable and s14 fixes no number); the case+90 and 12-month §6.5 rows that exceed it stay named, reviewable parameters pending counsel Q2 — reduced to the floor or justified by fresh ADR if Q2 puts them in scope, standing unchanged if not.
 2. **Discard-by-default stands** (ADR-0031) — the code's minimisation direction and the s27(1) answer agree.
 3. **FRT justification dossier** required before any pilot face gate unblocks at G-gate.
 4. **The final text supersedes the floor** — any divergence between the issued code and this floor re-opens the decision via a fresh ADR, never a configuration change.
 5. **The partner contract carries the floor** to the provider-of-record's side.
 
-Why this is safe **whether or not the draft exists as recorded**: if it does, the team is ahead of the rule being written for its named launch channel — the entire point of `docs/PLAN.md` §C3. If the recorded publication detail is wrong, nothing is loosened, because every element of the floor is independently compelled or already adopted: s14 requires retention no longer than necessary; ADR-0031 is accepted; ADR-0002 is accepted; the honesty ledger forbids hiding "not measured". **Building to the stricter bound cannot put us on the wrong side of the final rule; building to the looser status quo could.** The asymmetry is the whole argument, and it needs no unverified text to hold.
+Why this is safe **whether or not the draft exists as recorded**: if it does, the team is ahead of the rule being written for its named launch channel — the entire point of `docs/PLAN.md` §C3. If the recorded publication detail is wrong, nothing is loosened, because each element has a separate anchor: s14 requires retention no longer than necessary (without fixing a number); ADR-0031 (*Proposed* pending both leads) supplies the stricter discard direction; ADR-0002 (accepted) keeps a human in the loop; the honesty ledger forbids hiding "not measured". What this deliberately does **not** claim: that the specific 30-day bound, the gate-domain scope, or the exception list are compelled by law — they are conservative internal choices recorded for lead review, binding only when both leads accept ADR-0032. **Building to the stricter bound cannot put us on the wrong side of the final rule; building to the looser status quo could.** The asymmetry is the whole argument, and it needs no unverified text to hold.
 
 ---
 
 ## 6 · What this changes in the build
 
-- **G3 (retention TTL implementation):** encode ≤ 30 days auto-overwrite for gate-domain data classes; keep the case-linked exception a named parameter pending Q2. The G3 gate now carries two constraints — this floor and ADR-0031's discard boundary.
+- **G3 (retention TTL implementation):** encode the proposed ≤ 30-day auto-overwrite floor for gate-domain data classes once ADR-0032 is accepted; keep the case-linked rows as named parameters pending Q2. The G3 gate now carries two constraints — this floor and ADR-0031's discard boundary.
 - **Estate pilot documentation:** signage/notice obligations are expected in any gated-premises code (recorded direction, ⚑) — folded into the counsel pack rather than guessed at now.
 - **Partner contract:** the PSiRA paper's clause 3 gains the retention floor alongside the discard rule.
 - **Showcase (SC.1–SC.5):** unaffected — synthetic data; no gate-domain personal information leaves the building.
@@ -101,4 +101,4 @@ Why this is safe **whether or not the draft exists as recorded**: if it does, th
 - **Recorded research this review builds on:** `docs/PLAN.md` §C3; `docs/OPEN-GAPS.md` G21; `docs/CHECKLIST.md` P2.6; `docs/POPIA-POSITION.md` §9 (P2.6 consequence: the draft's bound is stricter than discard-on-non-match because it bounds retention of matches too); `docs/PSIRA-POSITION.md` §4 (two regulators converging on technology providers); `docs/DISCARD-BY-DEFAULT-EMBEDDINGS.md`; `docs/POPIA-S57-DECISION-RECORD.md`.
 - **Primary-source access, 16 Sep 2026:** `inforegulator.org.za` reachable. Site search: "Gated Access Areas" — **zero results**; "access control" — **zero results**. Codes-of-conduct page: lists the RCC proposed code (received 08 Sep 2023), DMASA (30 Jun 2023), research sector (12 May 2023), CBA and BASA (approved 12 Oct 2022) — **no 2026 entries**; the register of approved codes lists CBA (CO 2/22) and BASA (CO 3/22) only. The homepage's latest posted notices date from 2025. Web search for the exact title "Code of Conduct for Gated Access Areas": **no corroboration**. `popia.co.za` (Accessible Law) reachable — s60, s61 and s73(1)(c) quoted verbatim from it above (⚑); s71 fetched to confirm the automated-decision cross-reference. The Government Gazette itself was not reachable from this environment.
 - **Every characterisation of the draft code in §2 and §4 is ⚑ pending Q1.** The statutory quotes are ⚑ pending counsel verification against the Gazette text.
-- **Not legal advice.** This paper makes no compliance claim and adopts no external instrument as binding; ADR-0032 is an internal design decision whose every element is independently grounded in the Act or in already-accepted ADRs.
+- **Not legal advice.** This paper makes no compliance claim and adopts no external instrument as binding; ADR-0032 is a *proposed* internal design decision — its elements draw on the Act's requirements and on already-accepted ADRs, while the 30-day bound, the gate-domain scope and the exception list are team-chosen defaults awaiting both-lead acceptance.

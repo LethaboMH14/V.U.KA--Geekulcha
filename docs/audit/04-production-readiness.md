@@ -1,6 +1,6 @@
 # Production readiness (C3, C4; security operations I)
 
-**Not ready for deployment.** No application code exists here. Controls below are specified, not operating. Paths in the security table are proposed implementation locations, not evidence. Credential/data remediation was completed and forensically verified 13 Sep (`docs/OPEN-GAPS.md` G6/G7; verification record `09-credential-remediation-verification.md`); production remains blocked by privacy routes, hardware measurements, response contracts and independent assurance.
+**Not ready for deployment.** Application code now exists in this repository — `brain/entity_resolution.py` and `brain/fusion.py` (scoring/entity resolution, unit-tested), `server/src/auth/governance.py` (two-person authorisation, contract-tested) and the events/OpenAPI contract tests — but nothing is deployed or operating: the controls below remain specified, not running (no retention TTL sweep, no anchoring pipeline, no outbox worker, no response workflow has been started in any environment). Paths in the security table are proposed implementation locations, not evidence. Credential/data remediation was completed and forensically verified 13 Sep (`docs/OPEN-GAPS.md` G6/G7; verification record `09-credential-remediation-verification.md`); production remains blocked by privacy routes (counsel questions open), hardware measurements, response contracts and independent assurance.
 
 ## 1. Deployment topology
 

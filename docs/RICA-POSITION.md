@@ -2,7 +2,7 @@
 
 > Serves **C3** — `docs/CHECKLIST.md` `P2.6` sibling `P2.7` (due 19 Sep, owner Ipeleng). Companion record; **no new ADR** — nothing in the architecture changes (§4).
 >
-> **Status: team position, not legal advice.** As with the PSiRA paper, no primary source was *readable* this session: the official RICA PDF is reachable (`justice.gov.za/legislation/acts/2002-070.pdf` — title metadata confirms Act 70 of 2002) but downloads as an encrypted, unparseable binary in this environment, the same limitation the POPIA paper recorded for the gov.za Act PDF; SAFLII, lawlibrary.org.za and polity.org.za return HTTP 403; gov.za hosts the **Bill** (`b50b-010.pdf`), not the Act. **This paper therefore contains no verbatim statutory quotes.** Every statutory characterisation below is ⚑ and rests on recorded team research plus orientation-level secondary sources (named as such in §7). The positions that matter — audio never persists, labels not audio, no audio attached to any record — are **verified facts of this repository's own architecture**, not statutory claims, and they are what carry this deliverable.
+> **Status: team position, not legal advice.** As with the PSiRA paper, no primary source was *readable* this session: the official RICA PDF is reachable (`justice.gov.za/legislation/acts/2002-070.pdf` — title metadata confirms Act 70 of 2002) but downloads as an encrypted, unparseable binary in this environment, the same limitation the POPIA paper recorded for the gov.za Act PDF; SAFLII, lawlibrary.org.za and polity.org.za return HTTP 403; gov.za hosts the **Bill** (`b50b-010.pdf`), not the Act. **This paper therefore contains no verbatim statutory quotes.** Every statutory characterisation below is ⚑ and rests on recorded team research plus orientation-level secondary sources (named as such in §7). The positions that matter — audio never persists, labels not audio, no audio attached to any record — are **specified constraints of this repository's own architecture** (`docs/01-ARCHITECTURE.md` ASR-6, T0, E3), not statutory claims, and they are what carry this deliverable. They are recorded design, **not implemented code**: no audio-path code exists in this repository yet, so they are not build facts — the bright lines become verified behaviour only when the audio path is implemented with executable negative tests (owed with the Task-4 port and checklist 4.3).
 
 ---
 
@@ -22,9 +22,9 @@ The honest complication mirrors P2.6: the statutory text could not be read this 
 - **Constitutional context:** on 3 Feb 2021 the Constitutional Court (the *AmaBhungane* litigation) found RICA's bulk-surveillance provisions deficient on privacy grounds. Bearing on VUKA is marginal (no bulk interception, no TSP role) — logged as counsel Q4 for completeness, not argued here.
 - **The load-bearing unknowns:** the exact wording of the s1 definitions ("communication", "interception", "indirect communication") and the s2 prohibition — unreadable this session — decide Q1–Q3 below. The retrieval route for the counsel pack is the official PDF URL recorded above.
 
-## 3 · What the architecture does — verified, not asserted
+## 3 · What the architecture specifies — recorded design, not running code
 
-From this repository's own records (no ⚑ needed — these are build facts):
+From this repository's own records (no ⚑ needed — these are the repository's own design specifications, stated accurately as specifications — not implemented-and-tested behaviour):
 
 | Design fact | Where | Why it matters for RICA |
 |---|---|---|
@@ -42,7 +42,7 @@ From this repository's own records (no ⚑ needed — these are build facts):
 1. **Never attach an audio clip as evidence.** Attaching recorded audio to any record would create a RICA interception question over the *acquisition* *and* a POPIA question over the *content* — voice recognition is expressly biometric (`docs/PLAN.md` §C4). The evidence chain already carries labels, decisions and hashes; this paper makes the "never audio" rule explicit as an operator and records rule, to be carried into `docs/OPERATOR-DUTY.md`'s evidence guidance and the partner contract's data clause (PSiRA paper §6).
 2. **Audio never persists.** The ring buffer is an architecture constraint (ASR-6, E3) — any change requires a fresh ADR, not a configuration. This is the same prepared-versus-forever distinction ADR-0031 draws for embeddings.
 
-**Why no new ADR:** both bright lines are already accepted architecture (ASR-6, T0) or existing evidence-chain design; ADR-0032 demonstrated the pattern for *new* floors. This paper records a statutory *position* on an unchanged design — an ADR restating ASR-6 would manufacture the appearance of a new decision where there is none. If counsel's answer to Q1 forces a design change, that change gets the ADR.
+**Why no new ADR:** both bright lines are already accepted *specification* (ASR-6, T0) or existing evidence-chain design — specified, not yet implemented; ADR-0032 demonstrated the pattern for *new* floors. This paper records a statutory *position* on an unchanged design — an ADR restating ASR-6 would manufacture the appearance of a new decision where there is none. If counsel's answer to Q1 forces a design change, that change gets the ADR.
 
 ---
 
@@ -79,4 +79,4 @@ The ring buffer means nothing *persists*; it does not mean nothing is *acquired*
 - **Primary-source access, 16 Sep 2026:** `justice.gov.za/legislation/acts/2002-070.pdf` **reachable but binary** — downloads (255 KB) with RICA's full title in its PDF metadata, but the content is Flate-encoded and unparseable in this environment (identical to the POPIA paper's gov.za experience); the URL is recorded here as the retrieval route for the counsel pack. `justice.gov.za/legislation/acts/` (index) HTTP 403. `lawlibrary.org.za` HTTP 403. `polity.org.za` HTTP 403. The gov.za RICA page hosts the **Bill** only (`b50b-010.pdf`, 3.4 MB). SAFLII not re-attempted (403 precedent from both prior sessions). Web searches for the full text and for ShotSpotter corroboration returned no usable results.
 - **Secondary orientation only (not relied on):** Wikipedia's RICA article (which carries an "original research" banner) and its ShotSpotter/SoundThinking article — used to orient §2 and the ShotSpotter note; no position in this paper rests on them.
 - **Every statutory characterisation is ⚑ pending counsel verification against the Act text.** The Cape Town 2016 / Lavender Hill 2022 deployment dates and the *"does not use microphones"* wording remain recorded team research, not re-verified.
-- **Not legal advice.** The two bright lines are build facts of this repository, stated as engineering constraints; the statutory positions are the team's working position until counsel reports, and the honesty ledger applies.
+- **Not legal advice.** The two bright lines are specified engineering constraints of this repository (recorded at architecture-specification level; not yet implemented code — executable negative tests owed with the audio-path port and checklist 4.3); the statutory positions are the team's working position until counsel reports, and the honesty ledger applies.
