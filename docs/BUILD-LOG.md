@@ -734,3 +734,17 @@ Needs/blockers: the public-profile owner must update and evidence the external c
 Business handoff: not applicable — market-copy correction only; no household capability changed.
 
 Next: submit the P1.1 PR for Sibusiso's review, obtain evidence of the external public-profile update, then proceed to P1.3 while coordinating the shared P1.2 check with Babatunde.
+
+## 2026-09-16 | Codex assistant at Khutso Mothopa's request | GPT-5 | P1.1 audit-record correction | partial, blocked, review pending
+
+Criterion: **C3 (progress of solution profile)**. Trust answer: the checklist and evidence log now use the same completion vocabulary, so a reviewer can distinguish repository-controlled work from the unverified external publication.
+
+Correction: the preceding P1.1 entry's sentence **"Updated P1.1 to complete in `docs/CHECKLIST.md`"** was inaccurate. `docs/CHECKLIST.md` correctly remains `◐ / partial` because the external public-profile update is not verifiable from this checkout. The prior entry is preserved for audit history; this append-only entry is the correction and no checklist state is changed.
+
+Evidence: `docs/08-BUSINESS.md` and `docs/LEAN-CANVAS.md` contain the source-labelled replacement; `docs/SONKE-OVERVIEW.md` was already corrected. `node scripts/check-docs.mjs`, `node scripts/check-intake.mjs` and `git diff --check` pass. No contract, security, product capability, external profile or reviewer decision changed.
+
+Needs/blockers: the external public-profile owner must provide update evidence before P1.1 can move to `☑`. Sibusiso remains the required first reviewer, followed by both leads; no merge is permitted before that sequence.
+
+Business handoff: not applicable — audit-record correction only.
+
+Next: request Sibusiso's review of this correction, then request Lethabo's re-review after Sibusiso's decision.
