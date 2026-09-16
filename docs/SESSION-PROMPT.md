@@ -18,7 +18,8 @@ Read these in order before doing anything:
   4. team/KHUTSO.md             — MY operating spec: role, reviewer, effort,
                                   behaviour, my domain rules, my current task
   5. docs/OVERLAPS.md           — shared files; claim before touching
-  6. docs/BUILD-LOG.md, last 5  — what just changed
+  6. docs/build-log/entries/, last 5 files — what just changed (sorted by
+                                  filename; docs/build-log/README.md explains)
 
 Then: git pull. Tell me what changed since I last worked, and what my current
 task is, before you propose anything.
@@ -85,7 +86,7 @@ These live in `RULES.md` so every tool reads the same copy, rather than seven pr
 1. Evidence recorded in `docs/EVIDENCE.md`
 2. Your reviewer has accepted it
 3. `team/<you>.md` updated — including **Current task**
-4. `docs/BUILD-LOG.md` entry: **what, why, how, when**
+4. A new file in `docs/build-log/entries/` (never edit the frozen `docs/BUILD-LOG.md`): **what, why, how, when, research, real data, business reasoning** — `docs/build-log/TEMPLATE.md`
 5. `docs/CHECKLIST.md` row ticked, with its criterion tag
 
 **Escalation:**
@@ -108,7 +109,7 @@ git pull
   → git checkout -b <yourname>/<thing>
   → work
   → node scripts/check-docs.mjs && node scripts/check-intake.mjs
-  → update team/<you>.md · docs/BUILD-LOG.md · docs/CHECKLIST.md
+  → update team/<you>.md · new docs/build-log/entries/ file · docs/CHECKLIST.md
   → git push -u origin <yourname>/<thing>
   → open PR, request your reviewer
   → reviewer accepts → merge → git checkout main && git pull

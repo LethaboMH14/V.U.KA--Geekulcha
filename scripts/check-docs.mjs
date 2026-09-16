@@ -63,8 +63,13 @@ for(const name of ['lethabo','sibusiso','babatunde','mutarisi','khutso','vukosi'
   for(const marker of ['AI tool / model','Sequenced work','Interfaces','Needs and blockers','Definition of done','Outside-role work','Running log'])
     assert(t.includes(marker),`team/${name}: missing ${marker}`);
 }
-for(const p of ['BRIEF.md','RULES.md','AGENTS.md','SECURITY.md','docs/BUILD-LOG.md','team/TEMPLATE.md','templates/BUSINESS-HANDOFF.md','docs/OVERLAPS.md','.github/pull_request_template.md']) read(p);
+for(const p of ['BRIEF.md','RULES.md','AGENTS.md','SECURITY.md','docs/BUILD-LOG.md','docs/build-log/README.md','docs/build-log/TEMPLATE.md','docs/AGENT-ROUTING.md','team/TEMPLATE.md','templates/BUSINESS-HANDOFF.md','docs/OVERLAPS.md','.github/CODEOWNERS','.github/pull_request_template.md']) read(p);
 assert(read('BRIEF.md').trim().split(/\s+/).length<=500,'Brief exceeds 500-word one-page budget');
+{
+  const entries = fs.existsSync('docs/build-log/entries') ? fs.readdirSync('docs/build-log/entries').filter(f=>f.endsWith('.md')) : [];
+  assert(entries.length>=1,'docs/build-log/entries/ has no entries — the frozen docs/BUILD-LOG.md convention has ended; see docs/build-log/README.md');
+  for(const f of entries) assert(/^\d{4}-\d{2}-\d{2}-[a-z]+-[a-z0-9-]+\.md$/.test(f),`docs/build-log/entries/${f}: filename doesn't match YYYY-MM-DD-<author>-<slug>.md`);
+}
 for(const file of walk(root).filter(p=>p.endsWith('.md'))) {
   const text=read(file);
   for(const line of text.split('\n')) {

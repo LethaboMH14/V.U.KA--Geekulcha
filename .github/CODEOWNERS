@@ -1,0 +1,58 @@
+# CODEOWNERS — GitHub auto-requests these people as reviewers when a PR touches
+# a matching path. This replaces manually remembering / typing --add-reviewer.
+# Reference: RULES.md "Lethabo is first reviewer for Mutarisi, Ipeleng and
+# Babatunde; Sibusiso for Vukosi and Khutso. Both remain final reviewers."
+#
+# Rules: LAST matching pattern wins, so general rules go first, overrides after.
+# CODEOWNERS fails SILENTLY on a bad username, a team with no members, or an
+# owner without write access — no error, the review request just never fires.
+# Verify this actually works by opening one real PR per owner after this merges
+# (docs/build-log/README.md's "what did NOT move" also applies here: this file
+# needs a working test, not just an unread commit).
+
+# Default: both leads see everything
+*                                   @LethaboMH14 @Sibusiso-K
+
+# Lethabo's first-review people
+team/mutarisi.md                   @LethaboMH14 @mutarisi-chibaya
+team/ipeleng.md                    @LethaboMH14 @Ipeleng-Modise
+team/babatunde.md                  @LethaboMH14 @tunde3zy-commits
+docs/wireframes/                   @LethaboMH14 @mutarisi-chibaya
+docs/PSIRA-POSITION.md             @LethaboMH14 @Ipeleng-Modise
+docs/POPIA-POSITION.md             @LethaboMH14 @Ipeleng-Modise
+docs/RICA-POSITION.md              @LethaboMH14 @Ipeleng-Modise
+docs/GATED-ACCESS-CODE-REVIEW.md   @LethaboMH14 @Ipeleng-Modise
+docs/POPIA-IO-REGISTRATION.md      @LethaboMH14 @Ipeleng-Modise
+docs/reviews/                      @LethaboMH14 @Ipeleng-Modise
+docs/08-BUSINESS.md                @LethaboMH14 @tunde3zy-commits
+docs/LEAN-CANVAS.md                @LethaboMH14 @tunde3zy-commits
+docs/SONKE-OVERVIEW.md             @LethaboMH14 @tunde3zy-commits
+docs/COMPETITORS.md                @LethaboMH14 @tunde3zy-commits
+
+# Sibusiso's first-review people
+team/vukosi.md                     @Sibusiso-K @KhozaVu
+team/khutso.md                     @Sibusiso-K @KhutsoMothopa
+appliance/                         @Sibusiso-K @KhozaVu
+docs/EVIDENCE.md                   @Sibusiso-K @KhutsoMothopa
+docs/CHECKLIST.md                  @Sibusiso-K @KhutsoMothopa
+docs/MASTER-CONTEXT.md             @Sibusiso-K @KhutsoMothopa
+docs/build-log/                    @Sibusiso-K @KhutsoMothopa
+
+# Contract / security / governance — needs Ipeleng or the contract owner
+# PLUS both leads per RULES.md's stricter bar. GitHub only auto-requests;
+# it can't enforce "both leads AND domain owner" as a single AND rule, so
+# branch protection's "require review from code owners" plus this list is
+# the closest native approximation — the rest is still on us to check.
+contracts/                         @Sibusiso-K @LethaboMH14 @Ipeleng-Modise
+server/src/auth/                   @Sibusiso-K @LethaboMH14 @Ipeleng-Modise
+docs/adr.md                        @Sibusiso-K @LethaboMH14
+docs/CONTRACT-APPROVAL-RECORD.md   @Sibusiso-K @LethaboMH14
+docs/OVERLAPS.md                   @Sibusiso-K @LethaboMH14
+
+# Architecture / product — Lethabo owns
+app/                               @LethaboMH14
+brain/                             @LethaboMH14
+docs/00-SPEC.md                    @LethaboMH14
+docs/01-ARCHITECTURE.md            @LethaboMH14
+RULES.md                           @LethaboMH14 @Sibusiso-K
+AGENTS.md                          @LethaboMH14 @Sibusiso-K
