@@ -686,3 +686,19 @@ Needs/blockers: formal approvals and contract consumer confirmation are still pe
 Business handoff: not applicable — this records repository/PR state only.
 
 Next: Sibusiso and Lethabo review PR #24; contract/server owners separately plan payload integration and update the approval/checklist records.
+
+## 2026-09-16 | Codex assistant | GPT-5 | WBS 3.2 protocol audit | documentation alignment, formal review pending
+
+Criterion: **C3 (progress of solution profile)**. Trust answer: a reviewer can reproduce the synthetic queue/replay evidence and see exactly where live-ingest, hardware and power claims stop; no household capability is claimed from unmeasured work.
+
+Changed: audited the required reading order, bounded WBS declaration, overlap register, branch/PR workflow, claim labels, evidence commands, security/intake gates, business-handoff rule, reviewer requirements and append-only logging. Corrected the stale `team/vukosi.md` update date. Updated PR #24's description to match the rebased branch, current 10/10 contract evidence, current rollback guidance and pending formal approvals.
+
+Evidence: `git status --short --branch` is clean and tracks `origin/feat/vukosi-3.2-edge-producer`; PR #24 is OPEN and CLEAN with `document-contracts` and `secret-scan` SUCCESS. No contract or production-access change was made. The original sequencing miss remains preserved in the prior correction entry; it is not relabelled as compliant.
+
+Decision: protocol obligations currently within this WBS are satisfied or explicitly recorded as pending. No self-approval, merge, fabricated measurement, reviewer approval or hardware claim was made.
+
+Needs/blockers: Sibusiso's second-lead review, Lethabo's formal review and consumer confirmation in `docs/CONTRACT-APPROVAL-RECORD.md` remain pending. Payload integration belongs to the contract/server owners; power-loss, disk-corruption, concurrent-writer and full-disk behaviour remain untested.
+
+Business handoff: not applicable — this is a documentation/protocol audit and does not change household capability.
+
+Next: await both formal reviewer decisions on PR #24; do not merge until required approvals and the contract consumer gate are resolved.
