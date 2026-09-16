@@ -1,0 +1,13 @@
+# Python test/dev dependencies — pinned per RULES.md's "pin dependencies" rule.
+# Nobody had recorded this before this PR: pytest was already used in
+# brain/tests/ but with no dependency file, so a clean checkout couldn't
+# reproduce a run (see docs/BUILD-LOG.md's WBS 3.2 entries — "could not run
+# because this clone has no pytest module"). This fixes that for the whole
+# Python test surface, not just anchor/ and server/.
+#
+# Install: pip install -r requirements-dev.txt
+# Run everything: python3 -m pytest brain/tests/ appliance/tests/ anchor/tests/ server/tests/
+
+pytest==9.1.1
+jsonschema==4.26.0
+PyYAML==6.0.3

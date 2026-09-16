@@ -4,16 +4,18 @@
 
 **This directory is genuinely new work** — unlike `app/`, `server/`, `appliance/`, `brain/`, `data/`, `dashboard/`, nothing here is a port. It is designed in `docs/00-SPEC.md` §3.4 and `docs/ANCHOR-RATIONALE.md`, and built fresh (`docs/HANDOVER.md` Task 5).
 
-## Files to be added (Task 5, `docs/HANDOVER.md` §7)
+## Files (Task 5, `docs/HANDOVER.md` §7)
 
-| File | Does |
-|---|---|
-| `chain.py` | Prev-hash chain. Ports the hashing/pointer logic from `server/src/db` once that lands |
-| `sign.py` | Ed25519 per-party keypairs — one each for device, operator, security company |
-| `merkle.py` | Hourly batching → one 32-byte root. **Nothing else goes on chain, ever** (E4) |
-| `publish.py` | OpenTimestamps client, chosen over a permissioned chain for longevity — see `docs/ANCHOR-RATIONALE.md`. **Must submit to multiple public calendars and schedule a prompt `ots upgrade` pass (ADR-0028) — no self-hosted calendar** |
-| `verify.py` | Integrity + anchor verification. **Returns the first broken link by index, not a boolean** — this is a frozen contract (`docs/00-SPEC.md` §4.2) |
-| `subject.py` | Subject access (F14) + deletion that removes the payload and retains the hash (F15) |
+| File | Does | Status |
+|---|---|---|
+| `chain.py` | Prev-hash chain: builds and appends `EvidenceEntry` objects, canonical `event_hash` per the frozen formula | ✅ **built, tested** — `anchor/tests/test_chain.py` |
+| `verify.py` | Integrity verification. **Returns the first broken link by index, not a boolean** — frozen contract (`docs/00-SPEC.md` §4.2, `contracts/openapi.yaml` `IntegrityResult`) | ✅ **built, tested** — `anchor/tests/test_verify.py`, including a "reports only the FIRST of two breaks" case |
+| `subject.py` | Subject access (F14): assembles a `SubjectRecord` for one subject from the chain | ✅ **built, tested** — `anchor/tests/test_subject.py`. Deletion (F15) not yet implemented |
+| `sign.py` | Ed25519 per-party keypairs — one each for device, operator, security company | 🔨 not started |
+| `merkle.py` | Hourly batching → one 32-byte root. **Nothing else goes on chain, ever** (E4) | 🔨 not started |
+| `publish.py` | OpenTimestamps client. **Must submit to multiple public calendars and schedule a prompt `ots upgrade` pass (ADR-0028) — no self-hosted calendar** | 🔨 not started — **this is what actually anchors anything publicly; until it exists, nothing in this directory is a real anchor, only a tested hash chain** |
+
+**Honesty boundary, stated plainly because this is the showcase (SC.1, `docs/MASTER-CONTEXT.md`):** `chain.py` and `verify.py` are real, tested, cryptographic logic — not simulated. But with no `publish.py`, there is nothing to verify *against a public calendar with no cooperation from us* yet. `subject.py`'s `proof.anchor` field says exactly this (`state: "not_submitted"`, a `sim_`-prefixed note) rather than implying a live anchor exists. Do not present the current output as a completed showcase in a demo — it is real progress toward one.
 
 ## Non-negotiable, before any code lands here
 

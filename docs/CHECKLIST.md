@@ -102,7 +102,7 @@
 
 | # | Item | Owner | Criterion | Due | State | Amended |
 |---|---|---|---|---|---|---|
-| SC.1 | **`GET /v1/subjects/{id}/record` end to end** — a subject requests their record, receives their full decision history, and the anchor proof verifies against a public verifier **with no cooperation from us** | Sibusiso | C2, C3, C4 | Sep 18 | ☐ | Added 14 Sep, Lethabo |
+| SC.1 | **`GET /v1/subjects/{id}/record` end to end** — a subject requests their record, receives their full decision history, and the anchor proof verifies against a public verifier **with no cooperation from us** | Sibusiso | C2, C3, C4 | Sep 18 | ◐ | 17 Sep — `anchor/chain.py`, `verify.py`, `subject.py` built and tested (25 tests, real: not simulated logic). `server/src/api/subjects.py` handler wired and jsonschema-validated against the real `contracts/openapi.yaml` SubjectRecord/EvidenceEntry shapes. **Not yet done:** no real FastAPI app/auth exists to attach to (`server/`'s own scaffold decision, not made here), no persistence layer, and critically **no `anchor/publish.py`** — so the "verifies against a public verifier with no cooperation from us" half of this row is not yet true. See `anchor/README.md`'s honesty boundary. |
 | SC.2 | The **subject-access screen** — the front end of SC.1. This is the demo moment | Mutarisi | C4 | Sep 19 | ☐ | Added 14 Sep, Lethabo |
 | SC.3 | **Second showcase** — an operator tries to whitelist alone, is refused, and the refusal is **itself anchored**. Under a minute | Sibusiso, Mutarisi | C2 | Sep 20 | ☐ | Added 14 Sep, Lethabo |
 | SC.4 | **Recorded fallback** for both showcases — local assets, opens with no internet | Mutarisi | C3 | Sep 21 | ☐ | Added 14 Sep, Lethabo |
