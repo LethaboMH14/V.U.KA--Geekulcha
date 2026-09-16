@@ -15,7 +15,7 @@
 | Hijackings / armed robberies | 680 / 272 | Same |
 | Peak concentration | 00:00 hour = 1,296 incidents, ≈3× the 05:00 trough | Same |
 | Precincts with official statistics | 678, all nine provinces | SAPS quarterly release |
-| Private security officers vs police | ~2.7m registered vs ~180k ⚑ | PSiRA / SAPS — **verify** |
+| Private security officers vs police | **~637,675 active vs 155,231 sworn / 187,681 total ≈ 4:1** `FACT` | PSiRA 2024/25 Annual Report; SAPS March 2025 |
 
 **The strategic read:** South Africa already spends billions on private security. VUKA does not create a new behaviour or a new budget line — it makes an existing spend *targeted*, and adds a record that makes the spend *provable*.
 

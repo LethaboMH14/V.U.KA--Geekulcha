@@ -167,9 +167,10 @@ CONSUMER
 · Suburban homeowners with an alarm they have stopped arming because of false alerts
 
 B2B2C — sell THROUGH, not against
-· Private security companies: control rooms and armed-response operators. ~2.7m
-  registered security officers versus roughly 180k police ⚑ — they already hold the
-  customer relationship, the billing rail and the response capability
+· Private security companies: control rooms and armed-response operators. ~637,675
+  active private-security officers versus 155,231 sworn / 187,681 total SAPS personnel
+  — approximately 4:1. `FACT` — PSiRA 2024/25 Annual Report; SAPS March 2025. They
+  already hold the customer relationship, the billing rail and the response capability
 · Estates, body corporates and HOAs: one committee decision covers 200+ homes, and
   the two-signature admin control is written for exactly their governance
 · Short-term insurers (motor and household): premium discount as the acquisition
