@@ -776,3 +776,15 @@ Needs/blockers: consumer confirmation is the sole remaining item before `P2.16`/
 Business handoff: not applicable — contract governance, no household capability changed.
 
 Next: resolve the SightingEvent payload question with Khutso/Vukosi; then the contract is fully frozen.
+
+## 2026-09-16 | Sibusiso (Claude session) | P2.16 sign-off evidence correction | fixed
+
+Changed: two accuracy fixes to the P2.16 sign-off from Lethabo's PR #33 review. (1) The approval-record row cited "events.schema.json/openapi.yaml current state" as evidence, which is a mutable reference, not a fixed one -- replaced with the exact commit reviewed, `f1246ae`, matching what the checklist's own header requires ("approval date and commit SHA are recorded below"). (2) Every reference to PR #24 as "approved, mergeable" was imprecise -- it is Sibusiso-approved and technically mergeable, but Lethabo's latest review on it is CHANGES_REQUESTED, so it is not fully approved. Corrected in docs/CONTRACT-APPROVAL-RECORD.md and docs/CHECKLIST.md to state that precisely.
+
+Evidence: `gh pr view 24 --json reviewDecision` confirmed CHANGES_REQUESTED before making this fix, not assumed. `node scripts/check-docs.mjs` passes.
+
+Decision: fixed rather than defended -- both findings were correct on inspection.
+
+Needs/blockers: unchanged from the prior entry -- consumer confirmation is still the sole remaining item before P2.16/the contract is frozen. PR #33 itself still needs its own nonauthor/domain review and verifiable required checks before merge, per Lethabo's review.
+
+Business handoff: not applicable -- recordkeeping correction only.
