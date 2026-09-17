@@ -318,8 +318,8 @@ function arrow(s, x, y, w, onDark, label) {
   title(s, 'We are not proposing to build this. We shipped it in July.', false, { fontSize: 31 });
 
   statTile(s, M, 2.32, 3.0, '33,600', '', 'Lines across the repositories', false, P.pdark);
-  statTile(s, 3.8, 2.32, 3.0, '440', '', 'Tests passing', false, P.pdark);
-  statTile(s, 7.0, 2.32, 3.0, '25', '', 'Architecture decision records', false, P.pdark);
+  statTile(s, 3.8, 2.32, 3.0, '510', '', 'Test-function definitions found · not run here', false, P.pdark);
+  statTile(s, 7.0, 2.32, 3.0, '30', '', 'Accepted ADRs · 2 proposed', false, P.pdark);
   statTile(s, 10.2, 2.32, 2.6, '207', '', 'Commits, dated before this brief', false, P.dgreen);
 
   card(s, M, 3.86, 5.9, 2.4, false);

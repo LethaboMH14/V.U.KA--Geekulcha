@@ -120,10 +120,10 @@ Every row includes **why this and not the obvious alternative.** A stack list pr
 | A01 Access control | Per-object authorisation; 2-of-2 on destructive actions; room-scoped sockets |
 | A02 Cryptography | Vectors not images; 3-second audio ring buffer; TLS; encryption at rest |
 | A03 Injection | Parameterised ORM; Pydantic schema validation on every boundary |
-| A04 Insecure design | 25 ADRs; documented threat model; **human gate enforced in code** |
+| A04 Insecure design | 30 accepted + 2 proposed ADR records; documented threat model; **human gate enforced in code** |
 | A05/A06 | No default credentials; `.env` only; pinned dependencies; CI; **secret scanning as a pre-commit hook and a CI gate** |
 | **POPIA** | Biometrics as vectors only; retention TTL in the data layer; subject-access route; deletion that preserves the hash. ⚠️ **ADR-0006 records this as an open obligation — closing it is in the current cycle** |
-| Testing | 440 contract tests · security-property tests (the human gate is a *test*, not a comment) · planned SAST, DAST, dependency scanning, ingest fuzzing, penetration test, bias evaluation |
+| Testing | Contract tests assert exact shapes; 510 test-function definitions found in predecessor source, with executed-suite count pending · security-property tests (the human gate is a *test*, not a comment) · planned SAST, DAST, dependency scanning, ingest fuzzing, penetration test, bias evaluation |
 
 ---
 

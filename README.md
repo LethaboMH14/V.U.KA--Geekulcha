@@ -104,7 +104,7 @@ Two subsystems in the predecessor codebase — the evidence chain and the on-dev
 
 | Claim | Check it by |
 |---|---|
-| 25 ADRs | [`docs/adr.md`](docs/adr.md) — clone and count |
+| 30 accepted + 2 proposed ADR records | [`docs/adr.md`](docs/adr.md) — clone and count by status |
 | 318 ms p95, n = 10 | [`docs/EVIDENCE.md`](docs/EVIDENCE.md) — command and predecessor source |
 | Commit and test counts | [`docs/EVIDENCE.md`](docs/EVIDENCE.md) — exact commands, not a bare number |
 | No code path sets `flagged` | Grep for it, once the port lands. That is the test |

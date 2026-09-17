@@ -92,9 +92,9 @@ If a change makes the system more capable but less checkable, it is the wrong ch
 **Measured**
 
 - Detection → alert render: **318 ms p95**, 273 ms p50, against a 2,000 ms budget. **This is n = 10.** The sample size travels with the number, every time.
-- **25 ADRs** · **224 `origin/main` commits** · ~33,600 tracked lines, ~10,300 server-side · **510 test-function definitions found; executed-suite count pending**.
+- **25 ported predecessor ADRs** · **30 accepted + 2 proposed ADR records in this checkout** · **224 `origin/main` commits** · ~33,600 tracked lines, ~10,300 server-side · **510 test-function definitions found; executed-suite count pending**.
 
-> The ADR count is **25**. Several documents previously said 27; that was corrected on 12 September across six files. Do not reintroduce it.
+> The **ported predecessor baseline** is **25**. The checkout now also records five accepted repository decisions (ADR-0026–0030) and two proposed decisions (ADR-0031–0032), so current records must be described with their status rather than collapsed into one baseline number. The stale 27 claim must not return.
 
 **Data**
 

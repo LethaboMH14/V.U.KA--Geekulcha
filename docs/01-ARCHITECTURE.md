@@ -2190,7 +2190,7 @@ These are requirements *not* to build. They get IDs and tests because a principl
 | Functional | 18 | 11 built · 6 in the G2/G3 window · 1 partially built (F8) |
 | Non-functional | 10 | 7 met · 2 in progress · 1 blocked on hardware |
 | Ethical | 10 | 8 enforced · 2 land with G2/G3 |
-| **Automated tests in the repository** | **440** | — |
+| **Automated test definitions in predecessor source** | **510 test-function definitions found; executed-suite count pending** | `docs/EVIDENCE.md` |
 
 ## 10.4 The abuse-case suite
 
@@ -2282,7 +2282,7 @@ flowchart LR
 | Validated in a **laboratory** environment | Real SAPS quarterly data, 15 712 claims, 709 geocoded suburbs, live Eskom and weather feeds — historical, predecessor-verified, not reproduced in this repository | Run the pipeline after the port |
 | Measured against a budget | Detection → alert p95 **318 ms** (n = 10) against a 2 000 ms budget — historical, not reproduced here | `scripts/latency.py` |
 | Automated verification source exists | **510 test-function definitions found**; executed-suite count pending | CI |
-| Decisions are documented and traceable | **27 ADRs**, 224 predecessor `origin/main` commits, append-only build log | `docs/adr.md` |
+| Decisions are documented and traceable | **30 accepted ADRs + 2 proposed ADRs (32 records)**, 224 predecessor `origin/main` commits, append-only build log | `docs/adr.md` |
 
 Two subsystems are **argued at 5**, not verified: the append-only evidence chain (relevant environment: the public internet with an independent verifier) and the on-device sensing path (the acoustic model ships in an Android build — sha256 verified across both predecessors, 15 Sep 2026). Both arguments are `ARGUED` until the port reproduces them here.
 
@@ -2516,7 +2516,7 @@ Append-only. Never edited — superseded. `docs/adr.md`.
 | 0026 | **ADR numbering collision resolved** — BEACON 0001–0007 kept, Team-Sonar-Vuka renumbered 0008–0025 | Accepted |
 | 0027 | **TRL settled at 4** — two subsystems argued at 5, four reasons not at 6, ceiling named | Accepted |
 
-*(27 ADRs exist in the repository; the table lists those load-bearing for this document. Naming, the public anchor, two-of-two signatures, deletion semantics and the autonomy boundary are recorded in prose across this document and the D-decisions, not as numbered ADRs — a pre-port plan to number them 0020–0025 was superseded by ADR-0026's renumbering, so this index previously listed decisions that do not exist at those numbers.)*
+*(32 ADR records exist in the repository: 30 are accepted and ADR-0031/0032 remain proposed pending both-lead acceptance. The table lists only those load-bearing for this document. Naming, the public anchor, two-of-two signatures, deletion semantics and the autonomy boundary are recorded in prose across this document and the D-decisions, not as numbered ADRs — a pre-port plan to number them 0020–0025 was superseded by ADR-0026's renumbering.)*
 
 ---
 
@@ -2629,7 +2629,7 @@ The verifier recomputes **every entry and every pointer**, and returns the **fir
 | Claim in here | Check it by |
 |---|---|
 | 318 ms p95 (n = 10) | Run `scripts/latency.py` yourself |
-| 510 test-function definitions, 25 ADRs, 224 predecessor `origin/main` commits | Re-run commands in `docs/EVIDENCE.md`; execute suites before claiming a passing test count |
+| 510 test-function definitions in predecessor source; 30 accepted + 2 proposed ADR records in this checkout; 224 predecessor `origin/main` commits | Re-run commands in `docs/EVIDENCE.md`; execute suites before claiming a passing test count |
 | No code path sets `flagged` | Grep for it. That is the test |
 | The forecast fails its baseline | `data/eval/` — the numbers are in the repository |
 | Every hour is anchored | `anchor/verify.py`, or a public OpenTimestamps verifier that has never heard of us |

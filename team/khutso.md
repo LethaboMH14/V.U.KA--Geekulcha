@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - When the real judging criteria publish, I refresh `docs/MASTER-CONTEXT.md` and re-tag `docs/CHECKLIST.md` the same day — that is the mechanism that stops the team optimising for the old four.
 
-**Current task** — `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md` are created; keep both current as items close. P1.1's repository-controlled surfaces are corrected (merged via PR #35) and its external public-profile portion remains blocked pending owner confirmation. P2.16's proposed ownership and evidence boundary are coordinated without calling the contract frozen. Next: resolve "440 tests" vs 510 test-function definitions with a real collected count or retire the claim (`P1.3`).
+**Current task** — `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md` are created; keep both current as items close. P1.1's repository-controlled surfaces are corrected (merged via PR #35) and its external public-profile portion remains blocked pending owner confirmation. P2.16's proposed ownership and evidence boundary are coordinated without calling the contract frozen. P1.3 is now the active bounded claim audit: live surfaces use the reproducible 510-definition wording and status-labelled ADR counts; the external public-profile update remains unverified.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -33,7 +33,7 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: P1.1 partial/blocked; repository-controlled surfaces are corrected (merged via PR #35), but the external public-profile update is unverified. WBS 1.4 is done with intake gate approved and both lead approvals recorded in `docs/security/intake-gate.json`. P2.16 coordination in progress with the ownership/evidence split recorded, while contract freeze remains pending consumer confirmation and Sibusiso's second-lead evidence. P1.3 follows closure; P1.2 remains a shared Khutso/Babatunde check.
+- Current task / status: P1.3 partial/review pending; repository-controlled stale test/ADR claims are corrected on the active branch, while the external public-profile update remains unverified. P1.1's repository portion is merged via PR #35. WBS 1.4 is done with intake gate approved and both lead approvals recorded in `docs/security/intake-gate.json`. P2.16 coordination remains in progress with the ownership/evidence split recorded; contract freeze still depends on consumer confirmation. P1.2 remains a shared Khutso/Babatunde check.
 - Claimed files / contract versions: `team/khutso.md` (role self-review) and `docs/BUILD-LOG.md` (append-only review record); no contract version change.
 - Last updated: 12 September 2026 by Codex assistant as a planning assignment.
 
@@ -130,3 +130,7 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 ## Running log
 
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
+
+## P1.3 repository portion — 2026-09-17
+
+Repository-controlled live claims were corrected to retire the unreproducible “440 tests” number and distinguish the 25-record ported predecessor baseline from the current checkout's 30 accepted and 2 proposed ADR records. The 510 test-function-definition source count remains explicitly historical, with execution pending. The external public-profile update is outside this checkout and remains unverified. Sibusiso must review first, followed by both leads; no merge is authorised by this entry.

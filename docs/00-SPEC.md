@@ -280,7 +280,7 @@ WS     /ws/member                     member room — MUST never receive ops eve
 | E6 calibration | `ml/eval/calibration.py` — reliability diagram, ECE | ⚠️ harness exists, **not yet run on real data** |
 | F13 dual signature | abuse-case suite: *a single operator must NOT be able to whitelist* | 🔨 to be written |
 
-**Total: 440 test cases.** Contract tests assert exact request/response **shapes**, not status codes.
+**510 test-function definitions found in predecessor source by the documented `git grep` method; no executed-suite total is claimed.** Contract tests assert exact request/response **shapes**, not status codes.
 
 ---
 
@@ -349,4 +349,4 @@ Disclosed here so that no judge has to discover them.
 
 Propose via an ADR entry in `docs/adr.md` (append-only). Discuss in the pull request. Mark **Accepted** on merge. Update the frozen-contract section if a locked decision changed. **Never edit history — supersede it.**
 
-**25 ADRs accepted to date.** The security and ethical properties of this system are architectural, dated, and reviewable — which is the only reason to believe they will still be there next month.
+**30 accepted ADRs and 2 proposed ADRs are recorded in this checkout.** The ported predecessor baseline is 25 accepted ADRs. The security and ethical properties of this system are architectural, dated, and reviewable — which is the only reason to believe they will still be there next month.

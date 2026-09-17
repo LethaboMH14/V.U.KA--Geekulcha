@@ -904,3 +904,15 @@ Needs/blockers: R is owned by Sibusiso's P2.3 remainder (implementation test + G
 Business handoff: not applicable — governance correction, no consumer-facing change.
 
 Next: Sibusiso wires the boundary per P2.3. Ipeleng back to P2.5 (IO registration — blocked on leads' D-IO-1 designation and org legal identity), then counsel items P2.6/P2.7/P2.4.
+
+## 2026-09-17 | Codex assistant at Khutso Mothopa's request | GPT-5 | P1.3 claim correction | partial, review pending
+
+Changed: created `docs/khutso-p13-claims` from merged `main` (`0cdd372`). Updated live specification, architecture, handover, README, team/stack/plain-language copy, Lean Canvas, checklist, and `scripts/build-deck.cjs` to retire the unreproducible “440 tests” claim. Current ADR wording now distinguishes the 25-record ported predecessor baseline from the checkout's 30 accepted + 2 proposed records. Historical evidence, dead-number warnings, task text, audit/build-log history and the archived submission remain unchanged.
+
+Evidence: ADR inventory command recorded in `docs/EVIDENCE.md` returned `{ total: 32, accepted: 30, proposed: 2 }`. The documented predecessor-source scan remains 510 test-function definitions (208 + 34 + 167 + 101), not an executed-suite result. `node --test` in this checkout discovered 11 local tests (10 pass, 1 fails because Gitleaks is not installed); `python -m pytest --collect-only -q` could not run because `pytest` is not installed. No passing total is claimed.
+
+Decision: retire “440 tests” from live claims; retain the 510-definition measure with its historical/execution caveat. Describe ADR counts by baseline and status rather than asserting the obsolete 27 or collapsing current records to 25.
+
+Needs/blockers: the external public-profile update remains outside this checkout and unverified. Sibusiso must review this PR first, followed by both leads; no merge is authorised by this entry.
+
+Business handoff: documentation/evidence correction only; no product, security or contract surface changed.

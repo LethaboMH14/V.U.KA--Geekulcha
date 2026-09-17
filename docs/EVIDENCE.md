@@ -98,3 +98,22 @@ Use `sim_` for simulated event identifiers and spoken demo labels. Never imply t
 | Household/partner interviews and named pilot area | Babatunde | Sep 18 | Consent-safe notes and actual recruitment capacity |
 
 All proposed dates, hours, capacities, design limits, scores and scenario numbers in this pack are planning assumptions, not measurements. IDs, table row counts, statutory section numbers and dates copied from the brief are not measured product claims.
+
+## P1.3 current-claim audit — 17 September 2026
+
+This entry is a new audit record; earlier historical evidence is intentionally preserved.
+
+**ADR inventory — current checkout (`docs/adr.md`).**
+
+Command run:
+```sh
+node --input-type=module -e "import fs from 'node:fs'; const t=fs.readFileSync('docs/adr.md','utf8'); const total=(t.match(/^## ADR-/gm)||[]).length; const accepted=(t.match(/(?:\| Status: Accepted\b|^\*\*Status:\*\* Accepted\b)/gm)||[]).length; const proposed=(t.match(/(?:\| Status: Proposed\b|^\*\*Status:\*\* Proposed\b)/gm)||[]).length; console.log({total,accepted,proposed});"
+```
+
+Result: `{ total: 32, accepted: 30, proposed: 2 }`. The 25 figure remains the verified ported-predecessor baseline (ADR-0001–0025); it is not the current checkout total.
+
+**Test-count decision.** The documented predecessor-source `git grep` method finds **510 test-function definitions** (208 Python + 34 JavaScript/TypeScript in BEACON; 167 Python + 101 JavaScript/TypeScript in Team-Sonar-Vuka). This is a source-definition count, not an executed-suite result. The earlier “440 tests” figure has no reproducing command and is retired from live claims.
+
+Current-checkout execution probes do not establish a collected predecessor-suite total: `node --test` discovers 11 local tests (10 pass, 1 fails because the required Gitleaks executable is not installed), and `python -m pytest --collect-only -q` cannot run because `pytest` is not installed. No passing total is claimed from either probe.
+
+Acceptance boundary: live judge-facing claims use the 510-definition wording with its historical/execution caveat; explicit dead-number warnings, checklist task text, build-log/audit history and the archived submission remain labelled records. External public-profile edits remain unverified and outside this checkout.

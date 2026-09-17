@@ -60,7 +60,7 @@ Also update industry size to **R87bn (2024)** — guarding R34.8bn · monitoring
 **The corrected number is still overwhelming.** Four private officers for every police officer is a serious market statement. It does not need inflating, and it survives being checked — which the old one does not.
 
 ### Stale figures live on the public profile
-Still says "27 ADRs" (actual **25**) and "440 test cases" (unreproducible; `git grep` finds **510 test-function definitions**). `docs/EVIDENCE.md` already holds the corrected numbers and the exact commands. `P1.3`
+The public profile still says "27 ADRs" and "440 test cases". The ported predecessor baseline is **25** ADRs, while this checkout has **30 accepted + 2 proposed records**; the reproducible test measure is **510 test-function definitions** from the documented predecessor-source `git grep`, with no executed-suite total. `P1.3`
 
 ## A2 · Settle TRL at 4, with the ceiling named
 
@@ -540,7 +540,7 @@ The August submission — deck, slides and generated PDFs — carried "27 ADRs",
 - `grep -rn "2.7m\|2,7m\|180k"` → no hits; 4:1 present with the PSiRA citation
 - `grep -rn "TRL"` → one position (4) + the ceiling + ADR-0027
 - `grep -rniE "Vumacam|Fidelity ADT"` → the competitor block with its mapping table
-- `grep -rn "27 ADR\|440 test"` → nothing outside `docs/EVIDENCE.md`'s historical record
+- stale-claim sweep → no unclassified judge-facing occurrence; explicit dead-number warnings, checklist task text, build-log/audit history and the archived submission remain labelled by design
 - `node scripts/check-docs.mjs` exits 0 · PR opened, CI green, reviewer requested
 - Public overview diffed against the saved team profile
 

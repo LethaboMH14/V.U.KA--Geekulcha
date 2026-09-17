@@ -68,7 +68,7 @@ This work exists and is verifiable. It was produced under the predecessor projec
 |---|---|---|
 | **Software development** | Lethabo, Sibusiso, Mutarisi, Vukosi and Khutso are assigned technical delivery; Ipeleng owns security/privacy review; Babatunde owns business validation | Predecessors contain ~33,600 tracked lines and 224 `origin/main` commits; 510 test-function definitions found, executed-suite count pending |
 | **Backend** | Sibusiso | FastAPI, WebSockets, PostgreSQL + pgvector, migrations, auth, rate limiting |
-| **Enterprise architecture** | Lethabo, Khutso | 25 ADRs, frozen contracts, amendment protocol, spec-driven method, documented threat model, requirement-to-test traceability |
+| **Enterprise architecture** | Lethabo, Khutso | 30 accepted + 2 proposed ADR records, frozen contracts, amendment protocol, spec-driven method, documented threat model, requirement-to-test traceability |
 | **UI / UX** | Mutarisi, Lethabo | 20 React screens built; 14 exported design-handoff screen specifications; design tokens; Figma |
 | **Mobile / embedded** | Lethabo | Kotlin native, foreground service, on-device INT8 inference on a 2 GB device |
 | **IoT / hardware** | Vukosi | Edge appliance, sensor integration, power budget, tamper response |
@@ -102,7 +102,7 @@ Seven builders across four universities cannot work the way one co-located team 
 | **Sequenced phases, not concurrent sprints** | Govern → Calibrate → Harden → Demo. One thing at a time, the whole team on it, done before the next begins |
 | **A pull request for everything** — code, docs, design | Review on every change means no single point of knowledge, which is the real risk when seven people meet in person for the first time on the 25th |
 | **Documentation in the same PR as behaviour** | *Docs-or-it-didn't-happen.* The written record is the handover |
-| **Tests are the specification** | 440 contract tests asserting shapes. A regression is caught by a machine, not by whoever remembers |
+| **Tests are the specification** | Contract tests assert exact shapes; 510 test-function definitions are found in predecessor source, but the executed-suite total remains pending. A regression is caught by a machine, not by whoever remembers |
 | **ADRs are append-only, never edited** | Any of the seven can reconstruct why a decision was made without asking the other six |
 | **One file per person, one shared build log** | Reading someone's file tells you everything you need to work around them without speaking to them — which matters across four campuses and four time commitments |
 
