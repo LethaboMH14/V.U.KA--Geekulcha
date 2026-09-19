@@ -33,7 +33,7 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: Codex / GPT-5 (assistant-run in this session; owner confirmation pending).
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: WBS 3.2 merged by PR #24 on 16 September 2026 (FACT; merge commit `2b34d239`). WBS 4.2 is partially evidenced on `feat/vukosi-4.2-bom-power`, in draft PR #42: candidate public listing prices and a proposed measurement procedure are recorded; GitHub document-contracts and secret-scan checks passed. Review requests are pending from Sibusiso and Lethabo. No formal supplier quotations or physical power readings have been supplied or recorded; appliance/instrument access and owner availability remain unconfirmed.
+- Current task / status: WBS 3.2 merged by PR #24 on 16 September 2026 (FACT; merge commit `2b34d239`). WBS 4.2 is partially evidenced on `feat/vukosi-4.2-bom-power`, in draft PR #42: candidate public listing prices and a proposed measurement procedure are recorded; GitHub document-contracts and secret-scan checks passed. Review requests are pending from Sibusiso and Lethabo. A conditional rebaseline proposal for dependent work is recorded in the handoff; no schedule change is approved. No formal supplier quotations or physical power readings have been supplied or recorded; appliance/instrument access and owner availability remain unconfirmed.
 - Claimed files / contract versions: WBS 4.2 candidate documents are `appliance/BOM.md`, `appliance/POWER-MEASUREMENT.md`, and `docs/VUKOSI-WBS-4.2-HANDOFF.md`; no contract change. Historical WBS 3.2 producer consumes `contracts/events.schema.json` v0.1.0 unchanged.
 - Last updated: 19 September 2026 by Codex assistant at the user's request; owner availability remains unconfirmed.
 
@@ -48,6 +48,16 @@ Shared-surface claim: hardware/BOM economics is shared with Babatunde; the plann
 Acceptance evidence: dated, attributed public price observations for exact candidate parts with VAT, delivery and stock caveats where the supplier states them; an itemised proposed BOM separating listed prices from unpriced costs; a reproducible power test procedure; explicit “not measured” status for absent readings; and a business handoff to Babatunde/Khutso. Formal written supplier quotations and physical measurements remain required to close WBS 4.2.
 
 Status as of 2026-09-19: **PARTIAL**. Public listing observations, unresolved costs, and a proposed procedure are recorded. Formal written quotes and physical power/runtime measurements remain outstanding; the WBS 4.2 acceptance gate is not met. The schedule's 2026-09-17 date is past and marked as an assumption; no revised date is approved.
+
+## WBS dependency rebaseline proposal — 2026-09-19
+
+Criterion: **C3 (progress of solution profile)**. Trust answer: the proposal puts evidence prerequisites ahead of downstream claims and keeps the fixed event/freeze milestones visible; it does not turn an unmeasured prototype into a field-ready appliance.
+
+Intended files: `team/vukosi.md`, `docs/VUKOSI-WBS-4.2-HANDOFF.md`, and `docs/build-log/entries/2026-09-19-codex-vukosi-rebaseline-proposal.md`. No edit is proposed to the canonical `docs/audit/05-team-operating-system.md` or `docs/HANDOVER.md`; both-lead decision and schedule-owner recording are needed before those shared schedules change.
+
+Acceptance evidence: affected dependency map; a conditional recovery sequence bounded by the existing feature-freeze date; named owners for missing status/authority; and explicit pending approval. No other person's availability, task status, or acceptance is inferred.
+
+- 2026-09-19 — Codex assistant, at Vukosi's request: recorded a conditional recovery/rebaseline proposal for downstream WBS 5.2, 4.4, 5.3, 4.5, and 6.2 in `docs/VUKOSI-WBS-4.2-HANDOFF.md`. The canonical schedule is unchanged; both-lead approval, owner capacity confirmations, and Khutso's schedule update remain pending.
 
 ## Merge-gate follow-up declaration — 2026-09-16
 
