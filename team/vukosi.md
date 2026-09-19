@@ -33,7 +33,7 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: Codex / GPT-5 (assistant-run in this session; owner confirmation pending).
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: WBS 3.2 merged by PR #24 on 16 September 2026 (FACT; merge commit `2b34d239`). WBS 4.2 is partially evidenced on `feat/vukosi-4.2-bom-power`: candidate public listing prices and a proposed measurement procedure are recorded. No formal supplier quotations or physical power readings have been supplied or recorded; appliance/instrument access and owner availability remain unconfirmed.
+- Current task / status: WBS 3.2 merged by PR #24 on 16 September 2026 (FACT; merge commit `2b34d239`). WBS 4.2 is partially evidenced on `feat/vukosi-4.2-bom-power`, in draft PR #42: candidate public listing prices and a proposed measurement procedure are recorded; GitHub document-contracts and secret-scan checks passed. Review requests are pending from Sibusiso and Lethabo. No formal supplier quotations or physical power readings have been supplied or recorded; appliance/instrument access and owner availability remain unconfirmed.
 - Claimed files / contract versions: WBS 4.2 candidate documents are `appliance/BOM.md`, `appliance/POWER-MEASUREMENT.md`, and `docs/VUKOSI-WBS-4.2-HANDOFF.md`; no contract change. Historical WBS 3.2 producer consumes `contracts/events.schema.json` v0.1.0 unchanged.
 - Last updated: 19 September 2026 by Codex assistant at the user's request; owner availability remains unconfirmed.
 
