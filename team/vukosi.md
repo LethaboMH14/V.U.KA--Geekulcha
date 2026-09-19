@@ -21,7 +21,7 @@
 - **The appliance decides locally** — the siren fires with no uplink.
 - A missing instrument is recorded as missing, never estimated silently to fill the gap.
 
-**Current task** — Minimal synthetic edge producer with `sim_` fixtures only (`3.2`), then **real BOM quotes with dates** — this converts `ESTIMATE` to `FACT` (`4.2`) — then measured power/offline recovery (`4.4`).
+**Current task** — WBS 4.2: candidate BOM pricing and repeatable power-measurement procedure. Public web prices are only listed-price observations, not formal supplier quotes; no physical load/runtime has been measured. WBS 4.4 remains downstream.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every figure I report has a measurement method attached, or it is explicitly labelled unmeasured.
 
@@ -33,9 +33,21 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: Codex / GPT-5 (assistant-run in this session; owner confirmation pending).
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: 3.2, implementation present on `feat/vukosi-3.2-edge-producer`; PR #24 is open and clean after rebase, GitHub checks pass, and formal rereview is requested from Sibusiso and Lethabo. Focused producer suite passes 7/7 with `unittest`.
-- Claimed files / contract versions: `appliance/agent.py`, `appliance/tests/`, `appliance/README.md`; consumes `contracts/events.schema.json` v0.1.0 without changing it.
-- Last updated: 16 September 2026 by Codex assistant at the user's request; owner availability remains unconfirmed.
+- Current task / status: WBS 3.2 merged by PR #24 on 16 September 2026 (FACT; merge commit `2b34d239`). WBS 4.2 is partially evidenced on `feat/vukosi-4.2-bom-power`: candidate public listing prices and a proposed measurement procedure are recorded. No formal supplier quotations or physical power readings have been supplied or recorded; appliance/instrument access and owner availability remain unconfirmed.
+- Claimed files / contract versions: WBS 4.2 candidate documents are `appliance/BOM.md`, `appliance/POWER-MEASUREMENT.md`, and `docs/VUKOSI-WBS-4.2-HANDOFF.md`; no contract change. Historical WBS 3.2 producer consumes `contracts/events.schema.json` v0.1.0 unchanged.
+- Last updated: 19 September 2026 by Codex assistant at the user's request; owner availability remains unconfirmed.
+
+## WBS 4.2 declaration — 2026-09-19
+
+Criterion: **C3 (progress of solution profile)**. Trust answer: each listed price will point to a dated supplier source and exact candidate SKU; wattage/runtime remain “not measured” until an identified device and meter produce a reproducible record.
+
+Intended files: `appliance/BOM.md`, `appliance/POWER-MEASUREMENT.md`, `docs/VUKOSI-WBS-4.2-HANDOFF.md`, `team/vukosi.md`, `docs/OVERLAPS.md`, and `docs/build-log/entries/2026-09-19-codex-wbs-4-2-bom-power.md`. Per the current repository convention, `docs/BUILD-LOG.md` is frozen. No contract or production file is in scope. No raw measurement log will be created unless actual instrument readings are available.
+
+Shared-surface claim: hardware/BOM economics is shared with Babatunde; the planned BOM and commercial handoff will be proposed candidate pricing, not a purchase or approved design. Blocker: availability of the appliance components and a calibrated or specified power meter is not confirmed in this session, so physical power and runtime evidence may remain not measured.
+
+Acceptance evidence: dated, attributed public price observations for exact candidate parts with VAT, delivery and stock caveats where the supplier states them; an itemised proposed BOM separating listed prices from unpriced costs; a reproducible power test procedure; explicit “not measured” status for absent readings; and a business handoff to Babatunde/Khutso. Formal written supplier quotations and physical measurements remain required to close WBS 4.2.
+
+Status as of 2026-09-19: **PARTIAL**. Public listing observations, unresolved costs, and a proposed procedure are recorded. Formal written quotes and physical power/runtime measurements remain outstanding; the WBS 4.2 acceptance gate is not met. The schedule's 2026-09-17 date is past and marked as an assumption; no revised date is approved.
 
 ## Merge-gate follow-up declaration — 2026-09-16
 
@@ -103,3 +115,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
 - 2026-09-15 — Protocol correction: the WBS/path declaration for 3.2 was recorded in this file after implementation began, rather than before the first edit as RULES/AGENTS require. The paths are now explicit (`appliance/agent.py`, `appliance/tests/`, `appliance/README.md`, `team/vukosi.md`, `docs/BUILD-LOG.md`); no shared contract was edited. This correction is assistant-authored and included in PR #24.
+- 2026-09-19 — Codex assistant, at Vukosi's request: recorded WBS 4.2 candidate supplier listing observations and an unexecuted power-measurement procedure on `feat/vukosi-4.2-bom-power`; added the business/evidence handoff and shared-surface claim. No formal quote, procurement, power measurement, or reviewer approval is claimed. See `docs/build-log/entries/2026-09-19-codex-wbs-4-2-bom-power.md`.
