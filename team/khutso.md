@@ -6,7 +6,7 @@
 
 > This is what my AI agent follows for the whole session. Started via `docs/SESSION-PROMPT.md` — one prompt, my name swapped in. **I keep `Current task` accurate; that is what keeps the prompt self-refreshing.**
 
-**I am** — Khutso Mothopa. Wits. Requirements, WBS, traceability, verification mapping. **I am the team's memory** — I own `docs/EVIDENCE.md`, `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md`, and nobody else edits them without telling me.
+**I am** — Khutso Mothopa. Wits. Requirements, traceability and evidence. **I am the team's memory** — I own `docs/EVIDENCE.md`, `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md`. From 23 Sep I also build the two small services that make the demo real: guardian delivery and `sim_bank`.
 
 **Reviewed by** — Sibusiso, then both leads.
 
@@ -17,11 +17,11 @@
 **My domain rules**
 - I own `docs/EVIDENCE.md`, `docs/MASTER-CONTEXT.md`, `docs/CHECKLIST.md`. Nowhere else records these.
 - **A historical count is not a current result.**
-- **318 ms always travels with n = 10.** Every measured figure carries method, configuration and sample size, or it is not a measurement.
+- **318 ms always travels with n = 10 — and is never quoted as VIGIL's latency.** Every measured figure (M1–M7) carries method, configuration and sample size, or it is not a measurement.
 - **If it cannot be reproduced, it does not ship.**
-- When the real judging criteria publish, I refresh `docs/MASTER-CONTEXT.md` and re-tag `docs/CHECKLIST.md` the same day — that is the mechanism that stops the team optimising for the old four.
+- The judging criteria published (MASTER-CONTEXT v3, 23 Sep). I re-tag every new row with I / T / U / S / B / Q and run the coverage sweep under the new criteria.
 
-**Current task** — `docs/MASTER-CONTEXT.md` and `docs/CHECKLIST.md` are created; keep both current as items close. P1.1's repository-controlled surfaces are corrected (merged via PR #35) and its external public-profile portion remains blocked pending owner confirmation. P2.16's proposed ownership and evidence boundary are coordinated without calling the contract frozen. Next: resolve "440 tests" vs 510 test-function definitions with a real collected count or retire the claim (`P1.3`).
+**Current task** — Work order below (issued 23 Sep). First: personally re-check every source in the "Verified 23 September 2026" section of `docs/EVIDENCE.md`, then read the SAPS annual totals by eye.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -33,13 +33,50 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: P1.1 partial/blocked; repository-controlled surfaces are corrected (merged via PR #35), but the external public-profile update is unverified. WBS 1.4 is done with intake gate approved and both lead approvals recorded in `docs/security/intake-gate.json`. P2.16 coordination in progress with the ownership/evidence split recorded, while contract freeze remains pending consumer confirmation and Sibusiso's second-lead evidence. P1.3 follows closure; P1.2 remains a shared Khutso/Babatunde check.
+- Current task / status: Work order issued 23 Sep 2026 (see the Work order section below); evidence re-check due Thu 24 Sep 12:00.
 - Claimed files / contract versions: `team/khutso.md` (role self-review) and `docs/BUILD-LOG.md` (append-only review record); no contract version change.
-- Last updated: 12 September 2026 by Codex assistant as a planning assignment.
+- Last updated: 23 September 2026 — work order issued by Lethabo (co-lead) via Claude Code assistant.
+
+## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
+
+> Issued by Lethabo (co-lead) after the 21–22 Sep pivot meetings with Sibusiso and Babatunde. Decisions: ADR-0034 to ADR-0038. Spec: `docs/VUKA-2-SPEC.md` (section numbers below refer to it). **Owner acknowledgement pending** — accept it in your running log, or raise a blocker here. All times SAST. Criterion letters per `docs/MASTER-CONTEXT.md` §2 (I · T · U · S · B · Q). Before you start anything: pass the four review gates in `docs/MASTER-CONTEXT.md` §10.
+
+**Outcome you own:** the team's memory stays true through the pivot, and two small services make the demo real: guardian delivery and `sim_bank`.
+**Serves:** T, S, B.
+**Files you own or may touch:** `docs/EVIDENCE.md`, `docs/MASTER-CONTEXT.md`, `docs/CHECKLIST.md`, `docs/OPEN-GAPS.md` (with Lethabo), `docs/REQUIREMENTS-TRACE.md` (new), `server/src/notify/` (delivery), `sim_bank/` (new service).
+
+**Do this, in order:**
+1. **Wed 23–Thu 24 by 12:00** — review MASTER-CONTEXT v3 and the "Verified 23 September 2026" section of `docs/EVIDENCE.md`. Open every source, confirm the quote, and fix or flag ⚑ anything that doesn't hold. Tick each row in your running log.
+2. **Thu 24** — read the SAPS FY2024/25 and FY2025/26 national totals **by eye** from the official PDF (cite page and table) into `docs/EVIDENCE.md`. Never paste machine-extracted numbers.
+3. **Thu 24** — confirm the criterion letters on every P3 row in `docs/CHECKLIST.md` and run the coverage sweep (OS.11) under the new criteria.
+4. **Thu 24 by 20:00** — `docs/REQUIREMENTS-TRACE.md`: every requirement in `docs/VUKA-2-SPEC.md` §2 (V1–V10, G1–G6, A1–A7, S1–S4, P1–P2, D1–D3) → owner → test ID (T01–T20) → status.
+5. **Thu 24–Fri 25 by 20:00 — guardian delivery** (G3):
+   - Create a Firebase project (free); put the Firebase Cloud Messaging server credentials in App Service settings (never in git).
+   - Implement `server/src/notify/` so every alert arrives as a **visible** high-priority notification.
+   - Open a trial with a South African SMS provider and send through its REST API from the server. If the trial needs business verification that won't clear by Friday, record "push only" and tell Lethabo and Babatunde.
+6. **Fri 25 by 20:00 — `sim_bank`**, a small FastAPI service:
+   - `POST /sim_bank/v1/risk-signal` verifies ANCHOR's Ed25519 signature, holds new-beneficiary transfers for that subject, and returns routine wording.
+   - `POST /sim_bank/v1/release`.
+   - Every response carries `"sim": true`, and the UI shows SIMULATED.
+7. **Sat** — with Sibusiso, write the server-side abuse tests T11, T12, T13, T14 and T19 from Ipeleng's specifications. Record M3 and M6 with Vukosi.
+8. **Lowest priority (first on the cut line)** — daily OpenTimestamps stamp of the day's roots with `ots upgrade` (ADR-0028).
+
+**Acceptance checks:**
+- [ ] Every row in the 23 Sep evidence section re-checked by you and ticked in your running log
+- [ ] SAPS totals added with page and table references
+- [ ] `docs/REQUIREMENTS-TRACE.md` complete
+- [ ] A guardian phone receives a visible alert from the deployed server (screenshot)
+- [ ] `sim_bank` holds and releases, with a signature check (test)
+- [ ] T11 passes; M3 and M6 recorded with n
+
+**Deadlines:** evidence review Thu 12:00; trace Thu 20:00; delivery and `sim_bank` Fri 20:00; tests and M3/M6 Sat 18:00.
+**Depends on → hands off to:** contract v2 and the server (Sibusiso) → the evidence ceiling to Babatunde and Lethabo.
+**Do not:** record a number without its command, source and n; put Firebase or SMS credentials in git; let `sim_bank` look like a real bank.
+**Reviewer:** Sibusiso.
 
 ## Sequenced work
 
-All hours and dates below are ASSUMPTIONS, subject to availability and gates.
+**Superseded 23 September 2026 by the work order above** — kept for history; do not execute these rows. All hours and dates below are ASSUMPTIONS, subject to availability and gates.
 
 | Date | WBS | Hours | Task | Dependencies | Acceptance evidence |
 |---|---|---:|---|---|---|
@@ -130,3 +167,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 ## Running log
 
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
+- 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Khutso is asserted; owner acknowledgement pending.

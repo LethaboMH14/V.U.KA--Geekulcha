@@ -1,5 +1,7 @@
 # PLAN — GKHack26 execution: corrections, deployability evidence, and a seven-person pipeline
 
+> **Superseded in part — 23 Sep 2026.** VUKA is now **VIGIL + ANCHOR** (ADR-0034). Anything here about KHAYA, UMOJA, cameras, entities, the R299 model or the four-layer design is parked lineage, not the current product. Current spec: `docs/VUKA-2-SPEC.md` · economics: `docs/ECONOMICS-VIGIL-ANCHOR.md` · context: `docs/MASTER-CONTEXT.md`.
+
 > The whole shape of the build, in one place, so every person and every AI tool can see more than their own slice.
 >
 > **This does not replace the WBS in `docs/audit/05-team-operating-system.md`.** It corrects, extends and sequences it. Where a WBS ID exists it is kept; new items are marked **NEW**.

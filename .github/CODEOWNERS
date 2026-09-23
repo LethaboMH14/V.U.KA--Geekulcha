@@ -1,7 +1,7 @@
 # CODEOWNERS — GitHub auto-requests these people as reviewers when a PR touches
 # a matching path. This replaces manually remembering / typing --add-reviewer.
-# Reference: RULES.md "Lethabo is first reviewer for Mutarisi, Ipeleng and
-# Babatunde; Sibusiso for Vukosi and Khutso. Both remain final reviewers."
+# Reference: RULES.md "Lethabo is first reviewer for Mutarisi, Ipeleng, Babatunde
+# and Vukosi (from 23 Sep); Sibusiso for Khutso. Both remain final reviewers."
 #
 # Rules: LAST matching pattern wins, so general rules go first, overrides after.
 # CODEOWNERS fails SILENTLY on a bad username, a team with no members, or an
@@ -28,9 +28,12 @@ docs/08-BUSINESS.md                @LethaboMH14 @tunde3zy-commits
 docs/LEAN-CANVAS.md                @LethaboMH14 @tunde3zy-commits
 docs/SONKE-OVERVIEW.md             @LethaboMH14 @tunde3zy-commits
 docs/COMPETITORS.md                @LethaboMH14 @tunde3zy-commits
+docs/ECONOMICS-VIGIL-ANCHOR.md     @LethaboMH14 @tunde3zy-commits
+scripts/economics_vigil_anchor.py  @LethaboMH14 @tunde3zy-commits
+docs/STAGED-DURESS-DEFENCE.md      @LethaboMH14 @Ipeleng-Modise
+team/vukosi.md                     @LethaboMH14 @KhozaVu
 
 # Sibusiso's first-review people
-team/vukosi.md                     @Sibusiso-K @KhozaVu
 team/khutso.md                     @Sibusiso-K @KhutsoMothopa
 appliance/                         @Sibusiso-K @KhozaVu
 docs/EVIDENCE.md                   @Sibusiso-K @KhutsoMothopa
@@ -50,7 +53,11 @@ docs/CONTRACT-APPROVAL-RECORD.md   @Sibusiso-K @LethaboMH14
 docs/OVERLAPS.md                   @Sibusiso-K @LethaboMH14
 
 # Architecture / product — Lethabo owns
-app/                               @LethaboMH14
+app/                               @LethaboMH14 @KhozaVu @mutarisi-chibaya
+dashboard/                         @LethaboMH14 @mutarisi-chibaya @Ipeleng-Modise
+shared/                            @Sibusiso-K @LethaboMH14 @Ipeleng-Modise
+anchor/                            @Sibusiso-K @LethaboMH14
+docs/VUKA-2-SPEC.md                @LethaboMH14 @Sibusiso-K
 brain/                             @LethaboMH14
 docs/00-SPEC.md                    @LethaboMH14
 docs/01-ARCHITECTURE.md            @LethaboMH14
