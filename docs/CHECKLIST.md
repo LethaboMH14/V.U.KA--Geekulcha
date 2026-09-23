@@ -71,18 +71,32 @@
 | P3.B9 | Rehearse the blockchain attacks verbatim; update `docs/BLOCKCHAIN-ATTACK-REHEARSAL.md` for Hedera + OpenTimestamps and retire the R1.30 attack *(carried from P2.14)* | Babatunde, Sibusiso | I, B | Sep 26 | ☐ | Added 23 Sep, Lethabo |
 | P3.K7 | Criteria-coverage sweep under I/T/U/S/B/Q *(carried from OS.11)* | Khutso | all | Sep 25 | ☐ | Added 23 Sep, Lethabo |
 | P3.B10 | Rewrite the Sonke overview and Lean Canvas for VIGIL + ANCHOR with live figures only | Babatunde (reviewer: Lethabo) | B, I | Sep 24 20:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
+| P3.S9 | `docs/security/SSDLC.md` accepted by Ipeleng, reviewed by Lethabo, merged; control counts re-computed | Ipeleng | S, T | Sep 26 11:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S10 | `docs/security/THREAT-MODEL.md`: every STRIDE and coercion row has a spec ID and a test | Ipeleng | S | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S11 | Test specifications for T30–T49 (fixture, oracle, prerequisites), each sent to its writer | Ipeleng | S, T | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S12 | Internal test plan executed: `docs/security/PENTEST-RESULTS.md` with pass / fail / not run for all 64 PT cases | Ipeleng | S | Sep 26 20:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S13 | `docs/security/COMPLIANCE-GOVERNANCE.md` reviewed; counsel questions Q-C1–Q-C7 logged | Ipeleng | S, B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S14 | CI runs `node --test` plus semgrep and SCA jobs | Sibusiso | T, S | Sep 25 12:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S15 | ZAP baseline on staging API and verify page; report linked | Ipeleng | S | Sep 26 14:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S16 | MobSF static scan of the release APK; highs triaged | Vukosi | S | Sep 26 10:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S17 | Lockfiles committed; `npm audit`, `pip-audit`, `osv-scanner` clean or waived in the PR | Sibusiso | T, S | Sep 26 10:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S18 | PR #43 blockers B1–B3 in the spec; T37 specified | Lethabo, Ipeleng | S | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S19 | PR #43 should-fix S1–S4 each closed or carried with an owner | Sibusiso, Vukosi, Mutarisi, Ipeleng, Lethabo | S | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S20 | Export during an open incident decided (PIN-gated, prefix-only) and T30 specified | Lethabo, Sibusiso | S | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S21 | Wrong-PIN behaviour and attempt limit decided; T47 oracle written | Lethabo, Ipeleng | S, U | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S22 | 15-minute incident tabletop (leaked key, location leak) recorded in a build-log entry | Ipeleng | S | Sep 25 12:00 | ☐ | Added 23 Sep, Lethabo |
 
 ---
 
-### Phase 3 coverage by published criterion (computed 23 Sep from the P3 table; `all` counts once for each of I/T/U/S/B)
+### Phase 3 coverage by published criterion (computed 23 Sep (night, after P3.S9–S22) from the P3 table; `all` counts once for each of I/T/U/S/B)
 
 | Criterion | Weight | P3 rows serving it |
 |---|---:|---:|
-| **I** · Innovation & Creativity | 15 | 12 |
-| **T** · Technical Implementation | 15 | 23 |
-| **U** · Usability & Design | 10 | 13 |
-| **S** · Security & Ethics | 10 | 18 |
-| **B** · Business & Presentation | 15 | 17 |
+| **I** · Innovation & Creativity | 15 | 13 |
+| **T** · Technical Implementation | 15 | 27 |
+| **U** · Usability & Design | 10 | 14 |
+| **S** · Security & Ethics | 10 | 32 |
+| **B** · Business & Presentation | 15 | 19 |
 | **Q** · Quantum bonus | 5 | 1 |
 
 Khutso re-runs this sweep (OS.11) under the new letters.
@@ -101,5 +115,6 @@ Phases 1–2, the bonus row, the operating-system rows and the old showcase rows
 |---|---|---|
 | 14 Sep 2026 | File created. Every Phase 1 / Phase 2 / operating-system / showcase item entered on day one, so scope drift from here is visible | Lethabo |
 | 23 Sep 2026 | VIGIL + ANCHOR pivot: Phase 3 added (41 rows); 12 earlier rows ⊘ and 2 re-scoped, each with a dated reason; published criteria letters I/T/U/S/B/Q adopted for new rows | Lethabo |
-| 23 Sep 2026 (evening) | PR #43 review response: 5 rows added (P3.L8, P3.A6, P3.S7, P3.U5, P3.B7) — P3 now 46 rows; coverage recomputed | Lethabo |
+| 23 Sep 2026 (evening) | PR #43 review response: 5 rows added (P3.L8, P3.A6, P3.S7, P3.U5, P3.B7) — P3 now 65 rows, including P3.L9 and P3.B10 from #48; coverage recomputed | Lethabo |
 | 23 Sep 2026 (night) | Pivot clean-up: four-layer phases archived (nothing deleted); live rows carried into P3 as P3.B8, P3.B9, P3.K7; P3.L2 closed (pre-event building confirmed). P3 now 49 rows | Lethabo |
+| 23 Sep 2026 (late) | Ipeleng's security programme: 14 rows added (P3.S9–P3.S22) from `docs/security/SSDLC.md`, the threat model, the internal test plan and the compliance map. P3 now 63 rows; coverage recomputed | Lethabo |
