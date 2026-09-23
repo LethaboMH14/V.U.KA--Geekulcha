@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - The judging criteria published (MASTER-CONTEXT v3, 23 Sep). I re-tag every new row with I / T / U / S / B / Q and run the coverage sweep under the new criteria.
 
-**Current task** — P3.K1 review findings are resolved in the working tree by a Codex assistant acting at Khutso's request; Khutso's personal confirmation and Sibusiso's acceptance remain pending. P3.K2 is on the separate stacked PR #52.
+**Current task** — P3.K1 review corrections are pushed to PR #47 by a Codex assistant acting at Khutso's request; Khutso's personal confirmation and Sibusiso's acceptance remain pending. P3.K2 is on the separate stacked PR #52.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -106,3 +106,4 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Khutso is asserted; owner acknowledgement pending.
 - 2026-09-23 — Khutso requested that the latest changes be pulled, his tasks realigned and his workflow set up. Codex assistant pulled `main` at `847225e`, configured `origin`, installed the repository-pinned Gitleaks 8.24.3 hook, verified GitHub CLI 2.101.0 is authenticated as `KhutsoMothopa`, and opened `docs/khutso-p3-k1-evidence-recheck`. P3.K1 source disposition is now recorded in `docs/build-log/entries/2026-09-23-codex-khutso-p3-k1-evidence-audit.md`; no checklist row is ticked and no review is inferred.
 - 2026-09-23 — Codex assistant, acting at Khutso's request, resolved PR #47 review findings: secondary SABRIC and UK APP split details are flagged, ICB's inaccessible primary is flagged, FIPS 204 publication/effective dates are distinguished, the audit authorship/status is explicit, smartphone-duty wording is described as a clarification, and the unsupported OpenTimestamps observation is removed. Khutso confirmation and Sibusiso acceptance remain pending; no checklist row is ticked.
+- 2026-09-23 — Codex assistant rechecked the PR #47 follow-up and found the Federal Register citation targeted the wrong document number; corrected it to NIST's linked notice 2024-17956 and recorded the source wording. Removed the secondary SABRIC incident and app-share figures from the `MASTER-CONTEXT.md` headline row while retaining their explicit caveat in `EVIDENCE.md`. This is a review correction, not Khutso's personal source confirmation or reviewer acceptance.

@@ -31,7 +31,7 @@ Audit disposition:
 - Hedera: official pages support $0.0008 and public mirror-node ordering data; 3–5 s finality removed because it was not evidenced.
 - USD/ZAR/economics: local script reproduces the R9.34 estimate; it remains dated and tagged as an estimate.
 - OpenTimestamps: official pages support calendar-server operation; the unrecorded 1.01-hour observation was removed because the audit had no capture timestamp or sample basis.
-- FIPS 204: primary NIST PDF confirms the 13 Aug 2024 publication date and ML-DSA-65 sizes; the Federal Register supplies the 14 Aug 2024 effective date.
+- FIPS 204: [NIST's publication page](https://csrc.nist.gov/pubs/fips/204/final) says “Date Published: August 13, 2024”; the [Federal Register notice 2024-17956](https://www.federalregister.gov/d/2024-17956) says “FIPS 203, FIPS 204, and FIPS 205 are effective on August 14, 2024.” The primary FIPS 204 PDF table supports the ML-DSA-65 sizes. A previously linked Federal Register document number (2024-17918) was incorrect and has been replaced.
 - ECTA/RICA: official texts support the quoted factors/definition; source links corrected to government/Justice copies.
 - Cybercrimes Act, FTC emergency PIN, and Capitec Feature Lock: primary or current verification remains incomplete; limitations stay visible and no stronger claim is made.
 
