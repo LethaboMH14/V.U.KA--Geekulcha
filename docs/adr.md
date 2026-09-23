@@ -459,3 +459,36 @@ Generative super-resolution was considered as a fix and **rejected**: PULSE-styl
 **Context:** ADR-0036's acceptance carried the condition that the PIN-verification mechanism (B5) is a pre-condition for implementing `docs/VUKA-2-SPEC.md` §9, tracked as P3.L8 (Lethabo + Ipeleng, due Thu 24 Sep 12:00). The rules already exist in the spec (§8, §9) but are spread across two sections and an ADR; the Thursday check needs one page the team can agree line by line, and Vukosi needs the discard boundary stated without reading the whole spec.
 **Decision:** (1) The rules are agreed **as written in `docs/PIN-AUTHORITY-RULES.md`**, which restates and does not change §8, §9 or ADR-0036. (2) The one-sentence rule: a normal PIN is authority to do things; a duress PIN is authority to pretend things happened while raising the alarm; neither a normal PIN nor a coercer holding the phone can close an incident, delete evidence immediately, or leave the user with zero guardians. (3) Under duress, every destructive or trust-changing action (remove guardian, delete evidence, recover to a new device) is a **hard no-op dressed as success**; guardian addition creates a decoy and notifies the real guardians. (4) Incidents close only on guardian `stand_down` or automatic 6 h closure — never on a normal PIN. (5) Guardian removal stays silent, scheduled, effective after 24 h, deferred during an open incident, and refused for the last guardian. (6) Any future change to these rules goes through a fresh ADR, never a config change — the contract-freeze discipline applies.
 **Consequences:** Tests T12, T13, T16 and T24 are the executable form of this agreement. Vukosi and Mutarisi build the settings surfaces against `docs/PIN-AUTHORITY-RULES.md` from the moment this ADR is accepted. If the Thursday check amends a rule, the spec section and this page change in the same PR that records the acceptance.
+## ADR-0039: Detection and response details live in the committed payload; the evidence assessment is saved, uncalibrated and reproducible; third-party access is designed, not built
+**Status:** Proposed (2026-09-24). Binds on acceptance by Sibusiso (contract v2) and Ipeleng (security). On acceptance, it extends ADR-0038(2)'s class list.
+**Owner:** Lethabo Hoaeane (decision). Sibusiso Khumalo (contract and server). Ipeleng Constance Modise (security and privacy). Vukosi Khoza (sensing).
+**Context:** On 23 Sep, Lethabo asked for the evidence chain to record detection, time, device, the kind of sound and motion, cancellations, guardian behaviour, and a coercion "confidence" that depends on its cause. Anomaly flags come later. The coercion scenario catalogue (`docs/COERCION-SCENARIOS.md`, CEM-0, 133 scenarios) supplies the model. The plan went through three review rounds: an independent critic, then two rounds with a different model family. Three questions stayed open. They are recorded below as gates.
+**Decision:**
+(1) **Everything is private.** Every new field lives in the salted, committed, deletable payload. Public `action` classes and the 33-byte on-chain messages are unchanged.
+(2) **Payloads are versioned.** Each payload carries an integer `pv`. Contract v2 freezes the envelope `payload:{kind, pv, …}`, and per-kind schemas live in `contracts/payloads/`.
+(3) **Sound.** The existing six classes, plus "Gunshot, gunfire" (421), "Machine gun" (422) and "Fusillade" (423), all mapped by label. Excluded: 420 and 424–427. One class per window: the argmax, with ties going to the lowest index. Rendered as "gun-like sound (uncalibrated)". Applies from D2 onward.
+(4) **Motion** is a stretch detector: accelerometer rules only, no model (`impact`, `shake`, `snatch`; `surge` is parked). It is recorded only as corroboration, looking back over [−10 s, 0] and only while stationary or walking. It never opens a check-in.
+(5) **Device fields** are app version, model hash, Android API level and device model. Never IMEI, serial, Android ID or phone number.
+(6) **Guardian facts.**
+- `guardian_alert_opened` requires an explicit tap and never raises the E-level.
+- "No acknowledgement recorded by <time>" is derived at read time, together with the delivery state.
+- Acknowledgements are self-reported.
+(7) **Cancellations** use the existing kinds.
+(8) **A saved `evidence_assessment`** (server-signed, pv 1) is written once per incident transition, in the same head transaction.
+- It cites the entry IDs it used, a `ruleset_digest` and server-receipt `basis_time`, and carries `calibrated:false` plus a fixed statement.
+- It **never** holds a band, a probability, a likelihood or a verdict.
+- Decay freezes when the check-in is shown.
+- Conflict is shown to member and guardian as a display flag only, and is not stored.
+- **Third parties (banks, insurers) see the tier, the E-level and the reasons in plain words, never the numeric total.** The total is kept for replay and calibration only (decision of 24 Sep, 00:50).
+(9) **Access for insurers and banks is designed but not built this weekend.** It stays unbuilt until three gates close:
+- G-A: verifiable selective disclosure (Sibusiso, Ipeleng).
+- G-B: an independently checked safe-release condition (Lethabo, Ipeleng).
+- G-C: a reviewed partner-use rule — human review only, no automated eligibility or pricing, no adverse inference from a low or missing tally, and a way to contest (Babatunde, Ipeleng).
+(10) **No early guardian alert** in this build.
+**Rejected alternatives:**
+- a fused "coercion %" (uncalibrated, and it could be turned against a victim);
+- storing bands or odds;
+- motion alone opening a check-in (false alarms from phone drops and driving);
+- trigger-word detection (a second model, and a RICA/POPIA question; parked);
+- building third-party grants before the gates close.
+**Consequences:** `docs/VUKA-2-SPEC.md` §18. Tests T25–T29, T31 and T33 (T30 and T32 are designed only). Measurement M8. Contract v2 carries `pv`, `evidence_assessment` and `/alerts/{id}/opened`, with the grant routes marked `x-status: designed`. Gaps G36–G38.

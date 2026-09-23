@@ -30,7 +30,7 @@ IDs are stable; tests in §15 cite them.
 ### VIGIL (phone)
 - **V1** A journey is armed only by an explicit user action while the app is in the foreground. Arming refuses to start without microphone **and** notification permission and says why in plain words.
 - **V2** While armed, a foreground service of the types actually granted (microphone, and location only if granted) runs with a persistent, neutral notification: "VUKA journey active".
-- **V3** On-device YAMNet classifies 0.975 s windows (15 600 samples, 16 kHz mono, asserted from `get_input_details()`). Classes are mapped **by label**: Screaming, Shout, Yell, Glass, Shatter, Breaking. Scores are integer basis points 0–10000. Thresholds are labelled **uncalibrated** until §16 measures them.
+- **V3** *(ADR-0039, Proposed, adds gun-like classes and payload fields: see §18)* On-device YAMNet classifies 0.975 s windows (15 600 samples, 16 kHz mono, asserted from `get_input_details()`). Classes are mapped **by label**: Screaming, Shout, Yell, Glass, Shatter, Breaking. Scores are integer basis points 0–10000. Thresholds are labelled **uncalibrated** until §16 measures them.
 - **V4** A detection above threshold creates a `signal_detected` event, then shows the check-in:
   - The title is neutral ("Journey check").
   - It is a full-screen intent where `canUseFullScreenIntent()` allows, otherwise a high-priority notification.
@@ -455,3 +455,61 @@ Every result goes into `docs/EVIDENCE.md` with its method, configuration and n. 
 - **Anyone holding the unlocked phone can arm a journey and force a `no_answer` escalation**, no PIN required, including the bank signal after the 3-minute window with no `stand_down`. `signal_detected` carries location, so a false alarm this way can send guardians, and any police they call, toward the owner's own recorded position (Ipeleng's review, B3).
 - **A lone guardian sees every alert.** The never-zero rule guarantees at least one guardian, not two. Onboarding recommends at least two guardians who don't live with the user; one guardian is a single point of failure if they are asleep, unreachable, or the threat (Ipeleng's review, S2).
 - **Residual multi-session replacement risk** (§9, ADR-0036(5), Ipeleng's review B1): across two forced normal-PIN sessions, an attacker's own accepted add can become the "replacement" that unlocks a removal the attacker scheduled, ending with the attacker as the sole guardian. Notifying remaining guardians of adds and scheduled removals is the mitigation; it is not a closure of the risk.
+
+---
+
+## 18 · Detection and response detail, and the evidence assessment (ADR-0039, `PROPOSED`)
+
+Specification only until D1 (Thu 22:00) and D2 (Fri 12:00) pass. Nothing here changes a public field or an on-chain message.
+
+- **`pv`.** Every committed payload carries an integer payload version. Per-kind schemas live in `contracts/payloads/<kind>.v<pv>.json`.
+- **`signal_detected` payload (pv 1).** All values are integers:
+
+  ```
+  {kind, pv, journey_id, sense:"sound", class_label, class_index, score_bp, threshold_bp,
+   window_ms:975, model_sha256, app_version,
+   corroboration:[{sense:"motion", pattern, peak_mg, duration_ms, offset_ms, rule_version}],
+   location?:{lat_e7, lon_e7, acc_m, fix_age_ms}}
+  ```
+
+  `offset_ms ≤ 0`. A golden vector is added with contract v2.
+- **Gun-like classes:** 421, 422 and 423, mapped by label. 420 and 424–427 are excluded. Argmax, with ties going to the lowest index. Displayed as "gun-like sound (uncalibrated)".
+- **V11 motion (stretch detector).**
+  - `impact`, `shake` and `snatch` rules on the accelerometer.
+  - Recorded only as look-back corroboration, and only when stationary or walking.
+  - It never opens a check-in.
+- **Registration payload:** `app_version`, `model_sha256`, `android_api` and `device_model`. Never IMEI, serial, Android ID or phone number.
+- **Guardian facts.**
+  - `guardian_alert_opened`: `guardian_event`, guardian-signed, hourly anchoring, needs an explicit tap, never raises the E-level. Route: `POST /v1/alerts/{id}/opened`.
+  - "No acknowledgement recorded by <time>" is derived at read time.
+- **`evidence_assessment`** (`server_event`, pv 1).
+  - Fields:
+
+    ```
+    {kind, pv, ruleset_digest, cem_version, transition_id, input_head, evaluated_at,
+     reasons:[{reason, points, source_entry_ids, basis_time}], total_points, tier, rule,
+     e_level, calibrated:false, statement}
+    ```
+
+  - It is appended once per incident transition, in the same `subject_heads` transaction, and anchored with that transition. A retry returns the existing entry.
+  - `input_head` is the head immediately after the transition.
+  - `basis_time` is server receipt time.
+  - Decay freezes when the check-in is shown.
+  - The fixed statement reads: "Uncalibrated design tally. Not a probability or a finding about any person. A low total is not evidence that no coercion occurred."
+  - Forbidden fields: `probability`, `likelihood`, `verdict`, `not_coerced`, `genuine` and any band.
+- **Who sees what.**
+  - The member sees the full assessment after an incident closes, and only behind a fresh normal PIN.
+  - Guardians see the reasons.
+  - **Banks and insurers, once access is granted, see the tier, the E-level and the reasons, never `total_points`.**
+  - The demo panel shows everything, for `sim_` subjects only.
+- **Third-party access grants: designed, not built.** They are blocked by gaps G36–G38.
+- **Tests (specified, owned).**
+  - T25 (gun classes; Vukosi).
+  - T26 (motion look-back; Vukosi).
+  - T27 (assessment schema assertions and banned copy; Khutso, Mutarisi).
+  - T28 (`opened` tap, no E-level; Sibusiso, Mutarisi).
+  - T29 (accelerometer in the foreground service with the screen off, for at least 30 min on a budget phone; Vukosi).
+  - T31 (the verifier replays every assessment exactly; Sibusiso).
+  - T33 (one assessment per transition under racing and retries; Sibusiso).
+  - Designed only: T30 and T32.
+- **M8.** Motion pattern firings per armed hour, from a debug pattern log on the M7 drive plus a walk, reported per pattern with n.
