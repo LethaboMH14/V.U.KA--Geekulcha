@@ -1,13 +1,13 @@
 # Team files
 
-Seven owned work packages. Start with [START-HERE.md](START-HERE.md), then read your personal file and the [WBS](../docs/audit/05-team-operating-system.md). Each person must declare their actual availability and tool/model before editing; only Sibusiso's 13 September review session is currently confirmed.
+Seven people, one file each. **Start with [START-HERE.md](START-HERE.md)**: day-one setup, then your first task. Your full task list is the **Work order** section of your own file, issued 23 Sep 2026 for the VIGIL + ANCHOR build ([spec](../docs/VUKA-2-SPEC.md)). The four-layer tables, WBS and per-person history are archived under [`archive/2026-09-four-layer/`](../archive/2026-09-four-layer/README.md).
 
-- [Lethabo](lethabo.md)
-- [Sibusiso](sibusiso.md)
-- [Babatunde](babatunde.md)
-- [Mutarisi](mutarisi.md)
-- [Khutso](khutso.md)
-- [Vukosi](vukosi.md)
-- [Ipeleng](ipeleng.md)
+- [Lethabo](lethabo.md) — product, UX, architecture, final gate
+- [Sibusiso](sibusiso.md) — contract v2, ANCHOR server, anchoring, deployment
+- [Vukosi](vukosi.md) — VIGIL sensing, signing, measurement
+- [Mutarisi](mutarisi.md) — VIGIL and guardian screens; APK backup
+- [Khutso](khutso.md) — evidence, checklist, guardian delivery, `sim_bank`
+- [Ipeleng](ipeleng.md) — security, privacy, verify-page cryptography, SSDLC
+- [Babatunde](babatunde.md) — economics, deck, pitch, user validation
 
-[Exact template](TEMPLATE.md); Lethabo's file is the worked planning example. No human build activity has been invented.
+[Exact template](TEMPLATE.md). Declare your own availability and AI tool/model in your file; nobody fills those in for someone else.

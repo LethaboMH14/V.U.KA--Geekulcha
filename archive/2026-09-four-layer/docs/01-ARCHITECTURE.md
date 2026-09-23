@@ -1,5 +1,7 @@
 # VUKA — System Architecture & Design
 
+> **Superseded in part — 23 Sep 2026.** VUKA is now **VIGIL + ANCHOR** (ADR-0034). Anything here about KHAYA, UMOJA, cameras, entities, the R299 model or the four-layer design is parked lineage, not the current product. Current spec: `docs/VUKA-2-SPEC.md` · economics: `docs/ECONOMICS-VIGIL-ANCHOR.md` · context: `docs/MASTER-CONTEXT.md`.
+
 **Community safety you can verify.**
 
 | | |

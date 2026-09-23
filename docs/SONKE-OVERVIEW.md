@@ -1,5 +1,7 @@
 # Sonke Project Overview — VUKA
 
+> **Superseded in part — 23 Sep 2026.** VUKA is now **VIGIL + ANCHOR** (ADR-0034). Anything here about KHAYA, UMOJA, cameras, entities, the R299 model or the four-layer design is parked lineage, not the current product. Current spec: `docs/VUKA-2-SPEC.md` · economics: `docs/ECONOMICS-VIGIL-ANCHOR.md` · context: `docs/MASTER-CONTEXT.md`.
+
 > This is what judges read on the workspace. Lead with the real story, not "AI-powered." The organisers said: *"Stop saying 'Solution X is AI-powered.' Make your project overview reflect real-life stories — that's what makes your solution authentic. Use of AI is not impressive at this hackathon — we are looking for solutions that have a sense of reality and can be used after the hackathon, by real people."* — Tiyani Nghonyama, Lead Facilitator, 15 Sep 2026. `FACT`
 
 ---

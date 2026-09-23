@@ -16,7 +16,7 @@ Route work by how expensive it is to be wrong and how checkable the answer is, n
 
 ## Criteria recall
 
-Before any iteration, any new concept, and any artefact that reaches a judge: re-read `docs/MASTER-CONTEXT.md`. State which criterion the work serves (C1 team / C2 innovation / C3 progress / C4 user journey) and how it answers **"Would a real user trust and use this?"** If it serves none, say so and justify the work anyway — or drop it.
+Before any iteration, any new concept, and any artefact that reaches a judge: re-read `docs/MASTER-CONTEXT.md`. Pass the four review gates in `docs/MASTER-CONTEXT.md` §10 (fraud red-team, build for use, economic integrity, privacy by design). State which published criterion the work serves (I innovation · T technical · U usability & design · S security & ethics · B business · Q quantum bonus) and how it answers **"Would a real user trust and use this?"** If it serves none, say so and justify the work anyway — or drop it.
 
 ## Claim tagging — mandatory in every artefact
 
@@ -24,15 +24,15 @@ Tag every figure, capability statement and date: `FACT` (verified, with the comm
 
 ## Scope and truth
 
-This clean repository is the coordination system for seven people and every AI tool. Read BRIEF.md and docs/EVIDENCE.md. Mark each deliverable built, specified, simulated or blocked. A historical test count is not a current result. Measured figures include method, configuration and sample size. Estimates include assumptions and verification owner. Consumer copy starts with household need and actual limitations.
+This clean repository is the coordination system for seven people and every AI tool. Read BRIEF.md and docs/EVIDENCE.md. Mark each deliverable built, specified, simulated or blocked. A historical test count is not a current result. **An assurance needs a record:** "reviewed", "verified" or "N findings resolved" is stated only with a linkable record in the repository. **Signatures bind their full context:** a signed statement covers subject, target, action and source time, and verification compares ledger message bytes with the recomputed root, not only receipt fields. **Break-even and minimum counts round up**, never to the nearest whole. (Rules added from the PR #43 reviews.) Measured figures include method, configuration and sample size. Estimates include assumptions and verification owner. Consumer copy starts with household need and actual limitations.
 
 Never import the old repositories' history, add their remotes, merge/cherry-pick their commits, or copy a working tree wholesale. Port individually reviewed files only after the remediation gate in SECURITY.md is signed. Do not commit credentials, real .env files, keys, third-party claims data, face images/embeddings, raw audio, personal incident data or private organiser screenshots. Public SAPS sources require provenance/licence review. Use synthetic fixtures labelled `sim_`.
 
 ## Engineering principles
 
-Machines stop at `watch_candidate`. The only authorised transition to `flagged` is an authenticated human verification with operator identity, reason, tenant and audit event. A text search is useful but insufficient: test every transition and bypass path. Whitelisted entities accumulate no suspicion. Whitelisting, disarm, threshold changes and deletion require two distinct authorised principals signing the same scoped action. No generative model determines anything about a person. No autonomous dispatch from soft evidence, remote gate unlock, injurious countermeasure or responder bounty.
+**Machines notice; people decide** (ADR-0034). No model decides a consequence for a person. A bank risk signal is never sent from detection alone (ADR-0037). Escalation goes only to guardians the user chose; no autonomous dispatch, remote unlock, injurious countermeasure or responder bounty. The duress path is indistinguishable from the normal path in pixels, haptics, request shape and timing, and a duress PIN at any prompt raises the alarm. Guardian changes and deletion are PIN-gated and become convincing no-ops under duress (ADR-0036). Two distinct authorised operators must sign operator-initiated deletion, detection-threshold changes and signing-key rotation. No generative model, RAG or agent framework in the product (ADR-0038). A text search is useful but insufficient: test every transition and bypass path (`docs/VUKA-2-SPEC.md` §15). The parked UMOJA gate in `server/src/auth/` keeps its rule — machines stop at `watch_candidate`; `flagged` only by authenticated human verification — and its tests stay green.
 
-No personal data on a public chain. Verify commitments and deletion/linkability design before using real data. Preserve explicit uncertainty, stale state and unconfirmed timestamps. No hidden-mode safety promise without observable-behaviour tests. Keep contracts versioned; retries idempotent; tenant authority explicit.
+No personal data on a public chain; only 32-byte roots. **The anchor proves when, not what.** Verify commitments and deletion/linkability design before using real data. Preserve explicit uncertainty, stale state and unconfirmed timestamps. No hidden-mode safety promise without observable-behaviour tests. Keep contracts versioned; retries idempotent; tenant authority explicit.
 
 ## Code and review
 
@@ -40,7 +40,11 @@ Use focused modules, explicit types/schemas and errors; UTC internally and label
 
 Branches: `docs/<topic>`, `feat/<owner>-<wbs-id>`, `fix/<owner>-<topic>`, `hotfix/<incident>`. Main stays releasable. Commits: `type(scope): concrete change`, with WBS ID and evidence in body when relevant. PRs use the template, stay small and link acceptance evidence, status changes and rollback. Both leads review every PR; authors do not approve their own changes. For a lead-authored PR the other lead approves, the author records self-review, and a nonauthor domain reviewer approves. Security/contract changes need Ipeleng or relevant contract owner plus both leads' recorded review. Do not merge while required checks or remediation gate fail.
 
-Lethabo is first reviewer for Mutarisi, Ipeleng and Babatunde; Sibusiso for Vukosi and Khutso. Both remain final reviewers. GitHub branch protection must require the CI jobs and nonauthor approvals; a written rule is not proof that remote settings are enabled.
+Lethabo is first reviewer for Mutarisi, Ipeleng, Babatunde and Vukosi (from 23 Sep); Sibusiso for Khutso. Both remain final reviewers. GitHub branch protection must require the CI jobs and nonauthor approvals; a written rule is not proof that remote settings are enabled.
+
+**Leads step in when a deliverable is at risk.** Either lead may pair on, or take over, any work-order item when quality, alignment with `docs/VUKA-2-SPEC.md`, or pace puts the submission at risk. It is done openly: tell the owner, add a line to the owner's running log, and keep the owner's credit; where possible the owner reviews the result. It is a way to win together, never a verdict on a person.
+
+**Build-weekend fast path (Fri 25 Sep 16:00 to Sun 27 Sep 09:00):** a PR needs one lead plus one domain reviewer who is not the author, recorded in the PR body. Contract, ADR, security-boundary and governance changes still need both leads.
 
 Weekend hotfix: prefer rollback or disable the broken demo path. A minimal patch gets synchronous second-person review, security scan and focused verification before merge; leads record the exception scope and follow-up as a new `docs/build-log/entries/` file. No “deadline” exception for secrets, privacy or human-authority boundaries; if review is unavailable, use the verified fallback.
 

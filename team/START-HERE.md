@@ -1,24 +1,56 @@
-# Team start instructions
+# Team start instructions — VIGIL + ANCHOR build
 
-The repository is ready for assigned work. The intake gate is approved with evidence in `docs/security/intake-gate.json`; repository checks still run on every change. Product readiness remains bounded by `docs/OPEN-GAPS.md`.
+VUKA is now **VIGIL + ANCHOR** (ADR-0034). Your task list is the **Work order** section of your own `team/<name>.md`. It has steps, commands, acceptance checks, deadlines and your reviewer. The build spec is `docs/VUKA-2-SPEC.md`. **Final submission is Sun 27 Sep 09:00.**
 
-## Before editing
+## 1 · Day-one setup (everyone, about 20 minutes)
 
-1. Read `RULES.md`, `AGENTS.md`, `docs/HANDOVER.md` and your `team/<name>.md` file.
-2. Enter your actual availability, AI tool/model and current task in your personal file. Do not infer these fields for another person.
-3. Claim files in your personal file and check `docs/OVERLAPS.md` before changing a shared contract.
-4. Branch as `<name>/<thing>`. Keep built, designed, simulated and proposed claims distinct.
+1. **Clone and pull:** `git clone https://github.com/LethaboMH14/V.U.KA--Geekulcha.git`, then `git pull` every session. All seven of you have write access.
+2. **Install the secret-scanning hook.** The pre-commit hook **refuses every commit** until you do this (see `SECURITY.md`):
+   - Windows: `pwsh -File scripts/install-security.ps1`
+   - macOS/Linux: install Gitleaks 8.24.3, put it on your PATH, then run `git config --local core.hooksPath .githooks`
+   - Never bypass the hook with `--no-verify`.
+3. **Tools:** Node 22 LTS or newer, Python 3.11 and the GitHub CLI (`gh auth login`).
+4. **Check it works:** `node scripts/check-docs.mjs && node scripts/check-intake.mjs` should pass, and `python scripts/economics_vigil_anchor.py` should print break-even 10,901 at R20.
+5. **Fill in your team file:** your real AI tool and model (several still say `UNDECLARED`), your weekend availability, and one running-log line saying you **accept** your work order or what blocks you.
+6. **Start your AI tool** with the prompt in `docs/SESSION-PROMPT.md`. Change one word: your name.
 
-## Current first work item
+## 2 · Extra setup by role
 
-| Person | Role | Start with | First reviewer |
+| Who | Also set up | How to check it works |
+|---|---|---|
+| **Vukosi, Mutarisi** (Android) | Android Studio with SDK Platform 34 and JDK 17, per React Native 0.74's "Set Up Your Environment" guide; a phone with USB debugging on | `java -version` shows 17; `adb devices` lists your phone |
+| **Sibusiso** (server) | Python 3.11 virtual environment; PostgreSQL 16 (local or Docker); Hedera portal **testnet** account; Azure for Students | `psql --version`; the testnet account id is recorded in your team file (never the key) |
+| **Khutso** (delivery, `sim_bank`) | Firebase project for Cloud Messaging; a South African SMS gateway trial | Server credentials are in App Service settings or a local `.env` — never in git |
+| **Ipeleng** (verify page, `shared/`) | Node 22+; vitest for `shared/` | `npm test` passes the contract tests (10/10 today) |
+| **Lethabo** (Figma) | Share Figma file `pZYQ3m68SWIMFqaOk8kN3R` with Mutarisi | Mutarisi can open it |
+| **Babatunde** | Nothing extra | Can run the economics script |
+
+**Phones:** the team needs at least two Android phones (user + guardian) and one cheap 2–3 GB phone for measurements. Confirm who brings what by **Thu 24 Sep 10:00**.
+
+**Secrets:** keys, keystores, `.env` files, Firebase service-account files and the model file are git-ignored. If a secret ever reaches a commit, stop and tell Sibusiso and Ipeleng. Never paste a secret into an issue, a PR or chat.
+
+## 3 · Your first task
+
+| Person | First task (full steps in your work order) | Due | First reviewer |
 |---|---|---|---|
-| Lethabo Hoaeane | Co-lead; architecture, product, UX/Figma | G12 model provenance/licence register | Sibusiso |
-| Sibusiso Khumalo | Co-lead; backend, ledger, CI, demo orchestration | G14 machine-readable API contract | Lethabo |
-| Mutarisi Chibaya | Frontend / integration | Implement the first journey screen from the approved contract | Lethabo |
-| Vukosi Khoza | Edge, device and hardware | Sensor contract and measured hardware/BOM evidence | Sibusiso |
-| Khutso Mothopa | Data science / evaluation | Reproduce model evidence and correct TRL wording | Sibusiso |
-| Ipeleng Constance Modise | Security, privacy and red team | Privacy/data-flow review and abuse cases | Lethabo |
-| Babatunde Adelusi | Business, pitch and validation | Validate buyer assumptions and audit pitch claims | Lethabo |
+| **Lethabo** | Pivot PR merged; PIN-authority rules with Ipeleng; Figma pages | Thu 12:00 | Sibusiso |
+| **Sibusiso** | Canonical and Merkle vectors, then contract v2 | Thu 09:00 / 12:00 | Lethabo |
+| **Vukosi** | File-by-file port → signed release APK cold-installed from a QR code | **Thu 22:00** | Lethabo |
+| **Mutarisi** | UI foundation in `app/`; APK backup owner; guardian-min receiver | Thu / Fri 10:00 | Lethabo |
+| **Khutso** | Re-check every 23 Sep evidence row; SAPS totals by eye | Thu 12:00 | Sibusiso |
+| **Ipeleng** | PIN-authority rules with Lethabo; `shared/` canonical, DER and Merkle | Thu 12:00 / 14:00 | Lethabo |
+| **Babatunde** | Run the economics script; rewrite competitors and Lean Canvas; start 5 user conversations | Thu 20:00 | Lethabo |
 
-Dates and hours remain planning assumptions until each owner confirms them. A task is done only with evidence, reviewer acceptance, updated personal notes and a `docs/BUILD-LOG.md` entry.
+## 4 · How work moves
+
+```text
+git pull → read your work order → claim shared files in docs/OVERLAPS.md
+→ git checkout -b <type>/<you>-<thing>     (RULES.md: docs/…, feat/…, fix/…)
+→ work → node scripts/check-docs.mjs && node scripts/check-intake.mjs
+→ update team/<you>.md · add docs/build-log/entries/<date>-<you>-<slug>.md · tick docs/CHECKLIST.md P3
+→ push → open a PR → your reviewer is auto-requested (.github/CODEOWNERS)
+```
+
+**Build-weekend fast path** (Fri 16:00 → Sun 09:00): one lead plus one domain reviewer who isn't the author. Contracts, ADRs, security boundaries and governance still need both leads (RULES.md).
+
+A task is done only with evidence, reviewer acceptance, your team file updated, a build-log entry and the checklist row ticked. Blocked tasks stay blocked; approval is never inferred from time passing.

@@ -8,7 +8,7 @@
 
 **I am** — Sibusiso Khumalo. Wits. **Co-lead**: backend, ledger, CI, demo orchestration. I own the contract everyone else builds against.
 
-**Reviewed by** — Lethabo. **I review** — Vukosi, Khutso, and every PR as second lead.
+**Reviewed by** — Lethabo. **I review** — Khutso, and every PR as second lead.
 
 **Effort** — **High.** Be precise and terse.
 
@@ -18,10 +18,10 @@
 - **The contract is frozen** — changing it needs both leads and an ADR. Not one lead, not a good reason, both.
 - The verifier returns the **first broken link by index**, never a boolean.
 - **A refused privileged action is evidence, not an error to swallow.** Log it, anchor it, do not catch-and-hide it.
-- **No code path may set `flagged`.** The machine's ceiling is `watch_candidate`, enforced in code and tested, not just documented.
+- **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate keeps its `watch_candidate` ceiling and its tests stay green.
 - Never `--no-verify`.
 
-**Current task** — WBS 3.3 human-gate proof path implemented and tested in `server/src/auth/governance.py`; P2.3/G20 embedding boundary, P2.4 s57 decision record, P2.11 cost reconciliation, P2.14 rehearsal script, P2.15 calendar decision, WBS 4.5 checkpoint runbook and WBS 7.2 fallback runbook are prepared and pushed. Next: obtain Lethabo/second-lead contract approval and coordinate owner reviews; F14/SC.1 remains gated.
+**Current task** — Work order below (issued 23 Sep). First: review the pivot PR as second lead, then contract v2 by Thu 12:00.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -29,44 +29,68 @@
 
 - University / role: Wits / Co-lead; backend developer
 - Owns outright: Server, ledger, CI and demo orchestration.
-- Reviews only: All PRs; first review for Vukosi and Khutso.
+- Reviews only: All PRs; first review for Khutso (Vukosi moved to Lethabo on 23 Sep).
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
 - Claimed files / contract versions: `contracts/events.schema.json` v0.1.0; `contracts/openapi.yaml` v0.1.0 proposed pending both-lead approval; `package.json`; `test/events-contract.test.mjs`.
-- Last updated: 13 September 2026 during Sibusiso's review session.
+- Last updated: 23 September 2026 — work order issued by Lethabo (co-lead) via Claude Code assistant.
+
+## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
+
+> Issued by Lethabo (co-lead) after the 21–22 Sep pivot meetings with Sibusiso and Babatunde. Decisions: ADR-0034 to ADR-0038. Spec: `docs/VUKA-2-SPEC.md` (section numbers below refer to it). **Owner acknowledgement pending** — accept it in your running log, or raise a blocker here. All times SAST. Criterion letters per `docs/MASTER-CONTEXT.md` §2 (I · T · U · S · B · Q). Before you start anything: pass the four review gates in `docs/MASTER-CONTEXT.md` §10.
+
+**Outcome you own:** ANCHOR runs in the cloud — per-person signed chains, durable server-owned escalation, Hedera anchoring and export — and the contract everyone builds against.
+**Serves:** T, S, I, Q.
+**Files you own or may touch:** `contracts/openapi.yaml` (v2), `contracts/vectors/`, `contracts/keys/`, `anchor/`, `server/`, `test/openapi-contract.test.mjs`, `scripts/check-docs.mjs` (v2 update), `.github/workflows/checks.yml` (server jobs), deployment configuration.
+
+**Do this, in order:**
+1. **Wed 23** — review the pivot PR as second lead; accept or amend ADR-0034 to ADR-0038. Your acceptance binds them.
+2. **Thu 24 by 09:00 — vectors first:** `contracts/vectors/canonical.json` (including rejection vectors) and `contracts/vectors/merkle.json` (n = 1…8, n = 0 rejected) from the Python reference, so Ipeleng's JS can pass them by 14:00. Then **by 12:00 — contract v2** (§12), which must reflect B1–B5: the signed statement (§4), PIN authorisations (§9), deadline authority (§7), head-keyed proof (§6). Write paths and schemas (signed `details`, `Receipt`, `Proof`, `SubjectDeletionRequest`) and the auth scheme (§7, including the safety-event skew exemption). Mark the v1 UMOJA paths `deprecated: true`. Correct the canonical-form text (§5, ADR-0034). Update `test/openapi-contract.test.mjs` to v2. Stand up a pinned mock server for clients (for example `npx @stoplight/prism-cli@<pinned> mock contracts/openapi.yaml`).
+3. **Thu 24 14:00–16:00, at most 2 h — Hedera spike** (after the contract, so the two don't compete). Create a testnet account in the Hedera portal (free). Create a topic **with a `submitKey`**, submit a message, and read it back from the public mirror node. Try `hiero-sdk-python`; if it fails, use a Node sidecar with `@hashgraph/sdk`. In the same spike, sign with ML-DSA-65 in the chosen runtime and verify with `@noble/post-quantum`; save the cross-verification vector. Publish the key-manifest fingerprint message (`0x02`) before any root. Check `status.hedera.com` and Hedera's testnet reset notices, and record the topic epoch. Record the decision in a build-log entry.
+4. **Thu–Fri — ANCHOR server** (FastAPI + PostgreSQL):
+   - Rework PR #39's chain, verify and subject code for per-subject chains (§4) and the canonical form (§5).
+   - Signed-request auth (§7).
+   - Events idempotent on `event_id`; any unseen counter accepted.
+   - `escalation_deadlines`, with the scheduler on a dedicated connection re-checking its lock every tick (§8).
+   - `SELECT … FOR UPDATE` on `subject_heads` plus `UNIQUE(subject_id, chain_index)`.
+   - Payload and salt encrypted at rest (AES-GCM; key from App Service settings).
+   - Entry format v2 (§4) with a legacy verify path for PR #39's v1 entries.
+   - Outcome arbitration and a transactional outbox with idempotency keys (§8).
+   - Anchoring (§10): typed 33-byte messages; immediate roots for every PIN-gated outcome, coalesced to one per 60 s; hourly roots; `anchor_batches` snapshot and retry; receipts with topic epochs.
+   - `/healthz`, `WS /ws/panel` (event kinds for `sim_` subjects only), `GET /v1/subjects/{id}/export`, and the head-keyed public proof.
+5. **Fri 25 by 09:00 — server-min deployed** (ingest + chain + export only, no escalation or anchoring), then **by 12:00** the thin end-to-end slice with Vukosi and Ipeleng (§2 D2). **Agreed fallback:** if T08 isn't passing by Fri 18:00, anchoring stays stubbed and durable escalation takes priority.
+6. **Fri 25 by 23:59 — deployed** on Azure for Students:
+   - App Service B1 Linux with Always On, plus PostgreSQL Flexible B1ms.
+   - Region South Africa North if the subscription allows it; otherwise record the region for Ipeleng's s72 note.
+   - Secrets only in App Service settings.
+   - pytest and vitest vector jobs added to CI.
+7. **Sat** — server-side abuse tests with Khutso (T04–T14, T19) from Ipeleng's specifications; fix what fails.
+8. **Sat, if the cut line allows** — Ed25519 plus ML-DSA-65 root signing; publish the public keys in the topic's first message and in `contracts/keys/`.
+
+**Acceptance checks:**
+- [ ] v2 merged with both leads plus consumer confirmation (Vukosi for the app, Ipeleng for the verify page)
+- [ ] T01 and T02 pass in CI (pytest and vitest agree byte for byte)
+- [ ] T04–T11, T19, T21 and T23 pass; T08 passes at all three crash points (deadline, after the outcome commit, after send)
+- [ ] A real testnet receipt verifies on the verify page straight from the public mirror node
+- [ ] `/healthz` shows the last anchor under 65 minutes old
+- [ ] Deployment URL and region recorded; gitleaks green (no secret in git)
+
+**Depends on → hands off to:** the pivot PR → v2 and the mock to Vukosi, Mutarisi and Ipeleng; receipts to Lethabo's panel.
+**Do not:** change a frozen shape without both leads and an ADR; use Python `hash()` in any lock; keep escalation timers in memory; put anything but 32-byte roots on chain; commit a key; use `--no-verify`.
+**Reviewer:** Lethabo (plus Ipeleng for auth and cryptography).
 
 ## Sequenced work
 
-All hours and dates below are ASSUMPTIONS, subject to availability and gates.
-
-| Date | WBS | Hours | Task | Dependencies | Acceptance evidence |
-|---|---|---:|---|---|---|
-| Sep 13 | 1.3 | 4 | Install and exercise local/CI scanning | none | Clean scan passes; synthetic leak and missing-tool checks fail closed |
-| Sep 15 | 3.1 | 4 | Freeze event/API/governance contracts | 1.4 | Both leads and consumers approve versioned schemas |
-| Sep 17 | 3.3 | 6 | Port and verify human gate and proof path | 1.4,3.1 | Nonauthor reproduces denial, two-signature and tamper checks |
-| Sep 20 | 4.5 | 4 | Run integrated evidence checkpoint | 3.5,4.3,4.4 | Both leads record pass or cut scope; tag only tested snapshot |
-| Sep 26 | 7.2 | 4 | Rehearse fallback and scoped hotfix procedure | 7.1 | Rollback works; no bypass of authority or review |
+Replaced on 23 Sep 2026 by the work order above. The four-layer sequenced work, declarations and self-reviews are kept in [this file's history](../archive/2026-09-four-layer/team/sibusiso-history.md).
 
 ## Interfaces
 
-- Inputs: Remediation evidence from Ipeleng/Lethabo; sensor contract from Vukosi.
-- Outputs: Versioned API/events and proof export to Mutarisi/Vukosi/Khutso.
-- See docs/OVERLAPS.md; do not silently change a shared version.
-
-## Changed this session
-
-Sibusiso requested and owns this review. Local security-hook tests, clean repository/history scans and PR #2's successful remote checks were reviewed. The intake gate records Sibusiso's approval with those evidence references; this branch contains the resulting corrections.
+See your work order's **Depends on → hands off to** line. Shared files are claimed in `docs/OVERLAPS.md`; never silently change a shared contract.
 
 ## Needs and blockers
 
-- Collected predecessor test count remains unverified → owners must run both suites before repeating “440 tests”.
-- cloud quota failure → use approved local rehearsal path.
-- second-lead contract approval and ADR → Lethabo reviews the proposed event/OpenAPI shapes before they are called frozen.
-- PR publication → GitHub CLI reports `gh auth login` is required; branch is pushed and the manual PR URL is available.
-- WBS 3.3 runtime → system Python is absent, but bundled Python 3.12.14 is available and was used for the tested governance module; pytest remains unavailable, so tests use standard-library unittest.
-
-Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
+- Add new blockers here with the person's name and the evidence needed.
 
 ## Decisions affecting others
 
@@ -74,15 +98,11 @@ No approved decisions. Proposed tasks depend on both-lead acceptance; decisions 
 
 ## Definition of done
 
-Every assigned leaf has the independent evidence in the table, reviewer acceptance, relevant checks, honest built/specified/simulated status, an updated personal log and BUILD-LOG entry, and business handoff when capability changes. Blocked tasks remain blocked; no inferred approval from elapsed time.
+Every work-order item has its acceptance checks ticked with evidence, reviewer acceptance, the relevant checks passing, an honest built/specified/simulated status, this file and a `docs/build-log/entries/` file updated, and its `docs/CHECKLIST.md` P3 row ticked. Blocked tasks stay blocked; no approval is inferred from elapsed time.
 
 ## Outside-role work
 
-- Venue network rehearsal.
-- independent proof-verifier instructions.
-- release archive and rollback inventory.
-
-These are proposed additional contributions, not unbudgeted critical-path commitments. Agree ownership and time with leads before starting.
+None assigned for the build weekend. Agree any extra contribution with the leads before starting.
 
 ## Running log
 
@@ -91,3 +111,4 @@ These are proposed additional contributions, not unbudgeted critical-path commit
 - 2026-09-15 — Codex acting for Sibusiso: created the v0.1.0 event schema, zero-dependency Node test harness, exact-shape acceptance/rejection tests and proposed OpenAPI v3.1 contract. Second-lead approval and ADR remain pending; no approval is inferred.
 - 2026-09-15 — Codex acting for Sibusiso: implemented the bounded WBS 3.3 human-gate proof path and six standard-library unittest cases. Refused privileged attempts return evidence receipts; destructive actions require distinct co-signers; no `flagged` assignment exists.
 - 2026-09-15 — Codex acting for Sibusiso: added tested discard-by-default embedding matching, s57 decision record, anchoring-cost reconciliation and sweep inventory, blockchain attack rehearsal, OpenTimestamps decision, evidence-checkpoint runbook and fallback/hotfix runbook. Remaining approvals and live rehearsals are explicitly open.
+- 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Sibusiso is asserted; owner acknowledgement pending.
