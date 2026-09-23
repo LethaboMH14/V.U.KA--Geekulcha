@@ -12,6 +12,10 @@
 
 **Effort** — **High.** Be precise and terse.
 
+**My AI workflow** — Sibusiso directs the work and makes lead decisions. Codex investigates, reasons through architecture and risks, and writes a bounded task handoff with acceptance tests. Cline implements that handoff and records the actual commands, results and limitations. Claude independently reviews the PR against its exact commit; findings go back to Cline through Codex for correction and re-review. Use separate task and review worktrees so implementation and review do not overwrite each other. Keep the handoff, Git SHA and evidence in files or the PR; chat memory is not shared across tools. This is my personal tool routing, not a change to anyone else's setup.
+
+**Review authority** — Claude's analysis supports my review but is not my ADR acceptance or a nonauthor human approval of my own PR. The repository's required reviewers, contract decisions, security checks and merge gate still apply. Do not let a task packet silently resolve an unfrozen contract or a safety-critical design choice.
+
 **Behaviour** — *Be precise and terse. Show me the actual command and its actual output, never a summary of what you think happened. Security-critical paths get a test before they get a merge. If you are unsure whether something is safe, stop.*
 
 **My domain rules**
