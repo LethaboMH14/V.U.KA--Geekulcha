@@ -58,8 +58,8 @@
    - Guardians: invite code and QR, "what they will see", PIN-gated changes.
    - Start journey; Journey active.
    - **Journey check**: normal and duress PIN give the identical outcome, the same haptic and no timing difference.
-   - Delivery chips.
-   - My Record timeline (from Figma `23:8`) with "Verify independently".
+   - Delivery chips: queued → received only. Never a guardian acknowledgement while an incident is open (spec V8).
+   - My Record timeline (from Figma `23:8`) with "Verify independently". Incident events stay hidden until the incident closes (spec V8).
    - Settings: deletion with the 72 h notice; the recovery code shown once, only if the recovery endpoint exists.
 3. **Fri–Sat — guardian mode:**
    - Enter the code, with QR through the Google code scanner (no camera permission).
