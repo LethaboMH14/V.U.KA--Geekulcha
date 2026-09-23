@@ -4,6 +4,8 @@
 >
 > **Every number here is printed by** `python3 scripts/economics_vigil_anchor.py` (standard library only; `--json` for machine output). Code does the arithmetic. If this page and the script disagree, the script wins and this page is wrong.
 >
+> **Babatunde owns every number here, including the subscription price, and may revise any of them at any point during the build.** To change a figure, edit its tagged input in `scripts/economics_vigil_anchor.py`, re-run the script, and update this page, `docs/MASTER-CONTEXT.md` §8 and the deck from its output, with a build-log entry saying why (for example what the user conversations showed). Never change a number on a slide alone.
+>
 > **Supersedes** the R299 KHAYA model in `archive/2026-09-four-layer/docs/08-BUSINESS.md` §2.1 and `scripts/economics_engine.py` (PR #40).
 
 ---
@@ -11,7 +13,7 @@
 ## 1 · Who pays (decided 23 Sep)
 
 - **The app is free to users.** VIGIL is never behind a paywall.
-- **A partner pays about R20 per member per month** `ASSUMPTION` as a value-added benefit. The partner is a bank or an insurer that switches VIGIL on for its customers. This is the same shelf as FNB's GuardMe panic button (R19.90/month, powered by Aura — press report, 2022).
+- **A partner pays about R20 per member per month** `ASSUMPTION` as a value-added benefit. R20 is the starting point, set 23 Sep; Babatunde may revise it as validation comes in. The partner is a bank or an insurer that switches VIGIL on for its customers. This is the same shelf as FNB's GuardMe panic button (R19.90/month, powered by Aura — press report, 2022).
 - **A per-record fee** when a verified evidence pack is pulled for a dispute or claim `PROPOSED`.
 - **Retired:** the R100-per-member insurer story, and the "3% theft-claims reduction saves R20.7m" table (§4 explains why).
 

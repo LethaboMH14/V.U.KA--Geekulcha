@@ -48,7 +48,7 @@
 **Files you own or may touch:** `docs/ECONOMICS-VIGIL-ANCHOR.md`, `scripts/economics_vigil_anchor.py`, `docs/LEAN-CANVAS.md`, `docs/SONKE-OVERVIEW.md`, `docs/COMPETITORS.md`, `docs/PITCH-SCRIPT.md` (new), and the deck under `submission/`.
 
 **Do this, in order:**
-1. **Wed 23–Thu 24** — read `docs/ECONOMICS-VIGIL-ANCHOR.md` and run `python3 scripts/economics_vigil_anchor.py`. Challenge any input you disagree with **by editing the tagged input in the script**, never a number on a slide. Confirm the stipend line (seven people, five stipends?).
+1. **You own the subscription price and every economics number, and may revise them at any point during the build**, especially after the user conversations in step 3b. **Wed 23–Thu 24** — read `docs/ECONOMICS-VIGIL-ANCHOR.md` and run `python3 scripts/economics_vigil_anchor.py`. Challenge any input you disagree with **by editing the tagged input in the script**, never a number on a slide. Confirm the stipend line (seven people, five stipends?).
 2. **Thu 24** — rewrite `docs/COMPETITORS.md` for the two-layer product:
    - Namola, AURA / FNB GuardMe, bSafe, Google Personal Safety, Apple Check In, Noonlight.
    - iTOO [My]Cylution is a partner or an objection, not a competitor.

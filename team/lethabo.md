@@ -31,8 +31,8 @@
 - Owns outright: Product flow, final copy, architecture decisions.
 - Reviews only: All PRs; first review for Mutarisi, Ipeleng and Babatunde.
 - Lead / escalation: Both leads for contract changes.
-- AI tool / model: UNDECLARED — owner must enter actual values.
-- Availability / timezone: unconfirmed / Africa/Johannesburg.
+- AI tool / model: Claude (Claude Code), Codex and Figma; Gemini at times for cross-checks. Declared by Lethabo on 23 Sep 2026.
+- Availability / timezone: Available all day, every day, from 23 Sep 2026 until the end of the hackathon (Sun 27 Sep) / Africa/Johannesburg.
 - Current task / status: Work order issued 23 Sep 2026 (see the Work order section below). Pivot PR open for review.
 - Claimed files / contract versions: `docs/CONTRACT-APPROVAL-RECORD.md` (15 Sep); reserve before editing.
 - Last updated: 23 September 2026 — work order issued by Lethabo (co-lead) via Claude Code assistant.
@@ -107,3 +107,4 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-15 — opencode (GLM): wrote ADR-0029 after inspecting the BEACON predecessor — it carried two divergent fusion models (`brain/fusion.py` log-odds/`watch_candidate` orphaned; `server/src/suspicion/scorer.py` additive/`candidate` in use) and a duplicate server copy of `entity_resolution.py`. Decision: one fusion source (`brain/`), server delegates; state vocabulary is the contract's. Port guard added to `brain/README.md` and `docs/HANDOVER.md`. Next: support `server/` port against ADR-0029; judging criteria Friday 19 Sep.
 - 2026-09-15 — opencode (GLM): opened `docs/PORT-DIVERGENCES.md` to register predecessor-vs-contract mismatches during the port. Found and logged D2 (evidence-integrity response fields: `first_broken_index` vs `broken_at_seq`) and **D3 (material: the contract's `Sighting` carries none of the domain fields — `camera_id`, `hex_id`, `kind`, … — the fusion consumes, so the contract cannot be frozen as written)**. Updated P2.16 and HANDOVER Task 4. Next: resolve D3 with Sibusiso (needs an ADR).
 - 2026-09-23 — Claude Code assistant, at Lethabo's request: pivot analysis (four source-checked research passes), ADR-0034 to ADR-0038, `docs/VUKA-2-SPEC.md`, `docs/STAGED-DURESS-DEFENCE.md`, `docs/ECONOMICS-VIGIL-ANCHOR.md` with `scripts/economics_vigil_anchor.py`, MASTER-CONTEXT v3 and the seven work orders. Next: PR review, the organiser email, the Figma pages.
+- 2026-09-23 — Lethabo declared her tools (Claude Code, Codex, Figma; Gemini at times) and full-day availability through Sun 27 Sep, and confirmed that Babatunde owns the subscription price and every economics number, which he may revise at any point during the build.

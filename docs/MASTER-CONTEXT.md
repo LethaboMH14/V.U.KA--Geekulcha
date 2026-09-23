@@ -126,8 +126,8 @@ Full provenance in `EVIDENCE.md` ("Verified 23 September 2026").
 | Kidnappings | **17,061 (2023/24)**, up 264% since 2014/15; **44% during a hijacking** | `FACT` — SAPS via ISS Africa |
 | Bank fraud attempts rising | **75%** of SA banking leaders (vendor survey) | `FACT` — BioCatch, May 2026 |
 | Price anchor | FNB GuardMe **R19.90/month**; iTOO express-kidnapping cover **from R22.50/month** | `FACT` |
-| VUKA price | **~R20 per member per month**, partner-funded; app free | `ASSUMPTION` — decided 23 Sep |
-| Break-even at R20 | **10,901 members** (rounded up; includes the anchoring ceiling) | `ESTIMATE` — `scripts/economics_vigil_anchor.py` |
+| VUKA price | **~R20 per member per month**, partner-funded; app free | `ASSUMPTION` — the starting point, set 23 Sep. Babatunde owns it and may revise it during the build |
+| Break-even | **10,901 members at R20** (rounded up; includes the anchoring ceiling). If the price changes, quote whatever the script prints | `ESTIMATE` — `scripts/economics_vigil_anchor.py` |
 | Anchoring cost, whole network | **at most ≈ R570/month** (hourly R9.34 + immediate roots capped at one a minute), whatever the member count | `ESTIMATE` — Hedera $0.0008/message, R16.21/USD |
 | Detection accuracy, latency, battery | **Not measured** — `VUKA-2-SPEC.md` §16 | — |
 | ADRs | **37** | `FACT` — `git grep -c "^## ADR-" docs/adr.md` |
