@@ -104,5 +104,3 @@ Moved from `docs/CHECKLIST.md` when VUKA pivoted to VIGIL + ANCHOR (ADR-0034). R
 | **C2 · Innovation & creativity** | 18 | Strongest. Watch for over-serving |
 | **C3 · Progress of solution profile** | 17 | Strong |
 | **C4 · User journey story** | 5 | 🟠 **Thinnest real gap.** SC.2, P1.12 and the household walkthrough carry it. Khutso flags at the Sep 22 sweep if still thin |
-
-

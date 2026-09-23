@@ -87,4 +87,3 @@ Every assigned leaf has the independent evidence in the table, reviewer acceptan
 - rehearsal timekeeping and unresolved-question log.
 
 These are proposed additional contributions, not unbudgeted critical-path commitments. Agree ownership and time with leads before starting.
-

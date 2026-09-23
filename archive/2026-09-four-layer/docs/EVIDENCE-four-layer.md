@@ -82,4 +82,3 @@ Anchoring model: 720 batches/month, approximately R1.30/month for the network. T
 ## Failures retained without euphemism
 
 The forecast **loses to the constant baseline: MAE 0.484 versus 0.246**. Fusion weights are hand-set, labelled “PROVISIONAL — NOT fit on real data”. Face thresholds 0.55 and 0.65 cosine are uncalibrated targets. One of six suspicion factors is implemented in the prior project; five are documented stubs. Face demographic bias evaluation has not run. No independent penetration test. No self-trained computer-vision model; pretrained integration only. Hardware has not been fabricated. Retention TTL, subject access and deletion routes are absent.
-
