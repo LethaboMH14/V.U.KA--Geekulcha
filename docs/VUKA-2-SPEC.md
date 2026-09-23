@@ -36,7 +36,7 @@ IDs are stable; tests in §15 cite them.
   - It is a full-screen intent where `canUseFullScreenIntent()` allows, otherwise a high-priority notification.
   - `opened` is posted **only after** the check-in is confirmed shown.
 - **V5** The normal PIN and the duress PIN produce **pixel-identical** screens, the same haptic, the same request shape and the same response delay.
-- **V6** **A duress PIN anywhere is an alarm.** Entering it at any PIN prompt (check-in, guardian change, deletion, recovery, settings) emits a signed `duress_pin` event, while the prompt shows its normal-looking outcome.
+- **V6** **A duress PIN anywhere is an alarm.** Entering it at any PIN prompt (check-in, guardian change, deletion, recovery, settings) emits a signed **duress signal** (§3): a `checkin_result` with `result: duress_pin` at a check-in, or a `pin_authorised` with `mode: duress` at any other prompt. The prompt shows its normal-looking outcome.
 - **V7** Every event is signed with a P-256 key in Android Keystore (StrongBox when present). Salts and nonces come from native `SecureRandom`, never from JavaScript. Canonicalisation happens in the shared JS module (§5), and the bytes go to the native signer.
 - **V8** Events go into one ordered, encrypted local queue. Delivery state is shown truthfully as queued → received (server receipt) → acknowledged (guardian). The app never shows a generic "sent".
 - **V9** Heartbeats go every 30 s while armed. They carry a speed bucket only, never location, and are **not** chain entries. Location is attached only to `signal_detected`.
@@ -60,7 +60,7 @@ IDs are stable; tests in §15 cite them.
 - **A7** `/healthz` reports the last anchor time, the anchor queue depth, pending deadlines and the outbox backlog. A missed hourly anchor is logged as an alarm.
 
 ### Safety and security
-- **S1** A bank risk signal is **never** sent from detection alone. It is sent immediately on `duress_pin`. On `no_answer` or `contact_lost`, it is sent only if guardians were alerted and none sent `stand_down` within 3 minutes (ADR-0037).
+- **S1** A bank risk signal is **never** sent from detection alone. It is sent immediately on a duress signal (§3). On `no_answer` or `contact_lost`, it is sent only if guardians were alerted and none sent `stand_down` within 3 minutes (ADR-0037).
 - **S2** Guardian changes and deletion follow §9. PIN authorisation is required everywhere; a duress session turns these actions into convincing no-ops; a duress-session addition creates a decoy guardian; removals are delayed and never leave zero guardians.
 - **S3** Nothing an attacker can observe reveals that duress was signalled: no visible SMS, no distinctive anchor timing (§10), no panel event, and no difference in the check-in (V5).
 - **S4** No LLM, RAG or agent framework anywhere in the product (ADR-0038).
@@ -98,6 +98,13 @@ IDs are stable; tests in §15 cite them.
 | `recovery_performed` | `server_event` | server | §9 | **immediate** |
 | `deletion_tombstone` | `server_event` | server | §13 | hourly |
 
+**Duress signal.** There is **no separate `duress_pin` kind**. A *duress signal* is any one of:
+- a `checkin_result` with `result: duress_pin`;
+- a `pin_authorised` with `mode: duress`;
+- an `answered_late` whose late result is `duress_pin` (§8).
+
+Wherever this spec or ADR-0036/0037 says "on `duress_pin`", it means a duress signal. Every duress signal opens an incident, alerts guardians and sends the S1 bank signal immediately, unless that incident has already sent one.
+
 **Evidence levels** are counted in **independent principals**, not signatures. The phone's detection and the user's PIN come from the same device and key, so together they are **one** principal. A server timestamp is not a witness. The levels are used by banks and insurers, never by us, to decide anything about a person.
 
 | Level | Contains | Principals | Good for |
@@ -131,7 +138,7 @@ The frozen `EvidenceEntry` shape is unchanged: `action, actor_id, target_type, t
   ```
   The verifier rebuilds this statement from the outer fields and `details`. `actor_id` is inside the signature and must also equal the id registered for `signer_key_id`. If `action`, `actor_id`, `target_type`, `target_id`, `ts` or `commitment` changes, the signature fails. Negative vectors cover each field (T21).
 - **Registration entries** also carry `signer_pubkey` (SPKI, base64) in **plain** `details`. A public key is not personal information, and it keeps signatures checkable after payloads are deleted. The attestation stays inside the commitment.
-- **Idempotency and replay** (§7): an identical retry of the same signed bytes returns the original receipt. A reused `event_id` with different content is rejected (409). Any unseen `counter` is accepted, and exact repeats are rejected.
+- **Idempotency and replay** (§7): an identical retry returns the original receipt. A reused `event_id` with different content is rejected (409). Any unseen `counter` is accepted, and exact repeats are rejected. The `event_id` lookup runs **before** the nonce and counter checks (§7, order of checks), so a retry after a lost response is answered, not rejected as a replay.
 - **Legacy format v1** (PR #39: genesis `prev_hash = null`, floats accepted, no signed statement) is verified by a separate legacy path and never produced again. Format v1 and v2 entries never mix in one chain.
 
 ---
@@ -179,10 +186,16 @@ Rules:
 ## 7 · Auth, time and replay
 
 - **Request signing:** devices and guardians sign every request with their Keystore key, over `canonical({method, path, ts, body_sha256, nonce})`.
-- **Nonces:** scoped per signer key, retained 24 h, and never accepted twice.
+- **Nonces:** scoped per signer key and retained 24 h. A nonce never creates new state twice.
 - **Counters:** scoped per signer key. Any unseen value is accepted; exact repeats are rejected.
 - **Retries:** a retry sends the **same** signed bytes. A new signature over the same `event_id` with different content is rejected.
-- **Clock skew:** more than 120 s is rejected, **except** for `checkin_opened`, `checkin_result`, `pin_authorised` and `duress_pin`. Those are accepted and flagged `clock_skew`. The exemption relaxes **only** the skew check. Authentication, key revocation (§9) and action authority still apply in full.
+- **Order of checks** for any request that carries an event:
+  1. Authenticate the request signature and the key's status (revocation, §9).
+  2. **Idempotency lookup by `event_id`.** If an entry with this `event_id` exists with the identical `commitment` and event `sig`, return its **original receipt** and create nothing. If it exists with different content, reject with 409.
+  3. Only for an unseen `event_id`: the nonce, counter and clock-skew checks, then the append.
+
+  So a phone whose response was lost always gets its receipt on retry, and a replayed request never creates a second entry (T06). A request without an event, such as a heartbeat, is simply rejected if its nonce was seen before.
+- **Clock skew:** more than 120 s is rejected, **except** for `checkin_opened`, `checkin_result` and `pin_authorised`, the kinds that carry every duress signal (§3). Those are accepted and flagged `clock_skew`. The exemption relaxes **only** the skew check. Authentication, key revocation (§9) and action authority still apply in full.
 - **Deadline authority** (B4): every deadline is computed from **server receipt time**, never from the device's `ts`.
   - The device-chosen check-in window is limited to the allowed values of 20 s or 60 s.
   - A device timestamp in the future can never extend a deadline.
@@ -195,7 +208,9 @@ Rules:
 
 - **Outcome arbitration** (B3). Each check-in has a row in `checkins`, locked with `SELECT … FOR UPDATE` whenever an outcome is decided.
   - The first terminal outcome wins and is written once: `checkins.outcome ∈ {normal_pin, duress_pin, no_answer}`.
-  - A result arriving after `no_answer` is recorded as `answered_late`. It **never retracts** the alert, and guardians see "answered late".
+  - A result arriving after `no_answer` is still appended as the device-signed `checkin_result`, and the server then appends `answered_late` carrying that result. It **never retracts** the alert.
+    - A late **normal** PIN: guardians see "answered late".
+    - A late **duress** PIN is a duress signal (§3). Guardians see "duress PIN entered", and the S1 bank signal goes immediately unless this incident already sent one. The phone still shows its normal-looking outcome.
   - A normal response racing the timeout therefore yields exactly one terminal outcome (T23).
 - **Transactional outbox.** The same transaction that writes an outcome also writes `outbox` rows: `guardian_alert`, `bank_signal` (with `not_before` = +3 min where S1 requires), and `anchor_request`.
   - Each row carries an idempotency key.
@@ -207,7 +222,7 @@ Rules:
   - One scheduler holds the lock on a dedicated connection and re-checks it every tick, polling every second.
 - **`contact_lost`:** heartbeats stop for 90 s **while an incident is open** (see below). It never fires after the incident closes.
 - **Incidents.**
-  - An incident opens on `signal_detected`, `duress_pin`, `no_answer` or `contact_lost`.
+  - An incident opens on `signal_detected`, a duress signal (§3), `no_answer` or `contact_lost`.
   - It closes **only** on a guardian `stand_down`, or automatically 6 h after the last signal with heartbeats present and guardians notified.
   - **A normal PIN alone never closes an incident**, because a coercer can force it.
   - `incident_closed` is a server event, anchored immediately.
@@ -251,7 +266,7 @@ Rules:
 
   The manifest message is published **before the first batch** (Thursday spike). A key change, such as adding ML-DSA later, publishes a new `0x02` message, which starts a new key epoch. No personal data and no key material ever go on the ledger — only these 33-byte messages.
 - **Immediate anchoring with coalescing** (B6):
-  - Every **PIN-gated outcome** triggers an immediate root, normal or duress, at a check-in or at any other prompt: `checkin_result`, `pin_authorised`, `duress_pin`, plus the server outcomes `no_answer`, `contact_lost`, `answered_late`, `incident_closed`, `recovery_performed` and `key_revoked`.
+  - Every **PIN-gated outcome** triggers an immediate root, normal or duress, at a check-in or at any other prompt: `checkin_result` and `pin_authorised` (which carry every duress signal, §3), plus the server outcomes `no_answer`, `contact_lost`, `answered_late`, `incident_closed`, `recovery_performed` and `key_revoked`.
   - Immediate roots are **coalesced into at most one per 60 s window**. The public topic therefore shows only that *some* PIN-gated event happened in that minute, never which kind.
   - Precedence over a transfer made minutes later still holds.
   - **Hourly:** one root covering everything else that changed.
@@ -383,10 +398,10 @@ Each test is executable or a recorded observation, named in the PR that delivers
 | T03 | A real Keystore DER signature verifies on the verify page after conversion | §5.7 | a phone-captured signature and key fixture (Vukosi → Ipeleng) |
 | T04 | Altered export (payload, outer metadata, chain link, signature, each separately) → verify reports the first broken index | A5 | implemented export |
 | T05 | A forged server-authored chain with a substituted key is rejected against the pinned key manifest | §4, §10 | key bootstrap |
-| T06 | An identical retry returns the original receipt; a reused `event_id` with changed content → 409; an unseen out-of-order counter is accepted | §4, §7 | — |
+| T06 | An identical retry returns the original receipt, including a retry sent after the first response was lost (same nonce); a reused `event_id` with changed content → 409; an unseen out-of-order counter is accepted; a replayed request creates no second entry | §4, §7 | — |
 | T07 | Force-stopping the app after `opened` still produces `no_answer` and a guardian alert within window + grace + 5 s | §8 | real app, persistent server, guardian receiver |
 | T08 | Restart at the deadline, after the outcome commit, and after send → exactly one visible alert each time | §8 | real PostgreSQL, controlled crash points |
-| T09 | A late normal PIN after `no_answer` never retracts the alert | §8 | controlled clock |
+| T09 | A late normal PIN after `no_answer` never retracts the alert; a late **duress** PIN is treated as a duress signal (guardians told, bank signal sent once) while the phone shows the normal outcome | §3, §8 | controlled clock |
 | T10 | Once the incident closes, a dead zone produces no `contact_lost` | §8 | controlled clock |
 | T11 | Detection alone → no bank signal; duress PIN → immediate; `no_answer` → only after 3 min with no `stand_down`; no duplicate after a restart | S1, §8 | `sim_bank` + controlled time |
 | T12 | A guardian change without PIN authorisation is rejected; duress removal is a no-op; duress addition creates a decoy and notifies real guardians | S2, §9 | PIN-authorisation fixture |
