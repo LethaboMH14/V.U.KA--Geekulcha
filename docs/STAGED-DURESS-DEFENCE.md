@@ -28,14 +28,14 @@ Blockchain people call this the **oracle problem**: a ledger guarantees what hap
 | Layer | What it does | What it defeats | What it cannot defeat |
 |---|---|---|---|
 | **1 · The money doesn't move** `PROPOSED` | With a partner bank linked, a duress signal makes the bank apply its **own** routine friction (ADR-0037) | The payoff. Faking duress blocks your own withdrawal; not faking it leaves a "normal" record that undercuts the claim | Accounts at banks that have not integrated |
-| **2 · Independent witnesses** | Each party signs its own observation with its own key: device, user, guardian, bank | The lone fraudster. Staging now needs accomplices, each exposed to prosecution | A guardian who lies (who then becomes a co-accused) |
-| **3 · Hardware-signed events** | P-256 keys in Android Keystore, with attestation stored | Emulators, rooted phones, scripted sensor feeds | A real scream in a real room |
-| **4 · Public time before the transfer** | Every check-in outcome is anchored to Hedera within seconds | "The record was written after the transfer" | The truth of the event |
+| **2 · Independent principals** | Each principal signs its own observation with its own key: the user's device (detection **and** PIN are one principal), a guardian, a bank | The lone fraudster. Staging now needs accomplices, each exposed to prosecution | A guardian who lies (who then becomes a co-accused) |
+| **3 · Hardware-signed events** | P-256 keys in Android Keystore; each signature binds subject, target, action and source time | Tampering with an event's context after signing. While attestation is `stored_unverified`, a valid signature proves only that the key was used — **not** that the microphone heard a real event, and not that the phone wasn't rooted or emulated | A real scream in a real room; a scripted feed on an unverified device |
+| **4 · Public time before the transfer** | Every PIN-gated outcome, normal or duress, is anchored to Hedera within about a minute (coalesced per 60 s window) | "The record was written after the transfer" | The truth of the event |
 | **5 · History is part of the record** | Guardian changes, cancels and prior alerts are all chained | Hiding a switch-off or a pattern | A first-time fraudster |
 | **6 · People decide consequences** | The record is one input to a human adjuster or bank officer. Nothing pays out or gets rejected automatically | Machine verdicts in either direction | Bad human judgement (which is itself audited) |
 | **7 · Absence is not evidence** | Written into every partner agreement: **no claim is rejected because a VUKA record is missing** | Punishing a genuine victim whose phone was dead, off or not armed | — |
 
-**Corroboration levels** (`docs/VUKA-2-SPEC.md` §3): C0 device signal → C1 + user check-in → **C2 + independent human signature (the minimum for any claim)** → C3 + an institution's record. The one-line rule for a claim-grade record: **three independent signatures and one public timestamp, before the money moved.**
+**Evidence levels** (`docs/VUKA-2-SPEC.md` §3), counted in independent principals: E0 device signal → E1 + user check-in (same device, **one** principal) → **E2 + a guardian's own-key acknowledgement (two principals — the minimum for any claim)** → E3 + an institution's record. A guardian's acknowledgement shows a second person was alerted and responded; it is not eyewitness evidence. The one-line rule for a claim-grade record: **at least two independent principals and one public timestamp, before the money moved.** Missing corroboration never proves fraud.
 
 ---
 
@@ -43,14 +43,14 @@ Blockchain people call this the **oracle problem**: a ledger guarantees what hap
 
 | # | Scenario | What happens | What ANCHOR proves | Outcome |
 |---|---|---|---|---|
-| **S1** | Genuine express kidnapping, bank linked `SIMULATED` | Scream detected → "Journey check" → duress PIN; the screen shows the normal outcome → guardians alerted → `sim_bank` holds new beneficiaries with routine wording → guardian calls 10111 | Signal and check-in anchored seconds later, **before** the transfer attempt | Money mostly doesn't leave. If it did, the ordering is provable |
+| **S1** | Genuine express kidnapping, bank linked `SIMULATED` | Scream detected → "Journey check" → duress PIN; the screen shows the normal outcome → guardians alerted → `sim_bank` holds new beneficiaries with routine wording → guardian calls 10111 | Signal and check-in anchored within about a minute, **before** the transfer attempt | Money mostly doesn't leave. If it did, the ordering is provable |
 | **S2** | Staged "clean room" | An accomplice screams; a transfer is made; a claim is filed | Only what was fed in, plus the history | Bank linked: the duress hold blocks their own payout. Not linked: no independent witness, and footage contradicts the story. Staging is itself an offence (§2) |
-| **S3** | Held past the hour, phone wiped | With data: events left the phone within seconds, were chained on receipt, and check-in outcomes were anchored immediately. **With signal but no data:** events wait on the phone (no device SMS — it would sit in the attacker-readable Sent folder) | The data case survives a wipe | **If there was no data and the phone is wiped before delivery, the events are lost — we say so** |
+| **S3** | Held past the hour, phone wiped | With data: events left the phone within seconds, were chained on receipt, and PIN-gated outcomes were anchored within about a minute. **With signal but no data:** events wait on the phone (no device SMS — it would sit in the attacker-readable Sent folder) | The data case survives a wipe | **If there was no data and the phone is wiped before delivery, the events are lost — we say so** |
 | **S4** | Phone stolen after the alert | Server and guardian copies survive; recovery re-binds a new device (§9 rules) | Integrity of the surviving copies | Recovery is on the cut line; if cut, no code is shown and we say so |
 | **S5** | False alarm (music, children) | Check-in → normal PIN → closed | The cancel is anchored too | Nobody bothered. A later "it was duress" claim contradicts the record |
 | **S6** | Forced to enter the real PIN | The attacker watches and demands the normal PIN | That a normal code was entered, not that the person was safe | **A limitation**, in the honesty ledger: normal PIN = "normal code entered", not "safe" |
-| **S7** | Abuser as "guardian" | Only the VIGIL user can generate a code, and additions need the PIN. Removal is silent. Location is shared only at signal time | Who was paired, when, with whose code | Closes the stalkerware path |
-| **S8** | Attacker forces VUKA changes | A duress PIN at *any* prompt raises the alarm (V6). Removals and deletions look done but do nothing. Additions create a decoy guardian and notify the real ones | The duress signal and the no-op | The attacker sees success; the guardians get the alert |
+| **S7** | Abuser as "guardian" | Only the VIGIL user can generate a code, and additions need the PIN. Removal is silent but takes effect after 24 h, and the last guardian can't be removed until a replacement is accepted. Location is shared only at signal time | Who was paired, when, with whose code | Closes the stalkerware path |
+| **S8** | Attacker forces VUKA changes | A duress PIN at *any* prompt raises the alarm (V6). Removals and deletions look done but do nothing. Additions create a decoy guardian and notify the real ones. A forced **normal** PIN can only *schedule* a removal: it takes 24 h and never leaves zero guardians | The duress signal and the no-op | The attacker sees success; the guardians get the alert |
 | **S9** | Phone switched off before anything is detected | Nothing to detect, nothing sent | Nothing | **Nothing escalates** — on the honesty slide |
 | **S10** | Guardian calls the victim during a hijack | The guardian screen and SMS lead with "Don't call or text them. Call 10111." Calling unlocks only after `stand_down` | — | Removes the most likely way a well-meaning guardian tips off the attacker |
 
@@ -60,7 +60,7 @@ Blockchain people call this the **oracle problem**: a ledger guarantees what hap
 
 - No SMS from the device. Android writes a non-default app's sent SMS into the Sent folder.
 - No difference between normal and duress PIN screens, haptics, request shapes or response times (V5; test T15).
-- No distinctive public anchor timing. **Every** check-in outcome is anchored immediately, not only duress (ADR-0035).
+- No distinctive public anchor timing. **Every** PIN-gated outcome, normal or duress, is anchored, and immediate roots are coalesced to one per minute, so the ledger shows only minute-level activity (ADR-0035).
 - No readable event kinds on the public panel for real people. Kinds show only for `sim_` subjects (T19).
 - A neutral check-in title: "Journey check", never "Are you safe?".
 - **Stated, not hidden:** the Android microphone indicator is visible while a journey is armed. We say **"discreet, not invisible."**

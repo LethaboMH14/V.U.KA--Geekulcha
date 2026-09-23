@@ -69,7 +69,7 @@
 > **The anchor proves when, not what.** Every design decision makes the system more **checkable**, not more capable.
 
 - **VIGIL** — an Android app that notices duress during a journey the user starts, asks a discreet "Journey check", and alerts the people the user chose.
-- **ANCHOR** — one signed hash chain per person; every check-in outcome anchored to Hedera within seconds; a stranger can verify an exported record without trusting us.
+- **ANCHOR** — one signed hash chain per person; every PIN-gated outcome anchored to Hedera within about a minute; a stranger can verify an exported record without trusting us.
 - **Parked, not deleted:** KHAYA, UMOJA, cameras, faces, private-security dispatch (ADR-0034).
 - **Spec:** `VUKA-2-SPEC.md`. **Fraud defence:** `STAGED-DURESS-DEFENCE.md`. **Money:** `ECONOMICS-VIGIL-ANCHOR.md`.
 
@@ -127,13 +127,13 @@ Full provenance in `EVIDENCE.md` ("Verified 23 September 2026").
 | Bank fraud attempts rising | **75%** of SA banking leaders (vendor survey) | `FACT` — BioCatch, May 2026 |
 | Price anchor | FNB GuardMe **R19.90/month**; iTOO express-kidnapping cover **from R22.50/month** | `FACT` |
 | VUKA price | **~R20 per member per month**, partner-funded; app free | `ASSUMPTION` — decided 23 Sep |
-| Break-even at R20 | **10,861 members** | `ESTIMATE` — `scripts/economics_vigil_anchor.py` |
-| Anchoring cost, whole network | **≈ R9.34/month** hourly + ≈ R5.40/month immediate check-ins | `ESTIMATE` — Hedera $0.0008/message, R16.21/USD |
+| Break-even at R20 | **10,901 members** (rounded up; includes the anchoring ceiling) | `ESTIMATE` — `scripts/economics_vigil_anchor.py` |
+| Anchoring cost, whole network | **at most ≈ R570/month** (hourly R9.34 + immediate roots capped at one a minute), whatever the member count | `ESTIMATE` — Hedera $0.0008/message, R16.21/USD |
 | Detection accuracy, latency, battery | **Not measured** — `VUKA-2-SPEC.md` §16 | — |
 | ADRs | **37** | `FACT` — `git grep -c "^## ADR-" docs/adr.md` |
 | TRL | **4** (ADR-0027), to be re-argued for VIGIL once the port runs | `ASSESSED` |
 
-> 🔴 **Dead numbers — if you see these anywhere, they are wrong:** "R1.9bn / 97,975" as current · "85% of banks" · "R100 per member" · "3% claims reduction saves R20.7m" · R1.09bn as a market or a saving · "Santam 3.7m policyholders" · "94% net margin" · the 318 ms (n = 10) historical figure presented as VIGIL's speed · "2.7m security officers" · "27 ADRs" · "440 tests" · bare "TRL 5" · "R1.30/month".
+> 🔴 **Dead numbers — if you see these anywhere, they are wrong:** "R1.9bn / 97,975" as current · "85% of banks" · "R100 per member" · "10,861" as break-even (it is 10,901, rounded up) · "three independent signatures" (it is two independent principals) · "3% claims reduction saves R20.7m" · R1.09bn as a market or a saving · "Santam 3.7m policyholders" · "94% net margin" · the 318 ms (n = 10) historical figure presented as VIGIL's speed · "2.7m security officers" · "27 ADRs" · "440 tests" · bare "TRL 5" · "R1.30/month".
 
 ---
 

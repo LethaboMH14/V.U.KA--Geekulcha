@@ -50,13 +50,14 @@
 2. **Thu 24** — read the SAPS FY2024/25 and FY2025/26 national totals **by eye** from the official PDF (cite page and table) into `docs/EVIDENCE.md`. Never paste machine-extracted numbers.
 3. **Thu 24** — confirm the criterion letters on every P3 row in `docs/CHECKLIST.md` and run the coverage sweep (OS.11) under the new criteria.
 4. **Thu 24 by 20:00** — `docs/REQUIREMENTS-TRACE.md`: every requirement in `docs/VUKA-2-SPEC.md` §2 (V1–V10, G1–G6, A1–A7, S1–S4, P1–P2, D1–D3) → owner → test ID (T01–T20) → status.
-5. **Thu 24–Fri 25 by 20:00 — guardian delivery** (G3):
+5. **Thu 24–Fri 25 by 20:00 — guardian delivery** (G3). **Minimal path first, by Fri 10:00:** one FCM message from the server to Mutarisi's guardian-min screen. Then:
    - Create a Firebase project (free); put the Firebase Cloud Messaging server credentials in App Service settings (never in git).
-   - Implement `server/src/notify/` so every alert arrives as a **visible** high-priority notification.
+   - Implement `server/src/notify/` as the outbox consumer (§8) so every alert arrives as a **visible** high-priority notification, deduplicated by an FCM collapse key built from the outbox idempotency key.
    - Open a trial with a South African SMS provider and send through its REST API from the server. If the trial needs business verification that won't clear by Friday, record "push only" and tell Lethabo and Babatunde.
 6. **Fri 25 by 20:00 — `sim_bank`**, a small FastAPI service:
    - `POST /sim_bank/v1/risk-signal` verifies ANCHOR's Ed25519 signature, holds new-beneficiary transfers for that subject, and returns routine wording.
    - `POST /sim_bank/v1/release`.
+   - Honour the `Idempotency-Key` header so an outbox retry never produces a second hold.
    - Every response carries `"sim": true`, and the UI shows SIMULATED.
 7. **Sat** — with Sibusiso, write the server-side abuse tests T11, T12, T13, T14 and T19 from Ipeleng's specifications. Record M3 and M6 with Vukosi.
 8. **Lowest priority (first on the cut line)** — daily OpenTimestamps stamp of the day's roots with `ots upgrade` (ADR-0028).

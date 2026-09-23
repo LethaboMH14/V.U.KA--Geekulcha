@@ -49,19 +49,20 @@
 
 **Do this, in order:**
 1. **Wed 23–Thu 24** — review and take ownership of `docs/STAGED-DURESS-DEFENCE.md`. Do the three primary reads (the FTC 2010 emergency-PIN report; Cybercrimes Act ss8–9 from the Gazette or lawlibrary; POPIA s1 "biometrics") and replace each ⚑ with the primary quote.
-2. **Thu 24 by 12:00** — `shared/canonical.js` (§5: surrogate pairs, ASCII keys, no floats, safe integers), `shared/der.js` (DER → raw r‖s) and `shared/merkle.js` (§6), with vitest tests against Sibusiso's vectors (T01, T02). Vukosi's app and the verify page both import these.
+2. **Thu 24 by 12:00** — agree PIN authority, incident closure and the removal rules with Lethabo (§8, §9); they fix the oracles for T12, T13, T16, T23 and T24. **Then by 14:00** (Sibusiso's vectors land at 09:00) — `shared/canonical.js` (§5: surrogate pairs, ASCII keys, no floats, safe integers), `shared/der.js` (DER → raw r‖s) and `shared/merkle.js` (§6), with vitest tests against Sibusiso's vectors (T01, T02). Vukosi's app and the verify page both import these.
 3. **Thu 24** — `docs/THREAT-MODEL-VIGIL-ANCHOR.md` (STRIDE):
    - Assets.
    - Trust boundaries: phone, server, guardian phone, Hedera, `sim_bank`.
    - Threats per boundary, with mitigations mapped to spec IDs and tests.
-4. **Thu 24 by 20:00** — write the **specification** (inputs, expected outcome) for each of T04–T19. Sibusiso and Khutso write the server-side tests and Vukosi the device-side ones; you review each.
-5. **Fri–Sat by 18:00 — verify-page cryptography:**
+4. **Thu 24 by 20:00** — write the **specification** (fixture, oracle, prerequisites) for each of T04–T24, starting from the "Needs" column in §15. Sibusiso and Khutso write the server-side tests and Vukosi the device-side ones; you review each.
+5. **Fri 25 by 10:00 — verify-min** for the Fri 12:00 slice: hashes, prev links and device signatures from an export, with no mirror yet. Then **Fri–Sat by 18:00 — full verify-page cryptography:**
    - Recompute event hashes (WebCrypto SHA-256 over canonical bytes).
    - Check prev links and the first broken index.
    - Verify signatures against the keys inside the chain: P-256 via WebCrypto after DER → raw; Ed25519, and ML-DSA if built, for server entries and roots.
    - Check the Merkle audit path.
-   - Match topic, sequence, consensus timestamp and running hash against the public mirror node; label cached responses "cached — not independent".
-   - T03, T04 and T05 must pass.
+   - **Decode the mirror message and require its bytes (type `0x01`) to equal the root recomputed from the export**; check topic, sequence, consensus timestamp and running hash; accept only the pinned network, topic and key-manifest fingerprint (T22).
+   - Show one of three states: live-verified, archived ("archived — not independent") or unavailable.
+   - T03, T04, T05, T21 and T22 must pass.
 6. **Sat 11:00** (internal; programme deadline 12:30) — `docs/SSDLC-GKHACK26.md`, submitted on Sonke:
    - Requirements and the threat model.
    - Secure design decisions (ADR-0034–0038) and secure coding rules (RULES.md).
@@ -85,7 +86,7 @@
 - [ ] Privacy policy reviewed by Lethabo
 - [ ] Every abuse test specified and reviewed
 
-**Deadlines:** `shared/` Thu 12:00; STRIDE and test specifications Thu 20:00; SSDLC Sat 11:00; verify page and privacy policy Sat 18:00.
+**Deadlines:** PIN-authority rules Thu 12:00; `shared/` Thu 14:00; STRIDE and test specifications Thu 20:00; verify-min Fri 10:00; SSDLC Sat 11:00; verify page and privacy policy Sat 18:00.
 **Depends on → hands off to:** the vectors and export shape (Sibusiso) → `shared/` to Vukosi and Mutarisi; the SSDLC and privacy policy to Babatunde's deck.
 **Do not:** say "court-admissible", "unhackable" or "unbiased"; mark a legal point settled without a primary source; soften "the anchor proves when, not what".
 **Reviewer:** Lethabo.

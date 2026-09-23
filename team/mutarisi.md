@@ -68,6 +68,8 @@
    - Acknowledge (calls Vukosi's native signer).
 4. **Sat — `dashboard/`:** replace the parked camera prototype with `/panel` (crt.sh-style table of opaque hashes, chain index and receipts linked to HashScan; event kinds only for `sim_` subjects, tagged SIMULATED) and `/verify` (drop zone plus the three-state result chip).
 5. **Every screen** gets its loading, error, queued, no-network and empty states before its happy path.
+6. **Fri 25 by 10:00 — guardian-min receiver** (with Khutso): a debug screen in the APK that shows a raw FCM alert from the server, so the Fri 12:00 slice can prove delivery before the full guardian mode exists.
+7. **APK backup owner (D1).** If Vukosi's release APK isn't cold-installing by Thu 22:00, you take over the release build with him on Friday morning. Until then the demo phone runs a USB-installed debug build, and we say so.
 
 **Acceptance checks:**
 - [ ] T15 passes (normal vs duress screenshot diff is identical)
@@ -76,7 +78,7 @@
 - [ ] All targets at least 48 px; contrast checked
 - [ ] No string says "invisible", "proof of duress" or a bare "sent"; SIMULATED tags on all sim data
 
-**Deadlines:** Start journey, Journey check and My Record by **Fri 12:00** (end-to-end slice); guardian mode Sat 12:00; panel and verify layout Sat 18:00.
+**Deadlines:** guardian-min receiver **Fri 10:00**; Start journey, Journey check and My Record by **Fri 12:00** (end-to-end slice); guardian mode Sat 12:00; panel and verify layout Sat 18:00.
 **Depends on → hands off to:** Figma (Lethabo), native modules (Vukosi), contract mock (Sibusiso), verify cryptography (Ipeleng) → screens for Babatunde's deck and Lethabo's demo.
 **Do not:** introduce any visible difference between normal and duress; show state by colour alone; add features that aren't in `docs/VUKA-2-SPEC.md`; ship tokens that fail WCAG contrast.
 **Reviewer:** Lethabo.

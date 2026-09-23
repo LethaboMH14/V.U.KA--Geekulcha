@@ -125,6 +125,11 @@
 | P3.B4 | Deck (>10 slides incl. privacy policy and the honesty slide), buyer = bank or insurer partner | Babatunde | B, U | Sep 26 | ☐ | Added 23 Sep, Lethabo |
 | P3.B5 | Pitch script + two timed rehearsals under 3:00 | Babatunde | B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.B6 | Problem statement with the mentors (with Lethabo) | Babatunde | B, I | Sep 25 19:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.L8 | PIN authority, incident closure and removal rules agreed (§8, §9) | Lethabo, Ipeleng | S | Sep 24 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
+| P3.A6 | **Server-min** deployed: ingest + chain + export | Sibusiso | T | Sep 25 09:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
+| P3.S7 | **Verify-min**: hashes, links, device signatures | Ipeleng | T, S | Sep 25 10:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
+| P3.U5 | **Guardian-min receiver** screen + one FCM message; Mutarisi is also the APK backup owner | Mutarisi, Khutso | T | Sep 25 10:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
+| P3.B7 | Validation: 5 consent-based user conversations + 1 bank/insurer approach, recorded honestly | Babatunde | B, U | Sep 26 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 
 ---
 
@@ -173,10 +178,10 @@
 | Criterion | Weight | P3 rows serving it |
 |---|---:|---:|
 | **I** · Innovation & Creativity | 15 | 10 |
-| **T** · Technical Implementation | 15 | 19 |
-| **U** · Usability & Design | 10 | 11 |
-| **S** · Security & Ethics | 10 | 14 |
-| **B** · Business & Presentation | 15 | 13 |
+| **T** · Technical Implementation | 15 | 22 |
+| **U** · Usability & Design | 10 | 12 |
+| **S** · Security & Ethics | 10 | 16 |
+| **B** · Business & Presentation | 15 | 14 |
 | **Q** · Quantum bonus | 5 | 1 |
 
 Khutso re-runs this sweep (OS.11) under the new letters.
@@ -189,3 +194,4 @@ Khutso re-runs this sweep (OS.11) under the new letters.
 |---|---|---|
 | 14 Sep 2026 | File created. Every Phase 1 / Phase 2 / operating-system / showcase item entered on day one, so scope drift from here is visible | Lethabo |
 | 23 Sep 2026 | VIGIL + ANCHOR pivot: Phase 3 added (41 rows); 12 earlier rows ⊘ or re-scoped with dated reasons; published criteria letters I/T/U/S/B/Q adopted for new rows | Lethabo |
+| 23 Sep 2026 (evening) | PR #43 review response: 5 rows added (P3.L8, P3.A6, P3.S7, P3.U5, P3.B7) — P3 now 46 rows; coverage recomputed | Lethabo |

@@ -2,7 +2,7 @@
 
 **When you can't ask for help, VIGIL notices. When nobody believes you, ANCHOR proves when.** Machines notice; people decide. The anchor proves *when*, not *what*.
 
-**What we build (from 23 Sep, ADR-0034):** VIGIL, an Android app that listens during a journey the user starts, asks a discreet "Journey check" and alerts the guardians the user chose; and ANCHOR, a signed hash chain per person, with every check-in outcome anchored to Hedera within seconds, verifiable by a stranger. KHAYA and UMOJA are parked, not deleted.
+**What we build (from 23 Sep, ADR-0034):** VIGIL, an Android app that listens during a journey the user starts, asks a discreet "Journey check" and alerts the guardians the user chose; and ANCHOR, a signed hash chain per person, with every PIN-gated outcome anchored to Hedera within about a minute, verifiable by a stranger. KHAYA and UMOJA are parked, not deleted.
 
 **Event:** Geekulcha, Centurion, Fri 25 Sep 16:00 to Sun 27 Sep 16:00. **Final submission Sun 27 Sep 09:00** (not 15:00). SSDLC due Sat 12:30 (internal 11:00). Lean Canvas on Sonke Sat night. Criteria: Innovation 15 · Technical 15 · Usability & Design 10 · Security & Ethics 10 · Business 15 · Quantum bonus 5. Seven members, four universities; Lethabo and Sibusiso are joint leads.
 

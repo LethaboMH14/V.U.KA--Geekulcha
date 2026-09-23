@@ -54,7 +54,8 @@
    - iTOO [My]Cylution is a partner or an objection, not a competitor.
    - What each does better.
    - VIGIL's one difference: it works when you can't press.
-3. **Thu 24** — rewrite `docs/LEAN-CANVAS.md` with figures: R20 partner-funded; break-even 10,861; R155,090/month fixed; anchoring R9.34/month; market facts from MASTER-CONTEXT §8. It is also the Sonke canvas due Saturday night.
+3. **Thu 24** — rewrite `docs/LEAN-CANVAS.md` with figures: R20 partner-funded; break-even **10,901** (rounded up); R155,659/month fixed including the anchoring ceiling; anchoring at most ≈ R570/month whatever the member count; market facts from MASTER-CONTEXT §8. It is also the Sonke canvas due Saturday night.
+3b. **Thu 24–Sat 26 12:00 — validation.** Hold five short, consent-based conversations with potential users: would you arm this before a night drive? would you trust it? would R20 a month through your bank feel fair? Make one approach to a bank or insurer. Record each honestly in `docs/VALIDATION-2026-09.md`: no names without consent, and "no reply" is a valid result.
 4. **Fri 19:00** — problem statement with the mentors, co-written with Lethabo: two paragraphs, SAPS/ISS kidnapping and SABRIC 2025 data, plus one lived-experience line.
 5. **Fri–Sat — the deck** (more than 10 slides):
    - Problem, with charts.
@@ -83,6 +84,7 @@
 - [ ] Every slide number has a notes line citing `docs/EVIDENCE.md` or the script output
 - [ ] No dead number from MASTER-CONTEXT §8 appears anywhere (grep output in the PR)
 - [ ] `docs/COMPETITORS.md` and `docs/LEAN-CANVAS.md` rewritten
+- [ ] Five user conversations and one bank or insurer approach recorded in `docs/VALIDATION-2026-09.md`
 - [ ] Lean Canvas on Sonke with figures by Saturday night
 - [ ] Pitch under 3:00 in two timed rehearsals
 - [ ] Deck and video submitted before 09:00 Sunday
@@ -91,7 +93,7 @@
 **Depends on → hands off to:** evidence (Khutso), privacy policy (Ipeleng), screens (Mutarisi), demo (Lethabo) → the pitch to all presenters.
 **Do not:**
 - Call any company a partner without evidence.
-- Use R1.09bn, R100 per member, "3% saves R20.7m", "85%", R1.9bn as current, "94% net margin" or "South Africa will follow the UK".
+- Use R1.09bn, R100 per member, "3% saves R20.7m", "85%", R1.9bn as current, "94% net margin", "10,861", "three independent signatures" or "South Africa will follow the UK".
 - Pitch crime displacement.
 - Claim any claims-reduction percentage.
 

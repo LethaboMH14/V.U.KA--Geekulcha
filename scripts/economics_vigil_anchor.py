@@ -13,13 +13,14 @@ import sys
 IN = {
     "fixed_monthly": (155_090, "ESTIMATE", "business plan 21-22 Sep: 5 stipends x R30,000 + R5,090 tools/hosting/insurance"),
     "var_cloud": (0.15, "ESTIMATE", "business plan: extra cloud per member at 10,000 members"),
-    "var_anchor": (0.001, "ESTIMATE", "hourly anchoring R9.34/month spread over 10,000 members"),
     "var_support": (5.00, "ESTIMATE", "business plan: 1 agent at R25,000/month per 5,000 members"),
     "var_compliance": (0.57, "ESTIMATE", "business plan: R68,000/year compliance over 10,000 members"),
     "price_recommended": (20.00, "ASSUMPTION", "value-added benefit priced beside FNB GuardMe R19.90/month; decided 23 Sep"),
     "hcs_fee_usd": (0.0008, "FACT", "Hedera ConsensusSubmitMessage price from Jan 2026 (hedera.com blog)"),
     "usd_zar": (16.2075, "FACT", "USD/ZAR on 22 Sep 2026 (tradingeconomics)"),
-    "alerts_per_member_year": (0.5, "ASSUMPTION", "check-in outcomes needing immediate anchoring; to be measured"),
+    "checkins_per_member_month": (2, "ASSUMPTION", "PIN-gated outcomes per member per month; drives immediate anchors until the 60 s coalescing cap; to be measured"),
+    "immediate_windows_cap_month": (1440 * 30, "FACT", "at most one immediate root per 60 s window (VUKA-2-SPEC section 10)"),
+    "hourly_roots_month": (720, "FACT", "24 x 30"),
     "bass_p": (0.03, "FACT", "Sultan, Farley & Lehmann 1990, JMR 27(1):70-77, mean of 213 parameter sets"),
     "bass_q": (0.38, "FACT", "same source"),
     "channel_size": (1_000_000, "ASSUMPTION", "one partner with 1 million app customers; no partner signed"),
@@ -29,17 +30,21 @@ IN = {
     "plan_price": (100.00, "ASSUMPTION", "business plan's retired R100 insurer price"),
 }
 V = {k: v[0] for k, v in IN.items()}
-VAR = V["var_cloud"] + V["var_anchor"] + V["var_support"] + V["var_compliance"]
+VAR = V["var_cloud"] + V["var_support"] + V["var_compliance"]
+MSG = V["hcs_fee_usd"] * V["usd_zar"]
+# Anchoring is a bounded fixed cost: hourly roots + at most one immediate root per 60 s window, whatever the member count.
+ANCHOR_CEILING = (V["hourly_roots_month"] + V["immediate_windows_cap_month"]) * MSG
+FIXED = V["fixed_monthly"] + ANCHOR_CEILING
 
 
 def breakeven(price):
-    """Members needed so that N*(price - var) = fixed."""
-    return V["fixed_monthly"] / (price - VAR)
+    """Smallest whole number of members with N*(price - var) >= fixed (rounded UP, never to nearest)."""
+    return math.ceil(FIXED / (price - VAR))
 
 
 def operating_margin(members, price):
     revenue = members * price
-    return (members * (price - VAR) - V["fixed_monthly"]) / revenue
+    return (members * (price - VAR) - FIXED) / revenue
 
 
 def insurer_breakeven_reduction(price, claims_cost_per_member_year):
@@ -65,20 +70,22 @@ def years_to_share(share):
 
 
 def compute():
-    hourly = 720 * V["hcs_fee_usd"] * V["usd_zar"]
-    immediate = (10_000 * V["alerts_per_member_year"] / 12) * V["hcs_fee_usd"] * V["usd_zar"]
+    hourly = V["hourly_roots_month"] * MSG
+    immediate_cap = V["immediate_windows_cap_month"] * MSG
+    immediate_10k = min(V["immediate_windows_cap_month"], 10_000 * V["checkins_per_member_month"]) * MSG
     price = V["price_recommended"]
     be_share = breakeven(price) / V["channel_size"]
     plan_fee = V["plan_members"] * V["plan_price"] * 12
     return {
         "variable_cost_per_member_month": round(VAR, 3),
         "contribution_margin_pct": {str(p): round((p - VAR) / p * 100, 2) for p in (20, 25, 100)},
-        "breakeven_members": {str(p): round(breakeven(p)) for p in (10, 15, 19.90, 20, 22.50, 25, 50, 100)},
+        "fixed_monthly_incl_anchoring_ceiling": round(FIXED, 2),
+        "breakeven_members": {str(p): breakeven(p) for p in (10, 15, 19.90, 20, 22.50, 25, 50, 100)},
         "operating_margin_pct_at_R20": {str(n): round(operating_margin(n, 20) * 100, 1) for n in (10_000, 25_000, 50_000, 100_000)},
-        "annual_operating_profit_at_R20": {str(n): round((n * (20 - VAR) - V["fixed_monthly"]) * 12) for n in (25_000, 50_000, 100_000)},
-        "anchoring_rand_month": {"hourly_roots": round(hourly, 2), "immediate_checkins_10k_members": round(immediate, 2),
-                                 "constant_5min_option": round(12 * 24 * 30 * V["hcs_fee_usd"] * V["usd_zar"], 2)},
-        "bank_per_case_R15_cases_needed_per_month": round(V["fixed_monthly"] / 15),
+        "annual_operating_profit_at_R20": {str(n): round((n * (20 - VAR) - FIXED) * 12) for n in (25_000, 50_000, 100_000)},
+        "anchoring_rand_month": {"hourly_roots": round(hourly, 2), "immediate_cap": round(immediate_cap, 2),
+                                 "ceiling_total": round(ANCHOR_CEILING, 2), "immediate_at_10k_members": round(immediate_10k, 2)},
+        "bank_per_case_R15_cases_needed_per_month": math.ceil(FIXED / 15),
         "adoption_months_in_one_channel": {"1pct": round(years_to_share(0.01) * 12, 1), "5pct": round(years_to_share(0.05) * 12, 1),
                                            "10pct": round(years_to_share(0.10) * 12, 1),
                                            "breakeven_at_R20": round(years_to_share(be_share) * 12, 1)},
@@ -107,13 +114,14 @@ def main():
         return
     print("VUKA economics (VIGIL + ANCHOR) - every number computed here, every input tagged\n")
     print(f"Variable cost per member per month: R{r['variable_cost_per_member_month']}  [ESTIMATE]")
-    print("Members to break even (fixed R155,090/month):")
+    print(f"Fixed cost incl. anchoring ceiling: R{r['fixed_monthly_incl_anchoring_ceiling']:,}/month  [ESTIMATE]")
+    print("Members to break even (rounded up):")
     for p, n in r["breakeven_members"].items():
         print(f"  R{p:>6}/member/month -> {n:>7,} members")
     print("Operating margin at R20:", ", ".join(f"{int(k):,} members {v}%" for k, v in r["operating_margin_pct_at_R20"].items()))
     a = r["anchoring_rand_month"]
-    print(f"Anchoring: hourly R{a['hourly_roots']}/month + immediate check-ins ~R{a['immediate_checkins_10k_members']}/month "
-          f"(option: constant 5-min R{a['constant_5min_option']}/month)")
+    print(f"Anchoring: hourly R{a['hourly_roots']}/month + immediate at most R{a['immediate_cap']}/month "
+          f"= ceiling R{a['ceiling_total']}/month, whatever the member count (~R{a['immediate_at_10k_members']} immediate at 10,000 members)")
     print(f"Bank per-case only at R15: {r['bank_per_case_R15_cases_needed_per_month']:,} cases/month to cover fixed costs")
     m = r["adoption_months_in_one_channel"]
     print(f"Reference adoption in one 1M-customer channel: 1% ~{m['1pct']} mo, 5% ~{m['5pct']} mo, 10% ~{m['10pct']} mo; "

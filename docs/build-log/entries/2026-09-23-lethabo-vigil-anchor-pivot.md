@@ -1,10 +1,10 @@
 ## 2026-09-23 | Lethabo (co-lead), via Claude Code assistant | VIGIL + ANCHOR pivot | PROPOSED — binds on second-lead acceptance
 
-**Research** — Read Babatunde's 21–22 Sep business plan and the official GKHack26 programme (Sonke export, 23 Sep; judging criteria now published). Ran four source-checked research passes (market data, fraud/legal/platform, design) plus an independent red-team. Verified the predecessor Android app (`Team-Sonar---Vuka-/app/`) file by file. The build plan passed an independent adversarial review (three rounds, 45 findings, all resolved) before any file here was written.
+**Research** — Read Babatunde's 21–22 Sep business plan and the official GKHack26 programme (Sonke export, 23 Sep; judging criteria now published). Ran four source-checked research passes (market data, fraud/legal/platform, design) plus an independent red-team. Verified the predecessor Android app (`Team-Sonar---Vuka-/app/`) file by file.
 
 **Real data / references** — SABRIC 2025 (R2.4bn, 110,074 incidents); SAPS via ISS Africa (17,061 kidnappings 2023/24, 44% during hijackings); BioCatch May 2026 (75%); FNB GuardMe R19.90; iTOO [My]Cylution from R22.50; Hedera $0.0008/message; Android 14 foreground-service rules; ECTA s15 and RICA s1 read from primary text. All rows in `docs/EVIDENCE.md` "Verified 23 September 2026", pending Khutso's re-check.
 
-**Business reasoning** — The R100 insurer story was mis-scaled (savings counted on a whole R1.09bn book, fee charged on 10,000 members). Pricing at ~R20 partner-funded, the shelf FNB GuardMe already sells on, gives a break-even of 10,861 members that an actuary can't break (`scripts/economics_vigil_anchor.py`).
+**Business reasoning** — The R100 insurer story was mis-scaled (savings counted on a whole R1.09bn book, fee charged on 10,000 members). Pricing at ~R20 partner-funded, the shelf FNB GuardMe already sells on, gives a break-even of 10,901 members (rounded up, anchoring ceiling included) that an actuary can't break (`scripts/economics_vigil_anchor.py`).
 
 **Competitor reference** — FNB GuardMe/Aura, Namola, Google Personal Safety, Apple Check In, Noonlight: all need a press or connectivity. VIGIL's one difference is that it works when you can't press. The rewrite is P3.B2.
 

@@ -29,7 +29,7 @@
 
 - University / role: Wits / Co-lead; backend developer
 - Owns outright: Server, ledger, CI and demo orchestration.
-- Reviews only: All PRs; first review for Vukosi and Khutso.
+- Reviews only: All PRs; first review for Khutso (Vukosi moved to Lethabo on 23 Sep).
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
@@ -46,8 +46,8 @@
 
 **Do this, in order:**
 1. **Wed 23** — review the pivot PR as second lead; accept or amend ADR-0034 to ADR-0038. Your acceptance binds them.
-2. **Thu 24 by 12:00 — contract v2** (§12). Write paths and schemas (signed `details`, `Receipt`, `Proof`, `SubjectDeletionRequest`) and the auth scheme (§7, including the safety-event skew exemption). Mark the v1 UMOJA paths `deprecated: true`. Correct the canonical-form text (§5, ADR-0034). Commit `contracts/vectors/canonical.json` and `contracts/vectors/merkle.json` (n = 1…8) from the Python reference. Update `test/openapi-contract.test.mjs` to v2. Stand up a pinned mock server for clients (for example `npx @stoplight/prism-cli@<pinned> mock contracts/openapi.yaml`).
-3. **Thu 24 morning, at most 2 h — Hedera spike.** Create a testnet account in the Hedera portal (free). Create a topic **with a `submitKey`**, submit a message, and read it back from the public mirror node. Try `hiero-sdk-python`; if it fails, use a Node sidecar with `@hashgraph/sdk`. In the same spike, sign with ML-DSA-65 in the chosen runtime and verify with `@noble/post-quantum`; save the cross-verification vector. Record the decision in a build-log entry.
+2. **Thu 24 by 09:00 — vectors first:** `contracts/vectors/canonical.json` (including rejection vectors) and `contracts/vectors/merkle.json` (n = 1…8, n = 0 rejected) from the Python reference, so Ipeleng's JS can pass them by 14:00. Then **by 12:00 — contract v2** (§12), which must reflect B1–B5: the signed statement (§4), PIN authorisations (§9), deadline authority (§7), head-keyed proof (§6). Write paths and schemas (signed `details`, `Receipt`, `Proof`, `SubjectDeletionRequest`) and the auth scheme (§7, including the safety-event skew exemption). Mark the v1 UMOJA paths `deprecated: true`. Correct the canonical-form text (§5, ADR-0034). Update `test/openapi-contract.test.mjs` to v2. Stand up a pinned mock server for clients (for example `npx @stoplight/prism-cli@<pinned> mock contracts/openapi.yaml`).
+3. **Thu 24 14:00–16:00, at most 2 h — Hedera spike** (after the contract, so the two don't compete). Create a testnet account in the Hedera portal (free). Create a topic **with a `submitKey`**, submit a message, and read it back from the public mirror node. Try `hiero-sdk-python`; if it fails, use a Node sidecar with `@hashgraph/sdk`. In the same spike, sign with ML-DSA-65 in the chosen runtime and verify with `@noble/post-quantum`; save the cross-verification vector. Publish the key-manifest fingerprint message (`0x02`) before any root. Check `status.hedera.com` and Hedera's testnet reset notices, and record the topic epoch. Record the decision in a build-log entry.
 4. **Thu–Fri — ANCHOR server** (FastAPI + PostgreSQL):
    - Rework PR #39's chain, verify and subject code for per-subject chains (§4) and the canonical form (§5).
    - Signed-request auth (§7).
@@ -55,9 +55,11 @@
    - `escalation_deadlines`, with the scheduler on a dedicated connection re-checking its lock every tick (§8).
    - `SELECT … FOR UPDATE` on `subject_heads` plus `UNIQUE(subject_id, chain_index)`.
    - Payload and salt encrypted at rest (AES-GCM; key from App Service settings).
-   - Anchoring (§10): immediate on every check-in outcome, hourly roots, receipts.
-   - `/healthz`, `WS /ws/panel` (event kinds for `sim_` subjects only), and `GET /v1/subjects/{id}/export`.
-5. **Fri 25 by 12:00** — thin end-to-end slice with Vukosi and Ipeleng (§2 D2).
+   - Entry format v2 (§4) with a legacy verify path for PR #39's v1 entries.
+   - Outcome arbitration and a transactional outbox with idempotency keys (§8).
+   - Anchoring (§10): typed 33-byte messages; immediate roots for every PIN-gated outcome, coalesced to one per 60 s; hourly roots; `anchor_batches` snapshot and retry; receipts with topic epochs.
+   - `/healthz`, `WS /ws/panel` (event kinds for `sim_` subjects only), `GET /v1/subjects/{id}/export`, and the head-keyed public proof.
+5. **Fri 25 by 09:00 — server-min deployed** (ingest + chain + export only, no escalation or anchoring), then **by 12:00** the thin end-to-end slice with Vukosi and Ipeleng (§2 D2). **Agreed fallback:** if T08 isn't passing by Fri 18:00, anchoring stays stubbed and durable escalation takes priority.
 6. **Fri 25 by 23:59 — deployed** on Azure for Students:
    - App Service B1 Linux with Always On, plus PostgreSQL Flexible B1ms.
    - Region South Africa North if the subscription allows it; otherwise record the region for Ipeleng's s72 note.
@@ -69,7 +71,7 @@
 **Acceptance checks:**
 - [ ] v2 merged with both leads plus consumer confirmation (Vukosi for the app, Ipeleng for the verify page)
 - [ ] T01 and T02 pass in CI (pytest and vitest agree byte for byte)
-- [ ] T04–T11 and T19 pass; T08 (restart between `opened` and the deadline) passes
+- [ ] T04–T11, T19, T21 and T23 pass; T08 passes at all three crash points (deadline, after the outcome commit, after send)
 - [ ] A real testnet receipt verifies on the verify page straight from the public mirror node
 - [ ] `/healthz` shows the last anchor under 65 minutes old
 - [ ] Deployment URL and region recorded; gitleaks green (no secret in git)

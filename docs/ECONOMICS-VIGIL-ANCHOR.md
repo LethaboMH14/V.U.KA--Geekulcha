@@ -19,25 +19,25 @@
 
 | Line | Value | Tag |
 |---|---:|---|
-| Variable cost per member per month (cloud R0.15 + anchoring R0.001 + support R5.00 + compliance R0.57) | **R5.72** | `ESTIMATE` — Babatunde's plan |
-| Fixed cost per month (5 stipends × R30,000 + R5,090 tools, hosting, insurance) | **R155,090** | `ESTIMATE` — Babatunde's plan (7 people, 5 stipends: to confirm) |
+| Variable cost per member per month (cloud R0.15 + support R5.00 + compliance R0.57; anchoring moved into fixed cost) | **R5.72** | `ESTIMATE` — Babatunde's plan |
+| Fixed cost per month (5 stipends × R30,000 + R5,090 tools, hosting, insurance) + anchoring ceiling R569.47 | **R155,659.47** | `ESTIMATE` — Babatunde's plan (7 people, 5 stipends: to confirm) + `docs/VUKA-2-SPEC.md` §10 |
 | Contribution margin at R20 | **71.4%** | `ESTIMATE` |
-| **Break-even at R20** | **10,861 members** | `ESTIMATE` |
-| Operating margin at R20 | 10,000 members **−6.2%** · 25,000 **40.4%** · 50,000 **55.9%** · 100,000 **63.6%** | `ESTIMATE` |
-| Annual operating profit at R20 | 25,000 members **R2.42m** · 50,000 **R6.71m** · 100,000 **R15.27m** | `ESTIMATE` |
-| Anchoring, whole network | hourly **R9.34/month** + immediate check-in anchors **≈ R5.40/month** at 10,000 members | `ESTIMATE` — 720 × $0.0008 × R16.21 (Hedera fee from Jan 2026; USD/ZAR 22 Sep 2026) |
+| **Break-even at R20** (rounded **up**) | **10,901 members** | `ESTIMATE` |
+| Operating margin at R20 | 10,000 members **−6.4%** · 25,000 **40.3%** · 50,000 **55.8%** · 100,000 **63.6%** | `ESTIMATE` |
+| Annual operating profit at R20 | 25,000 members **R2.42m** · 50,000 **R6.70m** · 100,000 **R15.27m** | `ESTIMATE` |
+| Anchoring, whole network | hourly **R9.34/month** + immediate roots **at most R560.13/month** (one per 60 s window) = **ceiling R569.47/month whatever the member count**; ≈ R259 immediate at 10,000 members × 2 PIN-gated outcomes a month (`ASSUMPTION`) | `ESTIMATE` — $0.0008 per message × R16.21 (Hedera fee from Jan 2026; USD/ZAR 22 Sep 2026) |
 
-**Break-even by price** (fixed R155,090 ÷ (price − R5.72)):
+**Break-even by price** (⌈fixed R155,659.47 ÷ (price − R5.72)⌉, rounded up):
 
 | Price / member / month | R10 | R15 | R19.90 | **R20** | R22.50 | R25 | R50 | R100 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| Members to break even | 36,244 | 16,714 | 10,938 | **10,861** | 9,243 | 8,045 | 3,503 | 1,645 |
+| Members to break even | 36,370 | 16,774 | 10,978 | **10,901** | 9,277 | 8,074 | 3,516 | 1,652 |
 
 **The equations:**
 
 ```
 contribution per member     m  = p − v
-break-even members          N* = F / (p − v)
+break-even members          N* = ⌈F / (p − v)⌉   (round UP — a fraction of a member doesn't pay)
 operating margin at N          = (N·m − F) / (N·p)
 a partner pays if             value per member per year ≥ 12·p
 insurer break-even reduction  r* = 12·p / c     (c = relevant claims cost per member per year)
@@ -66,7 +66,7 @@ A penetration percentage needs a base. The honest base is **one partner's custom
 | Share of the partner's base | Members | Months after switch-on |
 |---|---:|---:|
 | 1% | 10,000 | ~3.8 |
-| **Break-even at R20 (1.09%)** | **10,861** | **~4.1** |
+| **Break-even at R20 (1.09%)** | **10,901** | **~4.1** |
 | 5% | 50,000 | ~15.9 |
 | 10% | 100,000 | ~27.0 |
 
@@ -87,7 +87,7 @@ A default-on switch inside a bank app would be faster; a download-only campaign 
 
 ## 7 · What a pilot must measure before any saving is claimed
 
-False alarms per armed hour · missed events · share of alerts delivered · guardian response time · bank holds triggered and released · verified evidence packs pulled · claims-handling time with and without a C2 record · legitimate payouts (a good record may *increase* fair payouts) · fraud leakage.
+False alarms per armed hour · missed events · share of alerts delivered · guardian response time · bank holds triggered and released · verified evidence packs pulled · claims-handling time with and without an E2 record · legitimate payouts (a good record may *increase* fair payouts) · fraud leakage.
 
 ## 8 · Corrections carried from the business plan
 
@@ -101,6 +101,6 @@ False alarms per armed hour · missed events · share of alerts delivered · gua
 | NFO 35% motor / 8% theft-hijack | Not found — removed | — |
 | 94% "net margin" | **94.28% was contribution margin at R100**; at R20 it is 71.4% | this script |
 | Profit "~R9.8m at break-even" | Zero by definition | arithmetic |
-| Bank per-case 2,000 cases = break-even | **10,339 cases/month** at R15 | this script |
+| Bank per-case 2,000 cases = break-even | **10,378 cases/month** at R15 | this script |
 | "South Africa is expected to follow" the UK | No statement found — removed | — |
 | Crime displacement as an advantage | Removed (see `docs/STAGED-DURESS-DEFENCE.md` §7) | Guerette & Bowers 2009 |

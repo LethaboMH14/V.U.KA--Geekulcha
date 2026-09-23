@@ -34,6 +34,8 @@ Kept current. Published here so no judge, reviewer or teammate has to discover a
 | **G28** | Guardian alerts are protected by TLS and at-rest encryption, **not end-to-end** to the guardian's key | Sibusiso, Ipeleng | Post-hackathon | Open — `PROPOSED` |
 | **G29** | Permission to build before Fri 25 Sep 16:00 on declared lineage is unconfirmed | Lethabo | Thu 24 Sep 12:00 | Open |
 | **G30** | **No real bank integration** — `sim_bank` only; the partner risk-signal API is `PROPOSED` (ADR-0037) | Lethabo, Babatunde | Pilot | Open — labelled SIMULATED |
+| **G31** | **Hedera testnet can reset** — live verification of a demo receipt may become archived-only; re-anchoring after a reset is a later publication (ADR-0035) | Sibusiso | Before Fri 25 Sep (check reset notices) | Open — verify page shows live-verified / archived / unavailable |
+| **G32** | **Attestation is stored, not verified** — a device signature proves a key was used, not that the microphone heard a real event or that the phone was unmodified | Ipeleng, Vukosi | Post-hackathon (Play Integrity once on the Store) | Open — stated in `docs/STAGED-DURESS-DEFENCE.md` layer 3 |
 
 ## Blocked by design, not by neglect
 
