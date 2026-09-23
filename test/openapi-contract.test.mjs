@@ -3,9 +3,9 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const document = await readFile(new URL("../contracts/openapi.yaml", import.meta.url), "utf8");
-const architecture = await readFile(new URL("../docs/01-ARCHITECTURE.md", import.meta.url), "utf8");
-const sdlc = await readFile(new URL("../docs/SDLC.md", import.meta.url), "utf8");
-const team = await readFile(new URL("../docs/TEAM.md", import.meta.url), "utf8");
+const architecture = await readFile(new URL("../archive/2026-09-four-layer/docs/01-ARCHITECTURE.md", import.meta.url), "utf8");
+const sdlc = await readFile(new URL("../archive/2026-09-four-layer/docs/SDLC.md", import.meta.url), "utf8");
+const team = await readFile(new URL("../archive/2026-09-four-layer/docs/TEAM.md", import.meta.url), "utf8");
 
 const requiredPaths = [
   "/v1/sightings:",

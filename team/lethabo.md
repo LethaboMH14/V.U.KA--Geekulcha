@@ -47,8 +47,8 @@
 
 **Do this, in order:**
 1. **Wed 23** — get the pivot PR reviewed: Sibusiso as second lead (his acceptance binds the ADRs), plus Ipeleng, Babatunde and Khutso on their docs. Before requesting review: `node scripts/check-docs.mjs && node scripts/check-intake.mjs && git diff --check`.
-2. **Wed 23** — email `sonke@geekulcha.dev`: may Team SONAR keep building before Fri 16:00 on its declared lineage repository, with a tagged baseline at 16:00? Record the reply date (not private content) in the `docs/EVIDENCE.md` missing-evidence register.
-2b. **Thu 24 by 12:00** — agree PIN authority, incident closure and the removal rules (24 h silent delay; never zero guardians) with Ipeleng (§8, §9). If the organisers rule out pre-event building, apply the fallback in `docs/VUKA-2-SPEC.md` §14 the same hour.
+2. ~~Wed 23 — ask the organisers about pre-event building.~~ **Done 23 Sep: confirmed allowed.** Still tag the baseline at Fri 16:00 (step 6) so the lineage is declared.
+2b. **Thu 24 by 12:00** — agree PIN authority, incident closure and the removal rules (24 h silent delay; never zero guardians) with Ipeleng (§8, §9).
 3. **Thu 24 by 12:00** — Figma: new pages "VIGIL", "Guardian", "ANCHOR panel + verify" and "Archive 2026-09-23 (parked layers)". Move obsolete frames to the archive page. Carry frame `9:9` (re-skin as the discreet "Journey check") and `23:8` (My Record: Hedera labels, VIGIL event kinds). Draw every surface in V1–V10 and G1–G6, each with loading, error, queued, no-network and empty states. Type: IBM Plex Sans + IBM Plex Mono, display IBM Plex Sans Condensed (`PROPOSED`). Icons: Phosphor. 48 px targets; dark grey, not pure black; state never shown by colour alone.
 4. **Thu 24** — hand Mutarisi the frames and tokens; review his first two screens on a real budget phone.
 5. **Fri 25 by 12:00** — run the thin end-to-end slice (§2 D2) with Vukosi, Sibusiso and Ipeleng; record it in a build-log entry.
@@ -59,7 +59,7 @@
 
 **Acceptance checks (all before you tick P3 rows):**
 - [ ] ADR-0034 to ADR-0038 accepted by Sibusiso on the PR
-- [ ] Organiser answer recorded by Thu 12:00
+- [x] Organiser answer recorded — pre-event building confirmed 23 Sep
 - [ ] Figma pages hold every V and G surface with non-happy states
 - [ ] T15 (normal vs duress screenshot diff) passes on the built app
 - [ ] E2E slice build-log entry exists by Fri 12:00; baseline tag exists
@@ -71,34 +71,15 @@
 
 ## Sequenced work
 
-**Superseded 23 September 2026 by the work order above** — kept for history; do not execute these rows. All hours and dates below are ASSUMPTIONS, subject to availability and gates.
-
-| Date | WBS | Hours | Task | Dependencies | Acceptance evidence |
-|---|---|---:|---|---|---|
-| Sep 13 | 1.2 | 4 | Verify old data cleanup and original-file inventory | none | Removal scope and unresolved copies recorded; no history imported |
-| Sep 14 | 1.5 | 3 | Replace team copy and verify roster | none | Seven roles and four universities compared with supplied roster/originals |
-| Sep 15 | 2.2 | 6 | Complete twelve-screen design handoff | 2.1 | Designer can reproduce copy, controls and failure states |
-| Sep 18 | 2.5 | 4 | Observe household walkthrough and revise | 2.3,2.4 | Actual consent-safe observations recorded; no invented participants |
-| Sep 24 | 6.5 | 4 | Run offline dress rehearsal and release gate | 5.5,6.2,6.4 | Both leads review, missing prerequisites block publication |
-| Sep 27 | 7.4 | 3 | Final submission by 15:00 SAST | 7.2,7.3 | Final package and submission receipt recorded by human |
+Replaced on 23 Sep 2026 by the work order above. The four-layer sequenced work, declarations and self-reviews are kept in [this file's history](../archive/2026-09-four-layer/team/lethabo-history.md).
 
 ## Interfaces
 
-- Inputs: Requirements from Khutso; API limits from Sibusiso.
-- Outputs: Screen specification to Mutarisi; product claims to Babatunde.
-- See docs/OVERLAPS.md; do not silently change a shared version.
-
-## Changed this session
-
-PR #2 records Lethabo's coordination scaffolding, predecessor remediation evidence, ADR consolidation, wireframe references and Figma links. Sibusiso reviewed those changes on 13 September; corrections are recorded on the review branch rather than silently rewriting the author history.
+See your work order's **Depends on → hands off to** line. Shared files are claimed in `docs/OVERLAPS.md`; never silently change a shared contract.
 
 ## Needs and blockers
 
-- Model provenance and licence evidence missing → Lethabo completes G12 before any model artifact is accepted.
-- shared contract dispute → both leads.
-- unavailable user testers → Babatunde recruits with consent.
-
-Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
+- Add new blockers here with the person's name and the evidence needed.
 
 ## Decisions affecting others
 
@@ -106,15 +87,11 @@ No approved decisions. Proposed tasks depend on both-lead acceptance; decisions 
 
 ## Definition of done
 
-Every assigned leaf has the independent evidence in the table, reviewer acceptance, relevant checks, honest built/specified/simulated status, an updated personal log and BUILD-LOG entry, and business handoff when capability changes. Blocked tasks remain blocked; no inferred approval from elapsed time.
+Every work-order item has its acceptance checks ticked with evidence, reviewer acceptance, the relevant checks passing, an honest built/specified/simulated status, this file and a `docs/build-log/entries/` file updated, and its `docs/CHECKLIST.md` P3 row ticked. Blocked tasks stay blocked; no approval is inferred from elapsed time.
 
 ## Outside-role work
 
-- Transport and venue logistics.
-- accessible printed demo fallback.
-- shared review-slot scheduling.
-
-These are proposed additional contributions, not unbudgeted critical-path commitments. Agree ownership and time with leads before starting.
+None assigned for the build weekend. Agree any extra contribution with the leads before starting.
 
 ## Running log
 

@@ -4,7 +4,7 @@
 >
 > **Every number here is printed by** `python3 scripts/economics_vigil_anchor.py` (standard library only; `--json` for machine output). Code does the arithmetic. If this page and the script disagree, the script wins and this page is wrong.
 >
-> **Supersedes** the R299 KHAYA model in `docs/08-BUSINESS.md` §2.1 and `scripts/economics_engine.py` (PR #40).
+> **Supersedes** the R299 KHAYA model in `archive/2026-09-four-layer/docs/08-BUSINESS.md` §2.1 and `scripts/economics_engine.py` (PR #40).
 
 ---
 

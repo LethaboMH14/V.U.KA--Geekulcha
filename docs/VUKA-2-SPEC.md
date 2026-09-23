@@ -4,7 +4,7 @@
 >
 > **Read with:** `docs/MASTER-CONTEXT.md` (what we are judged on) · `docs/STAGED-DURESS-DEFENCE.md` (why the design resists a faked duress event) · `docs/ECONOMICS-VIGIL-ANCHOR.md` (who pays) · your own `team/<name>.md` work order.
 >
-> **Supersedes in part:** `docs/00-SPEC.md` and `docs/01-ARCHITECTURE.md` for everything about KHAYA, UMOJA, entities, sightings, cameras and the `watch_candidate → flagged` state machine. Those documents are kept as lineage, not deleted.
+> **Supersedes in part:** `archive/2026-09-four-layer/docs/00-SPEC.md` and `…/01-ARCHITECTURE.md` for everything about KHAYA, UMOJA, entities, sightings, cameras and the `watch_candidate → flagged` state machine. Those documents are kept as lineage, not deleted.
 
 ---
 
@@ -331,9 +331,9 @@ Minimal deliverables come **before** their consumers (B7). "Min" means the small
 
 | When (SAST) | Milestone | Owner |
 |---|---|---|
-| Wed 23 | Pivot PR merged; organiser email sent about pre-event building | Lethabo |
+| Wed 23 | Pivot PR merged. **Pre-event building confirmed by the organisers (23 Sep)** | Lethabo |
 | **Thu 24 09:00** | Canonical and Merkle vectors, including rejection vectors (Python reference) | Sibusiso |
-| Thu 24 12:00 | Contract v2 (B1–B5 reflected) + pinned mock server; organiser answer due | Sibusiso · Lethabo |
+| Thu 24 12:00 | Contract v2 (B1–B5 reflected) + pinned mock server | Sibusiso |
 | Thu 24 12:00 | PIN-authority and incident rules agreed (§8, §9) | Lethabo · Ipeleng |
 | Thu 24 14:00 | `shared/` canonical, DER and Merkle passing the vectors | Ipeleng |
 | Thu 24 14:00–16:00 | Hedera spike: topic with `submitKey`, key-manifest message, mirror read-back | Sibusiso |
@@ -354,7 +354,7 @@ Minimal deliverables come **before** their consumers (B7). "Min" means the small
 
 **If the APK is not cold-installing at Thu 22:00:** Mutarisi takes over the release build on Friday morning with Vukosi. Until then, the demo phone runs a USB-installed debug build, and we say so. The QR download on the slide appears only once a release build installs cold.
 
-**If the organisers rule out building before Fri 16:00:**
+**If the organisers had ruled out building before Fri 16:00** *(not needed — pre-event building was confirmed on 23 Sep; kept for the record)*:
 - Product work stops at once. Nothing built after the ruling merges before 16:00.
 - `pre-hackathon-baseline` then holds only what is already on `main`: specifications, ADRs, contracts and vectors, the governance files, and the lineage anchor library from PR #39. We declare the baseline to the judges.
 - Thursday is used for setup only: accounts (Hedera testnet, Azure, Firebase), toolchains, Figma, test phones, and an empty signed-APK pipeline with no product code.

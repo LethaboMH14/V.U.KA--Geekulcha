@@ -17,14 +17,8 @@
 team/mutarisi.md                   @LethaboMH14 @mutarisi-chibaya
 team/ipeleng.md                    @LethaboMH14 @Ipeleng-Modise
 team/babatunde.md                  @LethaboMH14 @tunde3zy-commits
-docs/wireframes/                   @LethaboMH14 @mutarisi-chibaya
-docs/PSIRA-POSITION.md             @LethaboMH14 @Ipeleng-Modise
-docs/POPIA-POSITION.md             @LethaboMH14 @Ipeleng-Modise
 docs/RICA-POSITION.md              @LethaboMH14 @Ipeleng-Modise
-docs/GATED-ACCESS-CODE-REVIEW.md   @LethaboMH14 @Ipeleng-Modise
 docs/POPIA-IO-REGISTRATION.md      @LethaboMH14 @Ipeleng-Modise
-docs/reviews/                      @LethaboMH14 @Ipeleng-Modise
-docs/08-BUSINESS.md                @LethaboMH14 @tunde3zy-commits
 docs/LEAN-CANVAS.md                @LethaboMH14 @tunde3zy-commits
 docs/SONKE-OVERVIEW.md             @LethaboMH14 @tunde3zy-commits
 docs/COMPETITORS.md                @LethaboMH14 @tunde3zy-commits
@@ -35,7 +29,6 @@ team/vukosi.md                     @LethaboMH14 @KhozaVu
 
 # Sibusiso's first-review people
 team/khutso.md                     @Sibusiso-K @KhutsoMothopa
-appliance/                         @Sibusiso-K @KhozaVu
 docs/EVIDENCE.md                   @Sibusiso-K @KhutsoMothopa
 docs/CHECKLIST.md                  @Sibusiso-K @KhutsoMothopa
 docs/MASTER-CONTEXT.md             @Sibusiso-K @KhutsoMothopa
@@ -47,9 +40,7 @@ docs/build-log/                    @Sibusiso-K @KhutsoMothopa
 # branch protection's "require review from code owners" plus this list is
 # the closest native approximation — the rest is still on us to check.
 contracts/                         @Sibusiso-K @LethaboMH14 @Ipeleng-Modise
-server/src/auth/                   @Sibusiso-K @LethaboMH14 @Ipeleng-Modise
 docs/adr.md                        @Sibusiso-K @LethaboMH14
-docs/CONTRACT-APPROVAL-RECORD.md   @Sibusiso-K @LethaboMH14
 docs/OVERLAPS.md                   @Sibusiso-K @LethaboMH14
 
 # Architecture / product — Lethabo owns
@@ -58,8 +49,7 @@ dashboard/                         @LethaboMH14 @mutarisi-chibaya @Ipeleng-Modis
 shared/                            @Sibusiso-K @LethaboMH14 @Ipeleng-Modise
 anchor/                            @Sibusiso-K @LethaboMH14
 docs/VUKA-2-SPEC.md                @LethaboMH14 @Sibusiso-K
-brain/                             @LethaboMH14
-docs/00-SPEC.md                    @LethaboMH14
-docs/01-ARCHITECTURE.md            @LethaboMH14
 RULES.md                           @LethaboMH14 @Sibusiso-K
 AGENTS.md                          @LethaboMH14 @Sibusiso-K
+server/                            @Sibusiso-K @LethaboMH14 @Ipeleng-Modise
+archive/                           @LethaboMH14 @Sibusiso-K

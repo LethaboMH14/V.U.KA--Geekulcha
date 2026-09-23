@@ -85,32 +85,15 @@
 
 ## Sequenced work
 
-**Superseded 23 September 2026 by the work order above** — kept for history; do not execute these rows. All hours and dates below are ASSUMPTIONS, subject to availability and gates.
-
-| Date | WBS | Hours | Task | Dependencies | Acceptance evidence |
-|---|---|---:|---|---|---|
-| Sep 16 | 2.3 | 6 | Build or draw member/setup wireframes | 2.2 | S01–S07 checked by Lethabo on narrow viewport |
-| Sep 17 | 2.4 | 6 | Build or draw operator/subject wireframes | 2.2 | S08–S12 include stale/error and rights states |
-| Sep 18 | 3.4 | 6 | Connect one synthetic end-to-end flow | 2.4,3.3 | Candidate→human review→receipt→record; stale status checked |
-| Sep 21 | 6.1 | 4 | Prepare accessible offline visual fallback | 4.5 | Local assets open without internet; sim_ and limitation labels retained |
+Replaced on 23 Sep 2026 by the work order above. The four-layer sequenced work, declarations and self-reviews are kept in [this file's history](../archive/2026-09-four-layer/team/mutarisi-history.md).
 
 ## Interfaces
 
-- Inputs: Approved screens from Lethabo; API schema from Sibusiso.
-- Outputs: Screen state requirements to backend; task walkthrough to Khutso.
-- See docs/OVERLAPS.md; do not silently change a shared version.
-
-## Changed this session
-
-No work by Mutarisi Chibaya is asserted. This package was created by the assistant. No files are reserved and no PR exists.
+See your work order's **Depends on → hands off to** line. Shared files are claimed in `docs/OVERLAPS.md`; never silently change a shared contract.
 
 ## Needs and blockers
 
-- Schema churn → both leads freeze contract.
-- inaccessible copy → Lethabo language reviewers.
-- hardware unavailable → Vukosi provides clearly labelled synthetic fixture.
-
-Needed dates: before the dependent WBS leaf above; owner records actual evidence and escalation here.
+- Add new blockers here with the person's name and the evidence needed.
 
 ## Decisions affecting others
 
@@ -118,15 +101,11 @@ No approved decisions. Proposed tasks depend on both-lead acceptance; decisions 
 
 ## Definition of done
 
-Every assigned leaf has the independent evidence in the table, reviewer acceptance, relevant checks, honest built/specified/simulated status, an updated personal log and BUILD-LOG entry, and business handoff when capability changes. Blocked tasks remain blocked; no inferred approval from elapsed time.
+Every work-order item has its acceptance checks ticked with evidence, reviewer acceptance, the relevant checks passing, an honest built/specified/simulated status, this file and a `docs/build-log/entries/` file updated, and its `docs/CHECKLIST.md` P3 row ticked. Blocked tasks stay blocked; no approval is inferred from elapsed time.
 
 ## Outside-role work
 
-- Projector/contrast checks.
-- screenshot inventory for offline fallback.
-- keyboard navigation review of subject portal.
-
-These are proposed additional contributions, not unbudgeted critical-path commitments. Agree ownership and time with leads before starting.
+None assigned for the build weekend. Agree any extra contribution with the leads before starting.
 
 ## Running log
 

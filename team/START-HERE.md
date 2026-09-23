@@ -9,7 +9,7 @@ VUKA is now **VIGIL + ANCHOR** (ADR-0034). Your task list is the **Work order** 
    - Windows: `pwsh -File scripts/install-security.ps1`
    - macOS/Linux: install Gitleaks 8.24.3, put it on your PATH, then run `git config --local core.hooksPath .githooks`
    - Never bypass the hook with `--no-verify`.
-3. **Tools:** Node 18 or newer, Python 3.11 and the GitHub CLI (`gh auth login`).
+3. **Tools:** Node 22 LTS or newer, Python 3.11 and the GitHub CLI (`gh auth login`).
 4. **Check it works:** `node scripts/check-docs.mjs && node scripts/check-intake.mjs` should pass, and `python scripts/economics_vigil_anchor.py` should print break-even 10,901 at R20.
 5. **Fill in your team file:** your real AI tool and model (several still say `UNDECLARED`), your weekend availability, and one running-log line saying you **accept** your work order or what blocks you.
 6. **Start your AI tool** with the prompt in `docs/SESSION-PROMPT.md`. Change one word: your name.
@@ -21,7 +21,7 @@ VUKA is now **VIGIL + ANCHOR** (ADR-0034). Your task list is the **Work order** 
 | **Vukosi, Mutarisi** (Android) | Android Studio with SDK Platform 34 and JDK 17, per React Native 0.74's "Set Up Your Environment" guide; a phone with USB debugging on | `java -version` shows 17; `adb devices` lists your phone |
 | **Sibusiso** (server) | Python 3.11 virtual environment; PostgreSQL 16 (local or Docker); Hedera portal **testnet** account; Azure for Students | `psql --version`; the testnet account id is recorded in your team file (never the key) |
 | **Khutso** (delivery, `sim_bank`) | Firebase project for Cloud Messaging; a South African SMS gateway trial | Server credentials are in App Service settings or a local `.env` — never in git |
-| **Ipeleng** (verify page, `shared/`) | Node 18+ with the repo's test runner (`npm test`) | `npm test` runs |
+| **Ipeleng** (verify page, `shared/`) | Node 22+; vitest for `shared/` | `npm test` passes the contract tests (10/10 today) |
 | **Lethabo** (Figma) | Share Figma file `pZYQ3m68SWIMFqaOk8kN3R` with Mutarisi | Mutarisi can open it |
 | **Babatunde** | Nothing extra | Can run the economics script |
 
@@ -33,7 +33,7 @@ VUKA is now **VIGIL + ANCHOR** (ADR-0034). Your task list is the **Work order** 
 
 | Person | First task (full steps in your work order) | Due | First reviewer |
 |---|---|---|---|
-| **Lethabo** | Pivot PR merged; organiser email; PIN-authority rules with Ipeleng; Figma pages | Thu 12:00 | Sibusiso |
+| **Lethabo** | Pivot PR merged; PIN-authority rules with Ipeleng; Figma pages | Thu 12:00 | Sibusiso |
 | **Sibusiso** | Canonical and Merkle vectors, then contract v2 | Thu 09:00 / 12:00 | Lethabo |
 | **Vukosi** | File-by-file port → signed release APK cold-installed from a QR code | **Thu 22:00** | Lethabo |
 | **Mutarisi** | UI foundation in `app/`; APK backup owner; guardian-min receiver | Thu / Fri 10:00 | Lethabo |

@@ -1,32 +1,12 @@
 # app/ — VIGIL
 
-**The person.** Android, on-device, offline-first. Satisfies F1–F4, F9 (`docs/00-SPEC.md` §3.1).
+The Android app: journey mode, on-device YAMNet detection, the discreet "Journey check", guardian mode, and a signed, queued event record. It is specified in `docs/VUKA-2-SPEC.md` §2 (V1–V10, G1–G6), §5, §9 and §11.
 
-**Empty scaffold.** No code lands here yet — this directory exists so the port (`docs/HANDOVER.md` Task 4) has somewhere to go without a directory-creation merge collision. The working system this ports from exists in the predecessor codebase; see `docs/HANDOVER.md` §1 and §4.
+**Being built from 24 Sep 2026.** Owners: Vukosi (native, sensing, signing, release build) and Mutarisi (UI; APK backup). It is a new React Native 0.74.5 project, with predecessor files ported **one at a time** and reviewed (RULES.md).
 
-## Structure
-
-```
-android/
-  service/          Kotlin foreground service — background audio, motion, PIN sensing
-  modules/           Native bridges: AudioSensor, MotionSensor, PinSensor
-  assets/models/     Shipped LiteRT (TFLite) models, INT8-quantised, ≤ 20 MB total (N4)
-src/
-  sensors/           Sensor read paths feeding the fusion brain
-  brain/             Fusion, state machine — pure functions, no I/O. Golden-fixture-shared with brain/ (root)
-  evidence/          Ring buffer, hash chain, encrypted local store
-  api/               Client for UMOJA's frozen contract (shared/contract.ts)
-  ui/                Screens — 12 priority wireframes land here (G11 in docs/OPEN-GAPS.md)
-```
-
-## Non-negotiable, before any code lands here
-
-- **TypeScript strict** (`docs/HANDOVER.md` §7, `RULES.md`).
-- `src/brain/` is a **pure function** — no I/O, no clock, no platform calls. One golden fixture is the referee for both this and `server/`'s equivalent (`docs/00-SPEC.md` §3.1 fusion formula).
-- The duress credential (F3): real PIN and duress PIN unlock **identically** — same animation, same latency, same subsequent UI state, no observable network/UI/timing difference. This is the founding abuse case; a test must assert the absence of a difference, not just the presence of the duress path.
-- Model manifest with sha256 for every shipped model. Verify by loading the interpreter and reading `get_input_details()` — a recorded-metadata mismatch caught a real bug in July (`docs/HANDOVER.md` §6, `RULES.md`).
-- No code path may set `flagged`. Machine ceiling is `watch_candidate` (E1, `docs/00-SPEC.md` §4.3).
-
-## Budgets this directory is measured against
-
-Per-inference latency ≤ 50 ms on a 2 GB device (N5); vision throughput ≥ 8 FPS (N3); shipped model budget ≤ 20 MB (N4). See `docs/00-SPEC.md` §2.2.
+Rules that bind this folder:
+- Map YAMNet classes by label, and assert the input shape.
+- The model is fetched by `scripts/fetch_models.py` with a sha256 check and never committed.
+- Salts and nonces come from native `SecureRandom`.
+- No `CAMERA`, `SEND_SMS`, background-location or boot-receiver permissions.
+- The duress path is pixel-identical to the normal one (test T15).

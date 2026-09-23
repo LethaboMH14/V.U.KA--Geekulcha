@@ -1,6 +1,6 @@
 # Team files
 
-Seven people, one file each. **Start with [START-HERE.md](START-HERE.md)**: day-one setup, then your first task. Your full task list is the **Work order** section of your own file, issued 23 Sep 2026 for the VIGIL + ANCHOR build ([spec](../docs/VUKA-2-SPEC.md)). The older sequenced-work tables and the [WBS](../docs/audit/05-team-operating-system.md) are kept as history for the parked layers.
+Seven people, one file each. **Start with [START-HERE.md](START-HERE.md)**: day-one setup, then your first task. Your full task list is the **Work order** section of your own file, issued 23 Sep 2026 for the VIGIL + ANCHOR build ([spec](../docs/VUKA-2-SPEC.md)). The four-layer tables, WBS and per-person history are archived under [`archive/2026-09-four-layer/`](../archive/2026-09-four-layer/README.md).
 
 - [Lethabo](lethabo.md) — product, UX, architecture, final gate
 - [Sibusiso](sibusiso.md) — contract v2, ANCHOR server, anchoring, deployment
