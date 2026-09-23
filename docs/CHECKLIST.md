@@ -98,6 +98,6 @@ Phases 1–2, the bonus row, the operating-system rows and the old showcase rows
 | Date | Change | Who asked |
 |---|---|---|
 | 14 Sep 2026 | File created. Every Phase 1 / Phase 2 / operating-system / showcase item entered on day one, so scope drift from here is visible | Lethabo |
-| 23 Sep 2026 | VIGIL + ANCHOR pivot: Phase 3 added (41 rows); 12 earlier rows ⊘ or re-scoped with dated reasons; published criteria letters I/T/U/S/B/Q adopted for new rows | Lethabo |
+| 23 Sep 2026 | VIGIL + ANCHOR pivot: Phase 3 added (41 rows); 12 earlier rows ⊘ and 2 re-scoped, each with a dated reason; published criteria letters I/T/U/S/B/Q adopted for new rows | Lethabo |
 | 23 Sep 2026 (evening) | PR #43 review response: 5 rows added (P3.L8, P3.A6, P3.S7, P3.U5, P3.B7) — P3 now 46 rows; coverage recomputed | Lethabo |
 | 23 Sep 2026 (night) | Pivot clean-up: four-layer phases archived (nothing deleted); live rows carried into P3 as P3.B8, P3.B9, P3.K7; P3.L2 closed (pre-event building confirmed). P3 now 49 rows | Lethabo |

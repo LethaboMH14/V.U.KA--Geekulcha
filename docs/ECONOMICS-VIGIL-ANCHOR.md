@@ -27,7 +27,7 @@
 | **Break-even at R20** (rounded **up**) | **10,901 members** | `ESTIMATE` |
 | Operating margin at R20 | 10,000 members **−6.4%** · 25,000 **40.3%** · 50,000 **55.8%** · 100,000 **63.6%** | `ESTIMATE` |
 | Annual operating profit at R20 | 25,000 members **R2.42m** · 50,000 **R6.70m** · 100,000 **R15.27m** | `ESTIMATE` |
-| Anchoring, whole network | hourly **R9.34/month** + immediate roots **at most R560.13/month** (one per 60 s window) = **ceiling R569.47/month whatever the member count**; ≈ R259 immediate at 10,000 members × 2 PIN-gated outcomes a month (`ASSUMPTION`) | `ESTIMATE` — $0.0008 per message × R16.21 (Hedera fee from Jan 2026; USD/ZAR 22 Sep 2026) |
+| Anchoring, whole network | hourly **R9.34/month** + immediate roots **at most R560.13/month** (one per 60 s window) = **ceiling R569.47/month, whatever the member count and whatever the check-in volume**, because immediate roots are coalesced to at most one per 60 s across the whole network (1,440 a day; `docs/VUKA-2-SPEC.md` §10). Without coalescing, one outcome per member per day at 10,000 members would cost about R3,900/month; ≈ R259 immediate at 10,000 members × 2 PIN-gated outcomes a month (`ASSUMPTION`) | `ESTIMATE` — $0.0008 per message × R16.21 (Hedera fee from Jan 2026; USD/ZAR 22 Sep 2026) |
 
 **Break-even by price** (⌈fixed R155,659.47 ÷ (price − R5.72)⌉, rounded up):
 
@@ -50,7 +50,7 @@ adoption in one channel       F(t) = (1 − e^−(p+q)t) / (1 + (q/p)·e^−(p+q
 
 | Product | Price | What it tells a buyer |
 |---|---|---|
-| **FNB GuardMe** (Aura) in-app panic button | R19.90/month after a 3-month trial | A bank already sells safety inside its app. It needs a press; **VIGIL works when you can't press** |
+| **FNB GuardMe** (Aura) in-app panic button | R19.90/month after a 3-month trial (press report, Apr 2022 — re-check the current price) | A bank already sells safety inside its app. It needs a press; **VIGIL works when you can't press** |
 | **iTOO [My]Cylution** | from **R22.50/month** | Already insures **express kidnapping** and theft of funds as named perils. It's a partner or an objection, and either way we pre-empt it: "we make those claims cheaper to verify" |
 | Vehicle trackers (Tracker, Netstar, Cartrack) | R89–R335/month | Policyholders already pay monthly for insurer-linked safety tech |
 | Discovery Insure Vitality Drive | R150 once-off device activation | A major insurer already runs a phone-and-telematics safety programme |

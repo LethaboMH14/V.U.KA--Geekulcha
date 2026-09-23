@@ -125,7 +125,7 @@ Full provenance in `EVIDENCE.md` ("Verified 23 September 2026").
 | Digital banking crime, SA | **R2.4bn, 110,074 incidents (2025)**; banking apps ≈ 89% of cases | `FACT` — SABRIC 2025 report |
 | Kidnappings | **17,061 (2023/24)**, up 264% since 2014/15; **44% during a hijacking** | `FACT` — SAPS via ISS Africa |
 | Bank fraud attempts rising | **75%** of SA banking leaders (vendor survey) | `FACT` — BioCatch, May 2026 |
-| Price anchor | FNB GuardMe **R19.90/month**; iTOO express-kidnapping cover **from R22.50/month** | `FACT` |
+| Price anchor | FNB GuardMe **R19.90/month** (press report, Apr 2022); iTOO express-kidnapping cover **from R22.50/month** (2026) | `FACT` — re-check GuardMe's current price |
 | VUKA price | **~R20 per member per month**, partner-funded; app free | `ASSUMPTION` — the starting point, set 23 Sep. Babatunde owns it and may revise it during the build |
 | Break-even | **10,901 members at R20** (rounded up; includes the anchoring ceiling). If the price changes, quote whatever the script prints | `ESTIMATE` — `scripts/economics_vigil_anchor.py` |
 | Anchoring cost, whole network | **at most ≈ R570/month** (hourly R9.34 + immediate roots capped at one a minute), whatever the member count | `ESTIMATE` — Hedera $0.0008/message, R16.21/USD |
@@ -151,7 +151,7 @@ Full provenance in `EVIDENCE.md` ("Verified 23 September 2026").
 | What we said we'd do, ticked | `CHECKLIST.md` (section P3) |
 | What is true and how we know | `EVIDENCE.md` |
 | What is broken, published | `OPEN-GAPS.md` |
-| Decisions and why | `adr.md` (ADR-0034 to ADR-0038 for the pivot) |
+| Decisions and why | `adr.md` (ADR-0034 to ADR-0038 for the pivot); who accepted them: `ADR-ACCEPTANCE-RECORD.md` |
 | What changed and why | `build-log/entries/` |
 | Shared files — claim before editing | `OVERLAPS.md` |
 

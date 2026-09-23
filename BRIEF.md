@@ -8,7 +8,7 @@
 
 **Who does what:** Lethabo, product/UX/architecture and final gate. Sibusiso, contract v2, ANCHOR server, anchoring, deployment. Vukosi, VIGIL sensing, signing and measurement (reports to Lethabo). Mutarisi, VIGIL and guardian screens. Khutso, evidence, checklist, guardian delivery, `sim_bank`. Ipeleng, security, privacy, verify-page cryptography, SSDLC. Babatunde, economics, deck, pitch. Your full work order is in `team/<you>.md`.
 
-**Current reality:** the hackathon repo has specs, contracts, anchor chain code (PR #39) and governance, but no VIGIL app yet; the predecessor app is a reference to port file by file. No VIGIL number is measured yet: detection, latency, battery and delivery stay "not measured" until `docs/VUKA-2-SPEC.md` §16 runs. The 318 ms p95 (n = 10) historical figure measured a retired relay and is never quoted for VIGIL.
+**Current reality:** the repo has specs, the v1 contract and governance; the anchor chain code is in open PR #39, to be reworked to format v2; there is no VIGIL app yet; the predecessor app is a reference to port file by file. No VIGIL number is measured yet: detection, latency, battery and delivery stay "not measured" until `docs/VUKA-2-SPEC.md` §16 runs. The 318 ms p95 (n = 10) historical figure measured a retired relay and is never quoted for VIGIL.
 
 **Never:** claim "proof of duress", "invisible" or "court-admissible"; send a bank signal from detection alone; let a duress path look different from a normal one; use an LLM, RAG or agent framework in the product; put personal data on chain; let the absence of a record count against anyone. Anything simulated is `sim_` in code, SIMULATED on screen and named aloud; testnet is called testnet.
 

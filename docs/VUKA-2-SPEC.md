@@ -126,10 +126,10 @@ The frozen `EvidenceEntry` shape is unchanged: `action, actor_id, target_type, t
 - `payload` holds `kind` and every specific (for example `{"kind":"checkin_result","result":"duress_pin"}`). The salt is 16 bytes from the signer's native CSPRNG.
 - **The signed statement binds the full event context** (B1). `sig` is the signature over:
   ```
-  canonical({"domain":"vuka.event.v2", "subject_id", "target_type", "target_id", "action",
+  canonical({"domain":"vuka.event.v2", "subject_id", "actor_id", "target_type", "target_id", "action",
              "source_ts": ts, "signer_key_id", "counter", "event_id", "commitment"})
   ```
-  The verifier rebuilds this statement from the outer fields and `details`. If `action`, `actor_id` (which must equal the signer's registered id), `target_type`, `target_id`, `ts` or `commitment` changes, the signature fails. Negative vectors cover each field (T21).
+  The verifier rebuilds this statement from the outer fields and `details`. `actor_id` is inside the signature and must also equal the id registered for `signer_key_id`. If `action`, `actor_id`, `target_type`, `target_id`, `ts` or `commitment` changes, the signature fails. Negative vectors cover each field (T21).
 - **Registration entries** also carry `signer_pubkey` (SPKI, base64) in **plain** `details`. A public key is not personal information, and it keeps signatures checkable after payloads are deleted. The attestation stays inside the commitment.
 - **Idempotency and replay** (§7): an identical retry of the same signed bytes returns the original receipt. A reused `event_id` with different content is rejected (409). Any unseen `counter` is accepted, and exact repeats are rejected.
 - **Legacy format v1** (PR #39: genesis `prev_hash = null`, floats accepted, no signed statement) is verified by a separate legacy path and never produced again. Format v1 and v2 entries never mix in one chain.
@@ -138,7 +138,7 @@ The frozen `EvidenceEntry` shape is unchanged: `action, actor_id, target_type, t
 
 ## 5 · Canonical form
 
-The bytes are UTF-8 of Python `json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True)`. PR #39's implementation (`anchor/chain.py:65`) already hashes these compact bytes; only its docstring and `anchor/README.md` state default separators, and both are corrected.
+The bytes are UTF-8 of Python `json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True)`. PR #39's implementation (`anchor/chain.py:65`) already hashes these compact bytes. `anchor/README.md` now states the compact form, and #39's stale docstring is corrected in its format-v2 rework (#39 is not merged).
 
 Rules:
 1. Object keys are ASCII only, sorted by code point, recursively.
