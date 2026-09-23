@@ -10,7 +10,7 @@
 
 | Collected | Never collected |
 |---|---|
-| Sound **labels and scores** only — audio is classified in memory in one-second windows (spec V3) and never stored or attached to evidence | Raw audio — not stored, full stop |
+| Sound **labels and scores** only — audio is classified in memory in 0.975-second windows (spec V3) and never stored or attached to evidence | Raw audio — not stored, full stop |
 | Location **only** on a detected signal; speed bucket only on heartbeats | Camera images, contacts beyond the chosen guardians, banking credentials |
 
 ## The legal base, in four lines
