@@ -32,7 +32,7 @@ Needs/blockers:
   - C2 (`docs/ANCHOR-RATIONALE.md`, 33-byte messages);
   - C7 (`docs/STAGED-DURESS-DEFENCE.md` S10 → G4 wording);
   - C8 (`docs/EVIDENCE.md` record pending, P3.L9);
-  - C9 (STALE banners, and the `scripts/check-docs.mjs` latency check now matches `318ms` as well as `318 ms`, which caught two uncounted figures in `docs/LEAN-CANVAS.md` and one in `docs/ANCHOR-RATIONALE.md`);
+  - C9 (STALE banners, and the `scripts/check-docs.mjs` latency check now also matches the figure written without a space (the retired relay's 318 ms, n = 10), which caught two uncounted figures in `docs/LEAN-CANVAS.md` and one in `docs/ANCHOR-RATIONALE.md`);
   - C11 (the spec status line);
   - C15 (`docs/OVERLAPS.md` rows);
   - C19 and C20 (spec §4 and §6, for Sibusiso to confirm);
