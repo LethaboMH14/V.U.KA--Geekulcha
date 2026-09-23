@@ -51,7 +51,7 @@
 | P3.K6 | Daily OpenTimestamps stamp (first on the cut line) | Khutso | I | Sep 26 | ☐ | Added 23 Sep, Lethabo |
 | P3.S1 | Own `docs/STAGED-DURESS-DEFENCE.md`; primary reads replace ⚑ | Ipeleng | S | Sep 24 | ☐ | Added 23 Sep, Lethabo |
 | P3.S2 | `shared/` canonical, DER→raw and Merkle with vitest (T01, T02) | Ipeleng | T, S | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.S3 | STRIDE threat model + abuse-test specifications T04–T19 (incl. bank-signal data flow) | Ipeleng | S | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S3 | STRIDE threat model + abuse-test specifications T04–T24 (incl. bank-signal data flow) | Ipeleng | S | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo · **Widened T19 → T24, PR #43 review (C10)** |
 | P3.S4 | Verify-page cryptography (T03–T05) | Ipeleng | I, T, S | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S5 | SSDLC submitted on Sonke | Ipeleng | S | **Sep 26 12:30** | ☐ | Added 23 Sep, Lethabo |
 | P3.S6 | Privacy policy (the required slide's source) | Ipeleng | S, B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
@@ -62,6 +62,7 @@
 | P3.B5 | Pitch script + two timed rehearsals under 3:00 | Babatunde | B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.B6 | Problem statement with the mentors (with Lethabo) | Babatunde | B, I | Sep 25 19:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.L8 | PIN authority, incident closure and removal rules agreed (§8, §9) | Lethabo, Ipeleng | S | Sep 24 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
+| P3.L9 | Commit a redacted copy of the organiser's pre-build confirmation | Lethabo | — | Sep 24 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.A6 | **Server-min** deployed: ingest + chain + export | Sibusiso | T | Sep 25 09:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.S7 | **Verify-min**: hashes, links, device signatures | Ipeleng | T, S | Sep 25 10:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.U5 | **Guardian-min receiver** screen + one FCM message; Mutarisi is also the APK backup owner | Mutarisi, Khutso | T | Sep 25 10:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
@@ -69,6 +70,7 @@
 | P3.B8 | Hedera wording in every pitch surface: a permissioned-consensus ledger with a council of up to 39; network fees paid in HBAR; we issue no token *(carried from P2.12/P2.13)* | Babatunde | B, S | Sep 26 | ☐ | Added 23 Sep, Lethabo |
 | P3.B9 | Rehearse the blockchain attacks verbatim; update `docs/BLOCKCHAIN-ATTACK-REHEARSAL.md` for Hedera + OpenTimestamps and retire the R1.30 attack *(carried from P2.14)* | Babatunde, Sibusiso | I, B | Sep 26 | ☐ | Added 23 Sep, Lethabo |
 | P3.K7 | Criteria-coverage sweep under I/T/U/S/B/Q *(carried from OS.11)* | Khutso | all | Sep 25 | ☐ | Added 23 Sep, Lethabo |
+| P3.B10 | Rewrite the Sonke overview and Lean Canvas for VIGIL + ANCHOR with live figures only | Babatunde (reviewer: Lethabo) | B, I | Sep 24 20:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 
 ---
 

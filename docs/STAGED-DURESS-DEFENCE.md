@@ -102,12 +102,12 @@ Rules:
 
 ---
 
-## 8 · Legal hooks (all ⚑ until read from primary text by Ipeleng)
+## 8 · Legal hooks (⚑ until read from primary text by Ipeleng; ECTA s15(3) and RICA s1 "intercept" — primary text read 23 Sep)
 
 | Law | What it gives us |
 |---|---|
 | **ECTA 25 of 2002, s15(3)** (primary text read 23 Sep) | A court weighs the reliability of how a data message was generated, stored and communicated; how its integrity was maintained; and how its originator was identified. ANCHOR is built to those factors. Say **"built to maximise the ECTA s15 reliability factors"**, never "court-admissible" |
 | **Cybercrimes Act 19 of 2020, ss8–9** | Staging = cyber forgery/uttering; a payout = cyber fraud |
 | **RICA 70 of 2002, s1 "intercept"** (primary text read 23 Sep) | Interception needs a *communication* whose contents are made available to someone other than the parties. On-device classification of ambient sound, with nothing stored or transmitted, very likely falls outside it. This is our reading, not an opinion — counsel question stands (`docs/RICA-POSITION.md`) |
-| **POPIA s1 "biometrics"** | Covers "voice recognition", meaning identifying *who* is speaking. YAMNet classifies *what sound* occurred and identifies nobody. The 3-second buffer is still personal information while it exists, so minimality applies |
+| **POPIA s1 "biometrics"** | Covers "voice recognition", meaning identifying *who* is speaking. YAMNet classifies *what sound* occurred and identifies nobody. Each 0.975 s classification window is still personal information while it exists in memory — no audio is stored (spec V3) — so minimality applies |
 | **UK PSR APP reimbursement (from 7 Oct 2024)** | The comparison model: reimbursement is the default, with a high "gross negligence" bar. VUKA's record lowers the cost of investigating a claim; it is **not** a new bar victims must clear |

@@ -29,3 +29,5 @@ Who accepted which decision, when, and on which record. `RULES.md` requires a li
 | **S4** — extend the 24 h post-recovery freeze to bulk export (`GET /v1/subjects/{id}/export`) | Lethabo, with §9 | No date set | Should-fix, does not block merge |
 
 None of B1–S4 blocks the PR #43 merge that already happened (`8c621dfc`, 19:24:39 UTC) — Ipeleng's review says so directly, and the merge landed after her review was posted.
+
+**Follow-up, 23 Sep 2026.** The spec text for B1, B2, B3, S1, S2 and S4 is proposed in the PR from branch `docs/pr43-review-followups`. S1 still needs Sibusiso to confirm it in contract v2; S4 and the recovery row still need Lethabo and Ipeleng to confirm them at P3.L8. S3, the privacy policy, stays with Ipeleng. The conditions close only once that PR merges.

@@ -49,7 +49,7 @@
 1. **Wed 23–Thu 24 by 12:00** — review MASTER-CONTEXT v3 and the "Verified 23 September 2026" section of `docs/EVIDENCE.md`. Open every source, confirm the quote, and fix or flag ⚑ anything that doesn't hold. Tick each row in your running log.
 2. **Thu 24** — read the SAPS FY2024/25 and FY2025/26 national totals **by eye** from the official PDF (cite page and table) into `docs/EVIDENCE.md`. Never paste machine-extracted numbers.
 3. **Thu 24** — confirm the criterion letters on every P3 row in `docs/CHECKLIST.md` and run the coverage sweep (OS.11) under the new criteria.
-4. **Thu 24 by 20:00** — `docs/REQUIREMENTS-TRACE.md`: every requirement in `docs/VUKA-2-SPEC.md` §2 (V1–V10, G1–G6, A1–A7, S1–S4, P1–P2, D1–D3) → owner → test ID (T01–T20) → status.
+4. **Thu 24 by 20:00** — `docs/REQUIREMENTS-TRACE.md`: every requirement in `docs/VUKA-2-SPEC.md` §2 (V1–V10, G1–G6, A1–A7, S1–S4, P1–P2, D1–D3) → owner → test ID (T01–T24) → status. Owners for the newer tests: **T16** Vukosi (app) with Sibusiso (server); **T21** Sibusiso (vectors) with Ipeleng (verify); **T22** Ipeleng (verify page); **T23** and **T24** Sibusiso.
 5. **Thu 24–Fri 25 by 20:00 — guardian delivery** (G3). **Minimal path first, by Fri 10:00:** one FCM message from the server to Mutarisi's guardian-min screen. Then:
    - Create a Firebase project (free); put the Firebase Cloud Messaging server credentials in App Service settings (never in git).
    - Implement `server/src/notify/` as the outbox consumer (§8) so every alert arrives as a **visible** high-priority notification, deduplicated by an FCM collapse key built from the outbox idempotency key.
