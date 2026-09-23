@@ -14,7 +14,8 @@ import sys
 
 
 SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
-AUDIO_SUFFIXES = (".wav", ".mp3", ".flac", ".ogg")
+AUDIO_SUFFIXES = (".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac",
+                  ".opus", ".wma", ".aiff", ".amr")
 WILSON_Z = 1.959963984540054
 
 
@@ -114,6 +115,7 @@ def report_m1(data: dict) -> dict:
     if not isinstance(clips, list):
         raise InvalidInput("M1 clips must be an array")
     clip_ids = set()
+    missed_clip_ids = []
     successes = 0
     for index, item in enumerate(clips):
         clip = _object(item, {"clip_id", "licence", "score_bp"}, f"M1 clips[{index}]")
@@ -127,11 +129,15 @@ def report_m1(data: dict) -> dict:
             raise InvalidInput(f"M1 clips[{index}].score_bp must be at most 10000")
         if not licence.strip():
             raise InvalidInput(f"M1 clips[{index}].licence must be non-empty")
-        successes += score >= threshold
+        if score >= threshold:
+            successes += 1
+        else:
+            missed_clip_ids.append(clip_id)
     n = len(clips)
     report = _base("M1_detection_recall", config, n,
                    "Positive clips with score_bp >= threshold_bp / all positive clips; Wilson 95% interval (z=1.959963984540054).",
                    successes, n)
+    report["missed_clip_ids"] = missed_clip_ids
     if n == 0:
         report["status"] = "not_measured"
         report["reason"] = "no clips in input"
@@ -168,6 +174,10 @@ def report_m2(data: dict) -> dict:
             raise InvalidInput(f"M2 runs[{index}].alarm_times_s must be an array")
         alarm_times = [_finite_number(value, f"M2 runs[{index}].alarm_times_s[{j}]", 0)
                        for j, value in enumerate(times)]
+        for alarm_time in alarm_times:
+            if alarm_time > seconds:
+                raise InvalidInput(
+                    f"M2 runs[{index}].alarm_times_s contains a time beyond armed_seconds")
         raw += len(alarm_times)
         armed_total += seconds
         previous_counted = None

@@ -119,12 +119,27 @@ class OfflineInstrumentTests(unittest.TestCase):
             with self.subTest(fixture=fixture):
                 self.assert_invalid(fixture, "m1")
 
+    def test_f2_m1_reports_only_below_threshold_ids_in_input_order(self):
+        _, report, _ = self.invoke(m1_fixture(), "m1")
+        self.assertEqual(report["reports"][0]["missed_clip_ids"],
+                         ["sim_clip_0008", "sim_clip_0009"])
+
     def test_e7_m2_refractory_merges_events_and_rate_matches_hand_oracle(self):
         code, report, _ = self.invoke(m2_fixture(), "m2")
         m2 = report["reports"][0]
         self.assertEqual(code, 0)
         self.assertEqual((m2["raw"], m2["counted"], m2["armed_seconds_total"]), (3, 2, 1800))
         self.assertEqual(m2["false_alarms_per_hour"], 4.0)
+
+    def test_f1_m2_rejects_alarm_after_armed_window_but_accepts_endpoint(self):
+        outside = m2_fixture([{"run_id": "sim_r1", "armed_seconds": 300,
+                               "consent_recorded": True, "alarm_times_s": [300.01]}])
+        self.assert_invalid(outside, "m2")
+        endpoint = m2_fixture([{"run_id": "sim_r1", "armed_seconds": 300,
+                                "consent_recorded": True, "alarm_times_s": [300.0]}])
+        code, report, _ = self.invoke(endpoint, "m2")
+        self.assertEqual(code, 0)
+        self.assertEqual(report["reports"][0]["counted"], 1)
 
     def test_e8_m2_alarm_at_refractory_boundary_counts(self):
         fixture = m2_fixture([{"run_id": "sim_r1", "armed_seconds": 3600,
@@ -206,6 +221,13 @@ class OfflineInstrumentTests(unittest.TestCase):
                 poisoned[f"sim_recording{suffix}"] = "not audio bytes"
                 with self.subTest(suffix=suffix, measure=measure, key=True):
                     self.assert_invalid(poisoned, measure)
+
+    def test_f3_audio_guard_rejects_additional_common_suffixes(self):
+        for suffix in (".m4a", ".aac", ".opus", ".wma", ".aiff", ".amr"):
+            fixture = m1_fixture([7000])
+            fixture["config"]["class"] = f"sim_label{suffix}"
+            with self.subTest(suffix=suffix):
+                self.assert_invalid(fixture, "m1")
 
     def test_e18_whole_suite_forbids_socket_network_use(self):
         with self.assertRaises(AssertionError):
