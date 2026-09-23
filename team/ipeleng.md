@@ -54,7 +54,7 @@
    - Assets.
    - Trust boundaries: phone, server, guardian phone, Hedera, `sim_bank`.
    - Threats per boundary, with mitigations mapped to spec IDs and tests.
-4. **Thu 24 by 20:00** — write the **specification** (fixture, oracle, prerequisites) for each of T04–T24, starting from the "Needs" column in §15. Sibusiso and Khutso write the server-side tests and Vukosi the device-side ones; you review each.
+4. **Thu 24 by 20:00** — write the **specification** (fixture, oracle, prerequisites) for each of T04–T24 and T30–T49, starting from the "Needs" column in §15. Sibusiso and Khutso write the server-side tests and Vukosi the device-side ones; you review each.
 5. **Fri 25 by 10:00 — verify-min** for the Fri 12:00 slice: hashes, prev links and device signatures from an export, with no mirror yet. Then **Fri–Sat by 18:00 — full verify-page cryptography:**
    - Recompute event hashes (WebCrypto SHA-256 over canonical bytes).
    - Check prev links and the first broken index.
@@ -66,7 +66,7 @@
 6. **Sat 11:00** (internal; programme deadline 12:30) — `docs/SSDLC-GKHACK26.md`, submitted on Sonke:
    - Requirements and the threat model.
    - Secure design decisions (ADR-0034–0038) and secure coding rules (RULES.md).
-   - Tests T01–T24 with status.
+   - Tests T01–T24 and T30–T49 with status.
    - Deployment and incident response (the weekend fast path and rollback).
    - Privacy.
 7. **Sat by 18:00** — `docs/PRIVACY-POLICY.md` (the source for the required data-privacy-policies slide):
@@ -192,13 +192,13 @@
 
 | ID | Condition | Owner | Due | Test / evidence | State |
 |---|---|---|---|---|---|
-| B1 | Remaining guardians notified of additions and scheduled removals, naming the other party; ADR-0036(5) qualified; §17 line; T24 extended | Lethabo (spec), you (test) | Thu, §8/§9 meeting | T24, T37 | ☐ |
-| B2 | §17: a compromised server can suppress or fabricate escalation; independent witnesses named | Lethabo | Thu | §17 text; recorded observation | ☐ |
-| B3 | §17: unlocked phone forces `no_answer` escalation and bank signal; `signal_detected` carries location | Lethabo | Thu | §17 text; recorded observation | ☐ |
-| S1 | `bank_signal_sent` records its trigger | Sibusiso | contract v2 | T38 | ☐ |
-| S2 | Onboarding recommends ≥ 2 guardians; §17 lone-guardian line | Vukosi, Mutarisi | before Sat 18:00 | copy review | ☐ |
-| S3 | Privacy-policy text: residuals, cooling-off, hash permanence, guardian departure, bank as recipient | you | Sat 18:00 | `docs/PRIVACY-POLICY.md` | ☐ |
-| S4 | 24 h post-recovery freeze covers bulk export | Lethabo | with §9 | T39 | ☐ |
+| B1 | Remaining guardians notified of additions and scheduled removals, naming the other party; ADR-0036(5) qualified; §17 line; T24 extended | Lethabo (spec), you (test) | Thu, §8/§9 meeting | T24, T37 | Spec text merged in #48 (`98987a5`); open until confirmed at P3.L8 and T24 runs |
+| B2 | §17: a compromised server can suppress or fabricate escalation; independent witnesses named | Lethabo | Thu | §17 text; recorded observation | Spec text merged in #48; open until the recorded observation exists |
+| B3 | §17: unlocked phone forces `no_answer` escalation and bank signal; `signal_detected` carries location | Lethabo | Thu | §17 text; recorded observation | Spec text merged in #48; open until the recorded observation exists |
+| S1 | `bank_signal_sent` records its trigger | Sibusiso | contract v2 | T38 | Spec text merged in #48; open until contract v2 (#51) carries it |
+| S2 | Onboarding recommends ≥ 2 guardians; §17 lone-guardian line | Vukosi, Mutarisi | before Sat 18:00 | copy review | Spec text merged in #48; open until the app copy exists |
+| S3 | Privacy-policy text: residuals, cooling-off, hash permanence, guardian departure, bank as recipient | you | Sat 18:00 | `docs/PRIVACY-POLICY.md` | Open |
+| S4 | 24 h post-recovery freeze covers bulk export | Lethabo | with §9 | T39 | Spec text merged in #48; open until confirmed at P3.L8 |
 
 ## Sequenced work
 
