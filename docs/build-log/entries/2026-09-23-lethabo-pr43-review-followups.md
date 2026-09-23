@@ -27,7 +27,24 @@ Evidence: `node scripts/check-docs.mjs` and `node --test "test/**/*.test.mjs"` �
 
 Decision: Clarifies and extends the accepted spec/ADRs per Ipeleng's recorded conditions; no ADR text was edited.
 
-Needs/blockers: **Not completed in this pass** — C2's remaining "32-byte" occurrences outside the four named files, C4 (`duress_pin` as an event-kind search), C6 (recovery-row duress-column wording double-check with Ipeleng), C9 (SONKE-OVERVIEW.md/LEAN-CANVAS.md stale banners + check-docs regex), C11 (spec line 3 status sentence), C15 (`docs/OVERLAPS.md` claim rows), C16's `RULES.md`/`AGENTS.md` gate-language sweep beyond the lines found, C19/C20 (spec §4/§6 clarifications), C21 (`team/vukosi.md`, `team/babatunde.md`). Left for a follow-up PR; listed in the summary file.
+Needs/blockers:
+- **Every packet item is now done.** A second pass completed:
+  - C2 (`docs/ANCHOR-RATIONALE.md`, 33-byte messages);
+  - C7 (`docs/STAGED-DURESS-DEFENCE.md` S10 → G4 wording);
+  - C8 (`docs/EVIDENCE.md` record pending, P3.L9);
+  - C9 (STALE banners, and the `scripts/check-docs.mjs` latency check now matches `318ms` as well as `318 ms`, which caught two uncounted figures in `docs/LEAN-CANVAS.md` and one in `docs/ANCHOR-RATIONALE.md`);
+  - C11 (the spec status line);
+  - C15 (`docs/OVERLAPS.md` rows);
+  - C19 and C20 (spec §4 and §6, for Sibusiso to confirm);
+  - C21 (`team/vukosi.md`, `team/babatunde.md`);
+  - gender-neutral wording in the B1 bullets.
+- C4 needed no change: `duress_pin` now appears only as a result value or in the acceptance record.
+- A1 was dropped on rebase, because `main` (`847225e`, Sibusiso) already records Ipeleng's conditions. A follow-up note was appended instead.
+- **Still to decide at P3.L8 (Thu 12:00):**
+  - G33, `contact_lost` after a normal PIN;
+  - the recovery row;
+  - S4, the export freeze.
+- Sibusiso confirms S1, C5, C19 and C20 in contract v2 and the vectors.
 
 Business handoff: None. No figures changed beyond correcting stale byte counts.
 

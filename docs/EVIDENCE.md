@@ -64,6 +64,6 @@ Use `sim_` for simulated event identifiers and spoken demo labels. Never imply t
 | VIGIL detection recall, false alarms, latency, battery, heartbeat continuity, delivery, false no_answer (M1-M7) | Vukosi (Khutso records) | Sep 26 18:00 | Method, configuration and n per `docs/VUKA-2-SPEC.md` Section 16; "not measured" until then |
 | SAPS FY2024/25 and FY2025/26 totals read by eye from the official PDF | Khutso | Sep 24 | Page and table cited; no machine-extracted figures |
 | Primary reads: FTC 2010 emergency-PIN report; Cybercrimes Act ss8-9; POPIA s1 biometrics | Ipeleng | Sep 25 | Quote from the primary text replaces each flag |
-| Organiser answer on building before Fri 16:00 on declared lineage | Lethabo | Sep 24 12:00 | **Confirmed 23 Sep 2026** — pre-event building allowed (reply to Lethabo; content not stored) |
+| Organiser answer on building before Fri 16:00 on declared lineage | Lethabo | Sep 24 12:00 | **Confirmed 23 Sep 2026** — pre-event building allowed (reply to Lethabo; content not stored — **record pending**: a redacted copy is P3.L9) |
 
 All proposed dates, hours, capacities, design limits, scores and scenario numbers in this pack are planning assumptions, not measurements. IDs, table row counts, statutory section numbers and dates copied from the brief are not measured product claims.

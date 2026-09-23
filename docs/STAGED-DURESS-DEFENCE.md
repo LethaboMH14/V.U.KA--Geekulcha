@@ -52,7 +52,7 @@ Blockchain people call this the **oracle problem**: a ledger guarantees what hap
 | **S7** | Abuser as "guardian" | Only the VIGIL user can generate a code, and additions need the PIN. Removal is silent but takes effect after 24 h, and the last guardian can't be removed until a replacement is accepted. Location is shared only at signal time | Who was paired, when, with whose code | Closes the stalkerware path |
 | **S8** | Attacker forces VUKA changes | A duress PIN at *any* prompt raises the alarm (V6). Removals and deletions look done but do nothing. Additions create a decoy guardian and notify the real ones. A forced **normal** PIN can only *schedule* a removal: it takes 24 h and never leaves zero guardians | The duress signal and the no-op | The attacker sees success; the guardians get the alert |
 | **S9** | Phone switched off before anything is detected | Nothing to detect, nothing sent | Nothing | **Nothing escalates** — on the honesty slide |
-| **S10** | Guardian calls the victim during a hijack | The guardian screen and SMS lead with "Don't call or text them. Call 10111." Calling unlocks only after `stand_down` | — | Removes the most likely way a well-meaning guardian tips off the attacker |
+| **S10** | Guardian calls the victim during a hijack | The guardian screen and SMS lead with "Don't call or text them. Call 10111." Calling unlocks only after `stand_down` or incident closure (spec G4) | — | Removes the most likely way a well-meaning guardian tips off the attacker |
 
 ---
 

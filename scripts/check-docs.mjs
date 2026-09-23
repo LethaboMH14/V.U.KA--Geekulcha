@@ -31,7 +31,7 @@ assert(read('BRIEF.md').trim().split(/\s+/).length<=500,'Brief exceeds 500-word 
 for(const file of walk(root).filter(p=>p.endsWith('.md'))) {
   const text=read(file);
   for(const line of text.split('\n')) {
-    if(line.includes('318 ms')) assert(/n\s*=\s*10/.test(line),`${file}: latency missing sample size on same line`);
+    if(/318\s?ms/.test(line)) assert(/n\s*=\s*10/.test(line),`${file}: latency missing sample size on same line`);
   }
   for(const m of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
     const target=m[1].split('#')[0];
