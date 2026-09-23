@@ -2,6 +2,7 @@
 
 **Status:** PROPOSED — working document. Owner: Babatunde Adelusi.
 **Purpose:** Verified market data points used in the VUKA pricing model.
+**Source rule (added at merge, 24 Sep):** a `FACT` row needs a linkable source and date in the row, or its entry in `docs/EVIDENCE.md`. Rows in §4 and the VAT row in §2 still need a URL and date. Until they have one, read them as ⚑ secondary, and don't quote them on a slide. Babatunde adds the links; Khutso confirms them into `docs/EVIDENCE.md`.
 **Relationship to EVIDENCE.md:** `docs/EVIDENCE.md` is Khutso's register. This file points to it. Where a figure also lives in EVIDENCE.md, this file cites the line and does not duplicate the row.
 
 ## 1. Problem size — digital banking fraud
