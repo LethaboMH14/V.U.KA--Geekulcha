@@ -4,13 +4,13 @@
 
 ---
 
-**The one slide line:** *VUKA collects the minimum, keeps it the shortest time, shows the public nothing, and never identifies anyone.*
+**The one slide line:** *VUKA collects the minimum, keeps it 90 days unless you place a dispute hold, shows the public only hashes, and never identifies bystanders.*
 
 ## What we collect — and what we never do
 
 | Collected | Never collected |
 |---|---|
-| Sound **labels and scores** only — the 3-second audio buffer is never stored, and audio is never attached to evidence | Raw audio — not stored, full stop |
+| Sound **labels and scores** only — audio is classified in memory in one-second windows (spec V3) and never stored or attached to evidence | Raw audio — not stored, full stop |
 | Location **only** on a detected signal; speed bucket only on heartbeats | Camera images, contacts beyond the chosen guardians, banking credentials |
 
 ## The legal base, in four lines
@@ -19,6 +19,8 @@
 - **Guardians — their own consent**, plus a POPIA s18 privacy notice they acknowledge when they accept.
 - **Bystanders — nothing.** VIGIL classifies *what sound* occurred, never *who* spoke; POPIA's biometric definition (voice recognition = identifying a person) does not bite on what-happened labels. The camera/face product that would have needed the s27 biometric analysis was parked and archived together with that analysis (ADR-0031, ADR-0034).
 - **The public ledger gets hashes only** — 33-byte messages, no personal data ever (spec §10).
+- **Who processes it** (spec §13): our hosting, Google Firebase Cloud Messaging (alerts), the SMS gateway, and Hedera (hashes only). FCM and Hedera involve processing outside South Africa (s72 ⚑). A real bank joins this list before any integration (Ipeleng's review, S3).
+- **Guardians' data:** their acknowledgements are recorded on the user's chain; they accept an s18 notice first (G6).
 
 ## Retention (say it plainly)
 
