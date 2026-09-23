@@ -38,7 +38,7 @@ IDs are stable; tests in §15 cite them.
 - **V5** The normal PIN and the duress PIN produce **pixel-identical** screens, the same haptic, the same request shape and the same response delay.
 - **V6** **A duress PIN anywhere is an alarm.** Entering it at any PIN prompt (check-in, guardian change, deletion, recovery, settings) emits a signed **duress signal** (§3): a `checkin_result` with `result: duress_pin` at a check-in, or a `pin_authorised` with `mode: duress` at any other prompt. The prompt shows its normal-looking outcome.
 - **V7** Every event is signed with a P-256 key in Android Keystore (StrongBox when present). Salts and nonces come from native `SecureRandom`, never from JavaScript. Canonicalisation happens in the shared JS module (§5), and the bytes go to the native signer.
-- **V8** Events go into one ordered, encrypted local queue. Delivery state is shown truthfully as queued → received (server receipt) → acknowledged (guardian). The app never shows a generic "sent".
+- **V8** Events go into one ordered, encrypted local queue. Delivery state is shown truthfully as queued → received (server receipt). The app never shows a generic "sent". **While an incident is open, the member's phone never shows a guardian acknowledgement, and incident events stay out of the in-app My Record timeline until the incident closes.** Guardians are alerted only after a duress signal or `no_answer`, so an acknowledgement on screen would tell a coercer holding the phone that duress was entered (S3, V5).
 - **V9** Heartbeats go every 30 s while armed. They carry a speed bucket only, never location, and are **not** chain entries. Location is attached only to `signal_detected`.
 - **V10** There is no boot receiver. After a reboot, a notification offers to re-arm.
 

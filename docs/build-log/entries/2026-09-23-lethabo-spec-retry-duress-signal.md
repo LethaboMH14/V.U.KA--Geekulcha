@@ -1,4 +1,4 @@
-## 2026-09-23 | Lethabo (co-lead), via Claude Code assistant | Spec fixes from Vukosi's review of PR #43 | PROPOSED — for Sibusiso (contract owner) and Ipeleng (security) to confirm
+## 2026-09-23 | Lethabo (co-lead), via Claude Code assistant | Spec fixes from Vukosi's review and a pre-merge review of PR #43 | PROPOSED — for Sibusiso (contract owner) and Ipeleng (security) to confirm
 
 **Research** — Read the Codex-assisted review posted by Vukosi on PR #43 at head `7ddbf40`. It raised two findings, and both were confirmed against `docs/VUKA-2-SPEC.md`:
 - **Retry vs replay.** §4 said an identical retry returns its original receipt, but §7 said a nonce is never accepted twice. A retry resends the same signed bytes, so a phone whose response was lost would be rejected as a replay and never get its receipt.
@@ -21,6 +21,7 @@ Changed: `docs/VUKA-2-SPEC.md`:
 - V6, S1, the §7 clock-skew exemption, the §8 incident-opening list and the §10 immediate-anchoring list now use that definition.
 - §8: a late result is still appended as the device-signed `checkin_result`, then as `answered_late`. A late duress PIN alerts guardians ("duress PIN entered") and sends the bank signal once, while the phone shows its normal outcome.
 - T06 covers a retry after a lost response. T09 covers a late duress PIN.
+- **V8 (found by a pre-merge review):** the member's phone showed "acknowledged (guardian)". Guardians are alerted only after a duress signal or `no_answer`, so a coercer holding the phone would see an acknowledgement that a normal PIN never produces. Now: queued → received only, no guardian acknowledgement while an incident is open, and incident events hidden from My Record until it closes. `team/mutarisi.md` delivery chips and My Record lines match.
 
 Evidence: `node scripts/check-docs.mjs` passed. `node --test "test/**/*.test.mjs"`: 10 passed, 0 failed.
 
