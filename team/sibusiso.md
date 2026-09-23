@@ -18,10 +18,10 @@
 - **The contract is frozen** — changing it needs both leads and an ADR. Not one lead, not a good reason, both.
 - The verifier returns the **first broken link by index**, never a boolean.
 - **A refused privileged action is evidence, not an error to swallow.** Log it, anchor it, do not catch-and-hide it.
-- **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate keeps its `watch_candidate` ceiling and its tests stay green.
+- **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — Work order below (issued 23 Sep). First: review the pivot PR as second lead, then contract v2 by Thu 12:00.
+**Current task** — Work order below (issued 23 Sep). Pivot PR reviewed and ADR-0034–0038 accepted 23 Sep. Next: vectors (Thu 09:00), then contract v2 (Thu 12:00), then the ANCHOR server build.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -66,7 +66,7 @@
    - Secrets only in App Service settings.
    - pytest and vitest vector jobs added to CI.
 7. **Sat** — server-side abuse tests with Khutso (T04–T14, T19) from Ipeleng's specifications; fix what fails.
-8. **Sat, if the cut line allows** — Ed25519 plus ML-DSA-65 root signing; publish the public keys in the topic's first message and in `contracts/keys/`.
+8. **Sat, if the cut line allows** — Ed25519 plus ML-DSA-65 root signing. The topic's first message is the `0x02` key-manifest-hash message, never the keys themselves; the keys live in `contracts/keys/` (spec §10).
 
 **Acceptance checks:**
 - [ ] v2 merged with both leads plus consumer confirmation (Vukosi for the app, Ipeleng for the verify page)
@@ -77,7 +77,7 @@
 - [ ] Deployment URL and region recorded; gitleaks green (no secret in git)
 
 **Depends on → hands off to:** the pivot PR → v2 and the mock to Vukosi, Mutarisi and Ipeleng; receipts to Lethabo's panel.
-**Do not:** change a frozen shape without both leads and an ADR; use Python `hash()` in any lock; keep escalation timers in memory; put anything but 32-byte roots on chain; commit a key; use `--no-verify`.
+**Do not:** change a frozen shape without both leads and an ADR; use Python `hash()` in any lock; keep escalation timers in memory; put anything but typed 33-byte messages (`0x01` root, `0x02` key-manifest hash) on chain; commit a key; use `--no-verify`.
 **Reviewer:** Lethabo (plus Ipeleng for auth and cryptography).
 
 ## Sequenced work

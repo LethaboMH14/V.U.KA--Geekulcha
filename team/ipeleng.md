@@ -23,7 +23,7 @@
 - **An attacker must never be able to tell a duress path from a normal one.** That is a security boundary, tested (T15, T16), not a UI preference.
 - **Duress-session no-ops and the decoy guardian are tested, not asserted** (T12).
 
-**Current task** — Work order below (issued 23 Sep). First: own `docs/STAGED-DURESS-DEFENCE.md`, then write `shared/canonical.js`, `shared/der.js` and `shared/merkle.js` against Sibusiso's vectors by Thu 12:00. The SSDLC is due Sat 12:30 (internal Sat 11:00).
+**Current task** — Work order below (issued 23 Sep). PR #43 security review posted 23 Sep (APPROVE WITH CONDITIONS; recorded in `docs/ADR-ACCEPTANCE-RECORD.md`). Next: `shared/canonical.js`, `shared/der.js` and `shared/merkle.js` against Sibusiso's vectors by Thu 12:00, then the STRIDE model and test specifications by Thu 20:00. The SSDLC is due Sat 12:30 (internal Sat 11:00).
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every abuse case I sign off exists as a test that actually runs and actually fails the attack.
 
@@ -66,7 +66,7 @@
 6. **Sat 11:00** (internal; programme deadline 12:30) — `docs/SSDLC-GKHACK26.md`, submitted on Sonke:
    - Requirements and the threat model.
    - Secure design decisions (ADR-0034–0038) and secure coding rules (RULES.md).
-   - Tests T01–T20 with status.
+   - Tests T01–T24 with status.
    - Deployment and incident response (the weekend fast path and rollback).
    - Privacy.
 7. **Sat by 18:00** — `docs/PRIVACY-POLICY.md` (the source for the required data-privacy-policies slide):
