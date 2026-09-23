@@ -1,11 +1,11 @@
 openapi: 3.1.0
 info:
-  title: VUKA service contract
-  version: 0.1.0
+  title: VIGIL + ANCHOR service contract
+  version: 2.0.0
   description: >-
-    Machine-readable contract for the specified VUKA service surface. Machine
-    inputs stop at watch_candidate; consequential actions require an
-    authenticated human and scoped approvals.
+    Contract v2 for VIGIL + ANCHOR. Device, guardian and server events are
+    signed as specified in docs/VUKA-2-SPEC.md; the contract describes the
+    interface and does not itself implement authentication or verification.
 servers:
   - url: https://api.example.invalid
     description: PROPOSED placeholder; deployment host is not selected
@@ -14,11 +14,18 @@ tags:
     description: Subject-controlled record and deletion proof path (F14/F15)
   - name: Operations
     description: Authenticated operator and evidence operations
+  - name: VIGIL
+    description: Journey, check-in and guardian operations
+  - name: ANCHOR
+    description: Subject evidence and public anchoring operations
+  - name: Simulation
+    description: Explicitly simulated bank integration surface
 paths:
   /v1/sightings:
     post:
       tags: [Operations]
       operationId: ingestSightings
+      deprecated: true
       summary: Ingest one or more signed sightings
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -39,6 +46,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getEntity
+      deprecated: true
       summary: Read an entity and its current review state
       security: [{ bearerAuth: [] }]
       parameters: [{ $ref: '#/components/parameters/EntityId' }]
@@ -54,6 +62,7 @@ paths:
     post:
       tags: [Operations]
       operationId: verifyEntity
+      deprecated: true
       summary: Submit an authenticated human review action
       description: >-
         The machine cannot perform a consequential transition. A human review
@@ -78,6 +87,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getRisk
+      deprecated: true
       summary: Read the three-tier risk fallback
       security: [{ bearerAuth: [] }]
       parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }]
@@ -92,6 +102,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getHotspots
+      deprecated: true
       summary: Read available hotspot cells
       security: [{ bearerAuth: [] }]
       parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }]
@@ -106,6 +117,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getSafestRoute
+      deprecated: true
       summary: Read a member-facing safest route
       security: [{ bearerAuth: [] }]
       parameters:
@@ -123,6 +135,7 @@ paths:
     post:
       tags: [Operations]
       operationId: createPatrolRoute
+      deprecated: true
       summary: Request a patrol route under the declared fuel budget
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -151,15 +164,21 @@ paths:
     get:
       tags: [Operations]
       operationId: getLatestAnchor
-      summary: Read the latest public commitment status
-      security: [{ bearerAuth: [] }]
+      summary: Read the latest public anchor receipt
+      description: Public endpoint; exposes no subject data.
+      security: []
       responses:
         '200':
-          description: Anchor status
+          description: Latest public anchor receipt and verification key manifest
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/AnchorStatus' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+              schema:
+                type: object
+                required: [receipt, key_manifest]
+                additionalProperties: false
+                properties:
+                  receipt: { $ref: '#/components/schemas/AnchorReceipt' }
+                  key_manifest: { $ref: '#/components/schemas/KeyManifest' }
   /v1/subjects/{id}/record:
     get:
       tags: [Showcase]
@@ -181,15 +200,15 @@ paths:
     delete:
       tags: [Showcase]
       operationId: deleteSubjectData
-      summary: Delete private subject payload while retaining the required proof residue
-      description: F15 showcase path. Requires two distinct authorised signatures; deletion is recorded and idempotent.
+      summary: Request deletion of private subject payload while retaining proof residue
+      description: F15 showcase path. Subject-authenticated and PIN-authorised per §9; deletion is recorded and idempotent.
       security: [{ bearerAuth: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }, { $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/DeletionRequest' }
+            schema: { $ref: '#/components/schemas/SubjectDeletionRequest' }
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -201,6 +220,7 @@ paths:
     get:
       tags: [Operations]
       operationId: openOpsStream
+      deprecated: true
       summary: Open the authenticated operator event stream
       security: [{ bearerAuth: [] }]
       responses:
@@ -216,6 +236,363 @@ paths:
       responses:
         '101': { description: WebSocket upgrade accepted }
         '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/subjects:
+    post:
+      tags: [ANCHOR]
+      operationId: createSubject
+      summary: Create a subject and genesis registration entry
+      description: Device-signed request; the subject id is a random 128-bit value.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EvidenceEntryV2' }
+      responses:
+        '201':
+          description: Subject created with its genesis entry
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EvidenceEntryV2' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /v1/devices/recover:
+    post:
+      tags: [VIGIL]
+      operationId: recoverDevice
+      summary: Recover a subject onto a new device
+      description: Recovery-code authenticated; PIN and signature verification are performed by the implementation, not this contract.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recovery_code, new_device_key]
+              additionalProperties: false
+              properties:
+                recovery_code: { type: string, minLength: 1, writeOnly: true }
+                new_device_key: { type: string, minLength: 1 }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /v1/journeys:
+    post:
+      tags: [VIGIL]
+      operationId: startJourney
+      summary: Start a journey by explicit user action
+      description: Device-signed request; arming requires the app in the foreground and granted microphone and notification permissions.
+      responses:
+        '201': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/journeys/{id}/heartbeat:
+    post:
+      tags: [VIGIL]
+      operationId: sendJourneyHeartbeat
+      summary: Record a journey heartbeat
+      description: Device-signed; includes a speed bucket only and never location.
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [speed_bucket, ts]
+              additionalProperties: false
+              properties:
+                speed_bucket: { type: string, minLength: 1 }
+                ts: { type: string, format: date-time }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/journeys/{id}/end:
+    post:
+      tags: [VIGIL]
+      operationId: endJourney
+      summary: End an active journey
+      description: Device-signed request.
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/events:
+    post:
+      tags: [ANCHOR]
+      operationId: appendEvidenceEvent
+      summary: Append a signed v2 evidence entry
+      description: Device-signed entry; server returns the computed event hash, chain index and receipt time.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EvidenceEntryV2' }
+      responses:
+        '201':
+          description: Entry received and appended
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [event_hash, chain_index, received_at]
+                additionalProperties: false
+                properties:
+                  event_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+                  chain_index: { type: integer, minimum: 0 }
+                  received_at: { type: string, format: date-time }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /v1/checkins/{id}/opened:
+    post:
+      tags: [VIGIL]
+      operationId: openCheckin
+      summary: Record that a check-in was shown
+      description: Device-signed event; posted only after the check-in is confirmed shown.
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EvidenceEntryV2' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/checkins/{id}/result:
+    post:
+      tags: [VIGIL]
+      operationId: submitCheckinResult
+      summary: Record a check-in result
+      description: Device-signed event; normal and duress outcomes use the same request shape.
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EvidenceEntryV2' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/pin-authorisations:
+    post:
+      tags: [VIGIL]
+      operationId: submitPinAuthorisation
+      summary: Submit a PIN-authority statement scoped to one action
+      description: Device-signed per §9; this contract does not verify a PIN or signature.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinAuthorisation' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/guardians/invites:
+    post:
+      tags: [VIGIL]
+      operationId: createGuardianInvite
+      summary: Create a PIN-authorised guardian invite
+      description: Device-signed with fresh PIN authorisation per §§7 and 9.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinAuthorisation' }
+      responses:
+        '201': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/guardians/accept:
+    post:
+      tags: [VIGIL]
+      operationId: acceptGuardianInvite
+      summary: Accept a one-time guardian invite
+      description: Guardian-signed request; the guardian acknowledges the POPIA s18 notice.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invite_code, guardian_key, fcm_token, popia_s18_acknowledged]
+              additionalProperties: false
+              properties:
+                invite_code: { type: string, minLength: 1, writeOnly: true }
+                guardian_key: { type: string, minLength: 1 }
+                fcm_token: { type: string, minLength: 1 }
+                popia_s18_acknowledged: { const: true }
+      responses:
+        '201': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/guardians/{id}:
+    delete:
+      tags: [VIGIL]
+      operationId: removeGuardian
+      summary: Request delayed removal of a guardian
+      description: Device-signed with fresh PIN authorisation; normal removal has a 24-hour delay and duress is a no-op.
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinAuthorisation' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /v1/guardians/{id}/token:
+    put:
+      tags: [VIGIL]
+      operationId: updateGuardianToken
+      summary: Update a guardian notification token
+      description: Guardian-signed; a subject may also use device signature plus action-scoped PIN authorisation.
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fcm_token]
+              additionalProperties: false
+              properties:
+                fcm_token: { type: string, minLength: 1 }
+                pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/alerts/{id}/ack:
+    post:
+      tags: [VIGIL]
+      operationId: acknowledgeAlert
+      summary: Record a guardian alert acknowledgement
+      description: Guardian-signed acknowledgement.
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              additionalProperties: false
+              properties:
+                action: { type: string, enum: [called_10111, handling, stand_down] }
+                ts: { type: string, format: date-time }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/anchor/proof/{head_hash}:
+    get:
+      tags: [ANCHOR]
+      operationId: getAnchorProof
+      summary: Read the proof and receipt for an anchored chain head
+      description: Public; head-keyed and returns no chain segment.
+      security: []
+      parameters:
+        - { name: head_hash, in: path, required: true, schema: { type: string, pattern: '^[0-9a-f]{64}$' } }
+      responses:
+        '200':
+          description: Merkle audit path and anchor receipt
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proof, receipt]
+                additionalProperties: false
+                properties:
+                  proof: { $ref: '#/components/schemas/Proof' }
+                  receipt: { $ref: '#/components/schemas/AnchorReceipt' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/subjects/{id}/export:
+    get:
+      tags: [ANCHOR]
+      operationId: exportSubjectRecord
+      summary: Export the authenticated subject's complete evidence record
+      description: Subject-authenticated; returns genesis through head, unpaginated.
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      responses:
+        '200':
+          description: Subject export with payloads, salts, proofs and receipts
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubjectExport' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientApproval' }
+  /healthz:
+    get:
+      tags: [ANCHOR]
+      operationId: getHealth
+      summary: Read public service health and queue state
+      security: []
+      responses:
+        '200':
+          description: Health state without subject data
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [last_anchor_at, anchor_queue_depth, pending_deadlines, outbox_backlog]
+                additionalProperties: false
+                properties:
+                  last_anchor_at: { type: [string, 'null'], format: date-time }
+                  anchor_queue_depth: { type: integer, minimum: 0 }
+                  pending_deadlines: { type: integer, minimum: 0 }
+                  outbox_backlog: { type: integer, minimum: 0 }
+  /ws/panel:
+    get:
+      tags: [ANCHOR]
+      operationId: openPublicPanelStream
+      summary: Open the public opaque-hash panel stream
+      description: Exposes opaque hashes, chain indices and receipts; event kinds are emitted only for sim_ subjects and are labelled simulated.
+      security: []
+      responses:
+        '101': { description: WebSocket upgrade accepted }
+  /sim_bank/v1/risk-signal:
+    post:
+      tags: [Simulation]
+      operationId: sendSimulatedBankRiskSignal
+      summary: Send a labelled simulated bank risk signal
+      description: SIMULATED only; signed by ANCHOR and requires an Idempotency-Key.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BankSignal' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /sim_bank/v1/release:
+    post:
+      tags: [Simulation]
+      operationId: releaseSimulatedBankSignal
+      summary: Release a labelled simulated bank hold
+      description: SIMULATED only; signed by ANCHOR and requires an Idempotency-Key.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BankSignal' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
 components:
   securitySchemes:
     bearerAuth:
@@ -326,6 +703,107 @@ components:
         ts: { type: string, format: date-time }
         prev_hash: { type: [string, 'null'] }
         event_hash: { type: string }
+    EvidenceEntryV2:
+      type: object
+      description: >-
+        Format-v2 signed chain entry. Genesis prev_hash is 64 zero hex
+        characters; it is never null. Receipt time and chain index are server
+        fields inside details and are not part of the device signature.
+      required: [action, actor_id, target_type, target_id, details, ts, prev_hash, event_hash]
+      additionalProperties: false
+      properties:
+        action: { type: string, minLength: 1 }
+        actor_id: { type: string, minLength: 1 }
+        target_type: { type: string, enum: [journey, subject] }
+        target_id: { type: string, minLength: 1 }
+        details:
+          type: object
+          required: [v, signer, signer_key_id, counter, event_id, commitment, sig, received_at, chain_index]
+          additionalProperties: false
+          properties:
+            v: { const: 2 }
+            signer: { type: string, enum: [device, guardian, server] }
+            signer_key_id: { type: string, minLength: 1 }
+            counter: { type: integer, minimum: 0 }
+            event_id: { type: string, format: uuid }
+            commitment: { type: string, pattern: '^[0-9a-f]{64}$' }
+            sig: { type: string, contentEncoding: base64, minLength: 1 }
+            received_at: { type: string, format: date-time }
+            chain_index: { type: integer, minimum: 0 }
+            signer_pubkey: { type: string, contentEncoding: base64, description: Present on registration entries. }
+        ts: { type: string, format: date-time, description: Signer's source time. }
+        prev_hash: { type: string, pattern: '^[0-9a-f]{64}$', description: Genesis is exactly 64 zero hex characters; never null. }
+        event_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+    PinAuthorisation:
+      type: object
+      description: >-
+        §9 statement shape only. mode is committed in the private payload and
+        must not be exposed publicly. This schema does not verify PINs or signatures.
+      required: [action, target_id, mode, expires_at, nonce]
+      additionalProperties: false
+      properties:
+        action: { type: string, minLength: 1 }
+        target_id: { type: string, minLength: 1 }
+        mode: { type: string, enum: [normal, duress] }
+        expires_at: { type: string, format: date-time }
+        nonce: { type: string, minLength: 1 }
+    Proof:
+      type: array
+      description: Ordered Merkle audit path from leaf to root.
+      items:
+        type: object
+        required: [side, hash]
+        additionalProperties: false
+        properties:
+          side: { type: string, enum: [L, R] }
+          hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+    AnchorReceipt:
+      type: object
+      required: [topic_id, sequence_number, consensus_timestamp, running_hash, topic_epoch]
+      additionalProperties: false
+      properties:
+        topic_id: { type: string, minLength: 1 }
+        sequence_number: { type: integer, minimum: 1 }
+        consensus_timestamp: { type: string, format: date-time }
+        running_hash: { type: string, minLength: 1 }
+        topic_epoch: { type: integer, minimum: 1, description: Epoch of the pinned topic/key manifest. }
+    KeyManifest:
+      type: object
+      description: Public verification keys only; private key material is never part of the manifest.
+      required: [server_ed25519_public_key]
+      additionalProperties: false
+      properties:
+        server_ed25519_public_key: { type: string, contentEncoding: base64, minLength: 1 }
+        ml_dsa_65_public_key: { type: string, contentEncoding: base64, minLength: 1, description: Present only if this key is built. }
+    SubjectExport:
+      type: object
+      description: >-
+        Subject-authenticated and unpaginated; contains the complete record
+        from genesis through the current head, with payloads and salts kept
+        separately from the public chain.
+      required: [subject_id, entries, payloads, salts, proofs, receipts]
+      additionalProperties: false
+      properties:
+        subject_id: { type: string, minLength: 1 }
+        entries: { type: array, items: { $ref: '#/components/schemas/EvidenceEntryV2' } }
+        payloads: { type: array, items: { type: object }, description: Private event payloads keyed by event_id. }
+        salts: { type: array, items: { type: string, contentEncoding: base64 }, description: Private salts keyed by event_id. }
+        proofs: { type: array, items: { $ref: '#/components/schemas/Proof' } }
+        receipts: { type: array, items: { $ref: '#/components/schemas/AnchorReceipt' } }
+    SubjectDeletionRequest:
+      type: object
+      description: Subject-initiated §9 deletion request with action- and target-scoped PIN authority.
+      required: [pin_authorisation]
+      additionalProperties: false
+      properties:
+        pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation' }
+    BankSignal:
+      type: object
+      description: SIMULATED bank signal; outcome identifies the qualifying S1 trigger, never detection alone.
+      required: [triggering_outcome]
+      additionalProperties: false
+      properties:
+        triggering_outcome: { type: string, enum: [duress_pin, no_answer, contact_lost] }
     IntegrityResult:
       type: object
       description: >-

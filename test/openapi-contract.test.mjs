@@ -6,6 +6,7 @@ const document = await readFile(new URL("../contracts/openapi.yaml", import.meta
 const architecture = await readFile(new URL("../archive/2026-09-four-layer/docs/01-ARCHITECTURE.md", import.meta.url), "utf8");
 const sdlc = await readFile(new URL("../archive/2026-09-four-layer/docs/SDLC.md", import.meta.url), "utf8");
 const team = await readFile(new URL("../archive/2026-09-four-layer/docs/TEAM.md", import.meta.url), "utf8");
+const keyManifestFormat = await readFile(new URL("../contracts/keys/README.md", import.meta.url), "utf8");
 
 const requiredPaths = [
   "/v1/sightings:",
@@ -23,20 +24,88 @@ const requiredPaths = [
   "/ws/member:"
 ];
 
+const v2Operations = [
+  ["post", "/v1/subjects"],
+  ["post", "/v1/devices/recover"],
+  ["post", "/v1/journeys"],
+  ["post", "/v1/journeys/{id}/heartbeat"],
+  ["post", "/v1/journeys/{id}/end"],
+  ["post", "/v1/events"],
+  ["post", "/v1/checkins/{id}/opened"],
+  ["post", "/v1/checkins/{id}/result"],
+  ["post", "/v1/pin-authorisations"],
+  ["post", "/v1/guardians/invites"],
+  ["post", "/v1/guardians/accept"],
+  ["delete", "/v1/guardians/{id}"],
+  ["put", "/v1/guardians/{id}/token"],
+  ["post", "/v1/alerts/{id}/ack"],
+  ["get", "/v1/anchor/proof/{head_hash}"],
+  ["get", "/v1/subjects/{id}/export"],
+  ["get", "/healthz"],
+  ["get", "/ws/panel"],
+  ["post", "/sim_bank/v1/risk-signal"],
+  ["post", "/sim_bank/v1/release"]
+];
+
+function pathBlock(path) {
+  const start = document.indexOf(`  ${path}:`);
+  assert.notEqual(start, -1, `missing path ${path}`);
+  const nextPath = document.indexOf("\n  /", start + 1);
+  const components = document.indexOf("\ncomponents:", start + 1);
+  const end = nextPath === -1 ? components : components === -1 ? nextPath : Math.min(nextPath, components);
+  return document.slice(start, end === -1 ? document.length : end);
+}
+
 test("OpenAPI contract declares only the documented service paths", () => {
   assert.match(document, /^openapi: 3\.1\.0$/m);
+  assert.match(document, /^  version: 2\.0\.0$/m);
   for (const path of requiredPaths) assert.match(document, new RegExp(`^  ${path.replace(/[{}]/g, "\\$&")}$`, "m"));
+});
+
+test("v1 UMOJA paths remain present and are marked deprecated", () => {
+  const deprecatedOperations = [
+    ["post", "/v1/sightings"],
+    ["get", "/v1/entities/{id}"],
+    ["post", "/v1/entities/{id}/verify"],
+    ["get", "/v1/risk"],
+    ["get", "/v1/hotspots"],
+    ["get", "/v1/safest-route"],
+    ["post", "/v1/routes/patrol"],
+    ["get", "/ws/ops"]
+  ];
+  for (const [method, path] of deprecatedOperations) {
+    const block = pathBlock(path);
+    const operation = block.match(new RegExp(`(?:^|\\n)    ${method}:[\\s\\S]*?(?=\\n    [a-z]+:|$)`))?.[0] ?? "";
+    assert.match(operation, /deprecated: true/, `${method.toUpperCase()} ${path} is not deprecated`);
+  }
+  assert.equal((document.match(/^      deprecated: true$/gm) ?? []).length, deprecatedOperations.length);
+  assert.match(document, /^  \/v1\/evidence\/integrity:$/m);
+  assert.match(document, /^  \/ws\/member:$/m);
+});
+
+test("v2 operation inventory is present without adding undocumented paths", () => {
+  for (const [method, path] of v2Operations) {
+    const block = pathBlock(path);
+    assert.match(block, new RegExp(`(?:^|\\n)    ${method}:`, "m"), `${method.toUpperCase()} ${path} is missing`);
+  }
+  const expected = new Set([...requiredPaths.map((path) => path.slice(0, -1)), ...v2Operations.map(([, path]) => path)]);
+  const actual = new Set([...document.matchAll(/^  (\/[^:]+):$/gm)].map((match) => match[1]));
+  assert.deepEqual(actual, expected);
+  for (const path of ["/sim_bank/v1/risk-signal", "/sim_bank/v1/release"]) {
+    const block = pathBlock(path);
+    assert.match(block, /Idempotency-Key/);
+    assert.match(block, /SIMULATED/);
+  }
 });
 
 test("OpenAPI contract marks F14 and F15 as the showcase paths", () => {
   assert.match(document, /F14 showcase path/);
   assert.match(document, /F15 showcase path/);
   assert.match(document, /Subject access with an independently checkable proof package/);
-  assert.match(document, /Delete private subject payload while retaining the required proof residue/);
+  assert.match(document, /Request deletion of private subject payload while retaining proof residue/);
 });
 
 test("OpenAPI contract preserves governance and receipt requirements", () => {
-  assert.match(document, /two distinct authorised signatures/);
   assert.match(document, /Idempotency-Key/);
   assert.match(document, /page_size/);
   assert.match(document, /state: \{ type: string, enum: \[accepted, queued, pending, confirmed, refused\] \}/);
@@ -46,7 +115,8 @@ test("OpenAPI contract preserves governance and receipt requirements", () => {
 
 test("OpenAPI contract exposes no flagged or flag action setter", () => {
   assert.doesNotMatch(document, /action: flag\b/);
-  const actionLine = document.match(/action: \{ type: string, enum: \[[^\n]+\] \}/)?.[0] ?? "";
+  const verify = document.slice(document.indexOf("    VerifyRequest:"), document.indexOf("    DeletionRequest:"));
+  const actionLine = verify.match(/action: \{ type: string, enum: \[[^\n]+\] \}/)?.[0] ?? "";
   assert.doesNotMatch(actionLine, /\bflag(?:ged)?\b/);
   assert.match(actionLine, /verify_concern, dismiss, whitelist/);
 });
@@ -86,4 +156,58 @@ test("Sighting is the domain event, not the transport envelope (ADR-0030, D3)", 
 
 test("IntegrityResult documents a 0-based first_broken_index (ADR-0030, D2)", () => {
   assert.match(document, /first_broken_index is 0-based/);
+});
+
+test("v1 schema components remain and v2 evidence fixes the genesis hash shape", () => {
+  for (const name of ["EventEnvelope", "Sighting", "SightingEvent", "Entity", "VerifyRequest", "DeletionRequest", "Receipt", "EvidenceEntry", "IntegrityResult", "AnchorStatus", "SubjectRecord"]) {
+    assert.match(document, new RegExp(`^    ${name}:$`, "m"), `missing preserved schema ${name}`);
+  }
+  const entry = document.slice(document.indexOf("    EvidenceEntryV2:"), document.indexOf("    PinAuthorisation:"));
+  assert.match(entry, /prev_hash: \{ type: string, pattern: '\^\[0-9a-f\]\{64\}\$'/);
+  assert.match(entry, /Genesis is exactly 64 zero hex characters; never null/);
+  assert.doesNotMatch(entry, /prev_hash: \{ type: \[string, 'null'\] \}/);
+});
+
+test("PinAuthorisation matches the five-field §9 statement shape", () => {
+  const pin = document.slice(document.indexOf("    PinAuthorisation:"), document.indexOf("    Proof:"));
+  assert.match(pin, /required: \[action, target_id, mode, expires_at, nonce\]/);
+  for (const field of ["action", "target_id", "mode", "expires_at", "nonce"]) assert.match(pin, new RegExp(`^        ${field}:`, "m"));
+  assert.match(pin, /enum: \[normal, duress\]/);
+  assert.match(pin, /additionalProperties: false/);
+});
+
+test("BankSignal distinguishes the three §9/S1 trigger outcomes", () => {
+  const signal = document.slice(document.indexOf("    BankSignal:"), document.indexOf("    IntegrityResult:"));
+  assert.match(signal, /triggering_outcome: \{ type: string, enum: \[duress_pin, no_answer, contact_lost\] \}/);
+  assert.match(signal, /SIMULATED/);
+});
+
+test("proof, receipt and subject schemas carry the §6, §9 and §10 fields", () => {
+  const proof = document.slice(document.indexOf("    Proof:"), document.indexOf("    AnchorReceipt:"));
+  assert.match(proof, /side: \{ type: string, enum: \[L, R\] \}/);
+  assert.match(proof, /hash: \{ type: string, pattern: '\^\[0-9a-f\]\{64\}\$' \}/);
+
+  const receipt = document.slice(document.indexOf("    AnchorReceipt:"), document.indexOf("    KeyManifest:"));
+  for (const field of ["topic_id", "sequence_number", "consensus_timestamp", "running_hash", "topic_epoch"]) {
+    assert.match(receipt, new RegExp(`^        ${field}:`, "m"));
+  }
+
+  const manifest = document.slice(document.indexOf("    KeyManifest:"), document.indexOf("    SubjectExport:"));
+  assert.match(manifest, /server_ed25519_public_key/);
+  assert.match(manifest, /ml_dsa_65_public_key/);
+  assert.match(pathBlock("/v1/anchor/latest"), /key_manifest: \{ \$ref: '#\/components\/schemas\/KeyManifest' \}/);
+
+  const exportSchema = document.slice(document.indexOf("    SubjectExport:"), document.indexOf("    SubjectDeletionRequest:"));
+  for (const field of ["entries", "payloads", "salts", "proofs", "receipts"]) assert.match(exportSchema, new RegExp(`^        ${field}:`, "m"));
+  const deletion = document.slice(document.indexOf("    SubjectDeletionRequest:"), document.indexOf("    BankSignal:"));
+  assert.match(deletion, /pin_authorisation: \{ \$ref: '#\/components\/schemas\/PinAuthorisation' \}/);
+});
+
+test("key manifest message format is documented without key material", () => {
+  assert.match(keyManifestFormat, /0x02/);
+  assert.match(keyManifestFormat, /SHA-256\(key manifest bytes\)/);
+  assert.match(keyManifestFormat, /33 bytes/);
+  assert.match(keyManifestFormat, /Ed25519 \*\*public\*\* key/);
+  assert.match(keyManifestFormat, /ML-DSA-65 public key/);
+  assert.doesNotMatch(keyManifestFormat, /BEGIN (?:PRIVATE|RSA PRIVATE|EC PRIVATE) KEY/);
 });
