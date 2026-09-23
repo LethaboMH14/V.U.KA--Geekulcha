@@ -69,3 +69,8 @@ htmlcov/
 !.vscode/extensions.json
 *.swp
 *~
+
+# Firebase / cloud credentials — never commit (23 Sep 2026)
+google-services.json
+*firebase-adminsdk*.json
+service-account*.json
