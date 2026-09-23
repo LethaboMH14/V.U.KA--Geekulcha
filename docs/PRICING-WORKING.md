@@ -10,7 +10,7 @@
 - Break-even rounds **up** (`math.ceil`). A fraction of a member doesn't pay.
 - **Claims savings are what the pilot measures, not what we promise.** The pitch leads with product value: retention, acquisition, faster verification, less fraud leakage.
 - The pilot success criterion is the actuary test: the insurer saves at least **12 × price per enrolled member per year**, measured on the insurer's own data.
-- R1.09bn and 318 ms are retired. The ICB proxy is out.
+- R1.09bn and 318 ms (n = 10, a retired relay) are retired. The ICB proxy is out.
 - "Free to users" is not said. Use: "free to the uninsured; funded through the insurer's premium for policyholders".
 - **The price becomes an output of the model, not an input.**
 
