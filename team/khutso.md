@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - The judging criteria published (MASTER-CONTEXT v3, 23 Sep). I re-tag every new row with I / T / U / S / B / Q and run the coverage sweep under the new criteria.
 
-**Current task** — P3.K1 review corrections are pushed to PR #47 by a Codex assistant acting at Khutso's request; Khutso's personal confirmation and Sibusiso's acceptance remain pending. P3.K2 is on the separate stacked PR #52.
+**Current task** — P3.K1 corrections are on PR #47; Khutso's personal source confirmation and Sibusiso's acceptance remain pending. P3.K2 evidence is drafted on a replacement branch stacked on PR #47; await Sibusiso review and do not tick P3.K2 until acceptance evidence is recorded.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -33,7 +33,7 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: P3.K1 review findings addressed on 23 Sep 2026; Khutso personal confirmation and Sibusiso review pending; due Thu 24 Sep 12:00 (`PROPOSED` schedule from the work order).
+- Current task / status: P3.K1 personal confirmation and Sibusiso review pending; P3.K2 evidence drafted, awaiting Sibusiso review; due Thu 24 Sep 12:00 (`PROPOSED` schedule from the work order).
 - Claimed files / contract versions: `docs/EVIDENCE.md` for P3.K1/P3.K2; `team/khutso.md`, `docs/OVERLAPS.md` and a new `docs/build-log/entries/` record for coordination; `docs/CHECKLIST.md` only after acceptance evidence exists. No contract version change.
 - Last updated: 23 September 2026 — Khutso requested a pull, task realignment and workflow setup; Codex assistant configured the local workflow and recorded the bounded P3.K1 claim. No evidence row is asserted re-verified.
 
@@ -107,3 +107,4 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-23 — Khutso requested that the latest changes be pulled, his tasks realigned and his workflow set up. Codex assistant pulled `main` at `847225e`, configured `origin`, installed the repository-pinned Gitleaks 8.24.3 hook, verified GitHub CLI 2.101.0 is authenticated as `KhutsoMothopa`, and opened `docs/khutso-p3-k1-evidence-recheck`. P3.K1 source disposition is now recorded in `docs/build-log/entries/2026-09-23-codex-khutso-p3-k1-evidence-audit.md`; no checklist row is ticked and no review is inferred.
 - 2026-09-23 — Codex assistant, acting at Khutso's request, resolved PR #47 review findings: secondary SABRIC and UK APP split details are flagged, ICB's inaccessible primary is flagged, FIPS 204 publication/effective dates are distinguished, the audit authorship/status is explicit, smartphone-duty wording is described as a clarification, and the unsupported OpenTimestamps observation is removed. Khutso confirmation and Sibusiso acceptance remain pending; no checklist row is ticked.
 - 2026-09-23 — Codex assistant rechecked the PR #47 follow-up and found the Federal Register citation targeted the wrong document number; corrected it to NIST's linked notice 2024-17956 and recorded the source wording. Removed the secondary SABRIC incident and app-share figures from the `MASTER-CONTEXT.md` headline row while retaining their explicit caveat in `EVIDENCE.md`. This is a review correction, not Khutso's personal source confirmation or reviewer acceptance.
+- 2026-09-23 — Codex assistant, acting within Khutso's authorised P3.K2 scope: created stacked branch `docs/khutso-p3-k2-saps-totals`; visually read the official SAPS FY2024/25 national table (printed p.112) and the national 17-community-crime row on Q1–Q4 FY2025/26 tables (printed p.10 each). Recorded FY2024/25 = 1,515,383 and FY2025/26 = 1,452,038 as the explicit sum 346,182 + 361,560 + 385,936 + 358,360. No checklist row is ticked and no review is inferred.
