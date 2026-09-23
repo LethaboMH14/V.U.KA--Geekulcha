@@ -95,6 +95,18 @@ Node: `C:\Users\khoza\.cache\codex-runtimes\codex-primary-runtime\dependencies\n
 
 The implementation commit's pre-commit hook output was: `1 commits scanned`; `scanned ~28024 bytes (28.02 KB) in 451ms`; `no leaks found`; `Intake gate: documentation/repository tooling only.`
 
+## Review fixes (2026-09-23)
+
+Applied only review findings F1–F3. M2 now rejects an alarm time strictly greater than that run's `armed_seconds` with exit 2; equality is accepted. The existing E7 case (400.0 seconds in an 1800-second run) remains valid. M1 adds only `missed_clip_ids`, below-threshold clip IDs in input order. The audio suffix guard adds `.m4a`, `.aac`, `.opus`, `.wma`, `.aiff` and `.amr`. M3 percentile behaviour is unchanged pending human decision. No audio or extra report fields were added beyond `missed_clip_ids`.
+
+Test-first red command: `py -3.12 -m unittest discover -s scripts/tests -v` → exit 1, `Ran 40 tests`, `FAILED (failures=7, errors=1)`. The red cases were F1 (`test_f1_m2_rejects_alarm_after_armed_window_but_accepts_endpoint`), F2 (`test_f2_m1_reports_only_below_threshold_ids_in_input_order`, missing `missed_clip_ids`) and F3 (`test_f3_audio_guard_rejects_additional_common_suffixes`, all six new suffixes accepted). Existing E7 passed in that run.
+
+Green command, after implementing the three fixes: `py -3.12 -m unittest discover -s scripts/tests -v` → exit 0, `Ran 40 tests in 0.997s`, `OK`. This was the full offline Python suite; code and tests were unchanged afterward.
+
+Post-change repository checks: `node scripts/check-docs.mjs` PASS (document contracts, required counts, local links and selected claim safeguards passed); `node scripts/check-intake.mjs` PASS (intake gate has evidence references and approval records); `node --test "test/**/*.test.mjs"` PASS (10/10); Gitleaks PASS (`no leaks found`); `git diff --check` PASS (exit 0). `git ls-files '*.csv' '*.tflite' '*.wav'` showed only the inherited, untouched `research/results/anchor-scale-scenarios.csv`; it was already tracked at the base. No model, audio, dataset, real result or new CSV was added. No measurement was performed.
+
+Review-fix executor: **Codex / GPT-6** (runtime variant unavailable). Old `HEAD_SHA`: `cab484ec730085093a63855303eec15697500bef`. New implementation `HEAD_SHA`: `2af316672ef3e6ab37e2e4914282a1cb8f815e6b`. This note is closed in a separate evidence-only local commit. No push, PR, comment or release was made.
+
 ## Measurement status and review gates
 
 **NOT A MEASUREMENT.** There is no model inference, audio, dataset, real result, or field observation in this packet. M1, M2 and M3 remain unmeasured until their separate acquisition and device procedures run with real inputs, configuration and sample sizes. No threshold is endorsed here.
