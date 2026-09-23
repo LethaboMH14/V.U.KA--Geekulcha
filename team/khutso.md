@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - The judging criteria published (MASTER-CONTEXT v3, 23 Sep). I re-tag every new row with I / T / U / S / B / Q and run the coverage sweep under the new criteria.
 
-**Current task** — P3.K1, workflow ready and source verification not yet started: personally re-check every source in the "Verified 23 September 2026" section of `docs/EVIDENCE.md`. Record each URL or command, the passage checked, the result and any discrepancy in the running log before changing a claim. P3.K2 (SAPS annual totals read by eye) starts only after that sweep.
+**Current task** — P3.K2 evidence read is complete on the isolated stacked branch: the SAPS FY2024/25 national total and each FY2025/26 quarter were read visually from official tables, then the FY2025/26 annual total was summed explicitly. Await Sibusiso review; do not tick P3.K2 until acceptance evidence is recorded.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -33,7 +33,7 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: P3.K1 workflow configured on 23 Sep 2026; source re-check not yet started; due Thu 24 Sep 12:00 (`PROPOSED` schedule from the work order).
+- Current task / status: P3.K2 evidence drafted on 23 Sep 2026; review pending with Sibusiso; due Thu 24 Sep 12:00 (`PROPOSED` schedule from the work order).
 - Claimed files / contract versions: `docs/EVIDENCE.md` for P3.K1/P3.K2; `team/khutso.md`, `docs/OVERLAPS.md` and a new `docs/build-log/entries/` record for coordination; `docs/CHECKLIST.md` only after acceptance evidence exists. No contract version change.
 - Last updated: 23 September 2026 — Khutso requested a pull, task realignment and workflow setup; Codex assistant configured the local workflow and recorded the bounded P3.K1 claim. No evidence row is asserted re-verified.
 
@@ -105,3 +105,4 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
 - 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Khutso is asserted; owner acknowledgement pending.
 - 2026-09-23 — Khutso requested that the latest changes be pulled, his tasks realigned and his workflow set up. Codex assistant pulled `main` at `847225e`, configured `origin`, installed the repository-pinned Gitleaks 8.24.3 hook, verified GitHub CLI 2.101.0 is authenticated as `KhutsoMothopa`, and opened `docs/khutso-p3-k1-evidence-recheck`. P3.K1 source disposition is now recorded in `docs/build-log/entries/2026-09-23-codex-khutso-p3-k1-evidence-audit.md`; no checklist row is ticked and no review is inferred.
+- 2026-09-23 — Codex assistant, acting within Khutso's authorised P3.K2 scope: created stacked branch `docs/khutso-p3-k2-saps-totals`; visually read the official SAPS FY2024/25 national table (printed p.112) and the national 17-community-crime row on Q1–Q4 FY2025/26 tables (printed p.10 each). Recorded FY2024/25 = 1,515,383 and FY2025/26 = 1,452,038 as the explicit sum 346,182 + 361,560 + 385,936 + 358,360. No checklist row is ticked and no review is inferred.
