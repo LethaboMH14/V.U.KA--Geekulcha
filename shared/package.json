@@ -1,0 +1,15 @@
+{
+  "name": "@vuka/shared",
+  "private": true,
+  "type": "module",
+  "description": "Code both the app and the verify page use: canonical JSON (spec §5), DER→raw signatures, RFC 6962 Merkle trees (spec §6).",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.1"
+  }
+}
