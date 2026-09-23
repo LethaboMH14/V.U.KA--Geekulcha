@@ -55,6 +55,7 @@
 6. **Fri 25 16:00** — tag the baseline: `git tag -a pre-hackathon-baseline -m "State at GKHack26 start" && git push origin pre-hackathon-baseline`.
 7. **Fri 19:00** — problem statement with the mentors: two paragraphs, SAPS/ISS kidnapping and SABRIC 2025 data, co-written with Babatunde.
 8. **Sat** — `docs/DEMO-SCRIPT.md`: the 50-second sales demo, the 5-minute finale and the under-90-second video storyboard (phone mirrored with `scrcpy` beside the panel). Rehearse twice.
+8b. **Every evening at 20:00 until Sunday** — review every lane against its work order: open PRs, P3 rows and running logs. Mark each lane on track, at risk (pair) or taking over, and act on it per RULES.md "Leads step in".
 9. **Sun 08:30** — final gate: every slide number traced to `docs/EVIDENCE.md` or `scripts/economics_vigil_anchor.py`; every SIMULATED label present; the honesty slide present. Submit with Babatunde by 09:00.
 
 **Acceptance checks (all before you tick P3 rows):**

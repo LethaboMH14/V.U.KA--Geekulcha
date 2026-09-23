@@ -42,3 +42,8 @@ Five PRs merged in one sweep needed real conflict resolution (see `docs/build-lo
 ## Comment → rule, every time
 
 **If a PR review comment states something that should never happen again, it doesn't stay a comment.** It goes into `RULES.md`, `AGENTS.md`, or the relevant standing doc in the same PR or the next one — or it gets forgotten the moment the thread is archived, and the next session (any tier, any tool) repeats the mistake. This applies to every stage: a stage-1 model that got corrected in review, a stage-2 reviewer that found a real gap, a human lead who made a judgement call in a comment thread. State it once, in the standing docs, and it's enforced for everyone from then on — not just the person who happened to read that thread.
+
+## Two rules for the build weekend (added 23 Sep 2026)
+
+- **Oracle first.** Give a fast, cheap pass only work that a machine can check: golden vectors (`contracts/vectors/`), the acceptance tests T01–T24 in `docs/VUKA-2-SPEC.md` §15, or the contract tests. If nothing can check it yet, build the check first.
+- **Review across families on protocol and security work.** Signatures, canonical form, Merkle, escalation, auth and duress parity are reviewed by a different model family, or by a person, than the one that wrote them. Same-family review shares blind spots; the protocol gaps in PR #43 were found by a cross-family review.

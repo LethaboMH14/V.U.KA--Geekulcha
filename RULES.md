@@ -42,6 +42,8 @@ Branches: `docs/<topic>`, `feat/<owner>-<wbs-id>`, `fix/<owner>-<topic>`, `hotfi
 
 Lethabo is first reviewer for Mutarisi, Ipeleng, Babatunde and Vukosi (from 23 Sep); Sibusiso for Khutso. Both remain final reviewers. GitHub branch protection must require the CI jobs and nonauthor approvals; a written rule is not proof that remote settings are enabled.
 
+**Leads step in when a deliverable is at risk.** Either lead may pair on, or take over, any work-order item when quality, alignment with `docs/VUKA-2-SPEC.md`, or pace puts the submission at risk. It is done openly: tell the owner, add a line to the owner's running log, and keep the owner's credit; where possible the owner reviews the result. It is a way to win together, never a verdict on a person.
+
 **Build-weekend fast path (Fri 25 Sep 16:00 to Sun 27 Sep 09:00):** a PR needs one lead plus one domain reviewer who is not the author, recorded in the PR body. Contract, ADR, security-boundary and governance changes still need both leads.
 
 Weekend hotfix: prefer rollback or disable the broken demo path. A minimal patch gets synchronous second-person review, security scan and focused verification before merge; leads record the exception scope and follow-up as a new `docs/build-log/entries/` file. No “deadline” exception for secrets, privacy or human-authority boundaries; if review is unavailable, use the verified fallback.
