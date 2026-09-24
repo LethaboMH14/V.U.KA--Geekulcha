@@ -1,0 +1,355 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@1,400;1,500&display=swap');
+
+@import 'tailwindcss';
+
+/* ─────────────────────────────────────────────────────────────
+   VUKA — calm, premium token system
+   Themes: ivory (default) · silver · midnight (night mode)
+   ───────────────────────────────────────────────────────────── */
+
+/* ── Ivory (default) ─────────────────────────────────────────── */
+:root {
+  --vuka-bg-base: #f5f3ee;
+
+  /* Three soft, slowly drifting colour orbs behind the glass */
+  --vuka-orb-1:    #cfe3d6;   /* sage */
+  --vuka-orb-1-op: 0.65;
+  --vuka-orb-2:    #d6e2f2;   /* soft sky */
+  --vuka-orb-2-op: 0.60;
+  --vuka-orb-3:    #f3dccb;   /* warm peach */
+  --vuka-orb-3-op: 0.55;
+
+  /* Text */
+  --vuka-text-title:     #1f2328;
+  --vuka-text-header:    #1f2328;
+  --vuka-text-label:     #2b3037;
+  --vuka-text-secondary: #5b6068;
+  --vuka-text-dim:       #636870;
+  --vuka-input-border:   #6f747d;
+  --vuka-link:           #1e3a5f;
+  --vuka-text-mono:      #3a3f47;
+  --vuka-text-inverse:   #ffffff;
+
+  /* Accent — deep ink */
+  --vuka-action:      #1e3a5f;
+  --vuka-action-dim:  rgba(30, 58, 95, 0.10);
+  --vuka-action-text: #ffffff;
+
+  /* Verified / received only */
+  --vuka-green-fill:   #dcfce7;
+  --vuka-green-text:   #065f46;
+  --vuka-green-border: #86efac;
+
+  /* Guardian urgent only */
+  --vuka-amber-fill: #fef3c7;
+  --vuka-amber-text: #92400e;
+
+  /* Surfaces */
+  --vuka-bg-surface:  #ffffff;
+  --vuka-bg-elevated: #f2efe9;
+  --vuka-bg-overlay:  #ffffff;
+
+  /* Cards — layered glass with real depth */
+  --vuka-card-bg:    rgba(255, 255, 255, 0.55);
+  --vuka-card-solid: rgba(255, 255, 255, 0.92);
+  --vuka-shadow:     0 1px 2px rgba(30, 44, 70, 0.06), 0 18px 36px -14px rgba(30, 44, 70, 0.20);
+  --vuka-shadow-hero: 0 1px 2px rgba(30, 44, 70, 0.07), 0 30px 60px -18px rgba(30, 44, 70, 0.28);
+  --vuka-card-edge:  inset 1px 1px 0 rgba(255, 255, 255, 0.8), inset -1px -1px 0 rgba(255, 255, 255, 0.25);
+  --vuka-card-sheen: linear-gradient(to bottom, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 30%);
+
+  /* Compatibility aliases (older components read these) */
+  --vuka-glass-bg-1: var(--vuka-card-bg);
+  --vuka-glass-bg-2: var(--vuka-card-bg);
+  --vuka-glass-bg-3: var(--vuka-card-bg);
+  --vuka-glass-solid-1: var(--vuka-card-solid);
+  --vuka-glass-solid-2: var(--vuka-card-solid);
+  --vuka-glass-solid-3: var(--vuka-card-solid);
+  --vuka-shadow-1: var(--vuka-shadow);
+  --vuka-shadow-2: var(--vuka-shadow);
+  --vuka-shadow-3: var(--vuka-shadow);
+  --vuka-radius-xl: 20px;
+
+  /* Borders / hairlines */
+  --vuka-border:          #ece8e0;
+  --vuka-border-subtle:   #f0ece4;
+  --vuka-border-emphasis: #e2ddd2;
+
+  /* Radius */
+  --vuka-radius-sm: 12px;
+  --vuka-radius-md: 20px;
+  --vuka-radius-lg: 20px;
+
+  /* Motion */
+  --vuka-spring:    cubic-bezier(0.32, 0.72, 0, 1);
+  --vuka-ease:      240ms var(--vuka-spring);
+  --vuka-ease-long: 320ms var(--vuka-spring);
+
+  /* Monochrome film grain */
+  --vuka-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── Silver ──────────────────────────────────────────────────── */
+[data-theme='silver'] {
+  --vuka-bg-base: #eef0f3;
+  --vuka-orb-1:    #dde3ea;   /* cool blue-grey */
+  --vuka-orb-1-op: 0.70;
+  --vuka-orb-2:    #e2e6ee;   /* pale steel */
+  --vuka-orb-2-op: 0.60;
+  --vuka-orb-3:    #e8e4ea;   /* faint lilac-grey */
+  --vuka-orb-3-op: 0.50;
+
+  --vuka-action:      #2b2f36;   /* graphite */
+  --vuka-action-dim:  rgba(43, 47, 54, 0.10);
+
+  --vuka-bg-elevated: #e6e9ee;
+  --vuka-card-bg:    rgba(255, 255, 255, 0.60);
+  --vuka-card-solid: rgba(255, 255, 255, 0.92);
+
+  --vuka-border:          #e3e6ec;
+  --vuka-border-subtle:   #ebedf1;
+  --vuka-border-emphasis: #d7dbe2;
+}
+
+/* ── Midnight (night mode) ───────────────────────────────────── */
+[data-theme='midnight'] {
+  --vuka-bg-base: #0e1420;
+  --vuka-orb-1:    #2f3f6e;   /* indigo */
+  --vuka-orb-1-op: 0.55;
+  --vuka-orb-2:    #24476b;   /* deep teal-blue */
+  --vuka-orb-2-op: 0.45;
+  --vuka-orb-3:    #3a3560;   /* violet */
+  --vuka-orb-3-op: 0.40;
+
+  --vuka-text-title:     #f5f6f8;
+  --vuka-text-header:    #f5f6f8;
+  --vuka-text-label:     #d7dbe2;
+  --vuka-text-secondary: #9aa1ad;
+  --vuka-text-dim:       #8b93a1;
+  --vuka-input-border:   #7d8595;
+  --vuka-link:           #9db8e8;
+  --vuka-text-mono:      #c5ccd6;
+  --vuka-text-inverse:   #0e1420;
+
+  --vuka-action:      #4166a0;
+  --vuka-action-dim:  rgba(65, 102, 160, 0.16);
+  --vuka-action-text: #ffffff;
+
+  --vuka-green-fill:   #0d5c3a;
+  --vuka-green-text:   #86efac;
+  --vuka-green-border: #22c55e;
+
+  --vuka-bg-surface:  #141b28;
+  --vuka-bg-elevated: #1c2432;
+  --vuka-bg-overlay:  #1a2130;
+
+  --vuka-card-bg:    rgba(30, 38, 56, 0.55);
+  --vuka-card-solid: rgba(26, 33, 48, 0.92);
+  --vuka-shadow:     0 1px 2px rgba(0, 0, 0, 0.30), 0 20px 40px -12px rgba(0, 0, 0, 0.55);
+  --vuka-shadow-hero: 0 1px 2px rgba(0, 0, 0, 0.30), 0 28px 56px -12px rgba(0, 0, 0, 0.65);
+  --vuka-card-edge:  inset 1px 1px 0 rgba(255, 255, 255, 0.14), inset -1px -1px 0 rgba(255, 255, 255, 0.04);
+  --vuka-card-sheen: linear-gradient(to bottom, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 30%);
+
+  --vuka-border:          rgba(255, 255, 255, 0.10);
+  --vuka-border-subtle:   rgba(255, 255, 255, 0.05);
+  --vuka-border-emphasis: rgba(255, 255, 255, 0.16);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Tailwind v4 @theme inline — fonts only
+   ───────────────────────────────────────────────────────────── */
+@theme inline {
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --font-serif: 'IBM Plex Serif', Georgia, serif;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Surfaces — one calm card, blurred twin + solid fallback
+   ───────────────────────────────────────────────────────────── */
+.glass-1, .glass-2, .glass-3, .glass-hero {
+  background: var(--vuka-card-sheen), var(--vuka-card-bg);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow: var(--vuka-card-edge), var(--vuka-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 28px;
+  transition: box-shadow var(--vuka-ease-long), transform var(--vuka-ease-long);
+}
+.glass-1-solid, .glass-2-solid, .glass-3-solid, .glass-hero-solid {
+  background: var(--vuka-card-sheen), var(--vuka-card-solid);
+  box-shadow: var(--vuka-card-edge), var(--vuka-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 28px;
+  transition: box-shadow var(--vuka-ease-long), transform var(--vuka-ease-long);
+}
+
+/* Hero sits slightly forward on its own plane */
+.glass-hero, .glass-hero-solid {
+  transform: translateY(-2px);
+  box-shadow: var(--vuka-card-edge), var(--vuka-shadow-hero);
+}
+
+/* Glass circle — for icons and icon buttons */
+.glass-circle {
+  background: var(--vuka-card-sheen), var(--vuka-card-bg);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -2px 4px rgba(31, 35, 40, 0.06),
+    0 4px 10px -4px rgba(31, 35, 40, 0.18);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Glass pill — secondary buttons, chips, floating nav */
+.glass-pill {
+  background: var(--vuka-card-sheen), var(--vuka-card-bg);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: var(--vuka-card-edge), var(--vuka-shadow);
+  border-radius: 999px;
+}
+
+/* Flat card — Journey check stays plain (no shadow, no blur, no glass) */
+.flat-card {
+  background: var(--vuka-bg-surface);
+  border: 1px solid var(--vuka-border);
+  border-radius: var(--vuka-radius-md);
+}
+
+/* Film grain over the whole background — 1.5% */
+.film-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--vuka-noise);
+  opacity: 0.015;
+  mix-blend-mode: overlay;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Base
+   ───────────────────────────────────────────────────────────── */
+html, body, #root {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #eceae4;
+}
+
+::-webkit-scrollbar { width: 0; height: 0; }
+* { scrollbar-width: none; }
+
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Slowly drifting background orbs */
+@keyframes orbDrift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-36px, 30px) scale(1.08); }
+}
+@keyframes orbDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(40px, -28px) scale(1.06); }
+}
+@keyframes orbDrift3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(24px, 34px) scale(1.1); }
+}
+.orb-1 { animation: orbDrift1 20s ease-in-out infinite; }
+.orb-2 { animation: orbDrift2 24s ease-in-out infinite; }
+.orb-3 { animation: orbDrift3 22s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .orb-1, .orb-2, .orb-3 { animation: none; }
+}
+
+/* Signature "listening" line — a calm, slow waveform drift, no colour pulsing */
+@keyframes listeningDrift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-120px); }
+}
+.listening-wave { animation: listeningDrift 6s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .listening-wave { animation: none; }
+}
+
+.pin-key-press { transition: transform 80ms ease-out, background var(--vuka-ease); }
+.pin-key-press:active { transform: scale(0.96); }
+
+
+/* ─────────────────────────────────────────────────────────────
+   Polish layer — double bezel, focus, entry motion, type details
+   ───────────────────────────────────────────────────────────── */
+
+/* Double bezel: the hero glass sits in a thin machined tray */
+.bezel {
+  padding: 6px;
+  border-radius: 34px;
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 1px rgba(30, 44, 70, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+[data-theme='midnight'] .bezel {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.bezel > .glass-hero, .bezel > .glass-hero-solid { transform: none; }
+
+/* Cards enter once, staggered, on a spring. Flat surfaces (Journey check) never move. */
+@keyframes vukaEnter {
+  from { transform: translateY(14px); opacity: 0; filter: blur(4px); }
+  to   { transform: translateY(0);    opacity: 1; filter: blur(0); }
+}
+.screen-content .bezel,
+.screen-content .glass-1, .screen-content .glass-1-solid,
+.screen-content .glass-hero, .screen-content .glass-hero-solid {
+  animation: vukaEnter 560ms var(--vuka-spring) both;
+}
+.screen-content > * > *:nth-child(2) { animation-delay: 60ms; }
+.screen-content > * > *:nth-child(3) { animation-delay: 120ms; }
+.screen-content > * > *:nth-child(4) { animation-delay: 180ms; }
+
+/* Visible keyboard focus, everywhere */
+:focus-visible {
+  outline: 2px solid var(--vuka-action);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+/* Buttons: lift on hover, press down on tap */
+.vuka-btn { transition: transform var(--vuka-ease), box-shadow var(--vuka-ease), filter var(--vuka-ease); }
+.vuka-btn:hover:not(:disabled) { filter: brightness(1.04); }
+.vuka-btn:active:not(:disabled) { transform: scale(0.97); }
+.vuka-btn .btn-orb {
+  width: 30px; height: 30px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform var(--vuka-ease);
+}
+.vuka-btn:hover:not(:disabled) .btn-orb { transform: translateX(2px) scale(1.05); }
+
+/* Type details: balanced headings, tabular data */
+h1, h2, h3, p { text-wrap: pretty; }
+[style*='font-mono'], code { font-variant-numeric: tabular-nums; }
+
+/* Grain a touch stronger so the ivory reads as material */
+.film-grain { opacity: 0.025; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Form controls: borders meet 3:1 non-text contrast (WCAG 1.4.11) */
+input { border-color: var(--vuka-input-border) !important; }
+
+main h1 { margin: 0; font-weight: inherit; }
