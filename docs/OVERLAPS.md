@@ -10,6 +10,10 @@ Proposed paths, not implemented interfaces. Declare a claim in your team file be
 | `docs/audit/03-user-journeys.md`, future Figma | Lethabo, Mutarisi, Ipeleng | Copy, accessibility, duress observability |
 | Proof/export schema | Sibusiso, Ipeleng, Babatunde | What verification establishes, expiry/deletion caveats |
 | Data retention/subject rights | Ipeleng, Khutso, Sibusiso, Mutarisi | Legal basis, payload deletion, request states |
+| `shared/*.js` (canonical, DER, Merkle) | Ipeleng, Vukosi, Sibusiso | Must pass `contracts/vectors/`; no Kotlin canonicaliser (spec §5) |
+| `contracts/vectors/`, `contracts/keys/` | Sibusiso, Ipeleng | Golden and rejection vectors; the pinned key manifest (spec §5, §10) |
+| Server notification module (guardian alerts, FCM/SMS) | Sibusiso, Khutso, Mutarisi | Outbox idempotency keys, delivery states, V8 hiding (spec §8) |
+| `sim_bank` | Khutso, Sibusiso | Idempotency-Key, trigger provenance, SIMULATED labels (spec S1, §12) |
 | Hardware/BOM economics | Vukosi, Babatunde | Measured load, supplier quote, amortisation versus cash |
 | Evidence/README/deck | Khutso, Babatunde, Lethabo | Built versus specified; sample size and claim lineage |
 | CI/security settings | Sibusiso, Ipeleng | Required checks and failure behaviour |

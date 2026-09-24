@@ -44,4 +44,3 @@ Every assigned leaf has the independent evidence in the table, reviewer acceptan
 - plain-language cancellation/exit walkthrough.
 
 These are proposed additional contributions, not unbudgeted critical-path commitments. Agree ownership and time with leads before starting.
-

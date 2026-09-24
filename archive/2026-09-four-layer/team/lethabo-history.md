@@ -44,4 +44,3 @@ Every assigned leaf has the independent evidence in the table, reviewer acceptan
 - shared review-slot scheduling.
 
 These are proposed additional contributions, not unbudgeted critical-path commitments. Agree ownership and time with leads before starting.
-

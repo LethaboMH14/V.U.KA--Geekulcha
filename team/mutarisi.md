@@ -55,16 +55,16 @@
 2. **Thu–Fri — VIGIL screens:**
    - Welcome.
    - Permissions, including the refuse-to-arm explanation.
-   - Guardians: invite code and QR, "what they will see", PIN-gated changes.
+   - Guardians: invite code and QR, "what they will see", PIN-gated changes. The setup screen recommends at least two guardians who don't live with the user — a lone guardian sees every alert (spec §17, Ipeleng's review S2).
    - Start journey; Journey active.
    - **Journey check**: normal and duress PIN give the identical outcome, the same haptic and no timing difference.
-   - Delivery chips.
-   - My Record timeline (from Figma `23:8`) with "Verify independently".
+   - Delivery chips: queued → received only. Never a guardian acknowledgement while an incident is open (spec V8).
+   - My Record timeline (from Figma `23:8`) with "Verify independently". Incident events stay hidden until the incident closes (spec V8).
    - Settings: deletion with the 72 h notice; the recovery code shown once, only if the recovery endpoint exists.
 3. **Fri–Sat — guardian mode:**
    - Enter the code, with QR through the Google code scanner (no camera permission).
    - Consent and the s18 notice; ready.
-   - The alert screen leading with "Don't call or text them. Call 10111."; the call button locked until `stand_down` or a normal PIN.
+   - The alert screen leading with "Don't call or text them. Call 10111."; the call button unlocks only after `stand_down` or incident closure (spec G4).
    - Acknowledge (calls Vukosi's native signer).
 4. **Sat — `dashboard/`:** replace the parked camera prototype with `/panel` (crt.sh-style table of opaque hashes, chain index and receipts linked to HashScan; event kinds only for `sim_` subjects, tagged SIMULATED) and `/verify` (drop zone plus the three-state result chip).
 5. **Every screen** gets its loading, error, queued, no-network and empty states before its happy path.

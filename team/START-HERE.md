@@ -21,7 +21,7 @@ VUKA is now **VIGIL + ANCHOR** (ADR-0034). Your task list is the **Work order** 
 | **Vukosi, Mutarisi** (Android) | Android Studio with SDK Platform 34 and JDK 17, per React Native 0.74's "Set Up Your Environment" guide; a phone with USB debugging on | `java -version` shows 17; `adb devices` lists your phone |
 | **Sibusiso** (server) | Python 3.11 virtual environment; PostgreSQL 16 (local or Docker); Hedera portal **testnet** account; Azure for Students | `psql --version`; the testnet account id is recorded in your team file (never the key) |
 | **Khutso** (delivery, `sim_bank`) | Firebase project for Cloud Messaging; a South African SMS gateway trial | Server credentials are in App Service settings or a local `.env` — never in git |
-| **Ipeleng** (verify page, `shared/`) | Node 22+; vitest for `shared/` | `npm test` passes the contract tests (10/10 today) |
+| **Ipeleng** (verify page, `shared/`) | Node 22+; vitest for `shared/` | `npm test` passes the contract tests (10/10 today). `test/openapi-contract.test.mjs` currently checks the archived v1 contract until P3.A1 replaces it |
 | **Lethabo** (Figma) | Share Figma file `pZYQ3m68SWIMFqaOk8kN3R` with Mutarisi | Mutarisi can open it |
 | **Babatunde** | Nothing extra | Can run the economics script |
 

@@ -20,7 +20,7 @@ And precedence is exactly what every dispute in the safety and insurance world t
 
 **No. And this one would actively break the product.**
 
-Your budget is 2.0s p95 for detection → alert. You measured 318ms p95. Now compare consensus finality:
+Your budget is 2.0s p95 for detection → alert. The retired relay measured 318 ms p95 (n = 10); VIGIL latency is measurement M3. Now compare consensus finality:
 
 | Chain | Time to finality |
 |---|---|
@@ -90,12 +90,12 @@ Today each party holds its own record and every dispute is one word against anot
                               ↓
 ┌──────────────────────────────────────────────────────────────┐
 │  TIER 3 — THE PUBLIC ANCHOR  (the blockchain, finally)       │
-│  One Merkle root per hour. 32 bytes. That is the entire       │
+│  One Merkle root per hour. 33 bytes. That is the entire       │
 │  on-chain footprint. Tamper-PROOF, and provably prior.        │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**32 bytes an hour.** That's your whole blockchain. The discipline is the point — say the number on stage, because your rivals in that bucket will be putting far more on chain and defending far more attack surface.
+**One typed 33-byte message an hour** (a type byte plus the 32-byte root), plus at most one coalesced immediate root per minute (spec §10). That's your whole blockchain. The discipline is the point — say the number on stage, because your rivals in that bucket will be putting far more on chain and defending far more attack surface.
 
 ---
 
@@ -273,6 +273,6 @@ Have this sentence exactly: **"It removes ourselves as the single trusted party 
 >
 > We don't put alerts on a blockchain — our relay is 318 milliseconds and no chain is close. We don't put your face, your voice or your location on one either; public ledgers are permanent.
 >
-> What we anchor is 32 bytes an hour: the root of a hash chain covering every decision a human made about a person. Every verification, every dismissal, every response time, signed by whoever asserted it.
+> What we anchor is one typed 33-byte message an hour, plus coalesced immediate roots: the root of a hash chain covering every decision a human made about a person. Every verification, every dismissal, every response time, signed by whoever asserted it.
 >
 > So when an insurer disputes a claim, the record existed before there was a reason to fake it. When a member and a security company disagree about response time, neither one owns the file. And when we consider flagging someone and then decide not to, **that person can prove we cleared them** — because the record of us deciding not to accuse him is the one thing we can never quietly delete.

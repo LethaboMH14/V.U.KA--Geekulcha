@@ -23,7 +23,7 @@
 - **An attacker must never be able to tell a duress path from a normal one.** That is a security boundary, tested (T15, T16), not a UI preference.
 - **Duress-session no-ops and the decoy guardian are tested, not asserted** (T12).
 
-**Current task** — Work order below (issued 23 Sep). First: own `docs/STAGED-DURESS-DEFENCE.md`, then write `shared/canonical.js`, `shared/der.js` and `shared/merkle.js` against Sibusiso's vectors by Thu 12:00. The SSDLC is due Sat 12:30 (internal Sat 11:00).
+**Current task** — Work order below (issued 23 Sep). PR #43 security review posted 23 Sep (APPROVE WITH CONDITIONS; recorded in `docs/ADR-ACCEPTANCE-RECORD.md`). Next: `shared/canonical.js`, `shared/der.js` and `shared/merkle.js` against Sibusiso's vectors by Thu 12:00, then the STRIDE model and test specifications by Thu 20:00. The SSDLC is due Sat 12:30 (internal Sat 11:00).
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every abuse case I sign off exists as a test that actually runs and actually fails the attack.
 
@@ -54,7 +54,7 @@
    - Assets.
    - Trust boundaries: phone, server, guardian phone, Hedera, `sim_bank`.
    - Threats per boundary, with mitigations mapped to spec IDs and tests.
-4. **Thu 24 by 20:00** — write the **specification** (fixture, oracle, prerequisites) for each of T04–T24, starting from the "Needs" column in §15. Sibusiso and Khutso write the server-side tests and Vukosi the device-side ones; you review each.
+4. **Thu 24 by 20:00** — write the **specification** (fixture, oracle, prerequisites) for each of T04–T24 and T30–T49, starting from the "Needs" column in §15. Sibusiso and Khutso write the server-side tests and Vukosi the device-side ones; you review each.
 5. **Fri 25 by 10:00 — verify-min** for the Fri 12:00 slice: hashes, prev links and device signatures from an export, with no mirror yet. Then **Fri–Sat by 18:00 — full verify-page cryptography:**
    - Recompute event hashes (WebCrypto SHA-256 over canonical bytes).
    - Check prev links and the first broken index.
@@ -66,7 +66,7 @@
 6. **Sat 11:00** (internal; programme deadline 12:30) — `docs/SSDLC-GKHACK26.md`, submitted on Sonke:
    - Requirements and the threat model.
    - Secure design decisions (ADR-0034–0038) and secure coding rules (RULES.md).
-   - Tests T01–T20 with status.
+   - Tests T01–T24 and T30–T49 with status.
    - Deployment and incident response (the weekend fast path and rollback).
    - Privacy.
 7. **Sat by 18:00** — `docs/PRIVACY-POLICY.md` (the source for the required data-privacy-policies slide):
@@ -90,6 +90,115 @@
 **Depends on → hands off to:** the vectors and export shape (Sibusiso) → `shared/` to Vukosi and Mutarisi; the SSDLC and privacy policy to Babatunde's deck.
 **Do not:** say "court-admissible", "unhackable" or "unbiased"; mark a legal point settled without a primary source; soften "the anchor proves when, not what".
 **Reviewer:** Lethabo.
+
+## Security programme — SSDLC, threat model, pentest, compliance (issued 23 Sep 2026)
+
+> Issued by Lethabo (co-lead). It adds to the work order above; it does not replace it. **Owner acknowledgement pending** — accept it in your running log or raise a blocker. All times SAST. Serves **S** and **T**.
+> **Your four files** (new, `PROPOSED` until you accept them): `docs/security/SSDLC.md`, `docs/security/THREAT-MODEL.md`, `docs/security/PENTEST-PLAN.md`, `docs/security/COMPLIANCE-GOVERNANCE.md`. They replace the paths `docs/SSDLC-GKHACK26.md` and `docs/THREAT-MODEL-VIGIL-ANCHOR.md` named above. You own them from acceptance; change anything you disagree with and say why in the running log.
+> **Quality bar for everything below:** every control has a test or a file as evidence; every status is true today; "not run" and "not measured" are complete answers; no "unhackable", "court-admissible", "pentested" or "secure".
+
+### Day by day
+
+**Thu 24 Sep**
+
+| Time | Target | Quality bar |
+|---|---|---|
+| 08:00–08:45 | Read the four security files and spec §3–§10. Accept or amend in your running log | One line per file: accepted / amended (what) |
+| 09:00–11:00 | `shared/canonical.js`, `shared/der.js`, `shared/merkle.js` against Sibusiso's 09:00 vectors (P3.S2) | T01 and T02 green in vitest, including every rejection vector |
+| 11:00–11:30 | §8/§9 meeting with Lethabo (P3.L8); the agreement is due at 12:00. Agenda: B1–B3 text; **export during an open incident (T30)**; **wrong-PIN and attempt-limit rule (T47)**; S4 export freeze | Each item decided, owner named, recorded in a build-log entry |
+| 11:30–14:00 | Finish `shared/`; hand the import paths to Vukosi and Mutarisi | Vitest green in CI or locally with the command recorded |
+| 14:00–16:00 | Own the threat model: check every STRIDE row against the spec as it now stands | Every row has a spec ID and a test ID; no orphan threats |
+| 16:00–20:00 | Test specifications (fixture, oracle, prerequisites) for T04–T24 and T30–T49 (P3.S3) | Each has an oracle a machine can check, or is marked "recorded observation" with why |
+| 20:00–22:00 | Send each spec to its writer (table below); review Vukosi's manifest before the APK build | Writers acknowledge |
+| 22:00–23:00 | Pentest slot S1: PT-50, PT-51 on the release APK | Results recorded pass / fail / not run |
+
+**Fri 25 Sep**
+
+| Time | Target | Quality bar |
+|---|---|---|
+| 07:00–10:00 | **Verify-min** (P3.S7): hashes, prev links, device signatures from an export | T03, T04 green; first broken index reported |
+| 10:00–12:00 | Slot S2: PT-10–PT-15, PT-44 | Recorded |
+| 12:00 | Thin slice (RG1) with Vukosi and Sibusiso | RG1 pass/fail recorded by Lethabo |
+| 12:30–14:00 | Slot S3: API auth, replay, BOLA, public proof (PT-01–PT-07, PT-09, PT-32, PT-34, PT-38, PT-39) | Recorded; fails raised as PRs to Sibusiso |
+| 14:00–16:00 | Arrive at the venue with ID and an item to donate (or virtual check-in from 15:30); hackathon starts 16:00 | — |
+| 16:00–21:00 | Full verify page: Ed25519 roots, Merkle path, mirror decode, pinned topic and manifest, three states (T05, T21, T22) | T05 and T21 green; T22 once two real batches exist |
+| 21:00–23:59 | Slot S4: PIN authority and guardian governance (PT-08, PT-16–PT-22, PT-33, PT-35–PT-37, PT-40, PT-46, PT-47) — what the full server supports by then | Recorded; "not run — <missing prerequisite>" for the rest |
+
+**Sat 26 Sep**
+
+| Time | Target | Quality bar |
+|---|---|---|
+| 06:00–07:00 | Finish slot S4 | Recorded |
+| 07:00–10:00 | Slot S5 with Vukosi and Mutarisi: parity, Android storage and IPC, dependencies (PT-23–PT-28, PT-30, PT-31, PT-48, PT-49, PT-52–PT-56); ask Sibusiso for the SAST/SCA run | `docs/security/PENTEST-RESULTS.md` started |
+| 10:00–10:30 | Fill every test status in SSDLC §14; re-count controls by status | Every T and PT row says pass / fail / not run |
+| 10:30–11:00 | Lethabo reviews the SSDLC. **Internal deadline 11:00** | Review recorded in the PR |
+| 11:00–12:00 | DevLabs (every team represented; go only if you are our representative) | — |
+| 12:00–12:30 | **Submit the SSDLC on Sonke** (window closes 12:30). Screenshot the receipt; note it in your running log | Receipt time recorded |
+| 12:30–14:00 | Slot S6: anchoring and verify page (PT-29, PT-41–PT-43, PT-45, PT-57–PT-64), ZAP baseline | Recorded |
+| 14:00–17:00 | War Room: answer security and privacy questions with the panel | Only claims the repo supports |
+| 17:00–18:00 | Privacy policy (`docs/PRIVACY-POLICY.md`, P3.S6) with the PR #43 S3 text; verify page final | Lethabo reviews by 18:00 |
+| 18:00–20:00 | Slot S7: re-test every fail; close `PENTEST-RESULTS.md` | No case left without a status |
+| 20:00–21:00 | Give Babatunde the honesty-slide lines (G8, G26, G27, G32, B2, B3) and the privacy-slide source | He confirms receipt |
+
+**Sun 27 Sep**
+
+| Time | Target | Quality bar |
+|---|---|---|
+| 07:00–08:30 | RG3 security checklist with Lethabo (`SSDLC.md` §11) on the commit to be submitted | Every RG3 line true, or the claim is removed |
+| 08:30 | Final gate | — |
+| 09:00 | Final submission (Babatunde, Lethabo) | Nothing merges after this |
+| 10:00–15:30 | On hand for security questions in the pitch and demo | — |
+
+### Tests you write versus review
+
+| You write | You review (writer) |
+|---|---|
+| T01, T02 (vitest side); T03, T04, T05, T21, T22 (verify page); T32, T33 (verify-page network and XSS); T37 with Sibusiso; the recorded observations for B2 and B3 | Server: T06–T14, T19, T23, T24, T30, T31, T35, T36, T38, T39, T43, T44, T45, T48, T49 (Sibusiso). Delivery and `sim_bank`: T11, T34, T40, T46 server half (Khutso). Device: T15, T16, T17, T18, T20, T41, T42, T46 device half, T47 (Vukosi); T15 pixels and V8 chips (Mutarisi) |
+
+### Who you ping, for what, when
+
+| Person | For | By |
+|---|---|---|
+| **Sibusiso** | Vectors (Thu 09:00); contract v2 with B1 signed statement and S1 trigger field (Thu 12:00); add `node --test` and SAST/SCA jobs to CI; staging URL for S3 and ZAP (Fri 12:00); HCS topic id, `submitKey` test T43 and key manifest (Thu 16:00) | Thu 09:00 |
+| **Lethabo** | §8/§9 meeting (Thu 12:00); B1–B3 spec text; T30 and T47 decisions; SSDLC review (Sat 10:30); privacy policy review (Sat 17:00–18:00) | Thu 12:00 |
+| **Vukosi** | T03 Keystore signature and key fixture (Thu); release APK for PT-50/51 (Thu 22:00); T15 timing harness; debug build for PT-53 (Sat 07:00) | Thu 14:00 |
+| **Mutarisi** | Pixel-identical outcome screens (PT-23); no guardian ack during an incident (PT-28); verify-page layout using `textContent` only | Fri 12:00 |
+| **Khutso** | `sim_bank` signature and `Idempotency-Key` (T40); guardian token signing (T34); evidence rows and `docs/REQUIREMENTS-TRACE.md` linking tests; the build-log incident template | Fri 12:00 |
+| **Babatunde** | SSDLC summary for the deck; honesty-slide lines; privacy-slide source | Sat 20:00 |
+
+### Done means
+
+- The four security files accepted by you and reviewed by Lethabo, in a merged PR.
+- Every T01–T24 and T30–T49 has a written specification; every one you write runs.
+- `docs/security/PENTEST-RESULTS.md` has a pass / fail / not run for all 64 PT cases, with command, commit and tester.
+- SSDLC submitted on Sonke before 12:30 Sat, receipt noted in your running log.
+- B1–B3 closed in the spec, S1–S4 each closed or carried with an owner.
+- A build-log entry and ticked `docs/CHECKLIST.md` rows.
+
+### Sonke SSDLC submission checklist (Sat, before 12:30)
+
+- [ ] Control counts re-computed from `SSDLC.md` (Done / In build / Planned / Not doing)
+- [ ] Every test status filled: pass / fail / not run
+- [ ] Threat model attached or linked; coercion threats included
+- [ ] Tool runs listed with date, or "not run"
+- [ ] Release gates RG1 and RG2 results
+- [ ] Incident response and POPIA runbook
+- [ ] Privacy section (lawful basis, retention, operators, IO not registered — said plainly)
+- [ ] Honest limits: no independent pentest (G8), attestation unverified (G32), detection uncalibrated (G27), no branch protection (G17)
+- [ ] No secret, real location, phone number or private organiser screenshot in the upload
+- [ ] Receipt screenshot saved; time in your running log
+
+### Tracked conditions from your PR #43 review
+
+| ID | Condition | Owner | Due | Test / evidence | State |
+|---|---|---|---|---|---|
+| B1 | Remaining guardians notified of additions and scheduled removals, naming the other party; ADR-0036(5) qualified; §17 line; T24 extended | Lethabo (spec), you (test) | Thu, §8/§9 meeting | T24, T37 | Spec text merged in #48 (`98987a5`); open until confirmed at P3.L8 and T24 runs |
+| B2 | §17: a compromised server can suppress or fabricate escalation; independent witnesses named | Lethabo | Thu | §17 text; recorded observation | Spec text merged in #48; open until the recorded observation exists |
+| B3 | §17: unlocked phone forces `no_answer` escalation and bank signal; `signal_detected` carries location | Lethabo | Thu | §17 text; recorded observation | Spec text merged in #48; open until the recorded observation exists |
+| S1 | `bank_signal_sent` records its trigger | Sibusiso | contract v2 | T38 | Spec text merged in #48; open until contract v2 (#51) carries it |
+| S2 | Onboarding recommends ≥ 2 guardians; §17 lone-guardian line | Vukosi, Mutarisi | before Sat 18:00 | copy review | Spec text merged in #48; open until the app copy exists |
+| S3 | Privacy-policy text: residuals, cooling-off, hash permanence, guardian departure, bank as recipient | you | Sat 18:00 | `docs/PRIVACY-POLICY.md` | Open |
+| S4 | 24 h post-recovery freeze covers bulk export | Lethabo | with §9 | T39 | Spec text merged in #48; open until confirmed at P3.L8 |
 
 ## Sequenced work
 

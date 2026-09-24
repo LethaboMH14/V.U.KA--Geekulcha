@@ -12,16 +12,20 @@
 
 **Effort** — **High.** Be precise and terse.
 
+**My AI workflow** — Sibusiso directs the work and makes lead decisions. Codex investigates, reasons through architecture and risks, and writes a bounded task handoff with acceptance tests. Cline implements that handoff and records the actual commands, results and limitations. Claude independently reviews the PR against its exact commit; findings go back to Cline through Codex for correction and re-review. Use separate task and review worktrees so implementation and review do not overwrite each other. Keep the handoff, Git SHA and evidence in files or the PR; chat memory is not shared across tools. This is my personal tool routing, not a change to anyone else's setup.
+
+**Review authority** — Claude's analysis supports my review but is not my ADR acceptance or a nonauthor human approval of my own PR. The repository's required reviewers, contract decisions, security checks and merge gate still apply. Do not let a task packet silently resolve an unfrozen contract or a safety-critical design choice.
+
 **Behaviour** — *Be precise and terse. Show me the actual command and its actual output, never a summary of what you think happened. Security-critical paths get a test before they get a merge. If you are unsure whether something is safe, stop.*
 
 **My domain rules**
 - **The contract is frozen** — changing it needs both leads and an ADR. Not one lead, not a good reason, both.
 - The verifier returns the **first broken link by index**, never a boolean.
 - **A refused privileged action is evidence, not an error to swallow.** Log it, anchor it, do not catch-and-hide it.
-- **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate keeps its `watch_candidate` ceiling and its tests stay green.
+- **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — P3.A3 slice 1: local FastAPI skeleton, PostgreSQL append/read path and focused tests. Request authentication is an always-true stub, not real authentication; slices 2/3 remain outstanding.
+**Current task** — Pivot PR reviewed and ADR-0034–0038 accepted 23 Sep; vectors, PIN-authority/guardian governance and contract v2 done 23-24 Sep. Now on P3.A3 slice 1: local FastAPI skeleton, PostgreSQL append/read path and focused tests. Request authentication is an always-true stub, not real authentication; slices 2/3 remain outstanding.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -66,7 +70,7 @@
    - Secrets only in App Service settings.
    - pytest and vitest vector jobs added to CI.
 7. **Sat** — server-side abuse tests with Khutso (T04–T14, T19) from Ipeleng's specifications; fix what fails.
-8. **Sat, if the cut line allows** — Ed25519 plus ML-DSA-65 root signing; publish the public keys in the topic's first message and in `contracts/keys/`.
+8. **Sat, if the cut line allows** — Ed25519 plus ML-DSA-65 root signing. The topic's first message is the `0x02` key-manifest-hash message, never the keys themselves; the keys live in `contracts/keys/` (spec §10).
 
 **Acceptance checks:**
 - [ ] v2 merged with both leads plus consumer confirmation (Vukosi for the app, Ipeleng for the verify page)
@@ -77,7 +81,7 @@
 - [ ] Deployment URL and region recorded; gitleaks green (no secret in git)
 
 **Depends on → hands off to:** the pivot PR → v2 and the mock to Vukosi, Mutarisi and Ipeleng; receipts to Lethabo's panel.
-**Do not:** change a frozen shape without both leads and an ADR; use Python `hash()` in any lock; keep escalation timers in memory; put anything but 32-byte roots on chain; commit a key; use `--no-verify`.
+**Do not:** change a frozen shape without both leads and an ADR; use Python `hash()` in any lock; keep escalation timers in memory; put anything but typed 33-byte messages (`0x01` root, `0x02` key-manifest hash) on chain; commit a key; use `--no-verify`.
 **Reviewer:** Lethabo (plus Ipeleng for auth and cryptography).
 
 ## Sequenced work
