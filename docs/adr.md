@@ -531,20 +531,29 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 
 ---
 
-## ADR-0043: A guardian stand-down never ends a duress incident; an armed journey that goes silent notifies guardians
-**Status:** Proposed (2026-09-24). Proposed by Lethabo (co-lead, acting security lead). Binds when Sibusiso (second lead) accepts it; it changes accepted §8 behaviour.
+## ADR-0043: After duress, a guardian stand-down acknowledges but never resolves; duress incidents have a safe resolution; historical duress payloads never reach the member's device
+**Status:** Proposed (2026-09-24, revised the same day after a second adversarial review). Proposed by Lethabo (co-lead, acting security lead). Binds when Sibusiso (second lead) accepts it; it changes accepted §8 and §9 behaviour.
 **Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (server)
-**Context:** An independent red-team review of `docs/security/SECURITY-PROGRAMME.md` found two gaps in spec §8.
-- **The abuser who is a guardian.** Safety apps are most often abused by people who were *legitimately* added (`docs/security/research/THREAT-DATA.md`). If the coercer is one of the victim's guardians, the victim's duress PIN alerts him. Under §8, any single guardian's `stand_down` then closes the incident and, within 3 minutes, suppresses the `no_answer` bank signal. The attacker can end the alarm he is the subject of.
-- **Silencing without a PIN.** ADR-0041 PIN-gated ending a journey, but the operating system can still silence an armed journey with no PIN: force-stop, uninstall, revoking the microphone or notification permission, airplane mode. `contact_lost` fires only while an incident is open, so an armed journey with no incident dies silently.
+**Context:** Two independent adversarial reviews of `docs/security/SECURITY-PROGRAMME.md` found these gaps:
+- Under §8, any single guardian's `stand_down` closes an incident and suppresses the `no_answer` bank signal. **A coercer who is one of the victim's guardians** can therefore end the alarm he is the subject of. `docs/security/research/THREAT-DATA.md` records that safety apps are most often abused by legitimately added people.
+- Removing that power naively **locks a duress incident open forever**. The 6 h close needs heartbeats, and a duress journey-end stops the service. Recovery is blocked during incidents, so a lost or seized phone deadlocks the member.
+- G4 lets a guardian call the member after `stand_down`. An honest guardian can take an acknowledgement for "safe" and ring the phone while the coercer is present.
+- The ADR-0041 hold only **postpones** disclosure. After closure and expiry, a forced normal-PIN export shows the earlier duress entry.
 **Decision:**
-1. **After any duress signal in an incident, a guardian `stand_down` is recorded (and acknowledged to that guardian) but never closes the incident, never cancels the S1 bank signal, and never suppresses a later escalation.** Such an incident closes only by the 6 h automatic close, which needs heartbeats present and guardians notified. For incidents with no duress signal, `stand_down` works as §8 says today.
-2. **Armed-journey silence notice.** If an armed journey with no open incident sends no heartbeat for **N minutes** (N set in contract v2, default 10), the server sends guardians a low-key "VIGIL lost contact with <name>'s phone" notice. It **never** sends a bank signal and never opens an incident. It is a server event, anchored like any other.
+1. **After any duress signal in an incident, a guardian `stand_down` is recorded and acknowledged, and nothing more.** It never closes the incident, never cancels or suppresses the S1 bank signal, and never unlocks the G4 call while the incident is unresolved.
+2. **Safe resolution.** A duress incident closes when **either** of these happens:
+   - (a) the member authenticates **on any device with the recovery code**, **and** a guardian other than any who stood down records a voice confirmation. For a lone guardian, that guardian's confirmation is accepted after a 24 h cooling-off.
+   - (b) **72 h pass with no new signal.** Guardians are notified.
+
+   The `sim_bank` release (`/sim_bank/v1/release`) is sent only at (a) or (b). Recovery to a new device is allowed during a duress incident through the same recovery-code path, so a lost or seized phone never deadlocks the member.
+3. **Historical duress payloads never reach the member's device.** For any incident that contains a duress signal, the member-device export and My Record omit that incident's payloads permanently. The hashes stay, and the chain still verifies. The full record is available only through the recovery-code route in (2)(a).
+4. **The armed-journey silence notice is not built** and is off by default. It would tell a guardian that a journey was armed and went quiet, which is a surveillance channel for an abusive guardian. It needs per-guardian opt-in by the member, silent withdrawal, and an abuse test before it's built.
 **Rejected alternatives:**
-- Requiring two guardians to stand down: the lone-guardian case (§17) would lock the incident open until the 6 h close regardless, with the same effect as (1) but more complex.
+- Two guardians needed to stand down: the lone-guardian case locks it open anyway.
 - Opening a full incident on silence: every dead battery would reach the bank.
-- Hiding the alert from a guardian-abuser: impossible without knowing which guardian is the abuser.
+- A time-limited hold only: it postpones disclosure.
+- Letting a stand-down re-enable calls: an acknowledgement is not safety.
 **Consequences:**
-- Tests: T61, where a duress incident plus a stand-down leaves the bank signal sent and the incident open; and T62, where a silent armed journey sends one notice and no bank signal.
-- Contract v2: the silence threshold, and the `journey_silent` event kind.
-- Residual, stated in `SECURITY-PROGRAMME.md` §10: a guardian-coercer still *sees* the alert. Onboarding advises guardians who don't live with you.
+- Tests: T61 (a stand-down after duress: no close, no call unlock, the bank signal stands), T64 (repeat coercion after closure and after the hold: no historical duress payload on the device), and T65 (safe resolution by path (a) and by path (b); the bank release only then).
+- Contract v2: the recovery-code-authenticated resolution endpoint, the guardian voice-confirmation event, and the release trigger.
+- Residuals, stated in `SECURITY-PROGRAMME.md` §10: a guardian-coercer still *sees* the alert. Anyone holding the recovery code has the full record, so onboarding says to keep it away from the phone.
