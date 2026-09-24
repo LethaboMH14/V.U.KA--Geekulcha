@@ -336,10 +336,11 @@ For each control: **what** it protects (the threat IDs), **how** (the mechanism,
    - it writes `security-score.json` with levels, scores, reasons and next steps;
    - unit tests use fixtures for each level transition.
 3. **CI job `security-score`** runs the script on every push and uploads `security-score.json`. **It fails if any High-weight control drops a level** compared with `main`.
-4. **The public page `dashboard/security.html`** (static, the same CSP as the verify page) renders the categories as bars with the level mix, and a control table with level chips. Each row expands to show what, how, the method, why, and next.
-5. **In the app: Settings → "Security & privacy"** shows the overall evidence score, the seven category bars, and a link to the public page. The data is bundled at build time from `security-score.json`, and the screen shows its build date. **Duress check:** the screen is static and identical for every user and state, so it reveals nothing.
+4. **The public page `dashboard/security.html`, live.** A CI job on every push to `main` computes `security-score.json` and publishes it, with the page, to **GitHub Pages** (the repo is public). The page shows the **commit hash, the CI run link and the time it was computed**, so anyone can open the run that produced the number. It renders the categories as bars with the level mix, and a control table with level chips; each row expands to show what, how, the method, why, and next. It uses the same CSP as the verify page.
+5. **In the app: Settings → "Security & privacy", live.** The app fetches the published `security-score.json` over HTTPS from the pinned Pages URL. If there's no network, it shows the copy bundled at build time, **labelled "as of <date>, commit <hash>"**. It never shows an invented or cached-without-date value. The screen shows the overall evidence score, the seven category bars and a link to the public page. **Duress check:** the screen is identical for every user and state, and the fetch is the same request for everyone, so it reveals nothing.
 
 ### 12.5 Honesty rules for the scorecard
+- **Everything is live and computed.** No hand-entered score, and no demo data on this surface. If the CI job didn't run, the page says so.
 - The label is **"Evidence score"**, with a one-line definition on every surface. Never "security score" alone, and never "% secure".
 - **E4 is shown as empty** until an external report exists.
 - A drop in score is published, not hidden (principle 12).
