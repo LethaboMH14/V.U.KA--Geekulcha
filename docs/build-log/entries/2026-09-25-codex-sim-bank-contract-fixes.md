@@ -74,7 +74,19 @@ SimBankReceipt rejects sim false: PASS
 
 **Decision** — No new ADR or human sign-off was created. The task packet's accepted contract decision is implemented on PR #51. The OpenAPI scheme describes the server-authenticated interface; it is not evidence that a runtime sim_bank endpoint enforces the signature.
 
-**Needs / blockers** — Fresh PR #51 checks and Lethabo/Ipeleng contract/security review. The server-side sim_bank verifier remains unbuilt. The ADR-0041 endJourney/export implementation remains unbuilt and is labelled incomplete. Two PostgreSQL tests were skipped locally and must be observed in CI.
+**Post-push verification — exact head `8fea57238c4b5fc7b910d52ed5ec9811e4713e0b`**
+
+```text
+gh run view 36067039454 --repo LethaboMH14/V.U.KA--Geekulcha --json headSha,status,conclusion,jobs --jq '{headSha, status, conclusion, jobs: [.jobs[] | {name, conclusion}]}'
+{"conclusion":"success","headSha":"8fea57238c4b5fc7b910d52ed5ec9811e4713e0b","jobs":[{"conclusion":"success","name":"tests"},{"conclusion":"success","name":"python-audit"},{"conclusion":"success","name":"semgrep"},{"conclusion":"success","name":"document-contracts"},{"conclusion":"success","name":"npm-audit"},{"conclusion":"success","name":"osv-scan"},{"conclusion":"success","name":"secret-scan"}],"status":"completed"}
+
+gh pr view 51 --repo LethaboMH14/V.U.KA--Geekulcha --json headRefOid,reviewDecision,state,url
+{"headRefName":"feat/sibusiso-contract-v2","headRefOid":"8fea57238c4b5fc7b910d52ed5ec9811e4713e0b","reviewDecision":"CHANGES_REQUESTED","state":"OPEN","url":"https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/51"}
+```
+
+The local GitHub CLI could not cache detailed job logs (`Access is denied`), so no remote test count is claimed. The run metadata confirms the PostgreSQL-backed tests job and all six other required jobs completed successfully. Local pytest skipped the two database integration cases because its isolated environment had no PostgreSQL URL.
+
+**Needs / blockers** — Lethabo/Ipeleng contract/security review remains required; PR #51 is open with changes requested. The server-side sim_bank verifier remains unbuilt. The ADR-0041 endJourney/export implementation remains unbuilt and is labelled incomplete. No merge or deployment is inferred.
 
 **Business handoff** — Future sim_bank consumer must include the simulated subject id, server signature context and `sim: true` receipt. Do not describe the contract declaration as a deployed bank connection.
 
