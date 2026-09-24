@@ -184,8 +184,10 @@ paths:
       tags: [Showcase]
       operationId: getSubjectRecord
       summary: Subject access with an independently checkable proof package
-      description: F14 showcase path. Private payload and proof are returned subject to authentication and rights review.
-      security: [{ bearerAuth: [] }]
+      description: >-
+        F14 showcase path. Private payload and proof are returned subject to signed subject
+        authentication and rights review. This bodyless request signs the hash of empty bytes.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }, { $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }]
       responses:
         '200':
@@ -202,7 +204,7 @@ paths:
       operationId: deleteSubjectData
       summary: Request deletion of private subject payload while retaining proof residue
       description: F15 showcase path. Subject-authenticated and PIN-authorised per §9; deletion is recorded and idempotent.
-      security: [{ bearerAuth: [] }]
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }, { $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
@@ -241,12 +243,16 @@ paths:
       tags: [ANCHOR]
       operationId: createSubject
       summary: Create a subject and genesis registration entry
-      description: Device-signed request; the subject id is a random 128-bit value.
+      description: >-
+        Device-signed registration request; target_id is the random 128-bit subject id.
+        Because no key is enrolled yet, the request signature is verified with the registration
+        signer_pubkey and signer_key_id in the submission before the key is enrolled.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/EvidenceEntryV2' }
+            schema: { $ref: '#/components/schemas/EventSubmission' }
       responses:
         '201':
           description: Subject created with its genesis entry
@@ -283,6 +289,7 @@ paths:
       operationId: startJourney
       summary: Start a journey by explicit user action
       description: Device-signed request; arming requires the app in the foreground and granted microphone and notification permissions.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       responses:
         '201': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -293,6 +300,7 @@ paths:
       operationId: sendJourneyHeartbeat
       summary: Record a journey heartbeat
       description: Device-signed; includes a speed bucket only and never location.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       requestBody:
         required: true
@@ -316,6 +324,7 @@ paths:
       operationId: endJourney
       summary: End an active journey
       description: Device-signed request.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
@@ -326,12 +335,18 @@ paths:
       tags: [ANCHOR]
       operationId: appendEvidenceEvent
       summary: Append a signed v2 evidence entry
-      description: Device-signed entry; server returns the computed event hash, chain index and receipt time.
+      description: >-
+        Device/guardian-signed event submission. The signed details.sig binds the event context;
+        X-Vuka-Signature separately authenticates the HTTP request. The server computes chain
+        fields, recomputes the payload commitment and stores payload and salt encrypted at rest.
+        Check order is request authentication, event_id idempotency lookup, then nonce, counter
+        and clock-skew checks. An identical retry returns the original receipt before replay checks.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/EvidenceEntryV2' }
+            schema: { $ref: '#/components/schemas/EventSubmission' }
       responses:
         '201':
           description: Entry received and appended
@@ -345,7 +360,11 @@ paths:
                   event_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
                   chain_index: { type: integer, minimum: 0 }
                   received_at: { type: string, format: date-time }
-        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '400':
+          description: Invalid submission shape or payload commitment mismatch.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/IdempotencyConflict' }
   /v1/checkins/{id}/opened:
@@ -354,12 +373,13 @@ paths:
       operationId: openCheckin
       summary: Record that a check-in was shown
       description: Device-signed event; posted only after the check-in is confirmed shown.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/EvidenceEntryV2' }
+            schema: { $ref: '#/components/schemas/EventSubmission' }
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -370,12 +390,13 @@ paths:
       operationId: submitCheckinResult
       summary: Record a check-in result
       description: Device-signed event; normal and duress outcomes use the same request shape.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/EvidenceEntryV2' }
+            schema: { $ref: '#/components/schemas/EventSubmission' }
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -385,12 +406,13 @@ paths:
       tags: [VIGIL]
       operationId: submitPinAuthorisation
       summary: Submit a PIN-authority statement scoped to one action
-      description: Device-signed per §9; this contract does not verify a PIN or signature.
+      description: Device-signed PIN-authority statement per §9; signature verification is implementation behavior.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/PinAuthorisation' }
+            schema: { $ref: '#/components/schemas/PinAuthorisationStatement' }
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -401,11 +423,12 @@ paths:
       operationId: createGuardianInvite
       summary: Create a PIN-authorised guardian invite
       description: Device-signed with fresh PIN authorisation per §§7 and 9.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/PinAuthorisation' }
+            schema: { $ref: '#/components/schemas/PinAuthorisationStatement' }
       responses:
         '201': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -416,6 +439,7 @@ paths:
       operationId: acceptGuardianInvite
       summary: Accept a one-time guardian invite
       description: Guardian-signed request; the guardian acknowledges the POPIA s18 notice.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       requestBody:
         required: true
         content:
@@ -439,12 +463,13 @@ paths:
       operationId: removeGuardian
       summary: Request delayed removal of a guardian
       description: Device-signed with fresh PIN authorisation; normal removal has a 24-hour delay and duress is a no-op.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/PinAuthorisation' }
+            schema: { $ref: '#/components/schemas/PinAuthorisationStatement' }
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -455,7 +480,11 @@ paths:
       tags: [VIGIL]
       operationId: updateGuardianToken
       summary: Update a guardian notification token
-      description: Guardian-signed; a subject may also use device signature plus action-scoped PIN authorisation.
+      description: >-
+        Guardian-signed only. The X-Vuka-Key-Id must resolve to this guardian's active guardian key;
+        subject/device keys and PIN-authorisation statements are not accepted for token updates.
+      x-vuka-required-signer-role: guardian
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       requestBody:
         required: true
@@ -467,17 +496,18 @@ paths:
               additionalProperties: false
               properties:
                 fcm_token: { type: string, minLength: 1 }
-                pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation' }
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientApproval' }
   /v1/alerts/{id}/ack:
     post:
       tags: [VIGIL]
       operationId: acknowledgeAlert
       summary: Record a guardian alert acknowledgement
       description: Guardian-signed acknowledgement.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       requestBody:
         required: true
@@ -521,8 +551,10 @@ paths:
       tags: [ANCHOR]
       operationId: exportSubjectRecord
       summary: Export the authenticated subject's complete evidence record
-      description: Subject-authenticated; returns genesis through head, unpaginated.
-      security: [{ bearerAuth: [] }]
+      description: >-
+        Subject-authenticated with the §7 signed-request headers; returns genesis through head,
+        unpaginated. For this bodyless request, body_sha256 is SHA-256 of the empty byte string.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       responses:
         '200':
@@ -598,6 +630,29 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
+    VukaKeyId:
+      type: apiKey
+      in: header
+      name: X-Vuka-Key-Id
+      description: Active device or guardian signer_key_id used to resolve the registered public key.
+    VukaTimestamp:
+      type: apiKey
+      in: header
+      name: X-Vuka-Ts
+      description: RFC 3339 request timestamp included in the signed request statement.
+    VukaNonce:
+      type: apiKey
+      in: header
+      name: X-Vuka-Nonce
+      description: Per-request nonce; retained per key for 24 hours, subject to event retry ordering in §7.
+    VukaSignature:
+      type: apiKey
+      in: header
+      name: X-Vuka-Signature
+      description: >-
+        Base64 raw P-256 r||s signature over canonical({method, path, ts, body_sha256, nonce});
+        body_sha256 hashes the exact HTTP body bytes. For initial registration, verify with the
+        submitted signer_pubkey before enrolling the signer_key_id.
   parameters:
     EntityId: { name: id, in: path, required: true, schema: { type: string, minLength: 1 } }
     SubjectId: { name: id, in: path, required: true, schema: { type: string, minLength: 1 } }
@@ -690,6 +745,7 @@ components:
         receipt_id: { type: string }
         state: { type: string, enum: [accepted, queued, pending, confirmed, refused] }
         anchor_status: { type: string, enum: [not_submitted, submitted, pending, confirmed, gap] }
+        pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation', description: Present when a verified PIN-authority statement is recorded; expiry is server-derived. }
     EvidenceEntry:
       type: object
       required: [action, actor_id, target_type, target_id, details, ts, prev_hash, event_hash]
@@ -703,6 +759,66 @@ components:
         ts: { type: string, format: date-time }
         prev_hash: { type: [string, 'null'] }
         event_hash: { type: string }
+    EventSubmission:
+      type: object
+      description: >-
+        Device/guardian-submitted v2 event. The server supplies prev_hash, event_hash,
+        details.received_at and details.chain_index. It recomputes commitment as
+        SHA-256(salt bytes concatenated with canonical(payload)); a mismatch returns 400.
+        Payload and salt are sent over TLS and stored separately encrypted at rest.
+      required: [action, actor_id, target_type, target_id, ts, details, payload, salt]
+      additionalProperties: false
+      properties:
+        action: { type: string, minLength: 1 }
+        actor_id: { type: string, minLength: 1 }
+        target_type: { type: string, enum: [journey, subject] }
+        target_id: { type: string, minLength: 1 }
+        ts: { type: string, format: date-time, description: Signer's source time. }
+        details:
+          type: object
+          required: [v, signer, signer_key_id, counter, event_id, commitment, sig]
+          additionalProperties: false
+          properties:
+            v: { const: 2 }
+            signer: { type: string, enum: [device, guardian] }
+            signer_key_id: { type: string, minLength: 1 }
+            counter: { type: integer, minimum: 0 }
+            event_id: { type: string, format: uuid }
+            commitment: { type: string, pattern: '^[0-9a-f]{64}$' }
+            sig: { type: string, contentEncoding: base64, minLength: 1, description: Event-context signature over the §4 canonical statement. }
+            signer_pubkey: { type: string, contentEncoding: base64, description: Present on registration and guardian-accept entries. }
+        payload:
+          type: object
+          description: >-
+            Private committed payload. kind and pv select the per-kind schema at
+            contracts/payloads/{kind}.v{pv}.json; validate against that schema before acceptance.
+            Every value must also be canonical-safe (no floats, unsafe integers or non-ASCII keys).
+          required: [kind, pv]
+          properties:
+            kind: { type: string, minLength: 1 }
+            pv: { type: integer, minimum: 1 }
+          additionalProperties: { $ref: '#/components/schemas/CanonicalJsonValue' }
+        salt:
+          type: string
+          contentEncoding: base64
+          minLength: 24
+          maxLength: 24
+          pattern: '^[A-Za-z0-9+/]{21}[AEIMQUYcgkosw048]==$'
+          description: Base64 encoding of exactly 16 random bytes.
+    CanonicalJsonValue:
+      description: Recursive JSON value subset accepted by the §5 canonical form.
+      oneOf:
+        - type: string
+        - type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        - type: boolean
+        - type: 'null'
+        - type: array
+          items: { $ref: '#/components/schemas/CanonicalJsonValue' }
+        - type: object
+          propertyNames: { pattern: '^[\x00-\x7F]*$' }
+          additionalProperties: { $ref: '#/components/schemas/CanonicalJsonValue' }
     EvidenceEntryV2:
       type: object
       description: >-
@@ -734,19 +850,34 @@ components:
         ts: { type: string, format: date-time, description: Signer's source time. }
         prev_hash: { type: string, pattern: '^[0-9a-f]{64}$', description: Genesis is exactly 64 zero hex characters; never null. }
         event_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
-    PinAuthorisation:
+    PinAuthorisationStatement:
       type: object
       description: >-
-        §9 statement shape only. mode is committed in the private payload and
-        must not be exposed publicly. This schema does not verify PINs or signatures.
-      required: [action, target_id, mode, expires_at, nonce]
+        Device-signed §9 statement. sig is base64 DER ECDSA P-256 over canonical of
+        exactly action, target_id, mode and nonce; signer_key_id identifies the signing key.
+        The statement alone is not proof that a PIN was correctly verified.
+      required: [action, target_id, mode, nonce, sig, signer_key_id]
       additionalProperties: false
       properties:
         action: { type: string, minLength: 1 }
         target_id: { type: string, minLength: 1 }
         mode: { type: string, enum: [normal, duress] }
-        expires_at: { type: string, format: date-time }
         nonce: { type: string, minLength: 1 }
+        sig: { type: string, contentEncoding: base64, minLength: 1 }
+        signer_key_id: { type: string, minLength: 1 }
+    PinAuthorisation:
+      type: object
+      description: Server-side PIN-authority record; expires_at is set from server receipt time + 120 seconds after statement verification.
+      required: [action, target_id, mode, nonce, sig, signer_key_id, expires_at]
+      additionalProperties: false
+      properties:
+        action: { type: string, minLength: 1 }
+        target_id: { type: string, minLength: 1 }
+        mode: { type: string, enum: [normal, duress] }
+        nonce: { type: string, minLength: 1 }
+        sig: { type: string, contentEncoding: base64, minLength: 1 }
+        signer_key_id: { type: string, minLength: 1 }
+        expires_at: { type: string, format: date-time, readOnly: true }
     Proof:
       type: array
       description: Ordered Merkle audit path from leaf to root.
@@ -796,7 +927,7 @@ components:
       required: [pin_authorisation]
       additionalProperties: false
       properties:
-        pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation' }
+        pin_authorisation: { $ref: '#/components/schemas/PinAuthorisationStatement' }
     BankSignal:
       type: object
       description: SIMULATED bank signal; outcome identifies the qualifying S1 trigger, never detection alone.

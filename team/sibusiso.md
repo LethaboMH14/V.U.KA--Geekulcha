@@ -25,7 +25,7 @@
 - **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — Contract v2 (vectors, PIN-authority/guardian governance, openapi.yaml v2, pinned mock server) and P3.S14/S17 (CI + SCA gates, PR #62) are merged. §4a device-key registry merged as `PROPOSED` (PR #64) — still needs Ipeleng's security review before it counts as accepted, since it governs §7 auth. Now on P3.A3 slice 2 (real signed-request auth), blocked until Ipeleng reviews §4a. Slice 1 (FastAPI skeleton, PostgreSQL append/read) is done; its request authentication is an always-true stub pending slice 2.
+**Current task** — P3.A1 contract-v2 follow-up C5–C8 and SEC-1/SEC-2 on PR #51: device-submittable `EventSubmission`, payload/salt transport, §7 request-signature headers, the PIN-authority statement/server-record split, and guardian-only token updates. This is contract/helper work; server request authentication and runtime enforcement remain unbuilt until slice 2. Latest verified PR #51 head before edits: `95b28ed87afa85e6927ec39b761372611d6b8742`.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -96,6 +96,7 @@ See your work order's **Depends on → hands off to** line. Shared files are cla
 
 - Add new blockers here with the person's name and the evidence needed.
 - **P3.S14/S17 shared-path claim (24 Sep, Codex acting at Sibusiso's request):** editing `.github/workflows/checks.yml`, the root `package-lock.json`, and `docs/security/SCA-WAIVERS.md`; Ipeleng is a co-owner for CI/security settings per `docs/OVERLAPS.md`. Ipeleng: please review the gate behavior and waiver policy before merge. No contract or app behavior change.
+- **P3.A1 C5–C8 + SEC-1/SEC-2 claim (24 Sep, Codex acting at Sibusiso's request):** `contracts/openapi.yaml`, `anchor/pin_authority.py`, `anchor/tests/test_pin_authority.py`, `test/openapi-contract.test.mjs`, and one build-log entry. Contract work follows Lethabo's proposed resolutions accepted by Sibusiso in PR #51 comment `5814777869`; it does not claim runtime enforcement. Lethabo and the relevant security/contract reviewers must review the resulting diff before the contract is treated as frozen. No changes to server routes or server auth implementation in this task.
 - **P3.A3 slice 2 / P3.A6 deployment:** blocked pending a defined persisted source for enrolled device keys and journey ownership. `contracts/keys/README.md` only defines the public server key manifest and explicitly leaves manifest byte serialization unspecified; slice 1's `verify_request()` remains always-allow and `server/README.md` says the app must not be exposed before slice 2. Do not deploy the slice-1 stub.
 - **P3.A3 slice 3 / P3.A5 export:** blocked pending slice 2 and the human decisions identified in the packets (including Lethabo's T30 agreement and the currently open incident-rule decisions in `docs/PIN-AUTHORITY-RULES.md`). No implementation or live testnet submission until those prerequisites are satisfied.
 

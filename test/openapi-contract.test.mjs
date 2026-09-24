@@ -168,12 +168,69 @@ test("v1 schema components remain and v2 evidence fixes the genesis hash shape",
   assert.doesNotMatch(entry, /prev_hash: \{ type: \[string, 'null'\] \}/);
 });
 
-test("PinAuthorisation matches the five-field §9 statement shape", () => {
-  const pin = document.slice(document.indexOf("    PinAuthorisation:"), document.indexOf("    Proof:"));
-  assert.match(pin, /required: \[action, target_id, mode, expires_at, nonce\]/);
-  for (const field of ["action", "target_id", "mode", "expires_at", "nonce"]) assert.match(pin, new RegExp(`^        ${field}:`, "m"));
-  assert.match(pin, /enum: \[normal, duress\]/);
-  assert.match(pin, /additionalProperties: false/);
+test("PIN authority separates the signed statement from the server expiry record", () => {
+  const statement = document.slice(document.indexOf("    PinAuthorisationStatement:"), document.indexOf("    PinAuthorisation:"));
+  assert.match(statement, /required: \[action, target_id, mode, nonce, sig, signer_key_id\]/);
+  for (const field of ["action", "target_id", "mode", "nonce", "sig", "signer_key_id"]) {
+    assert.match(statement, new RegExp(`^        ${field}:`, "m"));
+  }
+  assert.doesNotMatch(statement, /^        expires_at:/m);
+  assert.match(statement, /canonical of[\s\S]*action, target_id, mode and nonce/);
+  assert.match(statement, /additionalProperties: false/);
+
+  const record = document.slice(document.indexOf("    PinAuthorisation:"), document.indexOf("    Proof:"));
+  assert.match(record, /required: \[action, target_id, mode, nonce, sig, signer_key_id, expires_at\]/);
+  assert.match(record, /expires_at: \{ type: string, format: date-time, readOnly: true \}/);
+  assert.match(record, /server receipt time \+ 120 seconds/);
+  const receipt = document.slice(document.indexOf("    Receipt:"), document.indexOf("    EvidenceEntry:"));
+  assert.match(receipt, /pin_authorisation: \{ \$ref: '#\/components\/schemas\/PinAuthorisation'/);
+  assert.match(document, /pin_authorisation: \{ \$ref: '#\/components\/schemas\/PinAuthorisationStatement' \}/);
+});
+
+test("EventSubmission carries only device-created fields, payload and a 16-byte salt", () => {
+  const submission = document.slice(document.indexOf("    EventSubmission:"), document.indexOf("    EvidenceEntryV2:"));
+  assert.match(submission, /required: \[action, actor_id, target_type, target_id, ts, details, payload, salt\]/);
+  assert.match(submission, /required: \[v, signer, signer_key_id, counter, event_id, commitment, sig\]/);
+  assert.match(submission, /required: \[kind, pv\]/);
+  assert.match(submission, /contracts\/payloads\/\{kind\}\.v\{pv\}\.json/);
+  assert.match(submission, /additionalProperties: \{ \$ref: '#\/components\/schemas\/CanonicalJsonValue' \}/);
+  assert.match(submission, /pattern: '\^\[A-Za-z0-9\+\/\]\{21\}\[AEIMQUYcgkosw048\]==\$'/);
+  const properties = submission.slice(submission.indexOf("      properties:"));
+  for (const serverField of ["prev_hash:", "event_hash:", "received_at:", "chain_index:"]) {
+    assert.doesNotMatch(properties, new RegExp(`^\\s+${serverField}`, "m"));
+  }
+  for (const path of ["/v1/subjects", "/v1/events", "/v1/checkins/{id}/opened", "/v1/checkins/{id}/result"]) {
+    assert.match(pathBlock(path), /\$ref: '#\/components\/schemas\/EventSubmission'/);
+  }
+  assert.match(pathBlock("/v1/events"), /payload commitment mismatch/);
+});
+
+test("§7 device and guardian operations require all four X-Vuka request headers", () => {
+  for (const [scheme, header] of [
+    ["VukaKeyId", "X-Vuka-Key-Id"],
+    ["VukaTimestamp", "X-Vuka-Ts"],
+    ["VukaNonce", "X-Vuka-Nonce"],
+    ["VukaSignature", "X-Vuka-Signature"]
+  ]) {
+    assert.match(document, new RegExp(`^    ${scheme}:$`, "m"));
+    assert.match(document, new RegExp(`name: ${header}`));
+  }
+  assert.match(document, /Base64 raw P-256 r\|\|s signature over canonical\(\{method, path, ts, body_sha256, nonce\}\)/);
+  assert.match(document, /^    CanonicalJsonValue:$/m);
+  assert.match(pathBlock("/v1/events"), /request authentication, event_id idempotency lookup, then nonce, counter/);
+  for (const path of ["/v1/subjects", "/v1/events", "/v1/checkins/{id}/opened", "/v1/subjects/{id}/record", "/v1/subjects/{id}/data", "/v1/subjects/{id}/export"]) {
+    const block = pathBlock(path);
+    assert.match(block, /VukaKeyId: \[\], VukaTimestamp: \[\], VukaNonce: \[\], VukaSignature: \[\]/);
+  }
+});
+
+test("guardian token updates exclude subject PIN authorization", () => {
+  const operation = pathBlock("/v1/guardians/{id}/token");
+  assert.match(operation, /Guardian-signed only/);
+  assert.match(operation, /x-vuka-required-signer-role: guardian/);
+  assert.match(operation, /VukaKeyId: \[\], VukaTimestamp: \[\], VukaNonce: \[\], VukaSignature: \[\]/);
+  assert.doesNotMatch(operation, /pin_authorisation/);
+  assert.match(operation, /'403': \{ \$ref: '#\/components\/responses\/InsufficientApproval' \}/);
 });
 
 test("BankSignal distinguishes the three §9/S1 trigger outcomes", () => {
@@ -200,7 +257,7 @@ test("proof, receipt and subject schemas carry the §6, §9 and §10 fields", ()
   const exportSchema = document.slice(document.indexOf("    SubjectExport:"), document.indexOf("    SubjectDeletionRequest:"));
   for (const field of ["entries", "payloads", "salts", "proofs", "receipts"]) assert.match(exportSchema, new RegExp(`^        ${field}:`, "m"));
   const deletion = document.slice(document.indexOf("    SubjectDeletionRequest:"), document.indexOf("    BankSignal:"));
-  assert.match(deletion, /pin_authorisation: \{ \$ref: '#\/components\/schemas\/PinAuthorisation' \}/);
+  assert.match(deletion, /pin_authorisation: \{ \$ref: '#\/components\/schemas\/PinAuthorisationStatement' \}/);
 });
 
 test("key manifest message format is documented without key material", () => {
