@@ -25,7 +25,7 @@
 - **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — P3.S14/S17 CI and dependency-security gates, PR [#62](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/62), head `9ab9d1cf2273718dd6ea3868e38c3a1ff3454eb4` on base `3a5407394183b52f9c701e0fa24a8fa270ec2442`. All seven CI jobs pass; Ipeleng and Lethabo's reviews remain pending. Checklist rows stay in progress until review. The other local packets for ANCHOR slice 2, Azure deployment, slice 3, and export remain under dependency/design review; see the build-log entry before treating them as implementation-ready.
+**Current task** — P3.S14/S17 CI and dependency-security gates, PR [#62](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/62), branch `feat/sibusiso-ci-security-gates` on base `3a5407394183b52f9c701e0fa24a8fa270ec2442`. All seven CI jobs pass on the current remote head; Ipeleng and Lethabo's reviews remain pending. Checklist rows stay in progress until review. The other local packets for ANCHOR slice 2, Azure deployment, slice 3, and export remain under dependency/design review; see the build-log entry before treating them as implementation-ready.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
