@@ -2,7 +2,7 @@
 
 WBS ID / owner / criterion: P3.V2 / Vukosi / T, S
 Built, specified, simulated or blocked: **Offline provenance gate built; live model checks blocked.**
-What changed for a household, operator or reviewer: the tool can verify a supplied model digest, install only a verified file, validate the class mapping and convert scores to basis points without accepting malformed values. Review record: [P2a REVIEW.md](REVIEW.md).
+What changed for a household, operator or reviewer: the tool can verify a supplied model digest, install only a verified file, validate the class mapping and convert scores to basis points without accepting malformed values. Review record: `docs/workflows/vukosi/p2a-yamnet-provenance/REVIEW.md`.
 
 ## Evidence and verification
 
@@ -14,7 +14,7 @@ What changed for a household, operator or reviewer: the tool can verify a suppli
 
 ## Review
 
-Claude's [P2a review](REVIEW.md) is an AI review, not human approval. Lethabo's review is pending. All checklist items intentionally remain unchecked.
+Claude's review at `docs/workflows/vukosi/p2a-yamnet-provenance/REVIEW.md` is an AI review, not human approval. Lethabo's review is pending. All checklist items intentionally remain unchecked.
 
 - [ ] No secrets, private data or old history imported; provenance reviewed
 - [ ] Intake gate evidence satisfied before feature work

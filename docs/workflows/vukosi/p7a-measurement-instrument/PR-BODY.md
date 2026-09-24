@@ -2,7 +2,7 @@
 
 WBS ID / owner / criterion: P3.V6 / Vukosi / T, B
 Built, specified, simulated or blocked: **Offline instrument built with synthetic tests; real measurement blocked.**
-What changed for a household, operator or reviewer: M1/M2/M3 reports expose counts, configuration and method; malformed inputs fail closed. The latest local proposal suppresses M3 percentiles until 30 attempts are delivered and awaits Khutso's confirmation. Review record: [P7a REVIEW.md](REVIEW.md).
+What changed for a household, operator or reviewer: M1/M2/M3 reports expose counts, configuration and method; malformed inputs fail closed. The latest local proposal suppresses M3 percentiles until 30 attempts are delivered and awaits Khutso's confirmation. Review record: `docs/workflows/vukosi/p7a-measurement-instrument/REVIEW.md`.
 
 ## Evidence and verification
 
@@ -14,7 +14,7 @@ What changed for a household, operator or reviewer: M1/M2/M3 reports expose coun
 
 ## Review
 
-Claude's [P7a review](REVIEW.md) is an AI review, not human approval; it predates the proposed M3 delivered gate. Lethabo's review is pending. All checklist items intentionally remain unchecked.
+Claude's review at `docs/workflows/vukosi/p7a-measurement-instrument/REVIEW.md` is an AI review, not human approval; it predates the proposed M3 delivered gate. Lethabo's review is pending. All checklist items intentionally remain unchecked.
 
 - [ ] No secrets, private data or old history imported; provenance reviewed
 - [ ] Intake gate evidence satisfied before feature work

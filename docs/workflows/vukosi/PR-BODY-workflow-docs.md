@@ -2,7 +2,7 @@
 
 WBS ID / owner / criterion: Vukosi workflow and packet reviews / Vukosi / T, S
 Built, specified, simulated or blocked: **Specified and reviewed by AI; human approval pending.**
-What changed for a household, operator or reviewer: packet tasks, blockers, proposed standing rules and review records make implementation boundaries and unverified claims inspectable. Packet reviews: [P1a](p1a-rn-scaffold/REVIEW.md), [P2a](p2a-yamnet-provenance/REVIEW.md), [P7a](p7a-measurement-instrument/REVIEW.md).
+What changed for a household, operator or reviewer: packet tasks, blockers, proposed standing rules and review records make implementation boundaries and unverified claims inspectable. Review files: `docs/reviews/VUKOSI-PR43-READINESS.md`, `docs/reviews/VUKOSI-WORKFLOW-CLAUDE-REVIEW.md`, `docs/workflows/vukosi/p1a-rn-scaffold/REVIEW.md`, `docs/workflows/vukosi/p2a-yamnet-provenance/REVIEW.md`, `docs/workflows/vukosi/p7a-measurement-instrument/REVIEW.md`.
 
 ## Evidence and verification
 
