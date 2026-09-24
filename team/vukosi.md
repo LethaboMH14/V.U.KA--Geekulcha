@@ -106,7 +106,7 @@ See your work order's **Depends on → hands off to** line. Shared files are cla
 - **PROPOSED — contract v2 gaps C5–C8:** Sibusiso to close the PR #51 contract gaps; evidence is the reviewed contract-v2 change and passing contract tests.
 - **PROPOSED — offline queue skew:** Sibusiso and Ipeleng to decide the accepted clock-skew rule for offline-queued events; evidence is a recorded cross-layer/security decision and matching tests.
 - **PROPOSED — reboot re-arm:** Lethabo to decide the V10 reboot re-arm trigger; evidence is the approved spec decision and an acceptance test.
-- **PROPOSED — measurement phones:** the leads to provide one budget 2–3 GB Android phone and a second phone for M3/M4/M5; evidence is the named devices available for the documented procedures.
+- **PROPOSED — measurement phones:** the leads to provide one budget 2–3 GB Android phone and a second phone for M3/M4/M5; leads confirm who brings what by Thu 24 Sep 10:00. Evidence is the named devices available for the documented procedures.
 - Add new blockers here with the person's name and the evidence needed.
 
 ## Decisions affecting others
