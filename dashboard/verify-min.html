@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VUKA — verify-min</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 46rem; margin: 2rem auto; padding: 0 1rem; color: #17202a; }
+    h1 { font-size: 1.25rem; }
+    p, pre, #result { font-size: 0.9rem; }
+    textarea { width: 100%; height: 14rem; font-family: ui-monospace, monospace; font-size: 0.8rem; }
+    button { padding: 0.5rem 1rem; }
+    #result { white-space: pre-wrap; background: #f4f6f8; border: 1px solid #d5dbe1; border-radius: 6px; padding: 0.75rem; min-height: 4rem; }
+    .pinned { color: #5a6572; }
+  </style>
+</head>
+<body>
+  <h1>VUKA — verify-min (thin slice)</h1>
+  <p>
+    Paste an exported subject record below. The browser recomputes every commitment,
+    event hash and prev link, checks every signature — device keys from the chain's
+    registration entries, the server key <strong>only</strong> from the pinned key
+    manifest committed in <code>contracts/keys/</code> — and reports the first broken
+    entry index. Mirror-node checks are not in this slice.
+  </p>
+  <p class="pinned">Pinned values are fetched live from <code>contracts/keys/verify-pins.json</code> and <code>contracts/keys/manifest.json</code>.</p>
+  <textarea id="export" spellcheck="false" placeholder='{"subject_id": "…", "entries": [ … ], "payloads": { … }, "salts": { … }}'></textarea>
+  <p><button id="verify" type="button">Verify export</button></p>
+  <div id="result" role="status">paste an export and press Verify</div>
+  <script type="module" src="./verify-min.js"></script>
+</body>
+</html>

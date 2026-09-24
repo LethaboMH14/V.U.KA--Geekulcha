@@ -1,15 +1,28 @@
-// Minimal v2 subject-export verifier (docs/VUKA-2-SPEC.md §§4–5, §4a/ADR-0042).
-// No mirror, Merkle receipt, revocation or server-signature verification.
+// Minimal v2 subject-export verifier (docs/VUKA-2-SPEC.md §§4–5, §4a/ADR-0042,
+// §14 verify-min). No mirror read, Merkle-proof or revocation checks.
 //
 // What `ok: true` means, and what it does not: the chain is internally
 // consistent (links, hashes, commitments, counters) and every device or
 // guardian entry is signed by a key the chain itself registers. It does NOT
 // prove the record came from VUKA — anyone can build a self-consistent chain
-// with their own keys. That binding needs the pinned anchor and key-manifest
-// checks (§6, §10), which verify-min does not run. Hence `assurance`.
+// with their own keys. Hence `assurance`.
+//
+// `verifyExport(exportObj, pins?)`: when pins are provided (as the verify page
+// does, from contracts/keys/verify-pins.json + manifest.json), the server-signed
+// entries are ALSO signature-checked against the PINNED Ed25519 key (T05 — the
+// server key can never come from the export itself) and any receipts in the
+// export must name pins.topic_id / pins.topic_epoch; `not_checked` then drops
+// "server signatures". Without pins the verifier stays anchor-agnostic (the
+// cross-language scripts and tests without a manifest).
+//
+// Key-registry hardening (red-team review SEC-A/SEC-B): a signer_key_id is
+// registered ONCE — a later registration with a different key or actor is
+// `key_conflict`, never a silent overwrite — and every entry resolved from a
+// registered key must claim that key's registered actor_id (`actor_mismatch`).
 
 import { canonicalize } from "./canonical.js";
 import { derToRaw } from "./der.js";
+import { importSpkiVerifyKey } from "./keys.js";
 
 const ZERO_HASH = "0".repeat(64);
 const HASH_RE = /^[0-9a-f]{64}$/;
@@ -168,9 +181,37 @@ function statementFor(entry, subjectId) {
 /**
  * Verify a format-v2 subject export in chain order.
  * @param {unknown} exportObj
- * @returns {Promise<{ ok: boolean, entries_checked: number, first_broken_index: number|null, reason: string|null, detail: string|null, payload_removed: number[], server_signature_not_checked: number[], not_checked: string[] }>}
+ * @param {{ server_ed25519_public_key?: string, network?: string, topic_id?: string,
+ *          topic_epoch?: number } | null} [pins] pinned values; when provided the
+ *        server signatures are checked against the pinned key and receipts are
+ *        checked against the pinned topic (T05).
+ * @returns {Promise<{ ok: boolean, entries_checked: number, first_broken_index: number|null, reason: string|null, detail: string|null, payload_removed: number[], server_signature_not_checked: number[], not_checked: string[], assurance: string }>}
  */
-export async function verifyExport(exportObj) {
+export async function verifyExport(exportObj, pins = null) {
+  let serverKey = null;
+  if (pins !== null && pins !== undefined) {
+    if (
+      typeof pins !== "object" || Array.isArray(pins) ||
+      typeof pins.server_ed25519_public_key !== "string" || pins.server_ed25519_public_key.length === 0
+    ) {
+      return failure(0, null, "bad_pins", "pins.server_ed25519_public_key is required when pins are provided (the pinned key manifest).", [], []);
+    }
+    try {
+      serverKey = await importSpkiVerifyKey(pins.server_ed25519_public_key, "Ed25519");
+    } catch (error) {
+      return failure(0, null, "bad_pins", `The pinned server key is not a usable Ed25519 SPKI: ${error instanceof Error ? error.message : "invalid"}`, [], []);
+    }
+  }
+  const out = await runChecks(exportObj, pins, serverKey);
+  if (serverKey !== null) {
+    // With pins every server entry was signature-checked: nothing unchecked remains (T05).
+    out.server_signature_not_checked = [];
+    out.not_checked = out.not_checked.filter((item) => item !== "server signatures");
+  }
+  return out;
+}
+
+async function runChecks(exportObj, pins, serverKey) {
   let normalized;
   try {
     normalized = normaliseExport(exportObj);
@@ -180,6 +221,22 @@ export async function verifyExport(exportObj) {
   const entries = normalized.entries;
   if (!Array.isArray(entries)) return failure(0, null, "bad_shape", "entries must be an array.", [], []);
   if (entries.length === 0) return failure(0, null, "empty_export", "The export contains no entries.", [], []);
+
+  // Receipts, when the export carries them, must name the pinned topic/epoch
+  // (mirror half of the anchor check; the mirror read itself stays out of scope).
+  if (pins !== null && Array.isArray(exportObj.receipts)) {
+    for (const receipt of exportObj.receipts) {
+      if (!isRecord(receipt)) {
+        return failure(0, null, "bad_shape", "Each entry of export.receipts must be an object.", [], []);
+      }
+      if (pins.topic_id !== undefined && receipt.topic_id !== pins.topic_id) {
+        return failure(0, null, "receipt_topic_mismatch", `A receipt names topic ${JSON.stringify(receipt.topic_id ?? null)}; the pinned topic is ${JSON.stringify(pins.topic_id)}.`, [], []);
+      }
+      if (pins.topic_epoch !== undefined && receipt.topic_epoch !== pins.topic_epoch) {
+        return failure(0, null, "receipt_topic_mismatch", `A receipt names topic_epoch ${JSON.stringify(receipt.topic_epoch ?? null)}; the pinned epoch is ${JSON.stringify(pins.topic_epoch)}.`, [], []);
+      }
+    }
+  }
 
   const payloadRemoved = [];
   const serverIndexes = [];
@@ -262,7 +319,27 @@ export async function verifyExport(exportObj) {
     }
 
     if (details.signer === "server") {
-      serverIndexes.push(i);
+      if (serverKey === null) {
+        serverIndexes.push(i);
+      } else {
+        // T05: the server key comes from the pinned manifest, never the export.
+        let statementBytes;
+        try {
+          statementBytes = canonicalize(statementFor(entry, normalized.subject_id));
+        } catch (error) {
+          return failure(i, i, "canonical_error", `Signed statement cannot be canonicalised: ${error.message}`, payloadRemoved, serverIndexes);
+        }
+        let sigBytes;
+        try {
+          sigBytes = decodeBase64(details.sig, "signature");
+        } catch (error) {
+          return failure(i, i, "server_signature_invalid", error instanceof Error ? error.message : "The server signature is invalid.", payloadRemoved, serverIndexes);
+        }
+        const serverSigOk = await globalThis.crypto.subtle.verify("Ed25519", serverKey, sigBytes, statementBytes);
+        if (!serverSigOk) {
+          return failure(i, i, "server_signature_invalid", "The server signature does not verify against the pinned key-manifest key.", payloadRemoved, serverIndexes);
+        }
+      }
     } else {
       const keyId = details.signer_key_id;
       const registered = keys.get(keyId);
@@ -310,4 +387,11 @@ export async function verifyExport(exportObj) {
   }
 
   return result(true, entries.length, null, null, null, payloadRemoved, serverIndexes);
+}
+
+/** Head of the chain = the last entry's event_hash (what a 0x01 root message must commit to). */
+export function chainHeadHex(exportObj) {
+  const entries = exportObj?.entries;
+  if (!Array.isArray(entries) || entries.length === 0) return null;
+  return entries[entries.length - 1].event_hash;
 }
