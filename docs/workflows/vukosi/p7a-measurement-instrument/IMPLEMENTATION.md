@@ -116,3 +116,21 @@ Fraud gate: not applicable to an offline report parser; no alert, bank or person
 ## Deviation and handoff
 
 No deviation from the file scope, standard-library-only rule, offline requirement, or no-real-data boundary. The output JSON input schema was specified by this implementation as allowed in TASK §5. The required tracked CSV remains inherited from BASE_SHA. AI review is pending; human review remains separate. Next work that can produce a measurement needs the real model/runtime gate, licensed clip lists or consenting ambient data, and the device procedure; none is included here.
+
+## M3 delivered gate — 2026-09-24
+
+**PROPOSED:** This is Vukosi's recommendation pending Khutso's confirmation. It is not a measurement and does not publish any latency result. Executor: Codex / GPT-5 (runtime variant not exposed). Old HEAD: `42f1bfe7898b98fe71837c8e959c838682ee09b4`; implementation commit: `b98780506c2e373c4fc28f55fc1238cfd177df01`. The final evidence commit is reported externally because a commit cannot contain its own SHA.
+
+M3 now always reports integer `delivered`. Percentiles (`median_ms`, `p95_ms`, `min_ms`, `max_ms`) appear only with at least 30 delivered attempts. With 30 or more total attempts but fewer than 30 delivered, status is `insufficient_n`, reason is `fewer than 30 delivered attempts`, `n` still includes lost attempts, and no percentile keys appear. The existing `n < 30` attempt gate, lost denominator, clock-suspect handling, and nearest-rank p95 calculation remain.
+
+**Tests first — FACT:** `py -3.12 -m unittest discover -s scripts/tests -v` initially ran 42 tests and exited 1: 37 passed and the five new/updated M3 assertions errored because `delivered` and the delivered gate were absent. After implementation, the same full offline command ran 42 tests in 1.477 seconds and exited 0 (`OK`). The four required cases pass: 30 attempts/27 delivered is insufficient with no percentiles; 30 delivered retains median 15.5, p95 29, min 1 and max 30; 40 attempts/30 delivered/10 lost calculates over the 30 delivered values; 30 attempts/29 delivered is insufficient.
+
+Existing tests changed, and why:
+
+- `test_e11_m3_29_attempts_has_no_latency_statistics`: added the required always-present `delivered == 29` assertion; the existing insufficient-attempt behaviour remains.
+- `test_e12_m3_30_latency_values_nearest_rank_hand_oracle`: added `delivered == 30`; the hand-computed percentile oracle is unchanged.
+- `test_e13_m3_lost_stays_in_denominator_statistics_delivered_only`, renamed `test_e13_m3_30_attempts_with_27_delivered_is_insufficient`: removed the old expectation that 27 delivered values produce percentiles and now asserts the delivered gate, exact reason, counts and absence of all percentile keys.
+
+New tests cover 40 attempts with 30 delivered and 30 attempts with 29 delivered. No expected percentile was derived from the implementation.
+
+**Repository evidence — FACT:** docs PASS; intake PASS; contract tests 10/10 PASS; Gitleaks PASS with no leaks; `git diff --check` PASS. The only tracked restricted-data match is the inherited, untouched `research/results/anchor-scale-scenarios.csv`. No model, audio, dataset, result, new CSV, network access, threshold tuning or device check was used. Device checks are **NOT RUN** because this packet has no live check and the phone was not required.
