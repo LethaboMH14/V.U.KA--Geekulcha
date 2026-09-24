@@ -10,7 +10,7 @@
 
 Changed: Replayed P3.K2 on `docs/khutso-p3-k2-saps-totals-replacement`, based on PR #47 head `40f1900`. Opened [PR #54](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/54) under `KhutsoMothopa` and requested `Sibusiso-K`. Closed [PR #52](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/52) with a pointer to #54; its old branch remains for traceability. This entry and `team/khutso.md` record the handoff.
 
-Evidence: `gh pr view 54` confirmed author `KhutsoMothopa`, base `docs/khutso-p3-k1-evidence-recheck`, exactly three changed files and the Sibusiso-K request. `node scripts/check-docs.mjs` passed; `node scripts/check-intake.mjs` passed with human authenticity review still required; `git diff --check origin/docs/khutso-p3-k1-evidence-recheck...HEAD` passed; `.tools/gitleaks.exe dir --redact --no-banner .` found no leaks. These checks do not constitute human source confirmation or review acceptance.
+Evidence: `gh pr view 54` confirmed author `KhutsoMothopa`, base `docs/khutso-p3-k1-evidence-recheck`, four changed files and the Sibusiso-K request. `node scripts/check-docs.mjs` passed; `node scripts/check-intake.mjs` passed with human authenticity review still required; `git diff --check origin/docs/khutso-p3-k1-evidence-recheck...HEAD` passed; `.tools/gitleaks.exe dir --redact --no-banner .` found no leaks. These checks do not constitute human source confirmation or review acceptance.
 
 Decision: Khutso explicitly approved replacement of PR #52. No evidence or governance contract decision was made, and nothing was merged.
 
