@@ -211,5 +211,8 @@ Codex correctly held off pushing pending my authorization (per the task's explic
 - PR #70's 13 decisions — posted, awaiting Lethabo's fold-in to `TEST-SPECS.md`.
 - PR #65 (Babatunde) — `CHANGES_REQUESTED` stands, no fix pushed.
 - PR #51 — CI fully green, `MERGEABLE`, C5–C8/SEC-1/SEC-2 pushed; still needs Lethabo's actual approval.
-- **P3.A3 slice 2 has everything it needs — no more blockers.** Ready for Codex now.
 - P3.L4 (thin end-to-end slice, joint with Lethabo/Vukosi/Ipeleng) — not packetized; genuinely blocked on P3.A3/A6 landing first.
+
+**Sep 25 status check, ~18:20:** real state doesn't match `docs/CHECKLIST.md`'s stale ☐ marks. P3.A6 (09:00 deploy) effectively missed — infra ready, app not deployed. P3.L4 (12:00) not started, blocked on A3/A6. P3.A3 ~20% done (slice 1 only). P3.A5 not started. P3.A4 half done (infra+CI ready, app not deployed). Already done ahead of schedule: P3.A1, P3.A2, P3.S14/S17, P3.S20/S21.
+
+**Sent Codex the slice-2 prompt — genuinely unblocked, no caveats needed.** Pointed it at `sibusiso-workflow/tasks/anchor-server-slice2/01-task.md`, named the exact commits (`f504082`, `f3cd73d`) it should build auth against, reminded it to pull latest (§4a, ADR-0041, key-manifest bootstrap all landed today), and repeated the internal-DB-only journey-binding decision. Waiting on its report.
