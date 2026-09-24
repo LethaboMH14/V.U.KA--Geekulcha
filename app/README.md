@@ -10,3 +10,27 @@ Rules that bind this folder:
 - Salts and nonces come from native `SecureRandom`.
 - No `CAMERA`, `SEND_SMS`, background-location or boot-receiver permissions.
 - The duress path is pixel-identical to the normal one (test T15).
+
+## Build a signed release APK (D1)
+
+The React Native 0.74.5 shell is in this folder. Android only; it has no product code yet. It exists so the signed-release path works before any feature does (spec §14).
+
+**The release key never enters the repo.** Gradle reads it from `~/.gradle/gradle.properties` or from environment variables:
+
+```
+VUKA_UPLOAD_STORE_FILE=C:/Users/<you>/.vuka/vigil-upload.jks
+VUKA_UPLOAD_KEY_ALIAS=vigil-upload
+VUKA_UPLOAD_STORE_PASSWORD=…
+VUKA_UPLOAD_KEY_PASSWORD=…
+```
+
+A release task with no key configured **fails**; it never falls back to the public debug key. Debug builds are unaffected.
+
+```bash
+cd app && npm ci
+cd android && ./gradlew assembleRelease
+```
+
+The APK is written to `android/app/build/outputs/apk/release/app-release.apk`. Record its SHA-256 and the signing certificate fingerprint (`apksigner verify --print-certs`) in the release notes. T20 needs the digest.
+
+The **release owner** (Vukosi; backup Mutarisi) holds the upload key and publishes the GitHub Release with its QR code. Whoever holds the key must keep it: an installed APK only updates from an APK signed with the same key.
