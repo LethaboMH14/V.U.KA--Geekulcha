@@ -55,7 +55,7 @@ IDs are stable; tests in §15 cite them.
 - **A2** Entry format per §4, canonical form per §5, Merkle per §6, auth and time per §7.
 - **A3** Escalation is server-owned, durable and exactly-once in effect (§8).
 - **A4** Anchoring per §10.
-- **A5** `GET /v1/subjects/{id}/export` returns genesis → head with payloads, salts, proofs and receipts, unpaginated, to the authenticated subject only.
+- **A5** `GET /v1/subjects/{id}/export` returns genesis → head with payloads, salts, proofs and receipts, unpaginated, to the authenticated subject only. **Exception, the pre-incident hold (§9, ADR-0041):** while an incident is open, and for 6 h after its last PIN entry, the member's own device receives the chain only up to the pre-incident head, identically for a normal and a duress authorisation. Export always needs a fresh `export` PIN authorisation (§9).
 - **A6** Public endpoints reveal no personal data. The public proof is keyed by an **anchored chain head** and returns only a Merkle audit path and receipt, never a chain segment (§6).
 - **A7** `/healthz` reports the last anchor time, the anchor queue depth, pending deadlines and the outbox backlog. A missed hourly anchor is logged as an alarm.
 
