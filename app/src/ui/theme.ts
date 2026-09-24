@@ -1,93 +1,104 @@
 /**
- * VIGIL design tokens — the Ivory theme from the prototype reference
- * (prototype/src/index.css). Contrast values are the audited ones:
- * secondary text ≥ 4.9:1 on the ivory base.
+ * VIGIL design tokens: Functional Industrial. A warm graphite body, bone
+ * type, and one cobalt signal (the primary key and the listening lamp).
  *
- * Colour carries meaning: green only for verified/received, amber only in
- * guardian mode, no red on member screens.
+ * Colour carries meaning and nothing else:
+ * - cobalt: the one action and the listening lamp, never decoration;
+ * - green: received or verified only;
+ * - amber: guardian mode only (its own territory, never on member screens);
+ * - no red anywhere on member screens.
+ *
+ * Contrast (computed, WCAG 2.x): textTitle 14.2:1 and textBody 8.3:1 on
+ * bgBase; textDim 5.1:1 on bgBase; white on cobalt 4.7:1; controlEdge on
+ * bgBase meets 3:1 (1.4.11 non-text).
  */
 export const colors = {
-  bgBase: '#F5F3EE',
-  bgSurface: '#FFFFFF',
-  bgElevated: '#F2EFE9',
-  card: 'rgba(255,255,255,0.72)',
-  cardSolid: 'rgba(255,255,255,0.92)',
+  bgBase: '#1B1C1E',
+  bgRaised: '#232427',
+  keyFace: '#2A2C2F',
+  keyFaceTop: '#323438',
+  keyFacePressed: '#222326',
+  /** One light source from above: a hairline highlight on top edges. */
+  topLight: 'rgba(255,255,255,0.07)',
+  hairline: 'rgba(255,255,255,0.06)',
+  shade: '#111214',
+  controlEdge: '#6E7076',
 
-  textTitle: '#1F2328',
-  textLabel: '#2B3037',
-  textSecondary: '#5B6068',
-  textDim: '#636870',
-  textMono: '#3A3F47',
-  textInverse: '#FFFFFF',
+  textTitle: '#ECEAE4',
+  textBody: '#B8B5AD',
+  textDim: '#8F8C85',
+  /** Unlit lamp and disabled marks: decorative only, never text. */
+  unlit: '#46484D',
 
-  action: '#1E3A5F',
-  actionDim: 'rgba(30,58,95,0.10)',
-  actionText: '#FFFFFF',
+  cobalt: '#3D6FD6',
+  cobaltTop: '#4A7BE0',
+  cobaltBottom: '#3363C6',
+  cobaltText: '#FFFFFF',
+  /** Cobalt for text or icons on graphite (6.8:1). */
+  cobaltInk: '#7FA3EE',
 
-  greenFill: '#DCFCE7',
-  greenText: '#065F46',
-  greenBorder: '#86EFAC',
+  /** Received or verified only. */
+  green: '#3FA37A',
+  greenInk: '#6FCB9F',
+  greenWash: 'rgba(63,163,122,0.14)',
 
-  border: '#ECE8E0',
-  borderSubtle: '#F0ECE4',
-  borderEmphasis: '#E2DDD2',
-  inputBorder: '#6F747D',
-  /** Control edges: 3.1:1 on the ivory base (WCAG 1.4.11), so keys hold in daylight. */
-  controlEdge: '#8F897E',
+  /** Bone lamp: a guardian who accepted. Not a status colour. */
+  bone: '#ECEAE4',
 
-  /** Primary pill gradient, top to bottom (one light source). */
-  actionTop: '#2A4C78',
-  actionBottom: '#1A3252',
-  /** Frosted glass: the hero bezel shell, card edge, and the orb on ink. */
-  bezelFill: 'rgba(255,255,255,0.5)',
-  glassEdge: 'rgba(255,255,255,0.88)',
-  orbOnInk: 'rgba(255,255,255,0.16)',
-  ghostFill: 'rgba(255,255,255,0.55)',
-  /** Android press ripple: identical on every control, both PIN paths. */
-  ripple: 'rgba(30,58,95,0.12)',
-  rippleOnInk: 'rgba(255,255,255,0.18)',
-  /** Ink-tinted, single light source (never pure black). */
-  shadow: '#1E2C46',
+  /** Guardian territory. Never used on member screens. */
+  guardianBase: '#241F18',
+  guardianRaised: '#2E271E',
+  guardianKeyTop: '#3A3126',
+  amber: '#D98E2B',
+  amberTop: '#E39B3A',
+  amberBottom: '#C98021',
+  amberInk: '#E9A64A',
+  onAmber: '#1B1C1E',
+
+  ripple: 'rgba(255,255,255,0.08)',
+  rippleOnSignal: 'rgba(255,255,255,0.18)',
 } as const;
 
 export const radii = {
-  sm: 12,
-  md: 20,
-  xl: 28,
-  pill: 999,
+  key: 14,
+  panel: 18,
+  round: 999,
 } as const;
 
+/** 8-point grid. */
 export const space = {
-  xs: 6,
-  sm: 10,
-  md: 14,
-  lg: 20,
-  xl: 24,
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
 } as const;
 
-/** IBM Plex, bundled as Android font assets (OFL). On Android a family name is the file name. */
+/**
+ * Hanken Grotesk for words, JetBrains Mono for numbers and readouts (both OFL,
+ * bundled as Android font assets). On Android a family name is the file name.
+ */
 export const fonts = {
-  regular: 'IBMPlexSans-Regular',
-  medium: 'IBMPlexSans-Medium',
-  semibold: 'IBMPlexSans-SemiBold',
-  mono: 'IBMPlexMono-Regular',
+  regular: 'HankenGrotesk-Regular',
+  medium: 'HankenGrotesk-Medium',
+  semibold: 'HankenGrotesk-SemiBold',
+  bold: 'HankenGrotesk-Bold',
+  mono: 'JetBrainsMono-Regular',
+  monoMedium: 'JetBrainsMono-Medium',
 } as const;
 
 export const type = {
-  hero: {fontFamily: fonts.semibold, fontSize: 32, lineHeight: 36, letterSpacing: -0.3, color: colors.textTitle},
-  title: {fontFamily: fonts.semibold, fontSize: 22, color: colors.textTitle},
-  eyebrow: {
-    fontFamily: fonts.medium,
-    fontSize: 11,
-    letterSpacing: 1.1,
-    textTransform: 'uppercase' as const,
-    color: colors.textDim,
-  },
-  body: {fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: colors.textSecondary},
-  label: {fontFamily: fonts.semibold, fontSize: 15, color: colors.textLabel},
+  /** The state word: "Ready", "Journey active". */
+  display: {fontFamily: fonts.semibold, fontSize: 44, lineHeight: 48, letterSpacing: -1.2, color: colors.textTitle},
+  title: {fontFamily: fonts.semibold, fontSize: 24, lineHeight: 30, letterSpacing: -0.4, color: colors.textTitle},
+  body: {fontFamily: fonts.regular, fontSize: 16, lineHeight: 24, color: colors.textBody},
+  label: {fontFamily: fonts.medium, fontSize: 16, lineHeight: 22, color: colors.textTitle},
   caption: {fontFamily: fonts.regular, fontSize: 13, lineHeight: 19, color: colors.textDim},
-  mono: {fontFamily: fonts.mono, fontSize: 13, color: colors.textMono},
+  /** Readout values: times, counts, build IDs. Measurement, not costume. */
+  readout: {fontFamily: fonts.mono, fontSize: 14, lineHeight: 20, color: colors.textBody},
+  clock: {fontFamily: fonts.monoMedium, fontSize: 26, lineHeight: 32, letterSpacing: -0.5, color: colors.textTitle},
 } as const;
 
-/** Minimum touch target (WCAG 2.5.5 / Android guidance). */
+/** Minimum touch target (Android 48 dp; WCAG 2.5.5). */
 export const TOUCH = 48;
