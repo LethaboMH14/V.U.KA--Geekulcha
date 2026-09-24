@@ -188,10 +188,19 @@ Not posted to GitHub — matching every earlier task packet this session (vector
 
 Confirmed none of C5–C8/SEC-1/SEC-2 had landed (grepped the contract and code directly). Accepted all of Lethabo's proposed resolutions as written on PR #51 — they're spec-consistent and don't expand scope. Wrote `sibusiso-workflow/tasks/contract-c5c8-sec1-sec2/01-task.md` for Codex: `EventSubmission` schema, payload/salt transport, the `X-Vuka-*` header auth scheme (this is literally the answer to slice 2's §7 question), and the `PinAuthorisationStatement`/server-record split (schema + `pin_authority.py` together, since they share the canonicalized shape). Updated `anchor-server-slice2`'s task packet to depend on this landing first and gave it the exact header scheme rather than leaving Codex to guess again. SEC-3 through SEC-6 flagged as follow-ups, not blocking this pass.
 
+**`contract-c5c8-sec1-sec2` — implemented locally by Codex, independently re-verified, NOT pushed.** Re-ran everything myself rather than trusting the build-log report: 97/97 pytest (up from 96), 23/23 node --test (up from 20), `check-docs`/`git diff --check` clean. Read the actual diff, not just the summary:
+- `EventSubmission` schema: no server-computed fields required, `commitment`/`payload`/`salt` present, applied correctly to registration/events/check-ins — including a correct edge case (registration's own signature verifies against its own `signer_pubkey`, since no key is enrolled yet, matching §4a's documented exception).
+- `X-Vuka-Key-Id`/`X-Vuka-Ts`/`X-Vuka-Nonce`/`X-Vuka-Signature`: all four correctly typed `apiKey`-in-header, applied consistently across every device/guardian route.
+- `PUT /v1/guardians/{id}/token` (SEC-2): now explicitly guardian-signed only, description states subject/device paths are rejected — matches the fix exactly.
+- `anchor/pin_authority.py` (SEC-1): `PinAuthorisationStatement` (6 fields, signed) split cleanly from `PinAuthorisationRecord` (adds server-derived `expires_at`); `canonical_pin_authorised` signs only the 4 real §9 fields, `sig`/`signer_key_id` validated but excluded from signed bytes to avoid self-signing.
+
+Codex correctly held off pushing pending my authorization (per the task's explicit instruction) and flagged its own real limitation: this is contract/helper shape only — no server enforces any of it yet, that's slice 2's job.
+
 **Still open / unblocked-for-Sibusiso:**
-- **`contract-c5c8-sec1-sec2` — the real current blocker on slice 2.** Ready for Codex now; slice 2 depends on it landing first.
+- **Push `contract-c5c8-sec1-sec2`'s changes to PR #51** — verified and ready, waiting on my go-ahead to push.
 - PR #69 (verify-min) — approved, still awaiting Lethabo's merge (not yet merged, unlike #68).
 - PR #70's 13 decisions — posted, awaiting Lethabo's fold-in to `TEST-SPECS.md`.
 - PR #65 (Babatunde) — `CHANGES_REQUESTED` stands, no fix pushed.
-- PR #51 — CI fully green (14/14), `MERGEABLE`; still needs Lethabo's actual approval AND the C5–C8/SEC-1/SEC-2 fixes before she'll consider merging it (she said so explicitly: "I am keeping this unmerged").
+- PR #51 — CI fully green (14/14), `MERGEABLE`; still needs Lethabo's actual approval AND (once pushed) her re-review of the C5–C8/SEC-1/SEC-2 fixes — she said explicitly "I am keeping this unmerged" until then.
+- Once pushed: **P3.A3 slice 2 has everything it needs**, no more blockers.
 - P3.L4 (thin end-to-end slice, joint with Lethabo/Vukosi/Ipeleng) — not packetized; genuinely blocked on P3.A3/A6 landing first.
