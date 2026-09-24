@@ -1,5 +1,7 @@
 # Overlap register (I, C3)
 
+**PROPOSED — 23 Sep, Vukosi workflow preparation:** `team/vukosi.md`, `docs/VUKOSI-VIGIL-WORKFLOW.md`, `docs/VUKOSI-CLAUDE-PROMPT.md`, `docs/reviews/VUKOSI-PR43-READINESS.md` and a new assistant build-log entry are the documentation-only claim. No product paths, contract, other owner's file, checklist status or schedule is changed. VIGIL's future `app/` bootstrap/package/lockfile ownership must be coordinated with Mutarisi; CI with Sibusiso; shared cryptography with Ipeleng. This claim is local until reviewed and published through a PR. The older table below is not a current VIGIL path allocation. **Added the same day (Claude review, packet P2a / P3.V2):** `docs/reviews/VUKOSI-WORKFLOW-CLAUDE-REVIEW.md`, `docs/workflows/vukosi/p2a-yamnet-provenance/` and, for the executor, `scripts/fetch_models.py` and `scripts/tests/test_fetch_models.py` (Vukosi-owned script paths per his work order). `.gitignore`, `docs/MODEL-LICENCES.md` and `docs/EVIDENCE.md` are read, not edited.
+
 Proposed paths, not implemented interfaces. Declare a claim in your team file before editing; a claim is coordination, not a lock enforced by software.
 
 | Shared surface | Owners | Contract to settle |
