@@ -18,7 +18,7 @@ Claude Code assistant (`claude-sonnet-5`), at Vukosi's request. AI review only: 
 The "Needs and blockers" edit removed the original line "Physical phones: at least two Android phones (user + guardian) and one budget 2–3 GB phone for M4/M5 → leads confirm who brings what by **Thu 24 Sep 10:00**." and replaced it with a "measurement phones" bullet that has **no date**. The `Thu 24 10:00` target was issued and should be preserved, not invented away. Restore the date in that bullet.
 
 ### B3 (P3): relative links in the PR bodies will not resolve
-`[P1a REVIEW.md](REVIEW.md)` (and the P2a and P7a equivalents) is relative to the file, but a PR description is not in that folder. Use the full repo path, for example `docs/workflows/vukosi/p1a-rn-scaffold/REVIEW.md`.
+the link text `P1a REVIEW.md` pointing at plain `REVIEW.md` (and the P2a and P7a equivalents) is relative to the file, but a PR description is not in that folder. Use the full repo path, for example `docs/workflows/vukosi/p1a-rn-scaffold/REVIEW.md`.
 
 ### B4 (P3, optional): the P1a PR body omits the device result
 It says device checks are NOT RUN in the protocol run, which is accurate for that run. My earlier independent review recorded a debug build installed and started on the Samsung SM-A736B (Android 16, API 36); the PR body could cite it as the reviewer's result, labelled as such, alongside "release install, T17 and T20 not run".
