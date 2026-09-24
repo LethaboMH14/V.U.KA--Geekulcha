@@ -196,11 +196,20 @@ Confirmed none of C5–C8/SEC-1/SEC-2 had landed (grepped the contract and code 
 
 Codex correctly held off pushing pending my authorization (per the task's explicit instruction) and flagged its own real limitation: this is contract/helper shape only — no server enforces any of it yet, that's slice 2's job.
 
+**`contract-c5c8-sec1-sec2` — pushed to PR #51, then a real follow-up fix pushed too.** Pushed `f504082` on Sibusiso's go-ahead. Codex then found and fixed a real gap on its own: the payload envelope's own top-level keys weren't checked for ASCII-only (only nested object keys were) — added `propertyNames` pattern, pushed as `f3cd73d`. Independently re-verified both commits myself before and after push (23/23 node --test, 97/97 pytest each time).
+
+**GitHub Actions billing outage — found, flagged, now resolved.** PR #51's CI (and every other open PR's) started failing every job in 3-5 seconds with "recent account payments have failed or your spending limit needs to be increased." Not a code problem — posted this directly on PR #51 for Lethabo. Confirmed later: CI is running real jobs again across every PR.
+
+**Reviewed 3 new PRs from Ipeleng (back and active) — all approved:**
+- **#74** — improved T01/T02 vector harness (drops my temporary field-name aliasing now the real shapes are settled, adds genuine audit-path verification against `merkle.py`'s proof output). Independently tested against my real `contracts/vectors/*.json`: 5/5 pass, not just against `main` where it trivially skips.
+- **#79/#80** — key-manifest bootstrap (§10), closes the exact open note I left in `contracts/keys/README.md` ("must not emit a fingerprint until serialization is pinned"). Independently verified: 64/64 pass. **Updated `anchor-server-slice3`'s task packet** with the pinned fingerprint (`c1d90404...5c70a0a2`) so Codex's Hedera anchoring publishes the identical `0x02` message the verify page expects — this was a real cross-team dependency that needed catching before slice 3 starts.
+
+**6 more PRs checked (CI-only, outside my domain):** #71 (privacy/POPIA), #72 (SSDLC recount), #73/#77 (RN app shell, VIGIL screens), #75 (Ipeleng's THREAT-MODEL/TEST-SPECS acceptance), #76 (P3.L8 records), #78 (security governance/ADR-0043). All CI green, none need my technical review.
+
 **Still open / unblocked-for-Sibusiso:**
-- **Push `contract-c5c8-sec1-sec2`'s changes to PR #51** — verified and ready, waiting on my go-ahead to push.
-- PR #69 (verify-min) — approved, still awaiting Lethabo's merge (not yet merged, unlike #68).
+- PR #69 (verify-min) — approved, still awaiting Lethabo's merge.
 - PR #70's 13 decisions — posted, awaiting Lethabo's fold-in to `TEST-SPECS.md`.
 - PR #65 (Babatunde) — `CHANGES_REQUESTED` stands, no fix pushed.
-- PR #51 — CI fully green (14/14), `MERGEABLE`; still needs Lethabo's actual approval AND (once pushed) her re-review of the C5–C8/SEC-1/SEC-2 fixes — she said explicitly "I am keeping this unmerged" until then.
-- Once pushed: **P3.A3 slice 2 has everything it needs**, no more blockers.
+- PR #51 — CI fully green, `MERGEABLE`, C5–C8/SEC-1/SEC-2 pushed; still needs Lethabo's actual approval.
+- **P3.A3 slice 2 has everything it needs — no more blockers.** Ready for Codex now.
 - P3.L4 (thin end-to-end slice, joint with Lethabo/Vukosi/Ipeleng) — not packetized; genuinely blocked on P3.A3/A6 landing first.
