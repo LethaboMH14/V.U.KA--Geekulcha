@@ -157,8 +157,18 @@ Not posted to GitHub — matching every earlier task packet this session (vector
 
 **Still open / unblocked-for-Sibusiso:**
 - **Ipeleng's §4a security review** — pinged on PR #51. This is now the single blocker on P3.A3 slice 2 and everything downstream (slice 3 → P3.A6 → P3.A5 → P3.L4).
+**PR #51 CI fixed end to end, 2026-09-24 ~14:12 — 14/14 checks green for the first time.** PR #62's new `tests` job caught three real, previously-latent problems the moment T01/T02 stopped being skipped and Python tests actually ran:
+- `shared/test/vectors.test.js`'s shape sketch didn't match the real `contracts/vectors/*.json` (golden/rejections vs. positive/rejection) — reconciled per the file's own documented escape hatch, plus fixed a latent UTF-16-vs-UTF-8 bug in `canonicalHexOf` that was never exercised before.
+- `server/` had no `requirements.txt` — CI installed `pytest` but never the app's own deps.
+- The obvious pin (`fastapi==0.115.6`) pulled in `starlette==0.41.3` with 14 CVEs; the fix (`starlette==1.3.1`) broke `TestClient` (needs `httpx2`, not `httpx`) and `osv-scan` caught two more transitive CVEs (`anyio` 9.3 critical, `idna`). Final pinned set verified clean via real `pip-audit` runs, real imports, and `server/tests/` 8/8 — not just guessed.
+
+**PR #39 closed, 2026-09-24.** Lethabo's direction: rebase, drop `anchor/chain.py` (superseded by contract v2's `canonical.py`/`merkle.py`), keep `verify.py`/`subject.py`/`server/src/api/subjects.py` as a starting point. Read all three — they're built on the dropped v1 `EvidenceEntry` dataclass, so cherry-picking them as-is would need an immediate rewrite. Instead folded the reusable logic (verify.py's first-broken-index walk algorithm, subject.py's SC.1 showcase shape and its `sim_`/`not_submitted` honesty discipline) directly into the `export-proof` task packet, explicitly excluded the placeholder auth and Musa fixture (superseded by §4a and a VIGIL fixture). Closed with the explanation on the PR thread.
+
+**PR #67 opened — Lethabo's P3.L8 checkpoint decisions, covering Ipeleng's security lane while she's away.** Resolves all 8 open items in `docs/PIN-AUTHORITY-RULES.md` §8, including T30/export (more precise than the version I posted as "accepted" earlier — adds a 6h post-incident hold on top of the open-incident hold), G33 (member-ended closure requires all-normal check-ins + no guardian alert + no duress), G34 (fallback `no_answer` deadline), G35 (PIN-gated journey end), T47 (wrong-PIN handling). Verified the actual spec diff line-by-line against the summary table — internally consistent, all 14 CI checks green, honestly adds a new residual risk to §17 rather than hiding it (a coercer who learns the real PIN can end a false alarm; the duress PIN is the defense). **ADR-0041 amends the already-accepted ADR-0036 (how an incident closes) — needs Sibusiso's explicit acceptance as second lead before it binds.** Not accepted yet; this is a decision, not something to wave through.
+
+**Still open / unblocked-for-Sibusiso:**
+- **PR #67 — needs your ADR-0041 acceptance decision.** Verified solid on my end; the accept/amend call is yours.
 - Ipeleng's SECURITY.md/intake-gate.json conflict (#47's original finding) — posted, awaiting her confirmation, not yet resolved.
-- PR #39 rebase-vs-close — precise breakdown posted 2026-09-24, awaiting Lethabo's decision; pinged her again directly on the PR thread same day since main has moved further and #39 is still `CONFLICTING`.
 - PR #65 (Babatunde) — `CHANGES_REQUESTED` stands, no fix pushed.
-- PR #51 itself still needs both-leads review before merge per `RULES.md` — Lethabo has only commented, not approved. Getting #51 merged also unblocks Ipeleng's #58 vectors (already merged, T01/T02 currently skip until #51 lands).
+- PR #51 — CI now fully green; still needs Lethabo's actual approval (not just her comment) per `RULES.md`'s both-leads rule. Merging it also unblocks Ipeleng's #58 vectors (T01/T02 currently skip until #51 lands).
 - P3.L4 (thin end-to-end slice, joint with Lethabo/Vukosi/Ipeleng) — not packetized; genuinely blocked on P3.A3/A6 landing first.
