@@ -1,8 +1,8 @@
-"""Local-only FastAPI skeleton for ANCHOR server slice 1.
+"""Local-only FastAPI service for ANCHOR server slices 1 and 2.
 
-Request authentication is deliberately stubbed and is NOT real authentication.
-This app must not be exposed to users until slice 2 replaces verify_request().
-Journey-target events are rejected until authenticated subject binding exists.
+Request authentication uses enrolled P-256 keys. This remains a prototype:
+PIN authority, escalation, anchoring, encrypted payload storage and deployment
+are outside these slices; do not expose it as a production service.
 """
 
 from __future__ import annotations
@@ -10,20 +10,35 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 import base64
 import binascii
+from dataclasses import dataclass
 from datetime import datetime, timezone
+import hashlib
 import re
 from typing import Annotated, Literal
 from uuid import UUID
 
+from cryptography.exceptions import InvalidSignature
+from cryptography.exceptions import UnsupportedAlgorithm
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
+from cryptography.hazmat.primitives.serialization import load_der_public_key
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
 from starlette.responses import JSONResponse
 
+from anchor.canonical import canonical
 from server.db import (
     DatabaseUnavailable,
     IdempotencyConflict,
+    JourneyBindingConflict,
     PostgresDatabase,
+    RequestReplay,
+    RequestTimestampExpired,
+    SignerKeyRevoked,
+    SignerKeyNotFound,
+    SignerSubjectMismatch,
     SubjectNotFound,
 )
 
@@ -50,6 +65,7 @@ class EvidenceDetailsV2(StrictModel):
     received_at: StrictStr
     chain_index: Annotated[StrictInt, Field(ge=0, le=9_007_199_254_740_991)]
     signer_pubkey: StrictStr = None  # type: ignore[assignment]
+    revoked_key_id: StrictStr = None  # type: ignore[assignment]
 
     @field_validator("event_id")
     @classmethod
@@ -94,9 +110,30 @@ class EvidenceEntryV2(StrictModel):
         _validate_rfc3339(value, "ts")
         return value
 
+    @model_validator(mode="after")
+    def key_revocation_has_public_reference(self):
+        if self.action == "key_revoked" and not self.details.revoked_key_id:
+            raise ValueError("key_revoked details must include revoked_key_id")
+        if self.action != "key_revoked" and self.details.revoked_key_id is not None:
+            raise ValueError("revoked_key_id is only valid on key_revoked entries")
+        return self
 
-class SubjectBindingUnavailable(Exception):
-    """A journey event has no trusted subject identity in slice 1."""
+
+class RequestAuthenticationFailure(Exception):
+    def __init__(self, code: str, message: str):
+        super().__init__(message)
+        self.code = code
+        self.message = message
+
+
+@dataclass(frozen=True)
+class AuthenticatedSigner:
+    signer_key_id: str
+    subject_id: str
+    signer_role: str
+    nonce: str
+    request_ts: str
+    genesis_registration: bool = False
 
 
 def _validate_rfc3339(value: str, field: str) -> None:
@@ -115,26 +152,118 @@ def verify_request(
     entry: EvidenceEntryV2 | None = None,
     *,
     subject_id: str | None = None,
-) -> bool:
-    """TODO slice 2: replace with signed-request auth; this always allows access.
+    database=None,
+    body: bytes = b"",
+) -> AuthenticatedSigner:
+    """Verify §7's HTTP request signature against an active enrolled P-256 key.
 
-    This is a development stub only. It does not verify signatures, credentials,
-    signer registration, revocation, nonce use, or device identity.
+    This verifies request authority only. It does not verify `details.sig`, a
+    PIN-authority statement, or the event payload commitment.
     """
-    del request, entry, subject_id
-    return True
+    store = database or getattr(request.app.state, "database", None)
+    key_id = request.headers.get("X-Vuka-Key-Id")
+    request_ts = request.headers.get("X-Vuka-Ts")
+    nonce = request.headers.get("X-Vuka-Nonce")
+    signature_text = request.headers.get("X-Vuka-Signature")
+    if not all((key_id, request_ts, nonce, signature_text)):
+        raise RequestAuthenticationFailure("authentication_required", "signed request headers are required")
+    if store is None:
+        raise RequestAuthenticationFailure("authentication_required", "signer registry is unavailable")
+    if not nonce or not nonce.strip() or len(nonce) > 256:
+        raise RequestAuthenticationFailure("invalid_signature", "signed request is invalid")
+    try:
+        _validate_rfc3339(request_ts, "X-Vuka-Ts")
+        parsed_ts = datetime.fromisoformat(request_ts.replace("Z", "+00:00"))
+        if parsed_ts.utcoffset() is None:
+            raise ValueError("timestamp needs timezone")
+    except ValueError as exc:
+        raise RequestAuthenticationFailure("invalid_signature", "signed request is invalid") from exc
+
+    genesis_registration = False
+    if entry is not None:
+        if entry.details.signer == "server":
+            raise RequestAuthenticationFailure("invalid_signature", "server events cannot be submitted as client requests")
+        if entry.details.signer_key_id != key_id:
+            raise RequestAuthenticationFailure("invalid_signature", "signer key id does not match request")
+
+    try:
+        key_record = store.get_signer_key(key_id)
+    except DatabaseUnavailable:
+        raise
+    if key_record is None and entry is not None and (
+        entry.action.removeprefix("sim_") == "registration"
+        and entry.target_type == "subject"
+        and entry.details.signer == "device"
+        and entry.details.signer_pubkey
+    ):
+        # Bootstrap exactly one device key from the signed genesis registration.
+        # Persistence is atomic with the genesis chain row in register_subject().
+        genesis_registration = True
+        key_record = {
+            "signer_key_id": key_id,
+            "subject_id": entry.target_id,
+            "signer_role": "device",
+            "public_key": entry.details.signer_pubkey,
+            "revoked_at": None,
+        }
+    if key_record is None:
+        raise RequestAuthenticationFailure("invalid_signature", "signer key is unknown")
+    if key_record.get("revoked_at") is not None:
+        raise RequestAuthenticationFailure("key_revoked", "signer key is revoked")
+    if key_record.get("signer_role") not in {"device", "guardian"}:
+        raise RequestAuthenticationFailure("invalid_signature", "signer key role is invalid")
+    if entry is not None and entry.details.signer != key_record.get("signer_role"):
+        raise RequestAuthenticationFailure("invalid_signature", "entry signer role does not match key")
+    if subject_id is not None and subject_id != key_record.get("subject_id"):
+        raise RequestAuthenticationFailure("not_found", "subject was not found")
+
+    try:
+        public_key_bytes = base64.b64decode(key_record["public_key"], validate=True)
+        public_key = load_der_public_key(public_key_bytes)
+        if not isinstance(public_key, ec.EllipticCurvePublicKey) or public_key.curve.name != "secp256r1":
+            raise ValueError("registered signer key is not P-256")
+        raw_signature = base64.b64decode(signature_text, validate=True)
+        if len(raw_signature) != 64 or base64.b64encode(raw_signature).decode("ascii") != signature_text:
+            raise ValueError("signature must be canonical base64 raw r||s")
+        r = int.from_bytes(raw_signature[:32], "big")
+        s = int.from_bytes(raw_signature[32:], "big")
+        der_signature = encode_dss_signature(r, s)
+        statement = {
+            "method": request.method.upper(),
+            "path": request.url.path,
+            "ts": request_ts,
+            "body_sha256": hashlib.sha256(body).hexdigest(),
+            "nonce": nonce,
+        }
+        public_key.verify(der_signature, canonical(statement), ec.ECDSA(hashes.SHA256()))
+    except InvalidSignature as exc:
+        raise RequestAuthenticationFailure("invalid_signature", "signed request is invalid") from exc
+    except (ValueError, TypeError, KeyError, binascii.Error, UnsupportedAlgorithm) as exc:
+        raise RequestAuthenticationFailure("invalid_signature", "signed request is invalid") from exc
+
+    return AuthenticatedSigner(
+        signer_key_id=key_id,
+        subject_id=key_record["subject_id"],
+        signer_role=key_record["signer_role"],
+        nonce=nonce,
+        request_ts=request_ts,
+        genesis_registration=genesis_registration,
+    )
 
 
 def _server_time() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _subject_id_for(entry: EvidenceEntryV2) -> str:
+def _subject_id_for(entry: EvidenceEntryV2, principal: AuthenticatedSigner, store) -> str:
     if entry.target_type == "subject":
-        return entry.target_id
-    # target_id may be a journey ID, while no subject_id or authenticated
-    # subject principal is present in this contract/request context.
-    raise SubjectBindingUnavailable
+        if entry.target_id != principal.subject_id:
+            raise RequestAuthenticationFailure("invalid_signature", "signed request is invalid")
+        return principal.subject_id
+    journey_subject = store.get_journey_subject(entry.target_id)
+    if journey_subject != principal.subject_id:
+        raise RequestAuthenticationFailure("invalid_signature", "signed request is invalid")
+    return journey_subject
 
 
 def _error_response(status_code: int, code: str, message: str) -> JSONResponse:
@@ -152,7 +281,7 @@ def create_app(database=None) -> FastAPI:
         yield
 
     app = FastAPI(
-        title="ANCHOR server slice 1",
+        title="ANCHOR server slices 1 and 2",
         version="2.0.0",
         lifespan=lifespan,
         docs_url=None,
@@ -166,32 +295,53 @@ def create_app(database=None) -> FastAPI:
         return _error_response(400, "invalid_request", "request shape or value is invalid")
 
     @app.post("/v1/events", status_code=status.HTTP_201_CREATED)
-    def append_event(entry: EvidenceEntryV2, request: Request):
-        if not verify_request(request, entry):
-            return _error_response(401, "unauthorized", "authentication required or invalid")
-
+    async def append_event(entry: EvidenceEntryV2, request: Request):
         try:
-            subject_id = _subject_id_for(entry)
-        except SubjectBindingUnavailable:
-            return _error_response(
-                400,
-                "invalid_request",
-                "journey-target events need subject binding, not implemented in slice 1",
-            )
+            principal = verify_request(request, entry, database=store, body=await request.body())
+            subject_id = _subject_id_for(entry, principal, store)
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
         try:
-            stored, _created = store.append(
-                subject_id,
-                entry.model_dump(mode="json", exclude_unset=True),
-                _server_time(),
-            )
+            received_at = _server_time()
+            if principal.genesis_registration:
+                stored, _created = store.register_subject(
+                    subject_id,
+                    entry.model_dump(mode="json", exclude_unset=True),
+                    received_at,
+                    signer_key_id=principal.signer_key_id,
+                    public_key=entry.details.signer_pubkey,
+                    nonce=principal.nonce,
+                    request_ts=principal.request_ts,
+                )
+            else:
+                stored, _created = store.append(
+                    subject_id,
+                    entry.model_dump(mode="json", exclude_unset=True),
+                    received_at,
+                    signer_key_id=principal.signer_key_id,
+                    signer_role=principal.signer_role,
+                    nonce=principal.nonce,
+                    request_ts=principal.request_ts,
+                )
         except IdempotencyConflict:
             return _error_response(
                 409,
                 "idempotency_conflict",
                 "event_id was already used for different content",
             )
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except SignerKeyNotFound:
+            return _error_response(401, "invalid_signature", "signer key is unknown")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
         except SubjectNotFound:
             return _error_response(400, "invalid_request", "subject chain is not registered")
+        except JourneyBindingConflict:
+            return _error_response(400, "invalid_request", "subject is already registered")
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
 
@@ -202,10 +352,33 @@ def create_app(database=None) -> FastAPI:
         }
 
     @app.get("/v1/subjects/{id}/export")
-    def export_subject(id: str, request: Request):
+    async def export_subject(id: str, request: Request):
         subject_id = id
-        if not verify_request(request, subject_id=subject_id):
-            return _error_response(401, "unauthorized", "authentication required or invalid")
+        try:
+            principal = verify_request(request, subject_id=subject_id, database=store, body=await request.body())
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != "device":
+            return _error_response(404, "not_found", "subject was not found")
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id,
+                subject_id=principal.subject_id,
+                nonce=principal.nonce,
+                request_ts=principal.request_ts,
+                now=datetime.now(timezone.utc),
+            )
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return _error_response(404, "not_found", "subject was not found")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
         try:
             entries = store.export(subject_id)
         except SubjectNotFound:

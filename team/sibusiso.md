@@ -25,7 +25,7 @@
 - **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — P3.A1 contract-v2 follow-up C5–C8 and SEC-1/SEC-2 on PR #51: device-submittable `EventSubmission`, payload/salt transport, §7 request-signature headers, the PIN-authority statement/server-record split, and guardian-only token updates. This is contract/helper work; server request authentication and runtime enforcement remain unbuilt until slice 2. Latest verified PR #51 head before edits: `95b28ed87afa85e6927ec39b761372611d6b8742`.
+**Current task** — P3.A3 slice 2 is implemented and locally committed on `feat/sibusiso-contract-v2`; request authentication, signer-key registry, genesis key enrollment and internal journey→subject binding are in place. Lethabo and Ipeleng security review and PostgreSQL-backed verification remain pending. Slice 3 (durable escalation and anchoring) is outstanding. No new routes, PIN verification, deployment or push are included.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -37,8 +37,8 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Claimed files / contract versions: `contracts/events.schema.json` v0.1.0; `contracts/openapi.yaml` v0.1.0 proposed pending both-lead approval; `package.json`; `test/events-contract.test.mjs`.
-- Last updated: 24 September 2026 — PR #62 checks green; Ipeleng and Lethabo review pending.
+- Claimed files / contract versions: P3.A3 slice 2 claim — `server/main.py`, `server/db.py`, and `server/tests/`; no OpenAPI edits. Existing contract claims remain in their PR records.
+- Last updated: 24 September 2026 — P3.A3 slice 2 committed locally; no push or deployment.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 
@@ -97,7 +97,7 @@ See your work order's **Depends on → hands off to** line. Shared files are cla
 - Add new blockers here with the person's name and the evidence needed.
 - **P3.S14/S17 shared-path claim (24 Sep, Codex acting at Sibusiso's request):** editing `.github/workflows/checks.yml`, the root `package-lock.json`, and `docs/security/SCA-WAIVERS.md`; Ipeleng is a co-owner for CI/security settings per `docs/OVERLAPS.md`. Ipeleng: please review the gate behavior and waiver policy before merge. No contract or app behavior change.
 - **P3.A1 C5–C8 + SEC-1/SEC-2 claim (24 Sep, Codex acting at Sibusiso's request):** `contracts/openapi.yaml`, `anchor/pin_authority.py`, `anchor/tests/test_pin_authority.py`, `test/openapi-contract.test.mjs`, and one build-log entry. Contract work follows Lethabo's proposed resolutions accepted by Sibusiso in PR #51 comment `5814777869`; it does not claim runtime enforcement. Lethabo and the relevant security/contract reviewers must review the resulting diff before the contract is treated as frozen. No changes to server routes or server auth implementation in this task.
-- **P3.A3 slice 2 / P3.A6 deployment:** blocked pending a defined persisted source for enrolled device keys and journey ownership. `contracts/keys/README.md` only defines the public server key manifest and explicitly leaves manifest byte serialization unspecified; slice 1's `verify_request()` remains always-allow and `server/README.md` says the app must not be exposed before slice 2. Do not deploy the slice-1 stub.
+- **P3.A3 slice 2 / P3.A6 deployment:** slice 2 is locally implemented, but security review and PostgreSQL-backed verification remain pending. The server must remain unexposed until its security review and required slices are complete; do not deploy this branch. No key-manifest runtime is assumed by this slice.
 - **P3.A3 slice 3 / P3.A5 export:** blocked pending slice 2 and the human decisions identified in the packets (including Lethabo's T30 agreement and the currently open incident-rule decisions in `docs/PIN-AUTHORITY-RULES.md`). No implementation or live testnet submission until those prerequisites are satisfied.
 
 ## Decisions affecting others
@@ -121,3 +121,4 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-15 — Codex acting for Sibusiso: added tested discard-by-default embedding matching, s57 decision record, anchoring-cost reconciliation and sweep inventory, blockchain attack rehearsal, OpenTimestamps decision, evidence-checkpoint runbook and fallback/hotfix runbook. Remaining approvals and live rehearsals are explicitly open.
 - 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Sibusiso is asserted; owner acknowledgement pending.
 - 2026-09-24 — Codex assistant, acting at Sibusiso's request: prepared the P3.S14/S17 workflow changes, root npm lockfile, and dependency waiver process on `feat/sibusiso-ci-security-gates`; PR #62 is open at `9ab9d1cf2273718dd6ea3868e38c3a1ff3454eb4`. All seven GitHub jobs pass. Ipeleng and Lethabo review remains pending; checklist rows are in progress, not complete. No human approval is inferred.
+- 2026-09-24 — Codex assistant, acting at Sibusiso's request: implemented P3.A3 slice 2 locally on `feat/sibusiso-contract-v2`; 17 server tests, 114 maintained Python tests and 23 root Node tests pass. PostgreSQL-backed verification and Lethabo/Ipeleng security review remain pending. No push, deployment or human sign-off.
