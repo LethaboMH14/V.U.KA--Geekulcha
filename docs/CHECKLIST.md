@@ -72,7 +72,7 @@
 
 ---
 
-### Phase 3 coverage by published criterion (computed 23 Sep from the P3 table; `all` counts once for each of I/T/U/S/B)
+### Phase 3 coverage by published criterion (recomputed 24 Sep from the P3 table; `all` counts once for each of I/T/U/S/B)
 
 | Criterion | Weight | P3 rows serving it |
 |---|---:|---:|
@@ -83,7 +83,7 @@
 | **B** · Business & Presentation | 15 | 17 |
 | **Q** · Quantum bonus | 5 | 1 |
 
-Khutso re-runs this sweep (OS.11) under the new letters.
+The 24 Sep OS.11 re-run counted 49 P3 rows: I=12, T=23, U=13, S=18, B=17, Q=1. `all` expands to I/T/U/S/B and does not imply Q. P3.L2 and P3.L5 remain explicitly untagged (`—`), leaving two gaps against the published rule that every piece of work names its criterion; assigning a criterion without the Lethabo-owned rationale would be fabricated. Lead decision is required before P3.K7 can be marked complete.
 
 ---
 
