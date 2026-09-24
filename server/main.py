@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 import re
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from cryptography.exceptions import InvalidSignature
@@ -94,6 +94,76 @@ class EvidenceDetailsV2(StrictModel):
         return value
 
 
+class EventSubmissionDetailsV2(StrictModel):
+    """Client-supplied signed details; receipt fields belong to stored entries only."""
+
+    v: Literal[2]
+    signer: Literal["device", "guardian"]
+    signer_key_id: Annotated[StrictStr, Field(min_length=1)]
+    counter: Annotated[StrictInt, Field(ge=0, le=9_007_199_254_740_991)]
+    event_id: Annotated[StrictStr, Field(json_schema_extra={"format": "uuid"})]
+    commitment: Annotated[StrictStr, Field(pattern=_HASH_PATTERN)]
+    sig: Annotated[StrictStr, Field(min_length=1)]
+    signer_pubkey: StrictStr = None  # type: ignore[assignment]
+
+    @field_validator("event_id")
+    @classmethod
+    def event_id_is_uuid(cls, value: str) -> str:
+        try:
+            UUID(value)
+        except ValueError as exc:
+            raise ValueError("event_id must be a UUID") from exc
+        return value
+
+    @field_validator("sig", "signer_pubkey")
+    @classmethod
+    def encoded_values_are_base64(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        try:
+            base64.b64decode(value, validate=True)
+        except (ValueError, binascii.Error) as exc:
+            raise ValueError("value must be base64") from exc
+        return value
+
+
+class EventPayloadV2(StrictModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+
+    kind: Annotated[StrictStr, Field(min_length=1)]
+    pv: Annotated[StrictInt, Field(ge=1)]
+
+
+class EventSubmissionV2(StrictModel):
+    """Client request shape; the server adds receipt and chain-position fields."""
+
+    action: Annotated[StrictStr, Field(min_length=1)]
+    actor_id: Annotated[StrictStr, Field(min_length=1)]
+    target_type: Literal["journey", "subject"]
+    target_id: Annotated[StrictStr, Field(min_length=1)]
+    details: EventSubmissionDetailsV2
+    ts: StrictStr
+    payload: EventPayloadV2
+    salt: Annotated[StrictStr, Field(min_length=24, max_length=24)]
+
+    @field_validator("ts")
+    @classmethod
+    def ts_is_rfc3339(cls, value: str) -> str:
+        _validate_rfc3339(value, "ts")
+        return value
+
+    @field_validator("salt")
+    @classmethod
+    def salt_is_base64_for_16_bytes(cls, value: str) -> str:
+        try:
+            salt_bytes = base64.b64decode(value, validate=True)
+        except (ValueError, binascii.Error) as exc:
+            raise ValueError("salt must be base64") from exc
+        if len(salt_bytes) != 16 or base64.b64encode(salt_bytes).decode("ascii") != value:
+            raise ValueError("salt must encode exactly 16 bytes")
+        return value
+
+
 class EvidenceEntryV2(StrictModel):
     action: Annotated[StrictStr, Field(min_length=1)]
     actor_id: Annotated[StrictStr, Field(min_length=1)]
@@ -149,7 +219,7 @@ def _validate_rfc3339(value: str, field: str) -> None:
 
 def verify_request(
     request: Request,
-    entry: EvidenceEntryV2 | None = None,
+    entry: EventSubmissionV2 | None = None,
     *,
     subject_id: str | None = None,
     database=None,
@@ -255,7 +325,7 @@ def _server_time() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _subject_id_for(entry: EvidenceEntryV2, principal: AuthenticatedSigner, store) -> str:
+def _subject_id_for(entry: EventSubmissionV2, principal: AuthenticatedSigner, store) -> str:
     if entry.target_type == "subject":
         if entry.target_id != principal.subject_id:
             raise RequestAuthenticationFailure("invalid_signature", "signed request is invalid")
@@ -295,7 +365,7 @@ def create_app(database=None) -> FastAPI:
         return _error_response(400, "invalid_request", "request shape or value is invalid")
 
     @app.post("/v1/events", status_code=status.HTTP_201_CREATED)
-    async def append_event(entry: EvidenceEntryV2, request: Request):
+    async def append_event(entry: EventSubmissionV2, request: Request):
         try:
             principal = verify_request(request, entry, database=store, body=await request.body())
             subject_id = _subject_id_for(entry, principal, store)

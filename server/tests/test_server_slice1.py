@@ -16,6 +16,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from anchor.canonical import canonical
 from server.db import NONCE_TTL, RequestReplay, RequestTimestampExpired
@@ -28,7 +29,7 @@ from server.db import (
     _request_fingerprint,
     _with_server_fields,
 )
-from server.main import EvidenceEntryV2, create_app
+from server.main import EventSubmissionV2, EvidenceEntryV2, create_app
 
 
 SIM_SUBJECT_ID = "sim_subject_123"
@@ -68,6 +69,19 @@ class MemoryDatabase:
 
     def _purge_expired_nonces(self, now):
         self.used_nonces = {key: expiry for key, expiry in self.used_nonces.items() if expiry > now}
+
+    @staticmethod
+    def _stored_chain_entry(entry, *, chain_index, prev_hash, received_at, clock_skew=False):
+        # Match the Postgres row projection: transport payload/salt do not live
+        # in the EvidenceEntryV2 chain record.
+        chain_fields = {key: value for key, value in entry.items() if key not in {"payload", "salt"}}
+        return _with_server_fields(
+            chain_fields,
+            chain_index=chain_index,
+            prev_hash=prev_hash,
+            received_at=received_at,
+            clock_skew=clock_skew,
+        )
 
     def seed_subject(self, subject_id):
         sim_event_id = str(uuid.uuid4())
@@ -130,7 +144,9 @@ class MemoryDatabase:
             self._purge_expired_nonces(now)
             if abs((_parse_test_time(request_ts) - now).total_seconds()) > 120:
                 raise RequestTimestampExpired(request_ts)
-            stored = _with_server_fields(entry, chain_index=0, prev_hash=GENESIS_HASH, received_at=received_at)
+            stored = self._stored_chain_entry(
+                entry, chain_index=0, prev_hash=GENESIS_HASH, received_at=received_at
+            )
             self.rows[subject_id] = [stored]
             self._lock_for(subject_id)
             self.signer_keys[signer_key_id] = {
@@ -232,7 +248,7 @@ class MemoryDatabase:
             self.used_counters.add(counter_key)
             time.sleep(0.01)
             head = self.rows[subject_id][-1]
-            stored = _with_server_fields(
+            stored = self._stored_chain_entry(
                 entry,
                 chain_index=head["details"]["chain_index"] + 1,
                 prev_hash=head["event_hash"],
@@ -263,13 +279,10 @@ def make_entry(*, sim_event_id=None, action="checkin_result", target_type="subje
             "event_id": sim_event_id or str(uuid.uuid4()),
             "commitment": "b" * 64,
             "sig": "c2ln",
-            # These fields are supplied by the contract but overwritten by the server.
-            "received_at": SIM_SOURCE_TIME,
-            "chain_index": 999,
         },
         "ts": SIM_SOURCE_TIME,
-        "prev_hash": "d" * 64,
-        "event_hash": "e" * 64,
+        "payload": {"kind": "sim_test_event", "pv": 1, "value": "sim_value"},
+        "salt": base64.b64encode(bytes(range(16))).decode("ascii"),
     }
 
 
@@ -311,6 +324,7 @@ def signed_post(client, entry, *, nonce=None, ts=None, private_key=SIM_PRIVATE_K
         "POST", "/v1/events", body, nonce=nonce, ts=ts, private_key=private_key,
         key_id=entry["details"]["signer_key_id"],
     )
+    headers["Content-Type"] = "application/json"
     return client.post("/v1/events", content=body, headers=headers)
 
 
@@ -320,6 +334,24 @@ def signed_export(client, subject_id=SIM_SUBJECT_ID, *, nonce=None, ts=None, pri
     headers = make_signed_headers("GET", path, body, nonce=nonce, ts=ts, private_key=private_key)
     headers["X-Vuka-Key-Id"] = key_id
     return client.request("GET", path, content=body, headers=headers)
+
+
+def test_event_submission_separates_client_body_from_stored_entry_shape():
+    submission = make_entry()
+
+    parsed = EventSubmissionV2.model_validate(submission)
+
+    assert parsed.action == submission["action"]
+    assert parsed.payload.kind == "sim_test_event"
+    assert parsed.salt == submission["salt"]
+    assert not hasattr(parsed, "prev_hash")
+    assert not hasattr(parsed.details, "received_at")
+    try:
+        EvidenceEntryV2.model_validate(submission)
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("client submission was accepted as a stored EvidenceEntryV2")
 
 
 def test_append_then_export_round_trip_uses_canonical_hash_and_server_position():
@@ -400,17 +432,26 @@ def test_journey_target_is_refused_without_subject_binding():
     assert response.json()["code"] == "invalid_signature"
 
 
-def test_malformed_hash_and_unknown_fields_are_rejected_before_append():
+def test_client_submission_rejects_server_owned_chain_fields_and_unknown_fields():
     client = TestClient(create_app(MemoryDatabase()))
-    invalid_hash = make_entry()
-    invalid_hash["event_hash"] = "not-a-hash"
+    client_supplied_event_hash = make_entry()
+    client_supplied_event_hash["event_hash"] = "e" * 64
+    client_supplied_prev_hash = make_entry()
+    client_supplied_prev_hash["prev_hash"] = "d" * 64
+    client_supplied_receipt_fields = make_entry()
+    client_supplied_receipt_fields["details"]["received_at"] = SIM_SOURCE_TIME
+    client_supplied_receipt_fields["details"]["chain_index"] = 999
     unknown_field = make_entry()
     unknown_field["unexpected"] = "sim_value"
 
-    bad_hash_response = client.post("/v1/events", json=invalid_hash)
+    bad_hash_response = client.post("/v1/events", json=client_supplied_event_hash)
+    bad_prev_hash_response = client.post("/v1/events", json=client_supplied_prev_hash)
+    bad_receipt_fields_response = client.post("/v1/events", json=client_supplied_receipt_fields)
     bad_field_response = client.post("/v1/events", json=unknown_field)
 
     assert bad_hash_response.status_code == 400
+    assert bad_prev_hash_response.status_code == 400
+    assert bad_receipt_fields_response.status_code == 400
     assert bad_field_response.status_code == 400
 
 
@@ -440,6 +481,7 @@ def test_missing_and_invalid_request_signatures_are_rejected():
     body = encode_entry(entry)
     headers = make_signed_headers("POST", "/v1/events", body)
     headers["X-Vuka-Signature"] = base64.b64encode(b"x" * 64).decode("ascii")
+    headers["Content-Type"] = "application/json"
     invalid = client.post("/v1/events", content=body, headers=headers)
 
     assert missing.status_code == 401
@@ -476,6 +518,7 @@ def test_unknown_and_revoked_signer_keys_use_decided_auth_codes():
     unknown_body = encode_entry(unknown_entry)
     unknown_headers = make_signed_headers("POST", "/v1/events", unknown_body)
     unknown_headers["X-Vuka-Key-Id"] = "sim_unknown_key"
+    unknown_headers["Content-Type"] = "application/json"
     unknown = client.post("/v1/events", content=unknown_body, headers=unknown_headers)
 
     database.signer_keys["sim_key_1"]["revoked_at"] = "2026-09-24T00:00:00Z"
@@ -559,6 +602,12 @@ def test_export_requires_the_matching_device_key_and_a_fresh_nonce():
 
 def test_key_revoked_event_requires_revoked_key_id_and_registry_never_accepts_server_role():
     base = make_entry(action="key_revoked")
+    del base["payload"]
+    del base["salt"]
+    base["details"]["received_at"] = SIM_SOURCE_TIME
+    base["details"]["chain_index"] = 1
+    base["prev_hash"] = "d" * 64
+    base["event_hash"] = "e" * 64
     base["details"]["signer"] = "server"
     base["details"]["signer_key_id"] = "sim_server_key"
     base["details"]["revoked_key_id"] = "sim_old_key"
