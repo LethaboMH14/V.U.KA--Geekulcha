@@ -149,10 +149,16 @@ Not posted to GitHub — matching every earlier task packet this session (vector
 - **#62:** her review confirmed all 7 gates pass and the waiver record is "narrow and time-bound, the right shape." **This closes P3.S14 and P3.S17.**
 - Both merges landed on `main` while PR #51 was open, which re-broke it via the same `team/sibusiso.md` "Current task" conflict as before (git history: `main` keeps touching that one line in parallel with contract-v2 branch work). Resolved the same way — merged `main` in, fixed the citation nit in the same pass, re-verified (104 pytest, 20 node --test), pushed (`5d9fe27`). PR #51 confirmed `MERGEABLE` again.
 
+**Four more PRs reviewed and approved as Sibusiso-K, 2026-09-24:**
+- **#63** (Khutso's requirements trace) — my earlier `CHANGES_REQUESTED` (V1/V4/G5 test-mapping errors) fixed, and the correction went further: expanded the honest test-gap count from 11 to 17 rows with clause-level justification (e.g. T17 checks permission refusal, not explicit arming). Approved.
+- **#57** (ADR-0039) — my scalar-type finding fixed exactly: "All values are integers" corrected to "every numeric field is an integer... the other fields are strings." Verified directly against the PR's copy of the spec. Approved.
+- **#66** (Lethabo's UI prototype, `prototype/`, 8795 lines) — new. Spot-checked the two safety-critical claims in the PR description against actual code rather than trusting the description: duress parity holds (`JourneyCheck`'s `handleComplete` is unconditional, `PinKeypad` has zero normal/duress branching); color rule holds (grepped all member-facing files, zero real red hits, amber confined to `GuardianView.tsx` and its documentation swatch). CI green, scope isolated to `prototype/`. Approved.
+- **#65** (Babatunde's economics v2) — checked for movement since my `CHANGES_REQUESTED` (unsupported R5,090 base-cost attribution). No new commit — still waiting on him, nothing more to do.
+
 **Still open / unblocked-for-Sibusiso:**
 - **Ipeleng's §4a security review** — pinged on PR #51. This is now the single blocker on P3.A3 slice 2 and everything downstream (slice 3 → P3.A6 → P3.A5 → P3.L4).
 - Ipeleng's SECURITY.md/intake-gate.json conflict (#47's original finding) — posted, awaiting her confirmation, not yet resolved.
 - PR #39 rebase-vs-close — precise breakdown posted 2026-09-24, awaiting Lethabo's decision; pinged her again directly on the PR thread same day since main has moved further and #39 is still `CONFLICTING`.
-- PR #57 (ADR-0039, Lethabo) — my `CHANGES_REQUESTED` from earlier is still the latest word; waiting on her.
+- PR #65 (Babatunde) — `CHANGES_REQUESTED` stands, no fix pushed.
 - PR #51 itself still needs both-leads review before merge per `RULES.md` — Lethabo has only commented, not approved. Getting #51 merged also unblocks Ipeleng's #58 vectors (already merged, T01/T02 currently skip until #51 lands).
 - P3.L4 (thin end-to-end slice, joint with Lethabo/Vukosi/Ipeleng) — not packetized; genuinely blocked on P3.A3/A6 landing first.
