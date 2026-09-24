@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - The judging criteria published (MASTER-CONTEXT v3, 23 Sep). I re-tag every new row with I / T / U / S / B / Q and run the coverage sweep under the new criteria.
 
-**Current task** — P3.K1 review corrections are pushed to PR #47 by a Codex assistant acting at Khutso's request; Khutso's personal confirmation and Sibusiso's acceptance remain pending. P3.K2 is on the separate stacked PR #52.
+**Current task** — P3.K1 review corrections are pushed to PR #47 by a Codex assistant acting at Khutso's request; Khutso's personal confirmation and Sibusiso's acceptance remain pending. P3.K2 is on replacement stacked PR #54.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
