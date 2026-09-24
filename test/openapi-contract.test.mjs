@@ -236,18 +236,40 @@ test("guardian token updates exclude subject PIN authorization", () => {
 
 test("BankSignal distinguishes the three §9/S1 trigger outcomes", () => {
   const signal = document.slice(document.indexOf("    BankSignal:"), document.indexOf("    IntegrityResult:"));
-  assert.match(signal, /triggering_outcome: \{ type: string, enum: \[duress_pin, no_answer, contact_lost\] \}/);
+  assert.match(signal, /required: \[subject_id, triggering_outcome\]/);
+  assert.match(signal, /subject_id: \{ type: string, minLength: 1, description: sim_ subject identifier\. \}/);
+  assert.match(signal, /triggering_outcome: \{ type: string, enum: \[duress_signal, no_answer, contact_lost\] \}/);
   assert.match(signal, /SIMULATED/);
+});
+
+test("sim_bank routes require pinned server signatures and explicitly simulated receipts", () => {
+  for (const path of ["/sim_bank/v1/risk-signal", "/sim_bank/v1/release"]) {
+    const operation = pathBlock(path);
+    assert.match(operation, /security: \[\{ VukaTimestamp: \[\], VukaNonce: \[\], VukaServerSignature: \[\] \}\]/);
+    assert.match(operation, /'202': \{ \$ref: '#\/components\/responses\/SimBankAcceptedReceipt' \}/);
+    assert.match(operation, /'401': \{ \$ref: '#\/components\/responses\/Unauthorized' \}/);
+  }
+  assert.match(document, /name: X-Vuka-Server-Signature/);
+  assert.match(document, /Base64 Ed25519 signature over canonical\(\{method, path, ts, body_sha256, nonce\}\)/);
+  assert.match(document, /server_ed25519_public_key[\s\S]*contracts\/keys\/manifest\.json/);
+
+  const receipt = document.slice(document.indexOf("    Receipt:"), document.indexOf("    EvidenceEntry:"));
+  assert.match(receipt, /sim: \{ type: boolean, const: true/);
+  const simulatedReceipt = document.slice(document.indexOf("    SimBankReceipt:"), document.indexOf("    EvidenceEntry:"));
+  assert.match(simulatedReceipt, /required: \[sim\]/);
+  assert.match(simulatedReceipt, /sim: \{ type: boolean, const: true \}/);
 });
 
 test("ADR-0041 journey end and export advertise their PIN and pre-incident gates", () => {
   const journeyEnd = pathBlock("/v1/journeys/{id}/end");
+  assert.match(journeyEnd, /INCOMPLETE — see ADR-0041 G35, implementation pending/);
   assert.match(journeyEnd, /fresh pin_authorised record/);
   assert.match(journeyEnd, /action end_journey/);
   assert.match(journeyEnd, /pin_authorisation_required/);
   assert.match(journeyEnd, /'403': \{ \$ref: '#\/components\/responses\/InsufficientApproval' \}/);
 
   const subjectExport = pathBlock("/v1/subjects/{id}/export");
+  assert.match(subjectExport, /INCOMPLETE — see ADR-0041 T30, implementation pending/);
   assert.match(subjectExport, /fresh[\s\S]*pin_authorised record for action export/);
   assert.match(subjectExport, /pin_authorisation_required/);
   assert.match(subjectExport, /pre-incident head/);

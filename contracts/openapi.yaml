@@ -328,6 +328,7 @@ paths:
         action end_journey and this journey id. A missing or mismatched authorisation
         is refused with pin_authorisation_required. A duress authorisation has the
         same phone-visible result as a normal one but triggers the server alarm.
+        INCOMPLETE — see ADR-0041 G35, implementation pending.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       responses:
@@ -565,6 +566,7 @@ paths:
         later; normal and duress authorisations yield byte-identical visible results.
         Otherwise the full chain is returned. The response is unpaginated. For this
         bodyless request, body_sha256 is SHA-256 of the empty byte string.
+        INCOMPLETE — see ADR-0041 T30, implementation pending.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       responses:
@@ -609,7 +611,10 @@ paths:
       tags: [Simulation]
       operationId: sendSimulatedBankRiskSignal
       summary: Send a labelled simulated bank risk signal
-      description: SIMULATED only; signed by ANCHOR and requires an Idempotency-Key.
+      description: >-
+        SIMULATED only; signed by ANCHOR with the pinned Ed25519 server key and requires an
+        Idempotency-Key.
+      security: [{ VukaTimestamp: [], VukaNonce: [], VukaServerSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
@@ -617,15 +622,19 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/BankSignal' }
       responses:
-        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '202': { $ref: '#/components/responses/SimBankAcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/IdempotencyConflict' }
   /sim_bank/v1/release:
     post:
       tags: [Simulation]
       operationId: releaseSimulatedBankSignal
       summary: Release a labelled simulated bank hold
-      description: SIMULATED only; signed by ANCHOR and requires an Idempotency-Key.
+      description: >-
+        SIMULATED only; signed by ANCHOR with the pinned Ed25519 server key and requires an
+        Idempotency-Key.
+      security: [{ VukaTimestamp: [], VukaNonce: [], VukaServerSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
@@ -633,8 +642,9 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/BankSignal' }
       responses:
-        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '202': { $ref: '#/components/responses/SimBankAcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/IdempotencyConflict' }
 components:
   securitySchemes:
@@ -664,6 +674,14 @@ components:
         Base64 raw P-256 r||s signature over canonical({method, path, ts, body_sha256, nonce});
         body_sha256 hashes the exact HTTP body bytes. For initial registration, verify with the
         submitted signer_pubkey before enrolling the signer_key_id.
+    VukaServerSignature:
+      type: apiKey
+      in: header
+      name: X-Vuka-Server-Signature
+      description: >-
+        Base64 Ed25519 signature over canonical({method, path, ts, body_sha256, nonce});
+        body_sha256 hashes the exact HTTP body bytes. Verify only with server_ed25519_public_key
+        from contracts/keys/manifest.json; the request cannot supply its own verification key.
   parameters:
     EntityId: { name: id, in: path, required: true, schema: { type: string, minLength: 1 } }
     SubjectId: { name: id, in: path, required: true, schema: { type: string, minLength: 1 } }
@@ -755,8 +773,16 @@ components:
       properties:
         receipt_id: { type: string }
         state: { type: string, enum: [accepted, queued, pending, confirmed, refused] }
+        sim: { type: boolean, const: true, description: Present and true on simulated bank receipts. }
         anchor_status: { type: string, enum: [not_submitted, submitted, pending, confirmed, gap] }
         pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation', description: Present when a verified PIN-authority statement is recorded; expiry is server-derived. }
+    SimBankReceipt:
+      allOf:
+        - $ref: '#/components/schemas/Receipt'
+        - type: object
+          required: [sim]
+          properties:
+            sim: { type: boolean, const: true }
     EvidenceEntry:
       type: object
       required: [action, actor_id, target_type, target_id, details, ts, prev_hash, event_hash]
@@ -946,11 +972,14 @@ components:
         pin_authorisation: { $ref: '#/components/schemas/PinAuthorisationStatement' }
     BankSignal:
       type: object
-      description: SIMULATED bank signal; outcome identifies the qualifying S1 trigger, never detection alone.
-      required: [triggering_outcome]
+      description: >-
+        SIMULATED bank signal for a sim_ subject; outcome identifies the qualifying S1
+        trigger, never detection alone.
+      required: [subject_id, triggering_outcome]
       additionalProperties: false
       properties:
-        triggering_outcome: { type: string, enum: [duress_pin, no_answer, contact_lost] }
+        subject_id: { type: string, minLength: 1, description: sim_ subject identifier. }
+        triggering_outcome: { type: string, enum: [duress_signal, no_answer, contact_lost] }
     IntegrityResult:
       type: object
       description: >-
@@ -1024,6 +1053,11 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Receipt' }
+    SimBankAcceptedReceipt:
+      description: Simulated bank request accepted or queued; receipt is explicitly marked simulated.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/SimBankReceipt' }
     InvalidRequest:
       description: Request shape or value is invalid.
       content:

@@ -110,7 +110,7 @@ jobs:
           npm ci --prefix shared
           npm audit --prefix shared
           npm ci --ignore-scripts --prefix anchor/hedera-sidecar
-          npm audit --omit=dev --audit-level=high --prefix anchor/hedera-sidecar
+          npm audit --prefix anchor/hedera-sidecar
   python-audit:
     runs-on: ubuntu-24.04
     steps:
