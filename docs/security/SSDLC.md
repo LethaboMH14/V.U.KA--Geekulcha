@@ -16,7 +16,7 @@
   - **Not doing** — a deliberate decision, with the reason.
 - `FACT` / `ESTIMATE` / `ASSUMPTION` / `PROPOSED` tags follow `RULES.md`.
 - **State of the code, 23 Sep** `FACT`: `anchor/`, `server/`, `app/`, `dashboard/` and `shared/` hold only READMEs and `.gitkeep` files. `contracts/openapi.yaml` is still the v1 (UMOJA) surface. Almost every product control is therefore *In build* or *Planned*. That is the honest starting point.
-- **Control count, 23 Sep** `FACT` (count of `C-nn` rows by status in this file): 79 controls — 14 Done, 30 In build, 31 Planned, 4 Not doing. Re-count before the Sonke submission.
+- **Control count, 24 Sep** `FACT` (count of `C-nn` rows by status in this file): 70 controls — 15 Done, 29 In build, 25 Planned, 1 Not doing.
 
 ## 1 · Frameworks we map to
 
@@ -80,9 +80,9 @@ R = does it · A = accountable, signs off · C = consulted · I = informed.
 |---|---|---|---|---|
 | C-01 | Requirements carry stable IDs; tests cite them | **Done** | `docs/VUKA-2-SPEC.md` §2, §15 | Lethabo |
 | C-02 | ADRs append-only, acceptance recorded per decision | **Done** | `docs/adr.md`, `docs/ADR-ACCEPTANCE-RECORD.md` | Leads |
-| C-03 | Security review recorded before a contract is frozen | **Done** | Closure table in `docs/ADR-ACCEPTANCE-RECORD.md` on `main`; full text `docs/reviews/IPELENG-PR43-REVIEW.md` is on branch `docs/ipeleng-pr43-review` (PR #45), not yet on `main` at `847225e` `FACT` | Ipeleng |
+| C-03 | Security review recorded before a contract is frozen | **Done** | Closure table in `docs/ADR-ACCEPTANCE-RECORD.md`; full review `docs/reviews/IPELENG-PR43-REVIEW.md` merged via PR #45 | Ipeleng |
 | C-04 | STRIDE threat model mapped to spec IDs and tests | **In build** | `docs/security/THREAT-MODEL.md`; P3.S3 | Ipeleng |
-| C-05 | Abuse-test specifications T04–T24, T30–T49 | **In build** | P3.S3, Thu 20:00 | Ipeleng |
+| C-05 | Abuse-test specifications T04–T24, T30–T49 | **In build** | PR #70 (`TEST-SPECS.md` and threat-map check); P3.S3 | Ipeleng |
 | C-06 | Requirement → owner → test trace | **In build** | `docs/REQUIREMENTS-TRACE.md`, P3.K3 | Khutso |
 | C-07 | Honesty ledger as a governance control | **Done** | `docs/MASTER-CONTEXT.md` §6; spec §17 | Khutso |
 | C-08 | Open-gap register, public | **Done** | `docs/OPEN-GAPS.md` | Khutso |
@@ -155,7 +155,7 @@ Each rule is checked by the named test, tool or review. "Review" means the PR re
 |---|---|---|---|---|
 | C-60 | Actions pinned by commit SHA; `permissions: contents: read`; `persist-credentials: false` | **Done** | `.github/workflows/checks.yml` | Sibusiso |
 | C-61 | Document contracts and claim safeguards in CI | **Done** | `scripts/check-docs.mjs` job | Sibusiso |
-| C-62 | Contract tests (`node --test`) run in CI. **Gap:** 10/10 pass locally, but `checks.yml` does not run them `FACT` | **Planned** | new CI job | Sibusiso |
+| C-62 | Contract tests (`node --test`) run in CI. The earlier gap (tests passed locally but CI didn't run them) was closed on 24 Sep by the `tests` job (PR #62) | **Done** | `.github/workflows/checks.yml` `tests` job; PR #62 checks green and security review recorded in P3.S14 | Sibusiso |
 | C-63 | Branch protection requiring CI and non-author review | **Planned** — blocked: repo is private on the free tier; `gh api …/branches/main/protection` returned 403 on 23 Sep `FACT` (G17) | GitHub settings | Sibusiso |
 | C-64 | CODEOWNERS auto-requests security review on `contracts/`, `server/`, `shared/`, `dashboard/` | **Done** | `.github/CODEOWNERS` | Leads |
 | C-65 | Release APK built from a tag; sha256 published with the release (D1, T20) | **In build** | T20 | Vukosi |
@@ -165,7 +165,7 @@ Each rule is checked by the named test, tool or review. "Review" means the PR re
 | ID | Control | Status | Command / evidence | Owner |
 |---|---|---|---|---|
 | C-70 | Lockfiles committed: `package-lock.json`; Python requirements with hashes; Gradle dependency verification | **Planned** | `pip-compile --generate-hashes`; `pip install --require-hashes -r requirements.txt`; `./gradlew --write-verification-metadata sha256 help` | Sibusiso, Vukosi |
-| C-71 | SCA on every PR | **Planned** | `npm audit --audit-level=high`; `pip-audit -r server/requirements.txt`; `osv-scanner scan source -r .` `ASSUMPTION`: flags checked on first run | Sibusiso |
+| C-71 | SCA on every PR | **Done** | `.github/workflows/checks.yml` `npm-audit`, `python-audit` and `osv-scan` jobs; PR #62 npm/OSV pass, Python audit not applicable until requirements exist (P3.S17) | Sibusiso |
 | C-72 | Pinned toolchain: Node, Python, JDK 17, RN 0.74. Today `team/START-HERE.md` states minimums ("Node 22 LTS or newer"), not pins; add `engines` in `package.json` and `.python-version` | **Planned** | `team/START-HERE.md` §1–2 | Sibusiso |
 | C-73 | Model-weights manifest with sha256; the app verifies the digest before loading; input shape asserted from `get_input_details()` (V3) | **In build** | YAMNet sha256 `10c95ea3…17de` recorded `FACT` (`docs/MODEL-CARDS.md`); P3.V2 | Vukosi |
 | C-74 | Gitleaks binary pinned by version and sha256 | **Done** | `checks.yml` (8.24.3, `sha256sum --check --strict`) | Sibusiso |

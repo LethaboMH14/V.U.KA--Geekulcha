@@ -51,10 +51,10 @@
 | P3.K6 | Daily OpenTimestamps stamp (first on the cut line) | Khutso | I | Sep 26 | ☐ | Added 23 Sep, Lethabo |
 | P3.S1 | Own `docs/STAGED-DURESS-DEFENCE.md`; primary reads replace ⚑ | Ipeleng | S | Sep 24 | ☐ | Added 23 Sep, Lethabo |
 | P3.S2 | `shared/` canonical, DER→raw and Merkle with vitest (T01, T02) | Ipeleng | T, S | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.S3 | STRIDE threat model + abuse-test specifications T04–T24 (incl. bank-signal data flow) | Ipeleng | S | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo · **Widened T19 → T24, PR #43 review (C10)** |
+| P3.S3 | STRIDE threat model + abuse-test specifications T04–T24 (incl. bank-signal data flow) | Ipeleng | S | Sep 24 20:00 | ◐ | Added 23 Sep, Lethabo · **Widened T19 → T24, PR #43 review (C10)** · 24 Sep: T04–T24 specified in `docs/security/TEST-SPECS.md` (Lethabo covering); writers to confirm |
 | P3.S4 | Verify-page cryptography (T03–T05) | Ipeleng | I, T, S | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S5 | SSDLC submitted on Sonke | Ipeleng | S | **Sep 26 12:30** | ☐ | Added 23 Sep, Lethabo |
-| P3.S6 | Privacy policy (the required slide's source) | Ipeleng | S, B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S6 | Privacy policy (the required slide's source) | Ipeleng | S, B | Sep 26 18:00 | ◐ | Added 23 Sep, Lethabo · 24 Sep: `docs/PRIVACY-POLICY.md` + `docs/security/POPIA-ONE-PAGER.md` drafted and claim-checked (Lethabo covering); PR open |
 | P3.B1 | Own the economics doc and script; challenge inputs in the script | Babatunde | B | Sep 24 | ☐ | Added 23 Sep, Lethabo |
 | P3.B2 | `docs/COMPETITORS.md` rewritten for the two-layer product | Babatunde | B, I | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.B3 | Lean Canvas with figures — repo and Sonke | Babatunde | B | Sep 26 night | ☐ | Added 23 Sep, Lethabo |
@@ -64,7 +64,7 @@
 | P3.L8 | PIN authority, incident closure and removal rules agreed (§8, §9) | Lethabo, Ipeleng | S | Sep 24 12:00 | ☑ | Added 23 Sep (PR #43 review), Lethabo; draft `docs/PIN-AUTHORITY-RULES.md` + ADR-0040 up 24 Sep — awaiting Lethabo's agreement at the checkpoint; 24 Sep: Lethabo agreed ADR-0040 and decided all 8 open items (ADR-0041, `PROPOSED`); ☑ when Sibusiso accepts ADR-0041; accepted by Sibusiso 24 Sep 12:21 UTC (PR #67 review) |
 | P3.L9 | Commit a redacted copy of the organiser's pre-build confirmation | Lethabo | — | Sep 24 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.A6 | **Server-min** deployed: ingest + chain + export | Sibusiso | T | Sep 25 09:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
-| P3.S7 | **Verify-min**: hashes, links, device signatures | Ipeleng | T, S | Sep 25 10:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
+| P3.S7 | **Verify-min**: hashes, links, device signatures | Ipeleng | T, S | Sep 25 10:00 | ◐ | Added 23 Sep (PR #43 review), Lethabo · 24 Sep: `shared/verify.js` built and tested (74 pass), PR open; Lethabo covering for Ipeleng |
 | P3.U5 | **Guardian-min receiver** screen + one FCM message; Mutarisi is also the APK backup owner | Mutarisi, Khutso | T | Sep 25 10:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.B7 | Validation: 5 consent-based user conversations + 1 bank/insurer approach, recorded honestly | Babatunde | B, U | Sep 26 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.B8 | Hedera wording in every pitch surface: a permissioned-consensus ledger with a council of up to 39; network fees paid in HBAR; we issue no token *(carried from P2.12/P2.13)* | Babatunde | B, S | Sep 26 | ☐ | Added 23 Sep, Lethabo |
@@ -72,8 +72,8 @@
 | P3.K7 | Criteria-coverage sweep under I/T/U/S/B/Q *(carried from OS.11)* | Khutso | all | Sep 25 | ☐ | Added 23 Sep, Lethabo |
 | P3.B10 | Rewrite the Sonke overview and Lean Canvas for VIGIL + ANCHOR with live figures only | Babatunde (reviewer: Lethabo) | B, I | Sep 24 20:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.S9 | `docs/security/SSDLC.md` accepted by Ipeleng, reviewed by Lethabo, merged; control counts re-computed | Ipeleng | S, T | Sep 26 11:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.S10 | `docs/security/THREAT-MODEL.md`: every STRIDE and coercion row has a spec ID and a test | Ipeleng | S | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.S11 | Test specifications for T30–T49 (fixture, oracle, prerequisites), each sent to its writer | Ipeleng | S, T | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S10 | `docs/security/THREAT-MODEL.md`: every STRIDE and coercion row has a spec ID and a test | Ipeleng | S | Sep 24 20:00 | ◐ | Added 23 Sep, Lethabo · 24 Sep: `scripts/check-threat-map.mjs` (column-aware) — 55 of 63 rows fully mapped after an independent mapping audit; 8 missing a test, listed in THREAT-MODEL §9 with owners |
+| P3.S11 | Test specifications for T30–T49 (fixture, oracle, prerequisites), each sent to its writer | Ipeleng | S, T | Sep 24 20:00 | ◐ | Added 23 Sep, Lethabo · 24 Sep: T30–T52 specified in `docs/security/TEST-SPECS.md`; sent to writers via the PR |
 | P3.S12 | Internal test plan executed: `docs/security/PENTEST-RESULTS.md` with pass / fail / not run for all 64 PT cases | Ipeleng | S | Sep 26 20:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S13 | `docs/security/COMPLIANCE-GOVERNANCE.md` reviewed; counsel questions Q-C1–Q-C7 logged | Ipeleng | S, B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S14 | CI runs `node --test` plus semgrep and SCA jobs | Sibusiso | T, S | Sep 25 12:00 | ☑ | Added 23 Sep, Lethabo · PR #62 all checks green 24 Sep; review pending · security review posted 24 Sep by Lethabo, covering for Ipeleng ([#62 comment](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/62#issuecomment-5814099098)): approve, three non-blocking notes |
