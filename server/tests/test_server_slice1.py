@@ -66,6 +66,9 @@ class MemoryDatabase:
         with self.lock_guard:
             return self.locks.setdefault(subject_id, threading.Lock())
 
+    def _purge_expired_nonces(self, now):
+        self.used_nonces = {key: expiry for key, expiry in self.used_nonces.items() if expiry > now}
+
     def seed_subject(self, subject_id):
         sim_event_id = str(uuid.uuid4())
         genesis = {
@@ -124,6 +127,7 @@ class MemoryDatabase:
             if subject_id in self.rows or signer_key_id in self.signer_keys:
                 raise ValueError("subject or signer key already exists")
             now = _parse_test_time(received_at)
+            self._purge_expired_nonces(now)
             if abs((_parse_test_time(request_ts) - now).total_seconds()) > 120:
                 raise RequestTimestampExpired(request_ts)
             stored = _with_server_fields(entry, chain_index=0, prev_hash=GENESIS_HASH, received_at=received_at)
@@ -172,6 +176,7 @@ class MemoryDatabase:
 
     def consume_request_nonce(self, *, signer_key_id, subject_id, nonce, request_ts, now):
         with self.auth_lock:
+            self._purge_expired_nonces(now)
             key = self.signer_keys.get(signer_key_id)
             if key is None:
                 raise ValueError("signer key is unknown")
@@ -195,6 +200,7 @@ class MemoryDatabase:
         event_id = entry["details"]["event_id"]
         now = _parse_test_time(received_at)
         with self.auth_lock, lock:
+            self._purge_expired_nonces(now)
             key = self.signer_keys.get(signer_key_id)
             if key is None:
                 raise ValueError("signer key is unknown")

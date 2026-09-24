@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS request_nonces (
     expires_at TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (signer_key_id, nonce)
 );
+CREATE INDEX IF NOT EXISTS request_nonces_expiry_idx ON request_nonces (expires_at);
 CREATE TABLE IF NOT EXISTS signer_counters (
     signer_key_id TEXT NOT NULL REFERENCES signer_keys(signer_key_id),
     counter BIGINT NOT NULL CHECK (counter >= 0),
@@ -146,8 +147,8 @@ def _clock_skewed(request_ts: str, now: datetime) -> bool:
 
 def _consume_nonce(cursor, signer_key_id: str, nonce: str, now: datetime) -> None:
     cursor.execute(
-        "DELETE FROM request_nonces WHERE signer_key_id = %s AND nonce = %s AND expires_at <= %s",
-        (signer_key_id, nonce, now),
+        "DELETE FROM request_nonces WHERE expires_at <= %s",
+        (now,),
     )
     cursor.execute(
         "SELECT 1 FROM request_nonces WHERE signer_key_id = %s AND nonce = %s",
