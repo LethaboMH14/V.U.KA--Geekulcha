@@ -528,3 +528,23 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 - P3.A3 slice 2 is unblocked.
 - Contract v2 (#51) adds `revoked_key_id` to plain `details` on `key_revoked` entries, and drops `server` from `signer_role`.
 - `shared/verify.js` (verify-min, P3.S7) already builds keys from the chain. Revocation checking is added once `key_revoked` entries exist in an export.
+
+---
+
+## ADR-0043: A guardian stand-down never ends a duress incident; an armed journey that goes silent notifies guardians
+**Status:** Proposed (2026-09-24). Proposed by Lethabo (co-lead, acting security lead). Binds when Sibusiso (second lead) accepts it; it changes accepted §8 behaviour.
+**Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (server)
+**Context:** An independent red-team review of `docs/security/SECURITY-PROGRAMME.md` found two gaps in spec §8.
+- **The abuser who is a guardian.** Safety apps are most often abused by people who were *legitimately* added (`docs/security/research/THREAT-DATA.md`). If the coercer is one of the victim's guardians, the victim's duress PIN alerts him. Under §8, any single guardian's `stand_down` then closes the incident and, within 3 minutes, suppresses the `no_answer` bank signal. The attacker can end the alarm he is the subject of.
+- **Silencing without a PIN.** ADR-0041 PIN-gated ending a journey, but the operating system can still silence an armed journey with no PIN: force-stop, uninstall, revoking the microphone or notification permission, airplane mode. `contact_lost` fires only while an incident is open, so an armed journey with no incident dies silently.
+**Decision:**
+1. **After any duress signal in an incident, a guardian `stand_down` is recorded (and acknowledged to that guardian) but never closes the incident, never cancels the S1 bank signal, and never suppresses a later escalation.** Such an incident closes only by the 6 h automatic close, which needs heartbeats present and guardians notified. For incidents with no duress signal, `stand_down` works as §8 says today.
+2. **Armed-journey silence notice.** If an armed journey with no open incident sends no heartbeat for **N minutes** (N set in contract v2, default 10), the server sends guardians a low-key "VIGIL lost contact with <name>'s phone" notice. It **never** sends a bank signal and never opens an incident. It is a server event, anchored like any other.
+**Rejected alternatives:**
+- Requiring two guardians to stand down: the lone-guardian case (§17) would lock the incident open until the 6 h close regardless, with the same effect as (1) but more complex.
+- Opening a full incident on silence: every dead battery would reach the bank.
+- Hiding the alert from a guardian-abuser: impossible without knowing which guardian is the abuser.
+**Consequences:**
+- Tests: T61, where a duress incident plus a stand-down leaves the bank signal sent and the incident open; and T62, where a silent armed journey sends one notice and no bank signal.
+- Contract v2: the silence threshold, and the `journey_silent` event kind.
+- Residual, stated in `SECURITY-PROGRAMME.md` §10: a guardian-coercer still *sees* the alert. Onboarding advises guardians who don't live with you.

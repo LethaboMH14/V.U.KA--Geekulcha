@@ -1,5 +1,7 @@
 # PIN-authority rules — what a PIN may do, what duress may not do, when an incident ends
 
+> ⚠️ **Where this page differs from `docs/VUKA-2-SPEC.md` §8–§9 or ADR-0041 (accepted 24 Sep 2026), the spec and the ADR govern.** Known differences: `expires_at` is set by the server and never signed by the device (§9); recovery on a new device isn't available under duress (§9); incident closure includes ADR-0041's member-ended rule. Tests are written against the spec.
+
 > **Owner:** Ipeleng Constance Modise (security and privacy) with Lethabo Hoaeane (co-lead). **Drafted** 24 September 2026 for the P3.L8 Thursday-12:00 check. **Status:** `PROPOSED` — binds when Lethabo agrees it at the checkpoint (record: `docs/ADR-ACCEPTANCE-RECORD.md`, **ADR-0040** in `docs/adr.md`; drafted as ADR-0039, renumbered because Lethabo claimed ADR-0039). **Sources:** `docs/VUKA-2-SPEC.md` §8 and §9; ADR-0036. Every rule here is already specified; this page restates them in one place so the team can agree them line by line. Not legal advice.
 
 ---
