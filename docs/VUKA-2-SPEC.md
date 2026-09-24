@@ -160,6 +160,54 @@ The frozen `EvidenceEntry` shape is unchanged: `action, actor_id, target_type, t
   - An entry signed by a key verifies if its `details.received_at` is **before** the `received_at` of that key's `key_revoked` entry. An entry received at or after it is rejected (§9 key revocation).
 - **Out of scope for 4a:** ML-DSA-65 keys (§10 names them as "if built" — not yet), key rotation outside recovery, and the guardian decoy-key behaviour under duress (§9's decoy guardian never receives a real key registration — it's `signer_keys`-invisible by design, already covered by §9, not repeated here).
 
+> **§4b is `PROPOSED`, drafted 25 September 2026 by Sibusiso, not yet accepted.** §4 says every payload holds `kind` and its specifics, and §18 says per-kind schemas live in `contracts/payloads/<kind>.v<pv>.json`, but that directory does not exist and only `signal_detected` has a field table. The ANCHOR server (P3.A3 slice 3) cannot wire events to escalation without knowing the fields of the three kinds that drive it. Binds when both leads agree it, recorded in `docs/ADR-ACCEPTANCE-RECORD.md` alongside a new ADR (number assigned at acceptance). Until then the schema files under `contracts/payloads/` are proposals, not a frozen contract.
+
+### 4b · Per-kind payloads for the escalation path (`PROPOSED`)
+
+Scope: `checkin_opened`, `checkin_result` and `journey_ended`, the three kinds slice 3 needs. `journey_armed`, `pin_authorised` (whose statement is already the `PinAuthorisationStatement` in `contracts/openapi.yaml`) and `signal_detected` (§18) are unchanged. Every schema follows the §18 conventions: `kind` and integer `pv` are required, every numeric field is an integer (§5), and no other fields are allowed (`additionalProperties: false`), so adding one is a `pv` bump. The schema files are the binding definition once accepted; these tables are the source they were built from.
+
+- **`checkin_opened` (pv 1)**, in `contracts/payloads/checkin_opened.v1.json`:
+
+  | Field | Type | Required | Values / constraint |
+  |---|---|---|---|
+  | `kind` | string | yes | `"checkin_opened"` |
+  | `pv` | integer | yes | `1` |
+  | `checkin_id` | string | yes | device-generated lowercase UUID; also the `{id}` in `/v1/checkins/{id}/opened` and `/result` |
+  | `journey_id` | string | yes | the journey this check-in belongs to, as in `signal_detected` |
+  | `signal_event_id` | string | yes | lowercase UUID: the `details.event_id` of the `signal_detected` event that triggered this check-in |
+  | `window_s` | integer | yes | `20` or `60` (§7) |
+
+- **`checkin_result` (pv 1)**, in `contracts/payloads/checkin_result.v1.json`:
+
+  | Field | Type | Required | Values / constraint |
+  |---|---|---|---|
+  | `kind` | string | yes | `"checkin_result"` |
+  | `pv` | integer | yes | `1` |
+  | `checkin_id` | string | yes | the `checkin_id` of this check-in's `checkin_opened` |
+  | `result` | string | yes | enum `"normal_pin"`, `"duress_pin"` |
+  | `attempt` | integer | yes | 1 or more: the ordinal of the PIN entry at which this PIN was accepted, counting every earlier wrong entry |
+
+- **`journey_ended` (pv 1)**, in `contracts/payloads/journey_ended.v1.json`:
+
+  | Field | Type | Required | Values / constraint |
+  |---|---|---|---|
+  | `kind` | string | yes | `"journey_ended"` |
+  | `pv` | integer | yes | `1` |
+  | `journey_id` | string | yes | the journey being ended; equals the `target_id` of the fresh `end_journey` authorisation |
+
+- **Why these fields, and what each one lets the server do:**
+  - **`signal_event_id` links a check-in to its detection.** §8 (G34) schedules `no_answer_fallback` when `signal_detected` is received and says an `opened` arriving first cancels it, but nothing said how the server knows *which* signal an `opened` answers. Matching by `journey_id` alone is ambiguous when two detections arrive close together. The signal always precedes its `opened` in the device's ordered queue (V8), and only a detection can open a check-in (V4, V11), so the field is required.
+  - **`checkin_id` is device-generated** so `opened` and `result` can be queued while offline (V8) without a server round trip. The server creates the `checkins` row (§8) on the first event it sees for an id, whether that is `opened` or, if `opened` was lost, `result`.
+  - **`window_s`, not `window_ms`,** so it cannot be confused with `signal_detected.window_ms` (the 975 ms audio window). It is the only device-chosen input to a deadline, so it is an enum: any other value is a 400, and the deadline is still computed from server receipt time (§7, B4).
+  - **`result` has no `no_answer`.** `no_answer` is a server event (§8), never device-authored. A duress PIN at any attempt is a duress signal (§3).
+  - **`attempt` implements the T47 rule** (ADR-0041): from the third wrong entry the outcome is fixed as `no_answer` at the deadline, so a `normal_pin` with `attempt >= 4` is appended but is never terminal and never retracts an alert. The wrong entries themselves produce no event (the §3 table lists no such kind), because the PIN is verified on the device (§9).
+  - **`journey_ended` has no `mode` and no authorisation reference.** Its authority is the separate `pin_authorised` event for `end_journey` (submitted via `POST /v1/pin-authorisations`), matched by §9's rule of a fresh authorisation for "that exact action and target". Putting `mode` in this payload would make a duress end differ from a normal end in shape, which T52 and the T15 harness forbid.
+
+- **Open points for the leads** (each has a proposed answer; none is decided here):
+  1. **`attempt` is device-asserted.** The server cannot check it, so it enforces T47 against an honest app only. That is the same trust the server already places in every device event, and the PIN itself never leaves the phone. Proposed: accept and record it as a residual in §17.
+  2. **Is an `end_journey` authorisation single-use?** §9 says "fresh, unexpired" but not consumed. Proposed: the server consumes it on the first accepted `journey_ended` (keyed by its nonce), and a second `journey_ended` for an already-ended journey is refused as `journey not active`, so one authorisation cannot end two journeys or be replayed inside its 120 s.
+  3. **Id length cap.** `journey_id` is unbounded in the schema, as in `signal_detected`. Proposed: leave it, and decide one cap for every id in one place rather than per kind.
+
 ---
 
 ## 5 · Canonical form
