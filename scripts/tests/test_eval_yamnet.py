@@ -169,21 +169,42 @@ class OfflineInstrumentTests(unittest.TestCase):
     def test_e11_m3_29_attempts_has_no_latency_statistics(self):
         _, report, _ = self.invoke(m3_fixture(list(range(1, 30))), "m3")
         m3 = report["reports"][0]
-        self.assertEqual((m3["status"], m3["n"]), ("insufficient_n", 29))
+        self.assertEqual((m3["status"], m3["n"], m3["delivered"]),
+                         ("insufficient_n", 29, 29))
         self.assertNotIn("median_ms", m3)
         self.assertNotIn("p95_ms", m3)
 
     def test_e12_m3_30_latency_values_nearest_rank_hand_oracle(self):
         _, report, _ = self.invoke(m3_fixture(), "m3")
         m3 = report["reports"][0]
-        self.assertEqual((m3["median_ms"], m3["p95_ms"], m3["min_ms"], m3["max_ms"], m3["lost"]),
-                         (15.5, 29, 1, 30, 0))
+        self.assertEqual((m3["median_ms"], m3["p95_ms"], m3["min_ms"], m3["max_ms"],
+                          m3["lost"], m3["delivered"]),
+                         (15.5, 29, 1, 30, 0, 30))
 
-    def test_e13_m3_lost_stays_in_denominator_statistics_delivered_only(self):
+    def test_e13_m3_30_attempts_with_27_delivered_is_insufficient(self):
         _, report, _ = self.invoke(m3_fixture(list(range(1, 31)), lost=3), "m3")
         m3 = report["reports"][0]
-        self.assertEqual((m3["n"], m3["lost"], m3["denominator"]), (30, 3, 30))
-        self.assertEqual((m3["median_ms"], m3["p95_ms"], m3["min_ms"], m3["max_ms"]), (17, 29, 4, 30))
+        self.assertEqual((m3["status"], m3["reason"], m3["n"], m3["lost"],
+                          m3["delivered"], m3["denominator"]),
+                         ("insufficient_n", "fewer than 30 delivered attempts", 30, 3, 27, 30))
+        for key in ("median_ms", "p95_ms", "min_ms", "max_ms"):
+            self.assertNotIn(key, m3)
+
+    def test_m3_40_attempts_with_30_delivered_reports_delivered_percentiles(self):
+        _, report, _ = self.invoke(m3_fixture(list(range(1, 41)), lost=10), "m3")
+        m3 = report["reports"][0]
+        self.assertEqual((m3["n"], m3["lost"], m3["delivered"], m3["denominator"]),
+                         (40, 10, 30, 40))
+        self.assertEqual((m3["median_ms"], m3["p95_ms"], m3["min_ms"], m3["max_ms"]),
+                         (25.5, 39, 11, 40))
+
+    def test_m3_30_attempts_with_29_delivered_is_insufficient(self):
+        _, report, _ = self.invoke(m3_fixture(list(range(1, 31)), lost=1), "m3")
+        m3 = report["reports"][0]
+        self.assertEqual((m3["status"], m3["reason"], m3["n"], m3["lost"], m3["delivered"]),
+                         ("insufficient_n", "fewer than 30 delivered attempts", 30, 1, 29))
+        for key in ("median_ms", "p95_ms", "min_ms", "max_ms"):
+            self.assertNotIn(key, m3)
 
     def test_e14_m3_negative_offset_corrected_latency_is_flagged_not_clamped(self):
         _, report, _ = self.invoke(m3_fixture([-5] + list(range(1, 30)), offset=0), "m3")

@@ -227,18 +227,19 @@ def report_m3(data: dict) -> dict:
             displayed = _integer(displayed, f"M3 attempts[{index}].displayed_at_ms", 0)
             latencies.append(displayed - detected - offset)
     n = len(attempts)
+    delivered = len(latencies)
     report = _base("M3_detection_to_guardian_display_latency", config, n,
-                   "Latency_ms = displayed_at_ms - detected_at_ms - clock_offset_ms; lost attempts remain in n and denominator; percentiles use delivered attempts, nearest-rank p95.",
-                   len(latencies), n)
-    report.update({"lost": lost, "clock_offset_ms": offset,
+                   "Latency_ms = displayed_at_ms - detected_at_ms - clock_offset_ms; lost attempts remain in n and denominator; percentiles require at least 30 delivered attempts and use delivered attempts only, nearest-rank p95.",
+                   delivered, n)
+    report.update({"lost": lost, "delivered": delivered, "clock_offset_ms": offset,
                    "clock_uncertainty_ms": uncertainty,
                    "clock_suspect": sum(value < 0 for value in latencies)})
     if n < 30:
         report["status"] = "insufficient_n"
         report["reason"] = "fewer than 30 attempts"
-    elif not latencies:
-        report["status"] = "not_measured"
-        report["reason"] = "no displayed attempts"
+    elif delivered < 30:
+        report["status"] = "insufficient_n"
+        report["reason"] = "fewer than 30 delivered attempts"
     else:
         ordered = sorted(latencies)
         size = len(ordered)
