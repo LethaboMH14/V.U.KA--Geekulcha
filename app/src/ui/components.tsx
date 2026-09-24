@@ -7,7 +7,7 @@
 import React, {useState} from 'react';
 import {Pressable, StyleSheet, Text, View, type ViewStyle} from 'react-native';
 import Svg, {Defs, LinearGradient, RadialGradient, Rect, Stop} from 'react-native-svg';
-import {Backspace} from 'phosphor-react-native';
+import {Backspace} from './icons';
 import {colors, fonts, radii, space, TOUCH} from './theme';
 
 /** Soft light from one source (top-left), drawn once behind the content. */
@@ -150,7 +150,9 @@ export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete
               {k === 'del' ? (
                 <Backspace size={24} color={colors.textTitle} />
               ) : (
-                <Text style={styles.keyText}>{k}</Text>
+                <Text style={styles.keyText} maxFontSizeMultiplier={1.4}>
+                  {k}
+                </Text>
               )}
             </Pressable>
           ) : (

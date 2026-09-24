@@ -11,7 +11,7 @@
  * long-press on the "Journey active" title so the check-in can be shown.
  */
 import React, {useEffect, useState} from 'react';
-import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {BackHandler, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {
   ArrowRight,
   CaretLeft,
@@ -23,7 +23,7 @@ import {
   ShieldChevron,
   Users,
   Waveform,
-} from 'phosphor-react-native';
+} from './icons';
 import {AmbientField, Button, Card, Leaf, PinKeypad, StatusChip} from './components';
 import {colors, fonts, space, TOUCH, type} from './theme';
 import {version} from '../../package.json';
@@ -41,6 +41,20 @@ const ICON = {size: 20, color: colors.textTitle} as const;
 export function VigilApp() {
   const [screen, setScreen] = useState<Screen>('ready');
   const [armed, setArmed] = useState(false);
+
+  // Android back: Settings returns to the previous screen. The check-in and
+  // "Checked in" swallow back identically for both PINs, so neither can be
+  // dismissed and the behaviour reveals nothing.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (screen === 'settings') {
+        setScreen(armed ? 'active' : 'ready');
+        return true;
+      }
+      return screen === 'check' || screen === 'checked';
+    });
+    return () => sub.remove();
+  }, [screen, armed]);
 
   if (screen === 'check') {
     return <JourneyCheck onDone={() => setScreen('checked')} />;
@@ -165,7 +179,11 @@ function JourneyActive({onEnd, onSimCheck}: {onEnd: () => void; onSimCheck: () =
         </View>
         <View style={{marginTop: 14, gap: 10}}>
           {SIM_GUARDIANS.map(g => (
-            <View key={g.name} style={[styles.row, {justifyContent: 'space-between'}]}>
+            <View
+              key={g.name}
+              accessible
+              accessibilityLabel={`${g.name}, ${g.accepted ? 'ready' : 'pending'}`}
+              style={[styles.row, {justifyContent: 'space-between'}]}>
               <Text style={styles.guardian}>{g.name}</Text>
               <Text style={[type.caption, {color: g.accepted ? colors.textSecondary : colors.textDim}]}>
                 {g.accepted ? 'Ready' : 'Pending'}
@@ -266,7 +284,7 @@ function ListeningLine() {
 }
 
 const styles = StyleSheet.create({
-  page: {padding: space.xl, paddingTop: 36, gap: space.md},
+  page: {padding: space.xl, paddingTop: 36, gap: space.md, width: '100%', maxWidth: 560, alignSelf: 'center'},
   name: {fontFamily: fonts.semibold, fontSize: 26, color: colors.textTitle, letterSpacing: -0.2},
   guardian: {fontFamily: fonts.regular, fontSize: 14, color: colors.textLabel},
   row: {flexDirection: 'row', alignItems: 'center', gap: 10},
