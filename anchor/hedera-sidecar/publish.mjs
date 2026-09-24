@@ -5,6 +5,37 @@ import { manifestMessage, canonicalManifestBytes, bytesToHex, decodeAnchorMessag
 const manifestPath = fileURLToPath(new URL("../../contracts/keys/manifest.json", import.meta.url));
 const pinsPath = fileURLToPath(new URL("../../contracts/keys/verify-pins.json", import.meta.url));
 const HEX_32 = /^[0-9a-f]{64}$/;
+const ECDSA_SECRET = /^0x[0-9a-fA-F]{64}$/;
+
+export function parseEcdsaSecret(value, PrivateKey) {
+  if (typeof value !== "string" || !ECDSA_SECRET.test(value)) {
+    throw new Error("Hedera ECDSA private key must be 0x-prefixed 32-byte hex");
+  }
+  // fromString() guesses the wrong key family for a raw 0x-prefixed value.
+  return PrivateKey.fromStringECDSA(value.slice(2));
+}
+
+export async function verifyPinnedCredentials({ operatorId, operatorPrivate, submitPrivate,
+  topicId, fetchFn = fetch }) {
+  if (!/^\d+\.\d+\.\d+$/.test(operatorId)) throw new Error("invalid Hedera operator ID");
+  const urls = [
+    `https://testnet.mirrornode.hedera.com/api/v1/topics/${topicId}`,
+    `https://testnet.mirrornode.hedera.com/api/v1/accounts/${operatorId}`,
+  ];
+  const [topicResponse, accountResponse] = await Promise.all(urls.map((url) =>
+    fetchFn(url, { signal: AbortSignal.timeout(10000) })));
+  if (!topicResponse.ok || !accountResponse.ok) {
+    throw new Error("pinned topic or operator account is unavailable from the mirror");
+  }
+  const [topic, account] = await Promise.all([topicResponse.json(), accountResponse.json()]);
+  if (topic.topic_id !== topicId || topic.deleted === true ||
+      topic.submit_key?._type !== "ECDSA_SECP256K1" ||
+      account.account !== operatorId || account.key?._type !== "ECDSA_SECP256K1" ||
+      topic.submit_key.key.toLowerCase() !== submitPrivate.publicKey.toStringRaw().toLowerCase() ||
+      account.key.key.toLowerCase() !== operatorPrivate.publicKey.toStringRaw().toLowerCase()) {
+    throw new Error("Hedera credentials do not match the pinned topic and operator account");
+  }
+}
 
 export async function pinnedAnchorMessage(kind, rootHex, loadJson = async (path) => JSON.parse(await readFile(path, "utf8"))) {
   const [manifest, pins] = await Promise.all([loadJson(manifestPath), loadJson(pinsPath)]);
@@ -78,6 +109,7 @@ export async function submitPinnedMessage(request, {
   env = process.env,
   sdkLoader = () => import("@hiero-ledger/sdk"),
   readBack = readMirror,
+  fetchFn = fetch,
 } = {}) {
   const { message, topicId, topicEpoch } = await pinnedAnchorMessage(request?.kind, request?.root_hex);
   const { HEDERA_OPERATOR_ID: operatorId, HEDERA_OPERATOR_KEY: operatorKey,
@@ -93,12 +125,15 @@ export async function submitPinnedMessage(request, {
     await readBack({ topicId, sequenceNumber: Number(manifestSequence), message: manifest.message });
   }
   const { Client, PrivateKey, TopicMessageSubmitTransaction } = await sdkLoader();
+  const operatorPrivate = parseEcdsaSecret(operatorKey, PrivateKey);
+  const submitPrivate = parseEcdsaSecret(submitKey, PrivateKey);
+  await verifyPinnedCredentials({ operatorId, operatorPrivate, submitPrivate, topicId, fetchFn });
   const client = Client.forTestnet();
   try {
-    client.setOperator(operatorId, PrivateKey.fromString(operatorKey));
+    client.setOperator(operatorId, operatorPrivate);
     const transaction = new TopicMessageSubmitTransaction()
       .setTopicId(topicId).setMessage(message).freezeWith(client);
-    await transaction.sign(PrivateKey.fromString(submitKey));
+    await transaction.sign(submitPrivate);
     const response = await transaction.execute(client);
     const receipt = await response.getReceipt(client);
     const sequenceNumber = Number(receipt.topicSequenceNumber?.toString());

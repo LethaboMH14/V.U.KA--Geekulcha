@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { pinnedAnchorMessage, readMirror, submitPinnedMessage, verifyMirrorMessage } from "./publish.mjs";
+import { pinnedAnchorMessage, readMirror, submitPinnedMessage, verifyMirrorMessage,
+  parseEcdsaSecret, verifyPinnedCredentials } from "./publish.mjs";
 
 const fingerprint = "c1d90404edd180765e15321d690881933c5a4ffcdecc18f064131b6c5c70a0a2";
 
@@ -69,28 +70,36 @@ test("mirror lag is retried, but mismatched content is never accepted", async ()
 test("submission needs separate operator and topic-submit credentials", async () => {
   await assert.rejects(submitPinnedMessage({ kind: "manifest" }, { env: {} }), /credentials are required/);
   await assert.rejects(submitPinnedMessage({ kind: "root", root_hex: "ab".repeat(32) }, {
-    env: { HEDERA_OPERATOR_ID: "0.0.99", HEDERA_OPERATOR_KEY: "operator-secret",
-      HEDERA_SUBMIT_KEY: "submit-secret" },
+    env: { HEDERA_OPERATOR_ID: "0.0.99", HEDERA_OPERATOR_KEY: `0x${"aa".repeat(32)}`,
+      HEDERA_SUBMIT_KEY: `0x${"bb".repeat(32)}` },
   }), /confirmed manifest sequence is required/);
+  assert.throws(() => parseEcdsaSecret("plain-secret", {}), /0x-prefixed/);
   let signed = false;
   let closed = false;
+  const operatorSecret = `0x${"aa".repeat(32)}`;
+  const submitSecret = `0x${"bb".repeat(32)}`;
   class Transaction {
     setTopicId(id) { assert.equal(id, "0.0.10687280"); return this; }
     setMessage(bytes) { assert.equal(bytes.length, 33); return this; }
     freezeWith() { return this; }
-    async sign(key) { assert.equal(key, "submit-secret"); signed = true; return this; }
+    async sign(key) { assert.equal(key.raw, submitSecret.slice(2)); signed = true; return this; }
     async execute() { return { getReceipt: async () => ({ topicSequenceNumber: 3 }) }; }
   }
   const sdkLoader = async () => ({
     Client: { forTestnet: () => ({ setOperator: (id, key) => {
-      assert.equal(id, "0.0.99"); assert.equal(key, "operator-secret");
+      assert.equal(id, "0.0.99"); assert.equal(key.raw, operatorSecret.slice(2));
     }, close: () => { closed = true; } }) },
-    PrivateKey: { fromString: (value) => value },
+    PrivateKey: { fromStringECDSA: (raw) => ({ raw,
+      publicKey: { toStringRaw: () => raw === operatorSecret.slice(2) ? "operator-public" : "submit-public" } }) },
     TopicMessageSubmitTransaction: Transaction,
   });
+  const fetchFn = async (url) => ({ ok: true, json: async () => url.includes("/topics/")
+    ? { topic_id: "0.0.10687280", deleted: false,
+      submit_key: { _type: "ECDSA_SECP256K1", key: "submit-public" } }
+    : { account: "0.0.99", key: { _type: "ECDSA_SECP256K1", key: "operator-public" } } });
   const result = await submitPinnedMessage({ kind: "manifest" }, {
-    env: { HEDERA_OPERATOR_ID: "0.0.99", HEDERA_OPERATOR_KEY: "operator-secret",
-      HEDERA_SUBMIT_KEY: "submit-secret" }, sdkLoader,
+    env: { HEDERA_OPERATOR_ID: "0.0.99", HEDERA_OPERATOR_KEY: operatorSecret,
+      HEDERA_SUBMIT_KEY: submitSecret }, sdkLoader, fetchFn,
     readBack: async ({ topicId, sequenceNumber, message }) => ({
       topic_id: topicId, sequence_number: sequenceNumber,
       consensus_timestamp: "1790197443.416460104", running_hash: "running-hash",
@@ -101,4 +110,8 @@ test("submission needs separate operator and topic-submit credentials", async ()
   assert.equal(closed, true);
   assert.equal(result.confirmed_by, "public_mirror");
   assert.equal(result.topic_epoch, 1);
+  await assert.rejects(verifyPinnedCredentials({ operatorId: "0.0.99",
+    operatorPrivate: { publicKey: { toStringRaw: () => "wrong" } },
+    submitPrivate: { publicKey: { toStringRaw: () => "submit-public" } },
+    topicId: "0.0.10687280", fetchFn }), /do not match/);
 });

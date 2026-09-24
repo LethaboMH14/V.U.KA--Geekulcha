@@ -15,7 +15,10 @@ sequence and message bytes with a consensus timestamp and running hash.
 It never puts credentials on the command line or in its success output.
 
 Set `HEDERA_OPERATOR_ID`, `HEDERA_OPERATOR_KEY`, and `HEDERA_SUBMIT_KEY` through
-the deployment secret store. Publish the `0x02` manifest message first and
+the deployment secret store. The keys are `0x`-prefixed 32-byte secp256k1
+private-key hex; the sidecar uses the SDK's explicit ECDSA parser and checks
+their derived public keys against the existing pinned topic and operator
+account on the public mirror before submitting. Publish the `0x02` manifest message first and
 record its confirmed sequence in `HEDERA_MANIFEST_SEQUENCE`; a root request
 re-reads and checks that manifest message before submitting `0x01`. The
 previous spike's plain-text message at sequence 1 is **not** a manifest
