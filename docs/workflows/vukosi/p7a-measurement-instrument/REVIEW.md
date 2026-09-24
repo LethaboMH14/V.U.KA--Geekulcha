@@ -36,3 +36,12 @@ There is no live check for this packet. Nothing here is a measurement, and no re
 - Reproduced: 40 offline tests OK, docs and intake checks pass, `node --test` 10/10, `git diff --check` clean, Gitleaks no leaks. The only tracked CSV is the inherited one.
 - Still open (human choice, unchanged): M3 prints a p95 from delivered attempts only once n ≥ 30 attempts.
 - Still not a measurement. Lethabo's review is pending.
+
+## Review of the M3 delivered gate: `6ea9fdc3066b511af6de9934eae97f3e1cfda819` (change `76b44f2`)
+
+**Result: correct; one low finding.** Claude Code assistant (`claude-sonnet-5`), fresh detached checkout. AI review only. It is not Lethabo's review, and the rule itself is Vukosi's recommendation pending Khutso's confirmation.
+
+- The change: `delivered` is now always reported, and median/p95/min/max appear only when `delivered >= 30`; otherwise `insufficient_n` with reason "fewer than 30 delivered attempts". Only `scripts/eval_yamnet.py` and its tests changed.
+- Reproduced: 42/42 offline tests, docs and intake checks, 13 contract tests, `git diff --check` and Gitleaks all pass. I probed the boundaries directly: 30 attempts with 3 lost gives `insufficient_n` (delivered 27); 30 with 0 lost gives median 15.5 and p95 29; 40 attempts with 10 lost gives percentiles over the 30 delivered (median 25.5, p95 39, lost 10, n 40), which I checked by hand; 30 attempts all lost gives `insufficient_n`.
+- **Low:** the earlier distinct status for zero delivered attempts (`not_measured`, "no displayed attempts") was folded into `insufficient_n`. Total loss now reads like a sample-size shortfall. Suggest keeping a reason that says nothing was delivered.
+- Still a measurement instrument, not a measurement. No live check exists.
