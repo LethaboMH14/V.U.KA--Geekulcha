@@ -68,6 +68,10 @@ jobs:
             echo "No anchor/tests or server/tests Python tests are present; skipped."
           else
             python -m pip install --disable-pip-version-check pytest==8.4.2
+            mapfile -t manifests < <(find anchor server -maxdepth 1 -type f -name 'requirements.txt' -print | sort)
+            for manifest in "${manifests[@]}"; do
+              python -m pip install --disable-pip-version-check -r "${manifest}"
+            done
             python -m pytest anchor/tests server/tests
           fi
   npm-audit:
