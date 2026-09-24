@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - The judging criteria published (MASTER-CONTEXT v3, 23 Sep). I re-tag every new row with I / T / U / S / B / Q and run the coverage sweep under the new criteria.
 
-**Current task** — P3.K1 review corrections are pushed to PR #47 by a Codex assistant acting at Khutso's request; Khutso's personal confirmation and Sibusiso's acceptance remain pending. P3.K2 is on replacement stacked PR #54.
+**Current task** — P3.K1 review corrections are merged on `main`; P3.K2 remains on its reviewed stacked branch; P3.K3 is the requirements trace on the Codex review branch, with Sibusiso review pending. Do not tick P3.K3 until the trace's owner, test-gap and status decisions are accepted.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -33,7 +33,7 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: P3.K1 review findings addressed on 23 Sep 2026; Khutso personal confirmation and Sibusiso review pending; due Thu 24 Sep 12:00 (`PROPOSED` schedule from the work order).
+- Current task / status: P3.K3 requirements trace drafted on 24 Sep 2026; Sibusiso review and both-lead acceptance pending; due Thu 24 Sep 20:00 (`PROPOSED` schedule from the work order).
 - Claimed files / contract versions: `docs/EVIDENCE.md` for P3.K1/P3.K2; `team/khutso.md`, `docs/OVERLAPS.md` and a new `docs/build-log/entries/` record for coordination; `docs/CHECKLIST.md` only after acceptance evidence exists. No contract version change.
 - Last updated: 23 September 2026 — Khutso requested a pull, task realignment and workflow setup; Codex assistant configured the local workflow and recorded the bounded P3.K1 claim. No evidence row is asserted re-verified.
 
@@ -108,3 +108,6 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-23 — Codex assistant, acting at Khutso's request, resolved PR #47 review findings: secondary SABRIC and UK APP split details are flagged, ICB's inaccessible primary is flagged, FIPS 204 publication/effective dates are distinguished, the audit authorship/status is explicit, smartphone-duty wording is described as a clarification, and the unsupported OpenTimestamps observation is removed. Khutso confirmation and Sibusiso acceptance remain pending; no checklist row is ticked.
 - 2026-09-23 — Codex assistant rechecked the PR #47 follow-up and found the Federal Register citation targeted the wrong document number; corrected it to NIST's linked notice 2024-17956 and recorded the source wording. Removed the secondary SABRIC incident and app-share figures from the `MASTER-CONTEXT.md` headline row while retaining their explicit caveat in `EVIDENCE.md`. This is a review correction, not Khutso's personal source confirmation or reviewer acceptance.
 - 2026-09-24 — Codex assistant, at Khutso's request, re-critiqued P3.K1 and corrected secondary-source flags, smartphone-duty valuation basis, UK APP policy scope and source, and the crime-displacement paper's observation count and limitations on PR #47. The new build-log entry names the later corrections and points to live P3.K2 PR #54. Khutso's row-by-row personal confirmation and reviewer acceptance remain pending; P3.K1 is not complete.
+- 2026-09-24 — Codex assistant, acting at Khutso's request, drafted `docs/REQUIREMENTS-TRACE.md` from VUKA-2 §2/§15 and the current P3 owners. The trace covers all 32 requirements, uses current T21–T24 tests where applicable, exposes requirements without dedicated tests, and records the work-order T01–T20 range mismatch. P3.K3 remains pending Sibusiso and both-lead review; no checklist row is ticked.
+- 2026-09-24 — Codex assistant, at Khutso's request, answered Sibusiso's PR #63 review by auditing each test against its literal §15 oracle. Seventeen requirement rows lack a direct test for their defining behavior, and the remaining rows state any partial clause coverage. The earlier 11-gap count was too narrow; the dated correction is in `docs/build-log/entries/2026-09-24-codex-khutso-p3-k3-test-scope-correction.md`. Re-review is pending; P3.K3 remains open.
+- 2026-09-24 — Codex assistant, at Khutso's request, merged current `main` into PR #63's branch without rewriting its history and re-checked the P3.K3 trace against ADR-0041's T30, T47 and T50–T52. The trace now flags the §2 A5 versus §9 member-device export scope conflict for Sibusiso, Ipeleng and both leads; no contract decision or test pass is inferred. Review of the updated head is required before P3.K3 can close.
