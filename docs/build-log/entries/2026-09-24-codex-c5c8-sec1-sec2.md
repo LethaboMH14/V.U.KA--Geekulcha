@@ -9,10 +9,12 @@
 **Competitor reference** — Not applicable; this is an ANCHOR contract/security-boundary change, not a market comparison.
 
 Changed:
-- `contracts/openapi.yaml`: added `EventSubmission` with client-supplied fields, payload and a constrained 16-byte base64 salt; applied it to subject registration, event ingest and check-in event paths. Added four required `X-Vuka-*` header schemes and their signed-request statement/order, replaced bearer authentication on subject record/export/deletion with signed-request auth, split `PinAuthorisationStatement` from the server record and exposed the server-derived record on receipts, and removed subject PIN authority from guardian-token updates (guardian signer role required).
+- `contracts/openapi.yaml`: added `EventSubmission` with client-supplied fields, payload and a constrained 16-byte base64 salt; applied it to subject registration, event ingest and check-in event paths. A recursive `CanonicalJsonValue` rejects floats, unsafe integers and non-ASCII object keys in committed payloads. Added four required `X-Vuka-*` header schemes and their signed-request statement/order, replaced bearer authentication on subject record/export/deletion with signed-request auth, split `PinAuthorisationStatement` from the server record and exposed the server-derived record on receipts, and removed subject PIN authority from guardian-token updates (guardian signer role required).
 - `anchor/pin_authority.py`: separated the six-field device statement from its server record, canonicalizes only `{action, target_id, mode, nonce}`, validates signature/key-id shape, and derives the record expiry from server receipt time. The module still does not verify ECDSA or PINs.
 - `anchor/tests/test_pin_authority.py` and `test/openapi-contract.test.mjs`: added tests for signature-scope canonical bytes, server-only expiry, input shapes, transport fields, header requirements and guardian-only token-update contract.
 - `team/sibusiso.md`: recorded the active task and shared-file claim.
+
+Follow-up hardening during final validation: the payload's own top-level keys also use the canonical ASCII-only rule; recursive nested objects already used that rule. The JSON Schema check below confirms both levels reject non-ASCII keys.
 
 Evidence (commands and actual results):
 - `git pull` → failed: `ssh: connect to host github.com port 22: Permission denied`; this worktree's configured remote uses SSH. `gh pr view 51 --repo LethaboMH14/V.U.KA--Geekulcha --json headRefOid,updatedAt,state` → `{"headRefOid":"95b28ed87afa85e6927ec39b761372611d6b8742","state":"OPEN","updatedAt":"2026-09-24T13:11:15Z"}`. `git rev-parse HEAD` → `95b28ed87afa85e6927ec39b761372611d6b8742`; the checked GitHub PR head therefore matched local HEAD.
@@ -21,7 +23,7 @@ Evidence (commands and actual results):
 - `node scripts/check-docs.mjs` → `Document contracts, required counts, local links and selected claim safeguards passed. Human fact/quality review is still required.`
 - `node scripts/check-intake.mjs` → `Intake gate has evidence references and approval records; reviewers must verify their authenticity.`
 - `git diff --check` → exit `0`, no whitespace errors; Git printed line-ending normalization warnings for the two Python files and `contracts/openapi.yaml` (LF will be replaced by CRLF on a later Git write).
-- One-off PyYAML/jsonschema validation of the OpenAPI components → `EventSubmission valid device shape: accepted; server fields: rejected`; `Pin statement: accepted without expiry; expiry added only by record`; `X-Vuka signed-request security: all four named routes require all four headers`; `Contract schema validation: PASS`. The temporary checker was removed after the run.
+- `python` PyYAML/jsonschema check rooted at OpenAPI's `components` → `EventSubmission: valid canonical-safe device shape accepted`; `EventSubmission: server fields, floats, unsafe integers and non-ASCII keys rejected`; `Contract schema validation: PASS`. The first standalone attempt used a component fragment without the OpenAPI root and failed to resolve the local `$ref`; rerunning against the OpenAPI component root passed. The temporary checker was not written to the repository.
 
 Decision: Sibusiso accepted the proposed C5–C8/SEC-1/SEC-2 dispositions on PR #51; this implements those requested contract changes. No ADR acceptance or contract freeze is inferred; required co-lead/security/consumer review remains pending.
 

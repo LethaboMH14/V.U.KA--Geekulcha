@@ -794,6 +794,7 @@ components:
             contracts/payloads/{kind}.v{pv}.json; validate against that schema before acceptance.
             Every value must also be canonical-safe (no floats, unsafe integers or non-ASCII keys).
           required: [kind, pv]
+          propertyNames: { pattern: '^[\x00-\x7F]*$' }
           properties:
             kind: { type: string, minLength: 1 }
             pv: { type: integer, minimum: 1 }

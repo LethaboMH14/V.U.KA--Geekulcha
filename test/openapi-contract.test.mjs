@@ -192,6 +192,7 @@ test("EventSubmission carries only device-created fields, payload and a 16-byte 
   assert.match(submission, /required: \[action, actor_id, target_type, target_id, ts, details, payload, salt\]/);
   assert.match(submission, /required: \[v, signer, signer_key_id, counter, event_id, commitment, sig\]/);
   assert.match(submission, /required: \[kind, pv\]/);
+  assert.ok(submission.includes("propertyNames: { pattern: '^[\\x00-\\x7F]*$' }"));
   assert.match(submission, /contracts\/payloads\/\{kind\}\.v\{pv\}\.json/);
   assert.match(submission, /additionalProperties: \{ \$ref: '#\/components\/schemas\/CanonicalJsonValue' \}/);
   assert.match(submission, /pattern: '\^\[A-Za-z0-9\+\/\]\{21\}\[AEIMQUYcgkosw048\]==\$'/);
