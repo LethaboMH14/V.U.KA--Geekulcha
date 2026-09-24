@@ -40,3 +40,15 @@ My first `assembleDebug` failed and I did not capture why. Codex reports it pass
 - A release build **installed on the phone** (only the debug build was). T17 (deny each permission) and T20 (cold install from a QR) are **NOT RUN**.
 - Anything on a budget 2–3 GB phone. This phone has 5.2 GB.
 - Signed-release behaviour, R8 and the model.
+
+## Re-review of `4bf6c7f64da030cd07cf17805728109872a822ce` (fixes `a5b81889…` D1 and `d28747c0…` D2)
+
+**Result: D1 and D2 closed. No new blocking findings.** Claude Code assistant (`claude-sonnet-5`), separate detached checkout at `C:\v\rev`, environment variables set explicitly in the shell. AI review only. It is not Lethabo's review or human approval.
+
+- **Scope:** the diff against the reviewed `5624705` touches only `app/scripts/check-manifest.mjs`, its test file, IMPLEMENTATION.md and one new build-log entry, plus 14 deletions under `app/ios/`. No `app/ios` file remains tracked.
+- **D1:** the checker now permits exactly `<package>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` in allow-list mode. Tests were written red first (17 pass, 1 fail), and the three cases requested are covered: permitted for the app's package, rejected under another package (`other.package…`), and every other permission (`RECORD_AUDIO`) still rejected.
+- **Reproduced:** `node --test app/scripts/check-manifest.test.mjs` 18/18. `npm ci` 925 packages, React Native 0.74.5. `assembleDebug` and `assembleRelease` both succeed. `node app/scripts/check-manifest.mjs <release merged manifest> --allowlist` exits 0 (permissions `INTERNET` and `app.vuka.vigil.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`). `apksigner verify` on the release APK reports no signature (`Missing META-INF/MANIFEST.MF`), so nothing is debug-signed.
+- **Hashes:** my debug APK sha256 `7454458ae9c5c2bcb01e42539c95babec21340b9186a755cc83bd790aa4f56e1` equals Codex's. My release APK sha256 is `65a2ece1651eead779c4e30df0a2f2f48bb214625f185ea87b1cd41b297c681c`, the same as in my first review run in the same folder, but **differs from Codex's release hash** (`8AE8A96D…`, built in `C:\v\p1a`). The release build is therefore reproducible in one folder and **not across folders**, which is probably an absolute path embedded in the output. Not a defect for this packet. Do not compare release-APK hashes between different checkout paths.
+- **Note (low, optional):** the allowed name comes from the manifest's own `package` attribute, so a hand-edited manifest could authorise its own name. In the built manifest `package="app.vuka.vigil"`. Pinning the check to the expected `applicationId` would be stricter.
+- **Codex's recorded model:** "GPT-5 (runtime variant not exposed)". The exact model is not captured.
+- **Not verified (unchanged):** a release build on the phone, T17, T20, any budget phone. The first-attempt debug build failure from the earlier review remains unexplained; this run and Codex's both passed.
