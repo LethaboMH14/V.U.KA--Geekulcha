@@ -180,15 +180,18 @@ Not posted to GitHub — matching every earlier task packet this session (vector
 - `export-proof` — T30's final rule from ADR-0041 (6h post-incident hold, not just "while open").
 - `anchor-server-slice3` — ADR-0041's member-ended closure, fallback deadline, PIN-gated journey end, wrong-PIN `attempt` handling.
 
-**Still open / unblocked-for-Sibusiso:**
 **PR #68 (ADR-0042/§4a) merged — 2026-09-24 ~12:46, on Sibusiso's explicit instruction.** This immediately re-broke PR #51 the same way as every prior main-merge today, but in a new file this time: #68's own accepted §4a text landed on `docs/VUKA-2-SPEC.md`, conflicting with my now-superseded draft of the same section on the contract-v2 branch. Resolved by taking `main`'s version outright (it's the accepted, amended text — my draft was strictly inferior to it). Re-verified: 104/104 pytest, 20/20 node --test, `check-docs`/`git diff --check` clean. Pushed (`95b28ed`); PR #51 confirmed `MERGEABLE` again.
 
-**§4a is now genuinely, fully unblocked.** Wrote the Codex handoff prompt for `anchor-server-slice2` — it now needs no "confirm #68 merged first" caveat, just "PR #68 merged, go ahead."
+**Real, bigger blocker found handing slice 2 to Codex: C5–C8 and SEC-1/SEC-2 on PR #51 were never actually implemented.** Codex correctly refused to invent §7's request-signature transport rather than guess. Checked PR #51's full comment thread — Lethabo (and Vukosi before her) had already found and proposed resolutions for four contract gaps (C5–C8: no device-submittable request schema, no payload/salt transport, no §7 header scheme, `PinAuthorisation` wrongly asks the device to sign `expires_at`) plus two security blockers I hadn't fully registered:
+- **SEC-1 (blocker):** `PinAuthorisation` has no `sig`/`signer_key_id` at all — confirmed directly in `anchor/pin_authority.py:20`, `_STATEMENT_FIELDS` still includes `expires_at` and nothing signs the statement. Any request with a valid bearer token could currently claim PIN authority, contradicting §9's own rule.
+- **SEC-2 (blocker):** `PUT /v1/guardians/{id}/token` still lets a subject redirect a guardian's alerts via device signature + normal PIN — a coercer forcing the real PIN can silently disarm a guardian, bypassing the 24h delay and never-zero rule with no notification to anyone.
+
+Confirmed none of C5–C8/SEC-1/SEC-2 had landed (grepped the contract and code directly). Accepted all of Lethabo's proposed resolutions as written on PR #51 — they're spec-consistent and don't expand scope. Wrote `sibusiso-workflow/tasks/contract-c5c8-sec1-sec2/01-task.md` for Codex: `EventSubmission` schema, payload/salt transport, the `X-Vuka-*` header auth scheme (this is literally the answer to slice 2's §7 question), and the `PinAuthorisationStatement`/server-record split (schema + `pin_authority.py` together, since they share the canonicalized shape). Updated `anchor-server-slice2`'s task packet to depend on this landing first and gave it the exact header scheme rather than leaving Codex to guess again. SEC-3 through SEC-6 flagged as follow-ups, not blocking this pass.
 
 **Still open / unblocked-for-Sibusiso:**
+- **`contract-c5c8-sec1-sec2` — the real current blocker on slice 2.** Ready for Codex now; slice 2 depends on it landing first.
 - PR #69 (verify-min) — approved, still awaiting Lethabo's merge (not yet merged, unlike #68).
 - PR #70's 13 decisions — posted, awaiting Lethabo's fold-in to `TEST-SPECS.md`.
 - PR #65 (Babatunde) — `CHANGES_REQUESTED` stands, no fix pushed.
-- PR #51 — CI fully green (14/14), `MERGEABLE`; still needs Lethabo's actual approval (not just her comment) per `RULES.md`'s both-leads rule. Merging it also unblocks Ipeleng's #58 vectors (T01/T02 currently skip until #51 lands).
-- **P3.A3 slice 2 is ready to hand to Codex right now** — nothing blocks it anymore.
+- PR #51 — CI fully green (14/14), `MERGEABLE`; still needs Lethabo's actual approval AND the C5–C8/SEC-1/SEC-2 fixes before she'll consider merging it (she said so explicitly: "I am keeping this unmerged").
 - P3.L4 (thin end-to-end slice, joint with Lethabo/Vukosi/Ipeleng) — not packetized; genuinely blocked on P3.A3/A6 landing first.
