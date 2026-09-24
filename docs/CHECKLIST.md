@@ -61,7 +61,7 @@
 | P3.B4 | Deck (>10 slides incl. privacy policy and the honesty slide), buyer = bank or insurer partner | Babatunde | B, U | Sep 26 | ☐ | Added 23 Sep, Lethabo |
 | P3.B5 | Pitch script + two timed rehearsals under 3:00 | Babatunde | B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.B6 | Problem statement with the mentors (with Lethabo) | Babatunde | B, I | Sep 25 19:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.L8 | PIN authority, incident closure and removal rules agreed (§8, §9) | Lethabo, Ipeleng | S | Sep 24 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
+| P3.L8 | PIN authority, incident closure and removal rules agreed (§8, §9) | Lethabo, Ipeleng | S | Sep 24 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo; draft `docs/PIN-AUTHORITY-RULES.md` + ADR-0040 up 24 Sep — awaiting Lethabo's agreement at the checkpoint |
 | P3.L9 | Commit a redacted copy of the organiser's pre-build confirmation | Lethabo | — | Sep 24 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.A6 | **Server-min** deployed: ingest + chain + export | Sibusiso | T | Sep 25 09:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.S7 | **Verify-min**: hashes, links, device signatures | Ipeleng | T, S | Sep 25 10:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
