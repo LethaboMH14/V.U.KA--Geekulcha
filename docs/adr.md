@@ -463,7 +463,7 @@ Generative super-resolution was considered as a fix and **rejected**: PULSE-styl
 ---
 
 ## ADR-0041: The P3.L8 checkpoint decisions: member-ended closure, a fallback deadline, a PIN-gated journey end, the pre-incident hold and the wrong-PIN rule
-**Status:** Proposed (2026-09-24). Decided by Lethabo (co-lead, acting as security lead while Ipeleng is away). Binds when Sibusiso (second lead) accepts it. **Partly supersedes** ADR-0036 and ADR-0040(4) on one point: incidents close only on `stand_down` or the 6 h close.
+**Status:** Accepted (2026-09-24). Decided by Lethabo (co-lead, acting as security lead while Ipeleng is away); accepted by Sibusiso (second lead), with no conditions, in his PR #67 review. **Partly supersedes** ADR-0036 and ADR-0040(4) on one point: incidents close only on `stand_down` or the 6 h close.
 **Owner:** Lethabo Hoaeane
 **Context:** ADR-0040 restated the PIN-authority rules and left eight points open (`docs/PIN-AUTHORITY-RULES.md` §8). Three of them are gaps the coercion catalogue exposed (PR #50):
 - **G33:** a false alarm answered normally never closes, so a later dead zone reaches the bank signal (E06, E10, E11).
