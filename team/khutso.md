@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - The judging criteria published (MASTER-CONTEXT v3, 23 Sep). I re-tag every new row with I / T / U / S / B / Q and run the coverage sweep under the new criteria.
 
-**Current task** — P3.K1 review corrections are merged on `main`; P3.K2 remains on its reviewed stacked branch; P3.K3 is the requirements trace on the Codex review branch, with Sibusiso review pending. Do not tick P3.K3 until the trace's owner, test-gap and status decisions are accepted.
+**Current task** — P3.K3's requirements trace merged to `main` in PR #63, but its acceptance record is not closed: Sibusiso approved an earlier head, Lethabo approved the merged head, and the A5 wording follow-up is in open PR #70. Reconcile the final-head first-review requirement and A5 trace wording before ticking P3.K3. P3.K1 corrections are on `main`; P3.K2's separate status must be checked before claiming completion.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -33,9 +33,9 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: P3.K3 requirements trace drafted on 24 Sep 2026; Sibusiso review and both-lead acceptance pending; due Thu 24 Sep 20:00 (`PROPOSED` schedule from the work order).
-- Claimed files / contract versions: `docs/EVIDENCE.md` for P3.K1/P3.K2; `team/khutso.md`, `docs/OVERLAPS.md` and a new `docs/build-log/entries/` record for coordination; `docs/CHECKLIST.md` only after acceptance evidence exists. No contract version change.
-- Last updated: 23 September 2026 — Khutso requested a pull, task realignment and workflow setup; Codex assistant configured the local workflow and recorded the bounded P3.K1 claim. No evidence row is asserted re-verified.
+- Current task / status: P3.K3 trace merged in PR #63 on 24 Sep 2026; final-head Sibusiso acceptance and A5 wording follow-up remain open. The Thu 24 Sep 20:00 date is the work-order schedule, not proof of completion.
+- Claimed files / contract versions: `docs/EVIDENCE.md` for P3.K1/P3.K2; `team/khutso.md`, `docs/CHECKLIST.md` P3.K3 status note, and a new `docs/build-log/entries/` record for this reconciliation. No contract version change or checklist tick.
+- Last updated: 24 September 2026 — Codex assistant, at Khutso's request, reconciled the merged P3.K3 PR with its review/check evidence and outstanding follow-up. No personal source confirmation or reviewer approval is inferred.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 
@@ -111,3 +111,4 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-24 — Codex assistant, acting at Khutso's request, drafted `docs/REQUIREMENTS-TRACE.md` from VUKA-2 §2/§15 and the current P3 owners. The trace covers all 32 requirements, uses current T21–T24 tests where applicable, exposes requirements without dedicated tests, and records the work-order T01–T20 range mismatch. P3.K3 remains pending Sibusiso and both-lead review; no checklist row is ticked.
 - 2026-09-24 — Codex assistant, at Khutso's request, answered Sibusiso's PR #63 review by auditing each test against its literal §15 oracle. Seventeen requirement rows lack a direct test for their defining behavior, and the remaining rows state any partial clause coverage. The earlier 11-gap count was too narrow; the dated correction is in `docs/build-log/entries/2026-09-24-codex-khutso-p3-k3-test-scope-correction.md`. Re-review is pending; P3.K3 remains open.
 - 2026-09-24 — Codex assistant, at Khutso's request, merged current `main` into PR #63's branch without rewriting its history and re-checked the P3.K3 trace against ADR-0041's T30, T47 and T50–T52. The trace now flags the §2 A5 versus §9 member-device export scope conflict for Sibusiso, Ipeleng and both leads; no contract decision or test pass is inferred. Review of the updated head is required before P3.K3 can close.
+- 2026-09-24 — Codex assistant, at Khutso's request, verified PR #63 merged as `ea6d7b5` with passing checks. Sibusiso approved `f209422`, not the final `2b3657f` head; Lethabo approved `2b3657f` and recorded A5 as an intended ADR-0041 exception, with the wording fix in open PR #70. The checklist remains unticked pending a recorded disposition of final-head first review and an A5 trace follow-up. This corrects task status, not the accepted contract.
