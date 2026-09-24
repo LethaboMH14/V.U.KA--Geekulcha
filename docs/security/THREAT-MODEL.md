@@ -193,14 +193,14 @@ Each needs a fixture, an oracle and prerequisites before Thu 20:00 (P3.S3). Owne
 | T44 | Burst of 200 requests to public endpoints | Rate limited (429); service stays up | Sibusiso |
 | T45 | SCA over lockfiles | No unwaived critical or high | Sibusiso |
 | T46 | Server logs and release logcat during a full scenario | No PIN, salt, payload, token or location | Khutso, Vukosi |
-| T47 | Wrong PIN at the check-in; repeated guesses | Oracle pending the Thu §8/§9 decision | Vukosi |
+| T47 | Wrong PIN at the check-in; repeated guesses | Decided by ADR-0041 (spec §8, §15): identical "Try again" ×3, then `no_answer` at the deadline; a later entry shows "Checked in"; duress still counts. Oracle in `TEST-SPECS.md` | Vukosi |
 | T48 | Operator deletion, threshold change or key rotation with one operator | Rejected; the attempt is chained | Sibusiso |
-| T49 | Subject A's key calls subject B's export, record and delete | 403, same body as not-found | Sibusiso |
+| T49 | Subject A's key calls subject B's export, record and delete | 404, body byte-identical to a subject that doesn't exist (corrected 24 Sep: a 403 leaks existence) | Sibusiso |
 
 ## 7 · Gaps this model raises
 
 1. **TM-C9, export during an open incident (largest).** A coercer holding the unlocked phone can open the export (or a share button built on it) and read `duress_pin` in the current payload. V8 hides it in My Record, but not in the export. **Proposed fix** for Lethabo and Sibusiso (spec change, both leads): export needs a fresh `pin_authorised` for action `export`; while an incident is open, or under a duress authorisation, the export ends at the last head before the incident. A chain prefix still verifies, so the no-op stays convincing. Test T30.
-2. **TM-C10, PIN guessing and wrong-PIN behaviour** are not specified. Decide Thursday; T47.
+2. **TM-C10, PIN guessing and wrong-PIN behaviour**: decided 24 Sep by ADR-0041; T47. Open only until T47 passes.
 3. **B1–B3** from the PR #43 review remain open until the spec text lands (`docs/security/SSDLC.md` §13).
 4. **No branch protection** (G17): a reviewed control can still be bypassed by a direct push.
 5. **Contract tests are not in CI** (`SSDLC.md` C-62).
