@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const SPEC_REF = /(?:§\s*\d+|\b(?:V|G|A|S|P|D|B)\d+\b|\bADR-\d{4}\b)/u;
+const TEST_REF = /(?:\bT\d{2}\b|\bPT-\d{2}\b)/u;
+
 /** Parse Markdown table rows that look like threat rows and report missing map refs. */
 export function parseThreatMap(markdown) {
   const rows = [];
@@ -17,17 +20,18 @@ export function parseThreatMap(markdown) {
     // Identify the STRIDE and coercion threat tables by their actual columns.
     // Asset, boundary, API mapping and new-test tables are not threat tables.
     if (!header.includes('threat') || !header.includes('test')) continue;
+    // Read references only from the column that should hold them: the spec
+    // reference from `Spec` (coercion table) or `Control` (STRIDE tables), the
+    // test reference from `Test`. A test ID mentioned in the threat prose does
+    // not count as a mapping.
+    const specCol = header.includes('spec') ? header.indexOf('spec') : header.indexOf('control');
+    const testCol = header.indexOf('test');
     for (const cells of table.slice(2)) {
       const id = cells[0]?.replace(/^\*\*|\*\*$/g, '').trim();
       if (!/^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*$/.test(id ?? '') || !/\d/.test(id)) continue;
-      const rowText = cells.join(' ');
       const missing = [];
-      if (!/(?:§\s*\d+|\b(?:V|G|A|S|P|D)\d+\b|\bADR-\d{4}\b)/u.test(rowText)) {
-        missing.push('spec reference');
-      }
-      if (!/(?:\bT\d{2}\b|\bPT-\d{2}\b)/u.test(rowText)) {
-        missing.push('test reference');
-      }
+      if (specCol < 0 || !SPEC_REF.test(cells[specCol] ?? '')) missing.push('spec reference');
+      if (!TEST_REF.test(cells[testCol] ?? '')) missing.push('test reference');
       rows.push({ id, missing });
     }
   }

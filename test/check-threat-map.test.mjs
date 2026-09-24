@@ -24,6 +24,20 @@ test('reports a missing spec reference', () => {
   assert.deepEqual(rows, [{ id: 'SV-1', missing: ['spec reference'] }]);
 });
 
+test('a test ID in the threat prose does not count as a test mapping', () => {
+  const rows = parseThreatMap(`| ID | Threat | Control | Test |
+|---|---|---|---|
+| SV-1 | T06 replay risk | V7 | — |`);
+  assert.deepEqual(rows, [{ id: 'SV-1', missing: ['test reference'] }]);
+});
+
+test('a spec reference in the threat prose does not count as a spec mapping', () => {
+  const rows = parseThreatMap(`| ID | Threat | Control | Test |
+|---|---|---|---|
+| SV-2 | breaks A5 export | signed request | T19 |`);
+  assert.deepEqual(rows, [{ id: 'SV-2', missing: ['spec reference'] }]);
+});
+
 test('ignores tables without threat IDs in the first cell', () => {
   const rows = parseThreatMap(`
 | API risk | Control | Test |
