@@ -463,16 +463,35 @@ Every result goes into `docs/EVIDENCE.md` with its method, configuration and n. 
 Specification only until D1 (Thu 22:00) and D2 (Fri 12:00) pass. Nothing here changes a public field or an on-chain message.
 
 - **`pv`.** Every committed payload carries an integer payload version. Per-kind schemas live in `contracts/payloads/<kind>.v<pv>.json`.
-- **`signal_detected` payload (pv 1).** All values are integers:
+- **`signal_detected` payload (pv 1).** Every **numeric** field is an integer (no floats, §5). The other fields are strings, as typed below. The contract-v2 schema `contracts/payloads/signal_detected.v1.json` and its golden vector are the binding definition. This table is the source it is built from.
 
-  ```
-  {kind, pv, journey_id, sense:"sound", class_label, class_index, score_bp, threshold_bp,
-   window_ms:975, model_sha256, app_version,
-   corroboration:[{sense:"motion", pattern, peak_mg, duration_ms, offset_ms, rule_version}],
-   location?:{lat_e7, lon_e7, acc_m, fix_age_ms}}
-  ```
+  | Field | Type | Required | Values / constraint |
+  |---|---|---|---|
+  | `kind` | string | yes | `"signal_detected"` |
+  | `pv` | integer | yes | `1` |
+  | `journey_id` | string | yes | the journey's id, as issued by `POST /v1/journeys` |
+  | `sense` | string | yes | enum `"sound"` (pv 1) |
+  | `class_label` | string | yes | enum: `"Screaming"`, `"Shout"`, `"Yell"`, `"Glass"`, `"Shatter"`, `"Breaking"`, `"Gunshot, gunfire"`, `"Machine gun"`, `"Fusillade"` |
+  | `class_index` | integer | yes | the YAMNet index of `class_label` (11, 6, 9, 435, 437, 464, 421, 422, 423) |
+  | `score_bp` | integer | yes | 0–10000 |
+  | `threshold_bp` | integer | yes | 0–10000 |
+  | `window_ms` | integer | yes | `975` |
+  | `model_sha256` | string | yes | 64 lowercase hex characters |
+  | `app_version` | string | yes | semantic version, e.g. `"1.0.0"` |
+  | `corroboration` | array | yes | 0–4 items; `[]` when none |
+  | `corroboration[].sense` | string | yes | enum `"motion"` |
+  | `corroboration[].pattern` | string | yes | enum `"impact"`, `"shake"`, `"snatch"` |
+  | `corroboration[].peak_mg` | integer | yes | 0–16000 (milli-g) |
+  | `corroboration[].duration_ms` | integer | yes | 1–10000 |
+  | `corroboration[].offset_ms` | integer | yes | −10000 to 0 (look-back only) |
+  | `corroboration[].rule_version` | string | yes | e.g. `"motion-rules.v1"` |
+  | `location` | object | no | present only when a fix exists |
+  | `location.lat_e7` | integer | yes (in `location`) | latitude × 10⁷, −900000000 to 900000000 |
+  | `location.lon_e7` | integer | yes (in `location`) | longitude × 10⁷, −1800000000 to 1800000000 |
+  | `location.acc_m` | integer | yes (in `location`) | accuracy in metres, 0 or more |
+  | `location.fix_age_ms` | integer | yes (in `location`) | age of the fix in ms, 0 or more |
 
-  `offset_ms ≤ 0`. A golden vector is added with contract v2.
+  No other fields are allowed in pv 1 (`additionalProperties: false`). Adding one is a `pv` bump.
 - **Gun-like classes:** 421, 422 and 423, mapped by label. 420 and 424–427 are excluded. Argmax, with ties going to the lowest index. Displayed as "gun-like sound (uncalibrated)".
 - **V11 motion (stretch detector).**
   - `impact`, `shake` and `snatch` rules on the accelerometer.
