@@ -50,7 +50,7 @@ Someone removing an abusive guardian keeps that guardian on alerts for **up to 2
 
 ## 5 · Incident lifecycle (§8)
 
-- **An incident opens** on `signal_detected`, `duress_pin`, `no_answer` or `contact_lost`.
+- **An incident opens** on `signal_detected`, a duress signal, `no_answer` or `contact_lost`.
 - **It closes only** on a guardian `stand_down`, or automatically 6 h after the last signal with heartbeats present and guardians notified.
 - **A normal PIN alone never closes an incident**, because a coercer can force it. A late normal PIN after `no_answer` is recorded `answered_late` and **never retracts** the alert.
 - `incident_closed` is a server event, anchored immediately.
