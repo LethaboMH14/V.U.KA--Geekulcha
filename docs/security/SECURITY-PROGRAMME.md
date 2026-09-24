@@ -1,6 +1,6 @@
 # VUKA security, compliance and governance programme
 
-> **Owner:** Ipeleng Constance Modise (security and privacy). Lethabo Hoaeane is covering the security lane from 24 Sep 2026 until Ipeleng returns, and is **acting incident lead** in the same period. **Status:** `PROPOSED`, revision 3, 24 Sep 2026.
+> **Owner:** Ipeleng Constance Modise (security and privacy). Lethabo Hoaeane is covering the security lane from 24 Sep 2026 until Ipeleng returns, and is **acting incident lead** in the same period. **Status:** `PROPOSED`, revision 4, 24 Sep 2026.
 > **Serves:** S, T, B.
 > **What this is:** the umbrella over the existing security documents:
 > - `SSDLC.md`: the lifecycle and the controls `C-nn`;
@@ -11,7 +11,7 @@
 >
 > It adds a legal register built from quoted sources, a standards baseline with versions, new controls, a pentest methodology with scoring, day-to-day operations, governance, and what we can show live.
 > **Evidence base:** `docs/security/research/SA-LAW.md`, `STANDARDS.md` and `THREAT-DATA.md`, researched 24 Sep 2026. Each claim carries a literal quote and URL, or ⚑ (unverified).
-> **Review record:** revision 1 was attacked by an independent red-team review (30 findings); revision 2 by a second, different-model adversarial review (12 findings). Every finding is dispositioned in §11. That review read `main`, so artefacts still in open PRs showed as missing. They are cited by PR number here, and **nothing in the showcase (§9) is used until its artefact is on `main`.**
+> **Review record:** revision 1 was attacked by an independent red-team review (30 findings); revisions 2 and 3 by a second, different-model adversarial review (12 and 10 findings). Every finding is dispositioned in §11. That review read `main`, so artefacts still in open PRs showed as missing. They are cited by PR number here, and **nothing in the showcase (§9) is used until its artefact is on `main`.**
 > **Not legal advice. This is an internal programme, not an independent assessment.** Gap G8 (no independent penetration test) stays open whatever this programme achieves.
 
 ---
@@ -84,16 +84,18 @@ Request signing, the order of checks, and replay rules (§7; T06, PT-01–PT-09)
 ### 4.3 Server (ANCHOR)
 - **Per-subject authorisation:** a cross-subject request returns **404 with a body identical to a missing subject**, in every document: TEST-SPECS T49 (PR #70), THREAT-MODEL T49 and PENTEST-PLAN PT-32 aligned (C-36).
 - **Governance under coercion:** PIN-authorised changes, the 24 h removal, never zero guardians, two operators for operator actions (§9; ADR-0036/0040/0041; T12, T13, T24, T48, T50–T52). **The two-operator rule is enforced at the API only.** Direct database or cloud-portal access bypasses it, and detection thresholds ship inside the APK, so the release-key holder can change them. Both are residuals, and the named principals are in §7.2.
-- **Durable escalation:** the outbox, exactly-once effects (§8; T07–T11, T23). **An FCM collapse key is not deduplication.** It collapses only messages still waiting to be delivered, not one already shown before a worker crash and retry. So the guardian app **stores each signed alert ID persistently and ignores repeats**. T08's oracle is "one alert *displayed*", tested with the retry after display and a receiver restart.
-- **ADR-0043 (proposed, needs both leads), revised after the second review:**
-  1. **After any duress signal, a guardian `stand_down` is recorded but never closes the incident, never cancels the bank signal, and never unlocks the G4 call.** A stand-down is an acknowledgement, not a verification of safety, so ringing the member's phone while a coercer may be present stays disabled.
-  2. **Safe resolution, so a duress incident can never stay locked forever.** It closes when **either** of these happens:
-     - the member authenticates **on any device with the recovery code** (not the phone PIN, which may be coerced), **and** a guardian other than any who stood down confirms speaking to them by voice. For a lone guardian, the confirmation is accepted after a 24 h cooling-off.
-     - **72 h pass with no new signal.** Guardians are notified.
+- **Durable escalation:** the outbox, exactly-once effects (§8; T07–T11, T23). **An FCM collapse key is not deduplication.** It collapses only messages still waiting to be delivered, not one already shown before a worker crash and retry. So the guardian app **handles alerts in two durable steps**:
+  1. The alert is stored as `pending`.
+  2. It is shown with **notification ID = alert ID**, then marked `displayed`.
 
-     The `sim_bank` release is sent only at safe resolution or expiry. Recovery to a new device is allowed through the same recovery-code path, so a lost or seized phone never blocks the member.
-  3. **Historical duress payloads are never shown on the member's device**, in export or My Record, even after closure and the 6 h hold. They are available only through the recovery-code route in (2). The hold stops postponing disclosure and prevents it.
-  4. **The silence notice is not built this weekend**, and it is off by default when built. It reveals that a journey was armed and went quiet, which an abusive guardian could use for surveillance. Before it's built, it needs per-guardian opt-in by the member, silent withdrawal, and an abuse test.
+  On restart, every `pending` alert is shown again. A repeat delivery of a `displayed` alert is ignored. Because the notification ID is stable, a re-show replaces the notification rather than adding one. **The claim is narrowed to what is tested:** at most one visible notification per alert ID, and at least one display after any single crash. **T08 tests both crash boundaries** (after persist and before display; after display and before marking).
+- **ADR-0043 (proposed; both leads, and Ipeleng's security review), fourth draft.** Each earlier draft's automatic resolution became an attack surface, so this one removes them:
+  1. A **`stand_down` after duress is an acknowledgement only.** No close, no bank-signal cancellation, no G4 call unlock.
+  2. **VUKA never resolves a duress incident or releases a bank hold automatically.** After 72 h with no signal, the state reads **"status unknown"**, which is not "safe". Lifting a bank hold is the **bank's own customer process**.
+  3. **Check-in results are redacted uniformly on the member's device.** No payload and no salt for *any* check-in, normal or duress, so the redaction is not a tell (T64).
+  4. **Recovery is independent of incident state.** It is allowed during an incident and moves onto the never-cut list.
+  5. **Full-record access** (s23) is a separate, counsel-reviewed process: designed, not built (Q-C10).
+  6. **The silence notice is not built.**
 - **Public deploy:** `sim_` subjects only, rejected in code (SEC-6; PT-68).
   - The **controllable test clock is compiled out** of the public build, and a test checks it's absent.
   - **Rate limits are keyed per device key**, not per IP, so the venue's shared NAT can't lock the demo out.
@@ -171,9 +173,9 @@ The phases follow **PTES** and **NIST SP 800-115** (plan → discover → attack
 ### 6.2 Release-blocking set (run and recorded by Sat 26 16:00, before RG2 at 18:00)
 | Area | Cases |
 |---|---|
-| Duress on the phone | T15 and T31 (on the `parityTest` variant), T57, T30 (export and My Record during an incident: the largest gap in the threat model), T64 (repeat coercion after closure and after the hold: no historical duress payload is shown) |
+| Duress on the phone | T15 and T31 (on the `parityTest` variant), T57, T30 (export and My Record during an incident: the largest gap in the threat model), T64 (normal and duress member-device histories are indistinguishable in the complete export: no payloads, no salts, same shape) |
 | The alert actually fires | T07 (force-stop), T08 (crash and restart), T51 (the check-in never shown), T11 (bank-signal triggers) |
-| PIN authority and guardians | T12, T16, T36, T47, T52, T24 (never zero guardians, the two-session path), T61 (stand-down after duress: no close, no call unlock, bank signal stands), T34 (guardian-token substitution) |
+| PIN authority and guardians | T12, T16, T36, T47, T52, T24 (never zero guardians, the two-session path), T61 (stand-down after duress: no close, no call unlock, bank signal stands), T34 (guardian-token substitution), T13 revised (recovery during an incident), T66 (no automatic release; "status unknown") |
 | Authentication and authorisation | T06 (signing, replay), T49, PT-68, T40 (forged bank signal refused) |
 | Chain and anchor | T04, T21, T22, T58 |
 | Hygiene and leaks | T46, T42, T63 (app network capture), secrets C-80–C-82 (with the CI failure shown) |
@@ -260,7 +262,9 @@ The acting incident lead is **Lethabo** (Ipeleng is away).
 - **A cloned app can harvest PINs.** Install only from the Release page and check the fingerprint.
 - **The consequences of duress are observable:** a coercer who probes the bank can infer a signal. Randomised or delayed friction is a partner requirement.
 - **A coercer who is a guardian receives the alert.** ADR-0043 stops him closing it, but can't stop him seeing it. The advice is guardians who don't live with you.
-- **Anyone holding the recovery code has the full record** and can resolve a duress incident with a guardian's confirmation (ADR-0043). Onboarding says to keep the code away from the phone. A coercer who forces out both the code and a guardian's confirmation defeats it.
+- **A duress incident can stay open, showing "status unknown", until the post-hackathon safe-contact procedure exists** (ADR-0043). This is deliberate: every automatic resolution proved to be an attack surface.
+- **The member's device never shows check-in results**, for any incident, so the full-record route (s23) is a separate, not-yet-built process (Q-C10).
+- **Anyone holding the recovery code can recover the account to a new device** (not resolve incidents or release holds). Onboarding says to keep the code away from the phone.
 - A compromised server can suppress or fabricate escalation (§17), and **backdate a revocation** within the window before the next anchor.
 - The two-operator rule is enforced at the API only. Thresholds ship in the APK.
 - Hedera **testnet** can reset, and its receipts are testnet receipts.
@@ -317,6 +321,20 @@ The acting incident lead is **Lethabo** (Ipeleng is away).
 | 11 | C-137 overclaims | **Accepted.** Claim narrowed; both service declarations tested |
 | 12 | Counts are weak evidence; the scorecard could reward docs and stale runs | **Accepted.** Failed-then-passing demo; E1 needs implementation paths; E2 bound to the exact commit |
 
+### Revision 3 review (the same second reviewer, round 3: 10 findings)
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | Duress-only redaction is itself a tell; salts enable guessing | **Accepted.** Uniform redaction of every check-in result, payload and salt; T64 checks indistinguishability |
+| 2 | Voice confirmation can be coerced | **Accepted.** Removed; safe contact is a human-reviewed procedure, designed not built |
+| 3 | Expiry rewards silencing the victim | **Accepted.** 72 h gives "status unknown" only; no release; the call stays locked |
+| 4 | Deadlock remains possible | **Accepted.** Recovery is separate from incident state and allowed during incidents; there is no eligibility rule to exhaust |
+| 5 | Recovery, access and release conflated | **Accepted.** Three separate operations; access is Q-C10 (counsel) |
+| 6 | A stale release can undo a new hold | **Accepted.** VUKA sends no release; the bank's own process lifts holds |
+| 7 | The escape path is outside the gate; recovery can be cut | **Accepted.** T13 revised and T66 in §6.2; recovery moves onto the never-cut list |
+| 8 | A dedupe crash gap | **Accepted.** Pending then displayed, with stable notification IDs; both crash boundaries tested; claim narrowed |
+| 9 | T63 contradictory host lists | **Accepted.** One allow-list; both roles plus the recovery flow |
+| 10 | The scorecard reads the overall CI status | **Accepted.** Per-test results for the exact commit; skipped means not passed |
+
 ## 12 · The security scorecard: measured, checkable, shown in the app
 
 **The question it answers:** *how much evidence stands behind each security claim, and what would raise it?* It does **not** answer "how secure is VUKA" as a probability. No calibrated number exists for that, and printing one would break the honesty ledger. Every score is computed by a script from repo artefacts. A judge re-runs the script and gets the same number.
@@ -326,7 +344,7 @@ The acting incident lead is **Lethabo** (Ipeleng is away).
 |---|---|---|
 | E0 | Specified | A `C-nn` row in `SSDLC.md`, or a new control in §5 here, with an owner |
 | E1 | Implemented | An **implementation** path (code or configuration under `app/`, `server/`, `anchor/`, `shared/`, `dashboard/`, `scripts/`, `contracts/` or `.github/`) cited by the control exists **at the scored commit**. A documentation path alone never counts: a control with only docs stays E0 |
-| E2 | Tested | At least one named test (`T-nn`, `PT-nn`, or a CI job) mapped to the control, **present in the code** and **passing in the CI run for the exact commit being scored**. The run's `head_sha` must equal the displayed commit, or the level stays E1. No stale green runs |
+| E2 | Tested | At least one named test (`T-nn`, `PT-nn`, or a CI job) mapped to the control, **present in the code** and **passing in the CI run for the exact commit being scored**. The run's `head_sha` must equal the displayed commit. **The evidence is the per-test result**: CI writes machine-readable results (`node --test --test-reporter=tap`, JUnit XML for pytest and vitest) as an artefact, and the script reads each mapped test's own result. **Skipped, todo or missing tests count as not passed.** An overall green run doesn't count |
 | E3 | Reviewed | E2, plus a linked review record by a non-author (a PR review URL, or a file in `docs/reviews/`) |
 | E4 | Independently verified | E3, plus an external party's report. **None today** (G8), and that is shown, not hidden |
 
@@ -351,7 +369,7 @@ For each control: **what** it protects (the threat IDs), **how** (the mechanism,
 
 ### 12.4 Build
 1. **`docs/security/scorecard/controls.json`**, the machine-readable register, one entry per control: `id`, `title`, `category`, `threats`, `mechanism`, `evidence_paths`, `tests`, `ci_jobs`, `review_links`, `external`. It is generated from `SSDLC.md` plus §5, then hand-completed. The markdown stays the human source, and the script fails if they disagree.
-2. **`scripts/security-score.mjs`** (Node, no dependencies):
+2. **`scripts/security-score.mjs`** (Node, no dependencies). It reads the per-test results artefact for E2 (§12.1), never the overall run status:
    - it reads the register;
    - it checks that each evidence path exists;
    - it finds each test ID in the test files;
@@ -378,4 +396,4 @@ For each control: **what** it protects (the threat IDs), **how** (the mechanism,
 | On-device capture | T57 (`FLAG_SECURE`) | Yes |
 | Backups and readable storage | T42 (`allowBackup` off; nothing sensitive in shared storage) | Yes |
 | Exports during an incident | T30 | Yes |
-| Third-party SDK traffic | T63 also lists every host contacted. Only our API, FCM and the pinned mirror are allowed | Yes |
+| Third-party SDK traffic | T63 lists every host contacted and checks it against **the one allow-list**: our API, FCM, the pinned mirror and the scorecard's GitHub Pages host. Captures cover **both app roles** (member and guardian) and the recovery flow | Yes |

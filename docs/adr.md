@@ -531,29 +531,40 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 
 ---
 
-## ADR-0043: After duress, a guardian stand-down acknowledges but never resolves; duress incidents have a safe resolution; historical duress payloads never reach the member's device
-**Status:** Proposed (2026-09-24, revised the same day after a second adversarial review). Proposed by Lethabo (co-lead, acting security lead). Binds when Sibusiso (second lead) accepts it; it changes accepted §8 and §9 behaviour.
-**Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (server)
-**Context:** Two independent adversarial reviews of `docs/security/SECURITY-PROGRAMME.md` found these gaps:
-- Under §8, any single guardian's `stand_down` closes an incident and suppresses the `no_answer` bank signal. **A coercer who is one of the victim's guardians** can therefore end the alarm he is the subject of. `docs/security/research/THREAT-DATA.md` records that safety apps are most often abused by legitimately added people.
-- Removing that power naively **locks a duress incident open forever**. The 6 h close needs heartbeats, and a duress journey-end stops the service. Recovery is blocked during incidents, so a lost or seized phone deadlocks the member.
-- G4 lets a guardian call the member after `stand_down`. An honest guardian can take an acknowledgement for "safe" and ring the phone while the coercer is present.
-- The ADR-0041 hold only **postpones** disclosure. After closure and expiry, a forced normal-PIN export shows the earlier duress entry.
-**Decision:**
-1. **After any duress signal in an incident, a guardian `stand_down` is recorded and acknowledged, and nothing more.** It never closes the incident, never cancels or suppresses the S1 bank signal, and never unlocks the G4 call while the incident is unresolved.
-2. **Safe resolution.** A duress incident closes when **either** of these happens:
-   - (a) the member authenticates **on any device with the recovery code**, **and** a guardian other than any who stood down records a voice confirmation. For a lone guardian, that guardian's confirmation is accepted after a 24 h cooling-off.
-   - (b) **72 h pass with no new signal.** Guardians are notified.
+## ADR-0043: After duress, nothing on VUKA's side resolves the incident automatically; check-in results are redacted uniformly on the member's device; recovery is separate from incident state
+**Status:** Proposed (2026-09-24, fourth draft after three adversarial review rounds). Proposed by Lethabo (co-lead, acting security lead). Binds when Sibusiso (second lead) accepts it. Ipeleng (security lead, now back) reviews it. It changes accepted §8, §9, §14 and T13.
+**Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (server), Ipeleng Constance Modise (security review)
+**Context:** Three review rounds tested successive drafts:
+- **Draft 1** stopped a guardian's `stand_down` from closing a duress incident, because a coercer can be a guardian. That locked incidents open forever.
+- **Draft 2** added a recovery-code-plus-voice-confirmation resolution and a 72 h auto-expiry with a bank release. The review showed that voice contact can be coerced, that expiry rewards silencing the victim, that a delayed release can undo a newer hold, and that redacting only duress incidents reveals which incidents were duress.
 
-   The `sim_bank` release (`/sim_bank/v1/release`) is sent only at (a) or (b). Recovery to a new device is allowed during a duress incident through the same recovery-code path, so a lost or seized phone never deadlocks the member.
-3. **Historical duress payloads never reach the member's device.** For any incident that contains a duress signal, the member-device export and My Record omit that incident's payloads permanently. The hashes stay, and the chain still verifies. The full record is available only through the recovery-code route in (2)(a).
-4. **The armed-journey silence notice is not built** and is off by default. It would tell a guardian that a journey was armed and went quiet, which is a surveillance channel for an abusive guardian. It needs per-guardian opt-in by the member, silent withdrawal, and an abuse test before it's built.
-**Rejected alternatives:**
-- Two guardians needed to stand down: the lone-guardian case locks it open anyway.
-- Opening a full incident on silence: every dead battery would reach the bank.
-- A time-limited hold only: it postpones disclosure.
-- Letting a stand-down re-enable calls: an acknowledgement is not safety.
+**The lesson: every automatic or low-assurance way of ending a duress incident is an attack surface.** This draft removes them rather than adding more.
+**Decision:**
+1. **A `stand_down` after any duress signal is an acknowledgement only.** It never closes the incident, never cancels or suppresses the S1 bank signal, and never unlocks the G4 call.
+2. **VUKA never resolves a duress incident, and never releases a bank hold, automatically.**
+   - After 72 h with no new signal, the incident's displayed state becomes **"status unknown"**. That is a display state, not "safe": the call stays locked and nothing is released.
+   - **Lifting a bank hold is the bank's own customer process** (in branch, or bank-authenticated), outside VUKA. `sim_bank` models this, and VUKA sends no release.
+   - A human-reviewed, member-initiated safe-contact procedure for closing duress incidents is **designed, not built** (post-hackathon), and is stated as a gap.
+3. **Check-in results are redacted uniformly on the member's device.** For every incident, normal or duress, and for every check-in:
+   - the member-device export and My Record show the event with **neither its payload nor its salt**;
+   - the representation is identical in field set, length class and verification status;
+   - withholding the salt stops anyone guessing the small result payload against the commitment.
+
+   The chain still verifies (hashes and signatures are unchanged). Nothing on the device tells a normal incident from a duress one. **T64** compares the complete exported representation of a normal and a duress history and requires them to be indistinguishable.
+4. **Recovery is independent of incident state.** Recovery to a new device (recovery code, rate-limited, guardians notified, old key revoked, the 24 h freeze) is **allowed during an open incident**. This replaces the block in T13. It is on spec §14's **never-cut list**, because it's the member's only way back after a seized or lost phone. Recovery never closes an incident and never releases anything.
+5. **Read-only access to the full record** (the POPIA s23 route for check-in results) is a **separate, counsel-reviewed process, designed and not built**: Q-C10. Until then, the member-device record shows events without check-in results, and that is stated in the privacy policy.
+6. **The armed-journey silence notice is not built** (an abusive guardian could use it for surveillance), and it is off by default when it is built.
+**Rejected alternatives (earlier drafts):**
+- Guardian voice confirmation (it can be coerced).
+- 72 h auto-close with a bank release (it rewards silencing the victim).
+- Redacting only duress incidents (the redaction is the tell).
+- Recovery blocked during incidents (it deadlocks the member).
 **Consequences:**
-- Tests: T61 (a stand-down after duress: no close, no call unlock, the bank signal stands), T64 (repeat coercion after closure and after the hold: no historical duress payload on the device), and T65 (safe resolution by path (a) and by path (b); the bank release only then).
-- Contract v2: the recovery-code-authenticated resolution endpoint, the guardian voice-confirmation event, and the release trigger.
-- Residuals, stated in `SECURITY-PROGRAMME.md` §10: a guardian-coercer still *sees* the alert. Anyone holding the recovery code has the full record, so onboarding says to keep it away from the phone.
+- Tests:
+  - T61: a stand-down after duress means no close, no call unlock, and the bank signal stands.
+  - T64: normal and duress member-device histories are indistinguishable in the full export.
+  - T13 (revised): recovery succeeds during an open incident, the freeze applies, and the incident stays open.
+  - T66: no VUKA-initiated release exists after 72 h; the state reads "status unknown".
+- Contract v2: `incident_status` includes `status_unknown`. There is no release trigger from VUKA.
+- Spec: §8 closure rules, §9's recovery row, and §14's never-cut list (recovery moves onto it).
+- Residuals, stated in `SECURITY-PROGRAMME.md` §10: a duress incident can stay open, showing "status unknown", until the post-hackathon safe-contact procedure exists; a guardian-coercer still sees the alert; the member's device never shows check-in results.
