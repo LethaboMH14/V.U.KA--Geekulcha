@@ -3,6 +3,7 @@
 - `canonical.js` — the canonical JSON form (`docs/VUKA-2-SPEC.md` §5), identical byte for byte to the Python reference. Exports `canonicalJson`, `canonicalize` (bytes), `canonicalizeJson` (strict text parse: duplicate keys, floats and unsafe integers refused) and `CanonicalisationError`.
 - `der.js` — converts Android Keystore DER signatures to raw r‖s for WebCrypto. Exports `derToRaw`, `rawToDer` (test/vector helper) and `DerError`.
 - `merkle.js` — RFC 6962 trees and audit paths (§6). Exports `merkleRoot`, `auditPath`, `recomputeRoot`, `leafHash`, `nodeHash`, `splitPoint`, `bytesToHex`, `hexToBytes` and `MerkleError`. Leaves are raw 32-byte chain heads in ascending byte order; an empty tree is refused (§6).
+- `verify.js` — verify-min (P3.S7): v2 subject-export hash, link, commitment, device/guardian signature and counter checks, with keys rebuilt from the chain only (ADR-0042). Exports `verifyExport`, `normaliseExport` and `ExportError`. **`ok: true` means internal consistency only** (`assurance: "internal_consistency_only"`); it does not prove the record came from VUKA until the anchor and key-manifest checks exist.
 
 ## Cross-language checks (before Thursday's vectors)
 
@@ -17,6 +18,10 @@ cd shared && npm install && npm test
 ```
 
 `npm test` runs `vitest run` (Node 22+; spec §15 T01/T02 and `team/START-HERE.md`). No dependencies beyond vitest ship in the modules themselves.
+
+## Verify an export
+
+Run `node shared/scripts/verify-export.mjs <export.json>` to print the first-failure verification result for a v2 subject export. Mirror receipts, Merkle proofs, key revocation and server signatures are reported as not checked.
 
 ## Vector files (T01/T02)
 

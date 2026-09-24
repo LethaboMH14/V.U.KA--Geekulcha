@@ -64,7 +64,7 @@
 | P3.L8 | PIN authority, incident closure and removal rules agreed (§8, §9) | Lethabo, Ipeleng | S | Sep 24 12:00 | ☑ | Added 23 Sep (PR #43 review), Lethabo; draft `docs/PIN-AUTHORITY-RULES.md` + ADR-0040 up 24 Sep — awaiting Lethabo's agreement at the checkpoint; 24 Sep: Lethabo agreed ADR-0040 and decided all 8 open items (ADR-0041, `PROPOSED`); ☑ when Sibusiso accepts ADR-0041; accepted by Sibusiso 24 Sep 12:21 UTC (PR #67 review) |
 | P3.L9 | Commit a redacted copy of the organiser's pre-build confirmation | Lethabo | — | Sep 24 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.A6 | **Server-min** deployed: ingest + chain + export | Sibusiso | T | Sep 25 09:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
-| P3.S7 | **Verify-min**: hashes, links, device signatures | Ipeleng | T, S | Sep 25 10:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
+| P3.S7 | **Verify-min**: hashes, links, device signatures | Ipeleng | T, S | Sep 25 10:00 | ◐ | Added 23 Sep (PR #43 review), Lethabo · 24 Sep: `shared/verify.js` built and tested (74 pass), PR open; Lethabo covering for Ipeleng |
 | P3.U5 | **Guardian-min receiver** screen + one FCM message; Mutarisi is also the APK backup owner | Mutarisi, Khutso | T | Sep 25 10:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.B7 | Validation: 5 consent-based user conversations + 1 bank/insurer approach, recorded honestly | Babatunde | B, U | Sep 26 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.B8 | Hedera wording in every pitch surface: a permissioned-consensus ledger with a council of up to 39; network fees paid in HBAR; we issue no token *(carried from P2.12/P2.13)* | Babatunde | B, S | Sep 26 | ☐ | Added 23 Sep, Lethabo |
