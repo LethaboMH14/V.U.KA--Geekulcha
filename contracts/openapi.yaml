@@ -323,12 +323,17 @@ paths:
       tags: [VIGIL]
       operationId: endJourney
       summary: End an active journey
-      description: Device-signed request.
+      description: >-
+        Device-signed request. ADR-0041 requires a fresh pin_authorised record for
+        action end_journey and this journey id. A missing or mismatched authorisation
+        is refused with pin_authorisation_required. A duress authorisation has the
+        same phone-visible result as a normal one but triggers the server alarm.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientApproval' }
         '404': { $ref: '#/components/responses/NotFound' }
   /v1/events:
     post:
@@ -550,10 +555,16 @@ paths:
     get:
       tags: [ANCHOR]
       operationId: exportSubjectRecord
-      summary: Export the authenticated subject's complete evidence record
+      summary: Export the authenticated subject's permitted evidence prefix
       description: >-
-        Subject-authenticated with the §7 signed-request headers; returns genesis through head,
-        unpaginated. For this bodyless request, body_sha256 is SHA-256 of the empty byte string.
+        Subject-authenticated with the §7 signed-request headers and a fresh
+        pin_authorised record for action export and this subject id. Missing or
+        mismatched PIN authority returns pin_authorisation_required. ADR-0041's
+        pre-incident hold returns only genesis through the pre-incident head while
+        an incident is open and for 6 hours after its last PIN entry, whichever ends
+        later; normal and duress authorisations yield byte-identical visible results.
+        Otherwise the full chain is returned. The response is unpaginated. For this
+        bodyless request, body_sha256 is SHA-256 of the empty byte string.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       responses:
@@ -910,9 +921,10 @@ components:
     SubjectExport:
       type: object
       description: >-
-        Subject-authenticated and unpaginated; contains the complete record
-        from genesis through the current head, with payloads and salts kept
-        separately from the public chain.
+        Subject-authenticated, fresh-PIN-gated and unpaginated. Contains genesis
+        through the permitted head (pre-incident head during ADR-0041's hold,
+        current head otherwise), with payloads and salts kept separately from
+        the public chain.
       required: [subject_id, entries, payloads, salts, proofs, receipts]
       additionalProperties: false
       properties:

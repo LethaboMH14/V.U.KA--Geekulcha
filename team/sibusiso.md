@@ -25,7 +25,7 @@
 - **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — P3.A3 slice 2 is implemented and locally committed on `feat/sibusiso-contract-v2`; request authentication, signer-key registry, genesis key enrollment and internal journey→subject binding are in place. Lethabo and Ipeleng security review and PostgreSQL-backed verification remain pending. Slice 3 (durable escalation and anchoring) is outstanding. No new routes, PIN verification, deployment or push are included.
+**Current task** — P3.A3 server hardening and P3.A4 deployment preparation on `feat/sibusiso-contract-v2`. Request and event signatures, actor-to-key binding, journey ownership, row-locked heads and encrypted payload storage have local tests, including a real PostgreSQL run. Export now refuses without fresh PIN authority; P3.A5's PIN-gated prefix and proof remain unbuilt. Lethabo/Ipeleng security review, the accepted per-kind payload schemas, key-manifest merge, escalation, anchoring and live deployment remain outstanding. The latest hardening is local only, not pushed or deployed.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -37,8 +37,8 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Claimed files / contract versions: P3.A3 slice 2 claim — `server/main.py`, `server/db.py`, and `server/tests/`; no OpenAPI edits. Existing contract claims remain in their PR records.
-- Last updated: 24 September 2026 — P3.A3 slice 2 committed locally; no push or deployment.
+- Claimed files / contract versions: P3.A3/P3.A4 hardening claim — `server/main.py`, `server/db.py`, `server/payload_store.py`, `server/tests/`, `server/requirements.txt`, root `requirements.txt`, `startup.sh`, `.gitattributes` (shell line endings), `server/README.md`; ADR-0041 contract clarification claim — `contracts/openapi.yaml`, `test/openapi-contract.test.mjs`. The latter shared paths need both leads and contract/domain review before merge; this local claim is not approval.
+- Last updated: 24 September 2026 — Codex assistant's hardening and packaging work tested locally against PostgreSQL; no push or deployment.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 

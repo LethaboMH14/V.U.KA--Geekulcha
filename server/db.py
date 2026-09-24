@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
 from anchor.canonical import canonical
+from server.payload_store import decode_payload_key, encrypt_payload
 
 
 GENESIS_HASH = "0" * 64
@@ -37,9 +38,26 @@ CREATE TABLE IF NOT EXISTS chain_entries (
     PRIMARY KEY (subject_id, chain_index),
     UNIQUE (subject_id, chain_index)
 );
+CREATE TABLE IF NOT EXISTS subject_heads (
+    subject_id TEXT PRIMARY KEY,
+    chain_index BIGINT NOT NULL CHECK (chain_index >= 0),
+    event_hash CHAR(64) NOT NULL
+);
+INSERT INTO subject_heads (subject_id, chain_index, event_hash)
+SELECT DISTINCT ON (subject_id) subject_id, chain_index, event_hash
+FROM chain_entries ORDER BY subject_id, chain_index DESC
+ON CONFLICT (subject_id) DO NOTHING;
+CREATE TABLE IF NOT EXISTS private_payloads (
+    subject_id TEXT NOT NULL,
+    event_id TEXT PRIMARY KEY,
+    nonce BYTEA NOT NULL,
+    ciphertext BYTEA NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL
+);
 CREATE TABLE IF NOT EXISTS signer_keys (
     signer_key_id TEXT PRIMARY KEY,
     subject_id TEXT NOT NULL,
+    actor_id TEXT NOT NULL,
     signer_role TEXT NOT NULL CHECK (signer_role IN ('device', 'guardian')),
     public_key TEXT NOT NULL,
     revoked_at TIMESTAMPTZ NULL,
@@ -75,10 +93,8 @@ ON chain_entries ((details_json ->> 'event_id'))
 
 LOCK_HEAD_SQL = """
 SELECT chain_index, event_hash
-FROM chain_entries
+FROM subject_heads
 WHERE subject_id = %s
-ORDER BY chain_index DESC
-LIMIT 1
 FOR UPDATE
 """
 
@@ -120,10 +136,17 @@ class RequestTimestampExpired(PermissionError):
 
 
 def _request_fingerprint(entry: dict[str, Any]) -> str:
-    """Hash the submitted event content, excluding server-owned chain fields."""
+    """Hash signed/committed entry fields shared by submission and stored row.
+
+    Payload and salt do not belong to the public chain entry. The verified
+    commitment binds them, so the stored row can answer an identical retry.
+    Separate encrypted payload storage is still required before deployment.
+    """
     request = copy.deepcopy(entry)
     request.pop("event_hash", None)
     request.pop("prev_hash", None)
+    request.pop("payload", None)
+    request.pop("salt", None)
     details = request["details"]
     details.pop("received_at", None)
     details.pop("chain_index", None)
@@ -167,6 +190,8 @@ def _with_server_fields(
     clock_skew: bool = False,
 ) -> dict[str, Any]:
     stored = copy.deepcopy(entry)
+    stored.pop("payload", None)
+    stored.pop("salt", None)
     stored["prev_hash"] = prev_hash
     stored["details"]["received_at"] = received_at
     stored["details"]["chain_index"] = chain_index
@@ -203,9 +228,31 @@ class PostgresDatabase:
         database_url: str | None = None,
         *,
         connect: Callable[..., Any] | None = None,
+        payload_key_b64: str | None = None,
     ) -> None:
         self.database_url = database_url or os.environ.get("DATABASE_URL")
         self._connect = connect
+        self._payload_key_b64 = payload_key_b64
+
+    def _payload_key(self) -> bytes:
+        try:
+            return decode_payload_key(
+                self._payload_key_b64 or os.environ.get("VUKA_PAYLOAD_KEY_B64")
+            )
+        except ValueError as exc:
+            raise DatabaseUnavailable("Payload encryption key is unavailable") from exc
+
+    def _store_private_payload(self, cursor, subject_id: str, entry: dict[str, Any], now: datetime) -> None:
+        event_id = entry["details"]["event_id"]
+        nonce, ciphertext = encrypt_payload(
+            self._payload_key(), subject_id=subject_id, event_id=event_id,
+            payload=entry["payload"], salt=entry["salt"],
+        )
+        cursor.execute(
+            """INSERT INTO private_payloads (subject_id, event_id, nonce, ciphertext, created_at)
+               VALUES (%s, %s, %s, %s, %s)""",
+            (subject_id, event_id, nonce, ciphertext, now),
+        )
 
     def _connection(self):
         if not self.database_url:
@@ -223,12 +270,30 @@ class PostgresDatabase:
             raise DatabaseUnavailable("PostgreSQL connection failed") from exc
 
     def initialize(self) -> None:
+        self._payload_key()
         connection = self._connection()
         try:
             with connection:
                 with connection.cursor() as cursor:
                     cursor.execute(CREATE_SCHEMA_SQL)
                     cursor.execute(CREATE_EVENT_ID_INDEX_SQL)
+        finally:
+            connection.close()
+
+    def healthcheck(self) -> None:
+        """Fail readiness when PostgreSQL cannot answer a trivial query."""
+        self._payload_key()
+        connection = self._connection()
+        try:
+            with connection:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    if cursor.fetchone() != (1,):
+                        raise DatabaseUnavailable("PostgreSQL health query failed")
+        except Exception as exc:
+            if isinstance(exc, DatabaseUnavailable):
+                raise
+            raise DatabaseUnavailable("PostgreSQL health query failed") from exc
         finally:
             connection.close()
 
@@ -240,7 +305,7 @@ class PostgresDatabase:
             with connection:
                 with connection.cursor(cursor_factory=RealDictCursor) as cursor:
                     cursor.execute(
-                        """SELECT signer_key_id, subject_id, signer_role, public_key,
+                        """SELECT signer_key_id, subject_id, actor_id, signer_role, public_key,
                                   revoked_at, revoked_reason
                            FROM signer_keys WHERE signer_key_id = %s""",
                         (signer_key_id,),
@@ -255,22 +320,23 @@ class PostgresDatabase:
             connection.close()
 
     def enroll_signer_key(
-        self, subject_id: str, signer_key_id: str, signer_role: str, public_key: str
+        self, subject_id: str, signer_key_id: str, signer_role: str, public_key: str,
+        actor_id: str,
     ) -> None:
         """Enroll a key only after its registration/guardian acceptance is trusted."""
         if signer_role not in {"device", "guardian"}:
             raise ValueError("signer_role must be device or guardian")
-        if not all((subject_id, signer_key_id, public_key)):
-            raise ValueError("subject, key id and public key are required")
+        if not all((subject_id, signer_key_id, public_key, actor_id)):
+            raise ValueError("subject, actor, key id and public key are required")
         connection = self._connection()
         try:
             with connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
                         """INSERT INTO signer_keys
-                           (subject_id, signer_key_id, signer_role, public_key)
-                           VALUES (%s, %s, %s, %s)""",
-                        (subject_id, signer_key_id, signer_role, public_key),
+                           (subject_id, actor_id, signer_key_id, signer_role, public_key)
+                           VALUES (%s, %s, %s, %s, %s)""",
+                        (subject_id, actor_id, signer_key_id, signer_role, public_key),
                     )
         finally:
             connection.close()
@@ -320,9 +386,9 @@ class PostgresDatabase:
                         if cursor.fetchone() is not None:
                             raise SignerSubjectMismatch(signer_key_id)
                         cursor.execute(
-                            "INSERT INTO signer_keys (subject_id, signer_key_id, signer_role, public_key)"
-                            " VALUES (%s, %s, 'device', %s)",
-                            (subject_id, signer_key_id, public_key),
+                            "INSERT INTO signer_keys (subject_id, actor_id, signer_key_id, signer_role, public_key)"
+                            " VALUES (%s, %s, %s, 'device', %s)",
+                            (subject_id, entry["actor_id"], signer_key_id, public_key),
                         )
                         _consume_nonce(cursor, signer_key_id, nonce, now)
                         counter = entry["details"]["counter"]
@@ -344,6 +410,12 @@ class PostgresDatabase:
                                 stored["prev_hash"], stored["event_hash"],
                             ),
                         )
+                        cursor.execute(
+                            """INSERT INTO subject_heads (subject_id, chain_index, event_hash)
+                               VALUES (%s, 0, %s)""",
+                            (subject_id, stored["event_hash"]),
+                        )
+                        self._store_private_payload(cursor, subject_id, entry, now)
                 return stored, True
             except IntegrityError as exc:
                 if getattr(exc, "pgcode", None) != "23505":
@@ -446,7 +518,7 @@ class PostgresDatabase:
             with connection:
                 with connection.cursor(cursor_factory=RealDictCursor) as cursor:
                     cursor.execute(
-                        """SELECT subject_id, signer_role, revoked_at
+                        """SELECT subject_id, actor_id, signer_role, revoked_at
                            FROM signer_keys WHERE signer_key_id = %s FOR UPDATE""",
                         (prior_key_id,),
                     )
@@ -454,9 +526,9 @@ class PostgresDatabase:
                     if row is None:
                         raise SignerKeyNotFound(prior_key_id)
                     if isinstance(row, dict):
-                        prior_subject, prior_role, prior_revoked = row["subject_id"], row["signer_role"], row["revoked_at"]
+                        prior_subject, prior_actor, prior_role, prior_revoked = row["subject_id"], row["actor_id"], row["signer_role"], row["revoked_at"]
                     else:
-                        prior_subject, prior_role, prior_revoked = row
+                        prior_subject, prior_actor, prior_role, prior_revoked = row
                     cursor.execute(
                         """SELECT subject_id, action, actor_id, target_type, target_id,
                                   details_json, ts, prev_hash, event_hash
@@ -507,9 +579,14 @@ class PostgresDatabase:
                     )
                     cursor.execute(
                         """INSERT INTO signer_keys
-                           (subject_id, signer_key_id, signer_role, public_key)
-                           VALUES (%s, %s, 'device', %s)""",
-                        (subject_id, new_key_id, new_public_key),
+                           (subject_id, actor_id, signer_key_id, signer_role, public_key)
+                           VALUES (%s, %s, %s, 'device', %s)""",
+                        (subject_id, prior_actor, new_key_id, new_public_key),
+                    )
+                    cursor.execute(
+                        """UPDATE subject_heads SET chain_index = %s, event_hash = %s
+                           WHERE subject_id = %s""",
+                        (chain_index, stored["event_hash"], subject_id),
                     )
             return stored
         finally:
@@ -574,7 +651,7 @@ class PostgresDatabase:
                         # Recheck key status under lock, then honor §7 event-id
                         # idempotency before nonce, counter and clock-skew checks.
                         cursor.execute(
-                            """SELECT subject_id, signer_role, revoked_at
+                            """SELECT subject_id, actor_id, signer_role, revoked_at
                                FROM signer_keys WHERE signer_key_id = %s FOR UPDATE""",
                             (signer_key_id,),
                         )
@@ -583,7 +660,8 @@ class PostgresDatabase:
                             raise SignerKeyNotFound(signer_key_id)
                         if key["revoked_at"] is not None:
                             raise SignerKeyRevoked(signer_key_id)
-                        if key["subject_id"] != subject_id or key["signer_role"] != signer_role:
+                        if (key["subject_id"] != subject_id or key["signer_role"] != signer_role
+                                or key["actor_id"] != entry["actor_id"]):
                             raise SignerSubjectMismatch(signer_key_id)
 
                         cursor.execute(
@@ -651,6 +729,12 @@ class PostgresDatabase:
                                 stored["event_hash"],
                             ),
                         )
+                        cursor.execute(
+                            """UPDATE subject_heads SET chain_index = %s, event_hash = %s
+                               WHERE subject_id = %s""",
+                            (next_index, stored["event_hash"], subject_id),
+                        )
+                        self._store_private_payload(cursor, subject_id, entry, now)
                 return stored, True
             except IntegrityError as exc:
                 if getattr(exc, "pgcode", None) != "23505":

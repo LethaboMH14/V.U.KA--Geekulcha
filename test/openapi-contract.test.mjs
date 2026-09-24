@@ -240,6 +240,21 @@ test("BankSignal distinguishes the three §9/S1 trigger outcomes", () => {
   assert.match(signal, /SIMULATED/);
 });
 
+test("ADR-0041 journey end and export advertise their PIN and pre-incident gates", () => {
+  const journeyEnd = pathBlock("/v1/journeys/{id}/end");
+  assert.match(journeyEnd, /fresh pin_authorised record/);
+  assert.match(journeyEnd, /action end_journey/);
+  assert.match(journeyEnd, /pin_authorisation_required/);
+  assert.match(journeyEnd, /'403': \{ \$ref: '#\/components\/responses\/InsufficientApproval' \}/);
+
+  const subjectExport = pathBlock("/v1/subjects/{id}/export");
+  assert.match(subjectExport, /fresh[\s\S]*pin_authorised record for action export/);
+  assert.match(subjectExport, /pin_authorisation_required/);
+  assert.match(subjectExport, /pre-incident head/);
+  assert.match(subjectExport, /6 hours after its last PIN entry/);
+  assert.match(subjectExport, /byte-identical visible results/);
+});
+
 test("proof, receipt and subject schemas carry the §6, §9 and §10 fields", () => {
   const proof = document.slice(document.indexOf("    Proof:"), document.indexOf("    AnchorReceipt:"));
   assert.match(proof, /side: \{ type: string, enum: \[L, R\] \}/);

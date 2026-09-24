@@ -203,6 +203,7 @@ class AuthenticatedSigner:
     signer_role: str
     nonce: str
     request_ts: str
+    public_key: str
     genesis_registration: bool = False
 
 
@@ -272,6 +273,7 @@ def verify_request(
         key_record = {
             "signer_key_id": key_id,
             "subject_id": entry.target_id,
+            "actor_id": entry.actor_id,
             "signer_role": "device",
             "public_key": entry.details.signer_pubkey,
             "revoked_at": None,
@@ -284,6 +286,8 @@ def verify_request(
         raise RequestAuthenticationFailure("invalid_signature", "signer key role is invalid")
     if entry is not None and entry.details.signer != key_record.get("signer_role"):
         raise RequestAuthenticationFailure("invalid_signature", "entry signer role does not match key")
+    if entry is not None and entry.actor_id != key_record.get("actor_id"):
+        raise RequestAuthenticationFailure("invalid_signature", "entry actor does not match key")
     if subject_id is not None and subject_id != key_record.get("subject_id"):
         raise RequestAuthenticationFailure("not_found", "subject was not found")
 
@@ -317,6 +321,7 @@ def verify_request(
         signer_role=key_record["signer_role"],
         nonce=nonce,
         request_ts=request_ts,
+        public_key=key_record["public_key"],
         genesis_registration=genesis_registration,
     )
 
@@ -334,6 +339,40 @@ def _subject_id_for(entry: EventSubmissionV2, principal: AuthenticatedSigner, st
     if journey_subject != principal.subject_id:
         raise RequestAuthenticationFailure("invalid_signature", "signed request is invalid")
     return journey_subject
+
+
+def verify_event_integrity(entry: EventSubmissionV2, subject_id: str, public_key_b64: str) -> None:
+    """Check C5 commitment and the independent §4 event-context signature."""
+    try:
+        salt = base64.b64decode(entry.salt, validate=True)
+        payload_bytes = canonical(entry.payload.model_dump(mode="json"))
+    except (ValueError, TypeError) as exc:
+        raise ValueError("payload is not canonical-safe") from exc
+    commitment = hashlib.sha256(salt + payload_bytes).hexdigest()
+    if commitment != entry.details.commitment:
+        raise ValueError("payload commitment does not match")
+
+    statement = {
+        "domain": "vuka.event.v2",
+        "subject_id": subject_id,
+        "actor_id": entry.actor_id,
+        "target_type": entry.target_type,
+        "target_id": entry.target_id,
+        "action": entry.action,
+        "source_ts": entry.ts,
+        "signer_key_id": entry.details.signer_key_id,
+        "counter": entry.details.counter,
+        "event_id": entry.details.event_id,
+        "commitment": entry.details.commitment,
+    }
+    try:
+        public_key = load_der_public_key(base64.b64decode(public_key_b64, validate=True))
+        if not isinstance(public_key, ec.EllipticCurvePublicKey) or public_key.curve.name != "secp256r1":
+            raise ValueError("event signer key is not P-256")
+        signature = base64.b64decode(entry.details.sig, validate=True)
+        public_key.verify(signature, canonical(statement), ec.ECDSA(hashes.SHA256()))
+    except (InvalidSignature, ValueError, TypeError, binascii.Error, UnsupportedAlgorithm) as exc:
+        raise RequestAuthenticationFailure("invalid_signature", "event signature is invalid") from exc
 
 
 def _error_response(status_code: int, code: str, message: str) -> JSONResponse:
@@ -364,11 +403,25 @@ def create_app(database=None) -> FastAPI:
     async def invalid_request(_request: Request, _exc: RequestValidationError):
         return _error_response(400, "invalid_request", "request shape or value is invalid")
 
+    @app.get("/healthz")
+    async def healthz():
+        healthcheck = getattr(store, "healthcheck", None)
+        if healthcheck is None:
+            return _error_response(503, "database_unavailable", "database health check is unavailable")
+        try:
+            healthcheck()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        return {"status": "ok", "database": "reachable"}
+
     @app.post("/v1/events", status_code=status.HTTP_201_CREATED)
     async def append_event(entry: EventSubmissionV2, request: Request):
         try:
             principal = verify_request(request, entry, database=store, body=await request.body())
             subject_id = _subject_id_for(entry, principal, store)
+            verify_event_integrity(entry, subject_id, principal.public_key)
+        except ValueError:
+            return _error_response(400, "invalid_request", "payload commitment is invalid")
         except RequestAuthenticationFailure as exc:
             status_code = 404 if exc.code == "not_found" else 401
             return _error_response(status_code, exc.code, exc.message)
@@ -449,20 +502,9 @@ def create_app(database=None) -> FastAPI:
             return _error_response(404, "not_found", "subject was not found")
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
-        try:
-            entries = store.export(subject_id)
-        except SubjectNotFound:
-            return _error_response(404, "not_found", "subject chain is not registered")
-        except DatabaseUnavailable:
-            return _error_response(503, "database_unavailable", "database unavailable")
-        return {
-            "subject_id": subject_id,
-            "entries": entries,
-            "payloads": [],
-            "salts": [],
-            "proofs": [],
-            "receipts": [],
-        }
+        # ADR-0041 requires a fresh export PIN authorisation and an incident
+        # prefix check. Neither exists in slices 1/2, so no chain is released.
+        return _error_response(403, "pin_authorisation_required", "fresh export PIN authorisation is required")
 
     return app
 
