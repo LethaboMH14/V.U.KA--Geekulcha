@@ -16,7 +16,7 @@
   - **Not doing** — a deliberate decision, with the reason.
 - `FACT` / `ESTIMATE` / `ASSUMPTION` / `PROPOSED` tags follow `RULES.md`.
 - **State of the code, 23 Sep** `FACT`: `anchor/`, `server/`, `app/`, `dashboard/` and `shared/` hold only READMEs and `.gitkeep` files. `contracts/openapi.yaml` is still the v1 (UMOJA) surface. Almost every product control is therefore *In build* or *Planned*. That is the honest starting point.
-- **Control count, 24 Sep** `FACT` (count of `C-nn` rows by status in this file): 70 controls — 15 Done, 29 In build, 25 Planned, 1 Not doing.
+- **Control count, 24 Sep** `FACT` (count of `C-nn` rows by status in this file): 79 controls — 16 Done, 30 In build, 29 Planned, 4 Not doing (`node scripts/count-controls.mjs`).
 
 ## 1 · Frameworks we map to
 

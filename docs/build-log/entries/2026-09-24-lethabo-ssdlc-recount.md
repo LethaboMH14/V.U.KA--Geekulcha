@@ -27,3 +27,5 @@ Needs/blockers: C-04 and C-05 move to Done when #70 merges. C-90's semgrep rules
 Business handoff: Quote "70 security controls, 15 done, 29 in build" only from the script output on the submission commit.
 
 Next: Lethabo reviews the full SSDLC before the Fri 22:00 internal gate, then uploads it at Sat 11:00.
+
+**Correction to this entry (24 Sep 2026, 20:50).** The "79 → 70" correction above was **wrong**. The count script matched only two-digit IDs (`C-\d{2}`), so it skipped the nine controls from C-100 to C-122. With the regex fixed to `C-\d{2,3}` and a test for three-digit IDs added, `node scripts/count-controls.mjs` reports **79 controls: 16 Done, 30 In build, 29 Planned, 4 Not doing**. The original 79 was right. The status changes to C-62 and C-71 stand. Found when an independent re-implementation (the evidence scorecard's register) counted 79 rows.

@@ -14,7 +14,8 @@ export function countControls(markdown) {
     const cells = line.split('|').slice(1, -1).map((cell) => cell.trim());
     if (cells.some((cell) => /^:?-{3,}:?$/.test(cell))) continue;
 
-    if (/^C-\d{2}$/.test(cells[0] ?? '')) {
+    // Two- or three-digit IDs: C-01 … C-99 and C-100 … C-122 (sections 9–12).
+    if (/^C-\d{2,3}$/.test(cells[0] ?? '')) {
       ids.push(cells[0]);
       const cell = cells[statusColumn] ?? '';
       const match = cell.match(/^\*\*(Done|In build|Planned|Not doing)\*\*/);

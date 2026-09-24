@@ -20,9 +20,17 @@ test('counts statuses and reports duplicate and missing IDs in a fixture', () =>
   });
 });
 
+test('counts three-digit control IDs (C-100 and above)', () => {
+  const md = ['| ID | Control | Status | Evidence |', '|---|---|---|---|', '| C-99 | A | **Done** | f |', '| C-100 | B | **Planned** | f |', '| C-122 | C | **Not doing** — reason | f |'].join('
+');
+  const r = countControls(md);
+  assert.equal(r.total, 3);
+  assert.equal(r.counts['Not doing'], 1);
+});
+
 test('counts the real SSDLC controls', async () => {
   const markdown = await readFile(new URL('../docs/security/SSDLC.md', import.meta.url), 'utf8');
   const result = countControls(markdown);
-  assert.equal(result.total, 70);
+  assert.equal(result.total, 79);
   assert.deepEqual(result.duplicates, []);
 });
