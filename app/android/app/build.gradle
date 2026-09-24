@@ -81,6 +81,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        // Phones only: x86 builds are for emulators and double the download.
+        ndk { abiFilters "armeabi-v7a", "arm64-v8a" }
     }
     signingConfigs {
         debug {
