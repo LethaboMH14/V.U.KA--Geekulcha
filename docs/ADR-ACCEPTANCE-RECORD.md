@@ -9,6 +9,7 @@ Who accepted which decision, when, and on which record. `RULES.md` requires a li
 | ADR-0036 — governance under coercion | Lethabo | Sibusiso | same | same | The decision is accepted. The PIN-verification mechanism (B5) is a **pre-condition for implementing** `docs/VUKA-2-SPEC.md` §9, tracked as P3.L8 (Lethabo + Ipeleng) |
 | ADR-0037 — bank risk signal, never from detection alone | Lethabo | Sibusiso | same | same | None |
 | ADR-0038 — no LLM / RAG / agent framework in the product | Lethabo | Sibusiso | same | same | None |
+| ADR-0040 — PIN-authority rules agreed as one written surface (drafted as ADR-0039; renumbered — Lethabo claimed ADR-0039 for detection detail) | Ipeleng (draft) | **Pending** — Lethabo at the Thu 24 Sep 12:00 check | — | Draft at `docs/PIN-AUTHORITY-RULES.md` | Restates §8/§9 and ADR-0036; changes nothing until accepted |
 
 **Separate requirements recorded with the acceptance:**
 - **Before contract v2's schemas or vectors are written:** `actor_id` is in the device-signed statement (`docs/VUKA-2-SPEC.md` §4). Added 23 Sep in the commit after the acceptance.
@@ -29,3 +30,5 @@ Who accepted which decision, when, and on which record. `RULES.md` requires a li
 | **S4** — extend the 24 h post-recovery freeze to bulk export (`GET /v1/subjects/{id}/export`) | Lethabo, with §9 | No date set | Should-fix, does not block merge |
 
 None of B1–S4 blocks the PR #43 merge that already happened (`8c621dfc`, 19:24:39 UTC) — Ipeleng's review says so directly, and the merge landed after her review was posted.
+
+**Follow-up, 23 Sep 2026.** The spec text for B1, B2, B3, S1, S2 and S4 is proposed in the PR from branch `docs/pr43-review-followups`. S1 still needs Sibusiso to confirm it in contract v2; S4 and the recovery row still need Lethabo and Ipeleng to confirm them at P3.L8. S3, the privacy policy, stays with Ipeleng. The conditions close only once that PR merges.

@@ -1,6 +1,6 @@
 # Khutso Mothopa
 
-**Proposed planning package; owner has not confirmed availability or started these tasks.**
+**Work order acknowledged for workflow setup on 23 September 2026; availability and AI model remain undeclared. No deliverable is complete without the acceptance evidence below and reviewer acceptance.**
 
 ## Agent operating spec
 
@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - The judging criteria published (MASTER-CONTEXT v3, 23 Sep). I re-tag every new row with I / T / U / S / B / Q and run the coverage sweep under the new criteria.
 
-**Current task** — Work order below (issued 23 Sep). First: personally re-check every source in the "Verified 23 September 2026" section of `docs/EVIDENCE.md`, then read the SAPS annual totals by eye.
+**Current task** — P3.K1 review corrections are pushed to PR #47 by a Codex assistant acting at Khutso's request; Khutso's personal confirmation and Sibusiso's acceptance remain pending. P3.K2 is on replacement stacked PR #54.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -33,13 +33,13 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: Work order issued 23 Sep 2026 (see the Work order section below); evidence re-check due Thu 24 Sep 12:00.
-- Claimed files / contract versions: `team/khutso.md` (role self-review) and `docs/BUILD-LOG.md` (append-only review record); no contract version change.
-- Last updated: 23 September 2026 — work order issued by Lethabo (co-lead) via Claude Code assistant.
+- Current task / status: P3.K1 review findings addressed on 23 Sep 2026; Khutso personal confirmation and Sibusiso review pending; due Thu 24 Sep 12:00 (`PROPOSED` schedule from the work order).
+- Claimed files / contract versions: `docs/EVIDENCE.md` for P3.K1/P3.K2; `team/khutso.md`, `docs/OVERLAPS.md` and a new `docs/build-log/entries/` record for coordination; `docs/CHECKLIST.md` only after acceptance evidence exists. No contract version change.
+- Last updated: 23 September 2026 — Khutso requested a pull, task realignment and workflow setup; Codex assistant configured the local workflow and recorded the bounded P3.K1 claim. No evidence row is asserted re-verified.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 
-> Issued by Lethabo (co-lead) after the 21–22 Sep pivot meetings with Sibusiso and Babatunde. Decisions: ADR-0034 to ADR-0038. Spec: `docs/VUKA-2-SPEC.md` (section numbers below refer to it). **Owner acknowledgement pending** — accept it in your running log, or raise a blocker here. All times SAST. Criterion letters per `docs/MASTER-CONTEXT.md` §2 (I · T · U · S · B · Q). Before you start anything: pass the four review gates in `docs/MASTER-CONTEXT.md` §10.
+> Issued by Lethabo (co-lead) after the 21–22 Sep pivot meetings with Sibusiso and Babatunde. Decisions: ADR-0034 to ADR-0038. Spec: `docs/VUKA-2-SPEC.md` (section numbers below refer to it). **Owner acknowledged the work order for workflow setup on 23 Sep; this is not acceptance of unverified claims or completion of any row.** All times SAST. Criterion letters per `docs/MASTER-CONTEXT.md` §2 (I · T · U · S · B · Q). Before you start anything: pass the four review gates in `docs/MASTER-CONTEXT.md` §10.
 
 **Outcome you own:** the team's memory stays true through the pivot, and two small services make the demo real: guardian delivery and `sim_bank`.
 **Serves:** T, S, B.
@@ -49,7 +49,7 @@
 1. **Wed 23–Thu 24 by 12:00** — review MASTER-CONTEXT v3 and the "Verified 23 September 2026" section of `docs/EVIDENCE.md`. Open every source, confirm the quote, and fix or flag ⚑ anything that doesn't hold. Tick each row in your running log.
 2. **Thu 24** — read the SAPS FY2024/25 and FY2025/26 national totals **by eye** from the official PDF (cite page and table) into `docs/EVIDENCE.md`. Never paste machine-extracted numbers.
 3. **Thu 24** — confirm the criterion letters on every P3 row in `docs/CHECKLIST.md` and run the coverage sweep (OS.11) under the new criteria.
-4. **Thu 24 by 20:00** — `docs/REQUIREMENTS-TRACE.md`: every requirement in `docs/VUKA-2-SPEC.md` §2 (V1–V10, G1–G6, A1–A7, S1–S4, P1–P2, D1–D3) → owner → test ID (T01–T20) → status.
+4. **Thu 24 by 20:00** — `docs/REQUIREMENTS-TRACE.md`: every requirement in `docs/VUKA-2-SPEC.md` §2 (V1–V10, G1–G6, A1–A7, S1–S4, P1–P2, D1–D3) → owner → test ID (T01–T24) → status. Owners for the newer tests: **T16** Vukosi (app) with Sibusiso (server); **T21** Sibusiso (vectors) with Ipeleng (verify); **T22** Ipeleng (verify page); **T23** and **T24** Sibusiso.
 5. **Thu 24–Fri 25 by 20:00 — guardian delivery** (G3). **Minimal path first, by Fri 10:00:** one FCM message from the server to Mutarisi's guardian-min screen. Then:
    - Create a Firebase project (free); put the Firebase Cloud Messaging server credentials in App Service settings (never in git).
    - Implement `server/src/notify/` as the outbox consumer (§8) so every alert arrives as a **visible** high-priority notification, deduplicated by an FCM collapse key built from the outbox idempotency key.
@@ -85,7 +85,8 @@ See your work order's **Depends on → hands off to** line. Shared files are cla
 
 ## Needs and blockers
 
-- Add new blockers here with the person's name and the evidence needed.
+- P3.K1/P3.K2: no known blocker at workflow setup. Any inaccessible or secondary-only source remains flagged rather than being inferred or silently upgraded.
+- P3.K4/P3.K5 gate status needs reconciliation before implementation: `SECURITY.md` says the remediation gate is blocked, while `docs/security/intake-gate.json` says `approved` and `node scripts/check-intake.mjs` passes. Sibusiso and Ipeleng must confirm which standing record is current and correct the stale one; no approval is inferred by this workflow entry. P3.K1/P3.K2 may proceed.
 
 ## Decisions affecting others
 
@@ -103,3 +104,7 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
 - 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Khutso is asserted; owner acknowledgement pending.
+- 2026-09-23 — Khutso requested that the latest changes be pulled, his tasks realigned and his workflow set up. Codex assistant pulled `main` at `847225e`, configured `origin`, installed the repository-pinned Gitleaks 8.24.3 hook, verified GitHub CLI 2.101.0 is authenticated as `KhutsoMothopa`, and opened `docs/khutso-p3-k1-evidence-recheck`. P3.K1 source disposition is now recorded in `docs/build-log/entries/2026-09-23-codex-khutso-p3-k1-evidence-audit.md`; no checklist row is ticked and no review is inferred.
+- 2026-09-23 — Codex assistant, acting at Khutso's request, resolved PR #47 review findings: secondary SABRIC and UK APP split details are flagged, ICB's inaccessible primary is flagged, FIPS 204 publication/effective dates are distinguished, the audit authorship/status is explicit, smartphone-duty wording is described as a clarification, and the unsupported OpenTimestamps observation is removed. Khutso confirmation and Sibusiso acceptance remain pending; no checklist row is ticked.
+- 2026-09-23 — Codex assistant rechecked the PR #47 follow-up and found the Federal Register citation targeted the wrong document number; corrected it to NIST's linked notice 2024-17956 and recorded the source wording. Removed the secondary SABRIC incident and app-share figures from the `MASTER-CONTEXT.md` headline row while retaining their explicit caveat in `EVIDENCE.md`. This is a review correction, not Khutso's personal source confirmation or reviewer acceptance.
+- 2026-09-24 — Codex assistant, at Khutso's request, re-critiqued P3.K1 and corrected secondary-source flags, smartphone-duty valuation basis, UK APP policy scope and source, and the crime-displacement paper's observation count and limitations on PR #47. The new build-log entry names the later corrections and points to live P3.K2 PR #54. Khutso's row-by-row personal confirmation and reviewer acceptance remain pending; P3.K1 is not complete.

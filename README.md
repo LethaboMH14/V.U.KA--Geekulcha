@@ -21,7 +21,7 @@ You make the transfer yourself, so every bank record says you authorised it. Eve
 | Layer | What it does |
 |---|---|
 | **VIGIL** — the phone | During a journey you start, it listens on the device for a scream, a shout or breaking glass. It asks a discreet "Journey check" that you answer with your normal PIN, or a duress PIN that looks identical. If you can't answer, the **server** alerts the guardians you chose: *"Don't call or text them. Call 10111."* |
-| **ANCHOR** — the record | Every event is signed by the device or person that produced it and chained per person. A 32-byte fingerprint is published to the **Hedera Consensus Service**, with OpenTimestamps → Bitcoin as a second anchor. Anyone can verify an exported record without trusting us. |
+| **ANCHOR** — the record | Every event is signed by the device or person that produced it and chained per person. A typed 33-byte message is published to the **Hedera Consensus Service**, with OpenTimestamps → Bitcoin as a second anchor. Anyone can verify an exported record without trusting us. |
 
 **The anchor proves *when*, not *what*.** It proves a record existed before the money moved and hasn't changed since. People decide what happened. How the design resists a staged, fake event is in [`docs/STAGED-DURESS-DEFENCE.md`](docs/STAGED-DURESS-DEFENCE.md).
 
@@ -31,7 +31,7 @@ One small model: **YAMNet**, running on the phone, which labels a sound and give
 
 ## Why a blockchain, and what it costs
 
-A bank, an insurer or a court can check the record **without trusting VUKA or the claimant**. Only 33-byte typed messages go on the ledger, never personal data. Anchoring costs about **R570 a month at most for the whole network**, however many members there are ([ADR-0035](docs/adr.md), [`scripts/economics_vigil_anchor.py`](scripts/economics_vigil_anchor.py)).
+A bank, an insurer or a court can independently check a record's **integrity and timing** — that it hasn't changed and when it was written — without trusting VUKA or the claimant (spec §17: when, not what). Only 33-byte typed messages go on the ledger, never personal data. Anchoring costs about **R570 a month at most for the whole network**, however many members there are ([ADR-0035](docs/adr.md), [`scripts/economics_vigil_anchor.py`](scripts/economics_vigil_anchor.py)).
 
 ## Business model
 

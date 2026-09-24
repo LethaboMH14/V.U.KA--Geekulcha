@@ -21,7 +21,7 @@
 - A behaviour change needs docs **and** a `docs/build-log/entries/` file in the **same PR**.
 - Duress states are **visually identical** to normal ones — no observable UI, timing or network difference. This is not a UI preference, it is the safety property.
 
-**Current task** — Work order below (issued 23 Sep). First: get the pivot PR (ADR-0034 to ADR-0038, `docs/VUKA-2-SPEC.md`, these work orders) reviewed and merged, and email the organisers about pre-event building.
+**Current task** — Work order below (issued 23 Sep). Pivot PR #43 merged as `8c621df`; pre-event building confirmed 23 Sep. Next: PR #43 review follow-ups (Ipeleng's B1–B3/S1–S4, this PR), then P3.L8 (PIN authority and incident rules, Thu 12:00) and P3.L9 (commit the organiser's confirmation).
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: the ADR is written before the decision is acted on anywhere else, and the rejected alternatives are in it.
 

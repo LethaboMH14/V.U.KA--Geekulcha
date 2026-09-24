@@ -1,6 +1,6 @@
 # VUKA 2 — VIGIL + ANCHOR specification
 
-> **Status:** `PROPOSED` build specification, issued 23 September 2026 by Lethabo (co-lead) after the 21–22 September pivot meetings with Sibusiso and Babatunde. It binds with ADR-0034 to ADR-0038 on second-lead acceptance. **Revision 2 (23 Sep, evening)** answers Sibusiso's review and the independent review he posted on PR #43 (blockers B1–B7, should-fix S1–S10); the disposition of each is in that PR.
+> **Status:** accepted build specification, issued 23 September 2026 by Lethabo (co-lead) after the 21–22 September pivot meetings with Sibusiso and Babatunde. It binds with ADR-0034 to ADR-0038, which were **accepted on 23 Sep 2026**: Sibusiso as second lead, and Ipeleng's security review approved with conditions (record: `docs/ADR-ACCEPTANCE-RECORD.md`). **Revision 2 (23 Sep, evening)** answers Sibusiso's review and the independent review he posted on PR #43 (blockers B1–B7, should-fix S1–S10); the disposition of each is in that PR.
 >
 > **Read with:** `docs/MASTER-CONTEXT.md` (what we are judged on) · `docs/STAGED-DURESS-DEFENCE.md` (why the design resists a faked duress event) · `docs/ECONOMICS-VIGIL-ANCHOR.md` (who pays) · your own `team/<name>.md` work order.
 >
@@ -60,7 +60,7 @@ IDs are stable; tests in §15 cite them.
 - **A7** `/healthz` reports the last anchor time, the anchor queue depth, pending deadlines and the outbox backlog. A missed hourly anchor is logged as an alarm.
 
 ### Safety and security
-- **S1** A bank risk signal is **never** sent from detection alone. It is sent immediately on a duress signal (§3). On `no_answer` or `contact_lost`, it is sent only if guardians were alerted and none sent `stand_down` within 3 minutes (ADR-0037).
+- **S1** A bank risk signal is **never** sent from detection alone. It is sent immediately on a duress signal (§3). On `no_answer` or `contact_lost`, it is sent only if guardians were alerted and none sent `stand_down` within 3 minutes (ADR-0037). The `bank_signal_sent` payload records which of `duress_signal`, `no_answer` or `contact_lost` triggered it, so the bank and an insurer's investigator can weigh a timed-out hold differently from an explicit duress PIN — "Sibusiso confirms in contract v2".
 - **S2** Guardian changes and deletion follow §9. PIN authorisation is required everywhere; a duress session turns these actions into convincing no-ops; a duress-session addition creates a decoy guardian; removals are delayed and never leave zero guardians.
 - **S3** Nothing an attacker can observe reveals that duress was signalled: no visible SMS, no distinctive anchor timing (§10), no panel event, and no difference in the check-in (V5).
 - **S4** No LLM, RAG or agent framework anywhere in the product (ADR-0038).
@@ -93,7 +93,7 @@ IDs are stable; tests in §15 cite them.
 | `no_answer` / `contact_lost` / `answered_late` / `incident_closed` | `server_event` | server Ed25519 | §8 | **immediate** |
 | `guardian_alerted` | `server_event` | server | outbox delivery (§8) | hourly |
 | `guardian_ack` | `guardian_event` | guardian | G5 | hourly |
-| `bank_signal_sent` / `bank_signal_ack` | `server_event` | server (ack countersigned by `sim_bank`) | S1 | hourly |
+| `bank_signal_sent` / `bank_signal_ack` | `server_event` | server (ack countersigned by `sim_bank`) | S1 — payload records the triggering outcome (`duress_signal` \| `no_answer` \| `contact_lost`); "Sibusiso confirms in contract v2" | hourly |
 | `guardian_added` / `guardian_removal_scheduled` / `guardian_removed` / `decoy_added` | `device_event` / `server_event` | device, then server | §9 | hourly |
 | `recovery_performed` | `server_event` | server | §9 | **immediate** |
 | `deletion_tombstone` | `server_event` | server | §13 | hourly |
@@ -136,6 +136,7 @@ The frozen `EvidenceEntry` shape is unchanged: `action, actor_id, target_type, t
   canonical({"domain":"vuka.event.v2", "subject_id", "actor_id", "target_type", "target_id", "action",
              "source_ts": ts, "signer_key_id", "counter", "event_id", "commitment"})
   ```
+  `subject_id` is the subject the chain belongs to, taken from the authenticated request path (for journey-targeted entries, the journey's subject). For the genesis `registration`, the actor check uses the `signer_pubkey` carried in that entry, because no key is registered before it (Sibusiso confirms in contract v2).
   The verifier rebuilds this statement from the outer fields and `details`. `actor_id` is inside the signature and must also equal the id registered for `signer_key_id`. If `action`, `actor_id`, `target_type`, `target_id`, `ts` or `commitment` changes, the signature fails. Negative vectors cover each field (T21).
 - **Registration entries** also carry `signer_pubkey` (SPKI, base64) in **plain** `details`. A public key is not personal information, and it keeps signatures checkable after payloads are deleted. The attestation stays inside the commitment.
 - **Idempotency and replay** (§7): an identical retry returns the original receipt. A reused `event_id` with different content is rejected (409). Any unseen `counter` is accepted, and exact repeats are rejected. The `event_id` lookup runs **before** the nonce and counter checks (§7, order of checks), so a retry after a lost response is answered, not rejected as a replay.
@@ -170,7 +171,7 @@ Rules:
   2. A failure retries the **same** batch, with the same root, until it is confirmed.
   3. Heads that change after the snapshot go into the next batch.
   4. **Empty window: nothing is submitted.** An empty tree (n = 0) is never anchored and is covered by a rejection vector.
-- **Proof encoding:** an ordered list of `[{"side": "L|R", "hash": "…"}]` from the leaf to the root. Vectors cover n = 1…8, and n = 0 as a rejection.
+- **Proof encoding:** an ordered list of `[{"side": "L|R", "hash": "…"}]` from the leaf to the root. `side` is the side the **sibling** hash sits on. Immediate and hourly roots use the same leaf rule. A head already inside a submitted, unconfirmed batch is not re-included, because that batch retries until it is confirmed (Sibusiso confirms with the vectors). Vectors cover n = 1…8, and n = 0 as a rejection.
 - **Public proof** (`GET /v1/anchor/proof/{head_hash}`): keyed by an anchored **head**. It returns the audit path and receipt only. Linking an interior event to that head requires the chain segment, which comes only in the subject's authenticated export. The public can't learn anything about later events.
 - **Verification binds the ledger message to this export's root** (B2). The verify page:
   1. recomputes the root from the export;
@@ -226,6 +227,7 @@ Rules:
   - It closes **only** on a guardian `stand_down`, or automatically 6 h after the last signal with heartbeats present and guardians notified.
   - **A normal PIN alone never closes an incident**, because a coercer can force it.
   - `incident_closed` is a server event, anchored immediately.
+  - **OPEN — decided at P3.L8 (Thu 24 Sep 12:00).** A normal PIN never closes an incident on its own, so a false detection, then a normal PIN, then either `journey_ended` or 90 s without a signal fires `contact_lost`: guardians are alerted and the bank signal follows 3 minutes later. This contradicts `docs/STAGED-DURESS-DEFENCE.md` S5. **Nobody implements `contact_lost` → bank signal after a normal-PIN outcome until this is decided.** The options: a normal PIN plus `journey_ended` closes the incident, or `contact_lost` doesn't trigger the bank signal after a normal-PIN outcome. Tracked as gap G33.
 - **Chain appends:** `SELECT … FOR UPDATE` on `subject_heads(subject_id)`, plus `UNIQUE(subject_id, chain_index)`. No advisory-lock hashing.
 - **Tests (T08):** restart the server (a) between `opened` and the deadline, (b) between committing the outcome and sending, and (c) between sending and marking done. Every case must still produce exactly one visible alert.
 - **Agreed fallback (Sibusiso):** if T08 isn't passing by **Fri 18:00**, anchoring stays stubbed and durable escalation takes priority.
@@ -237,19 +239,20 @@ Rules:
 - **PIN authority** (B5): the PIN is verified **on the device**, against an Argon2id hash in Keystore-wrapped storage. The device then signs a `pin_authorised` statement bound to one specific action. The server accepts a PIN-gated action only with a fresh, unexpired authorisation for **that exact action and target**. Device possession or a device signature alone is **never** PIN authority.
 
   ```
-  pin_authorised = {action, target_id, mode: normal|duress, expires_at: receipt + 120 s, nonce}
+  pin_authorised (device-signed) = {action, target_id, mode: normal|duress, nonce}
   ```
 
-  `mode` sits inside the committed payload, so the server sees it and the public never does.
+  The device signs `{action, target_id, mode, nonce}` — it cannot know the server's receipt time, so `expires_at` is never part of the signed statement. **The server** records `expires_at = received_at + 120 s` on receipt, alongside the signed fields — "Sibusiso confirms in contract v2". `mode` sits inside the committed payload, so the server sees it and the public never does.
 
 | Action | Normal PIN | Duress PIN | During an open incident |
 |---|---|---|---|
-| Add guardian (create invite) | Allowed; existing guardians notified | **Decoy guardian**: the accept succeeds, it never receives alerts, and real guardians are told "a guardian was added under duress" | Allowed; existing guardians notified |
-| Remove guardian | **Scheduled, silent, effective after 24 h**; the removed guardian keeps receiving alerts until then. **The last guardian can't be removed** until a replacement has been accepted | Looks done, does nothing | Deferred until the incident closes |
+| Add guardian (create invite) | Allowed; **existing guardians notified, naming the added guardian** | **Decoy guardian**: the accept succeeds, it never receives alerts, and real guardians are told "a guardian was added under duress" | Allowed; existing guardians notified, naming the added guardian |
+| Remove guardian | **Scheduled, silent, effective after 24 h**; the removed guardian keeps receiving alerts until then and is never told. **The remaining guardians are notified, naming the removed guardian.** **The last guardian can't be removed** until a replacement has been accepted | Looks done, does nothing | Deferred until the incident closes |
 | Delete evidence | 72 h cooling-off, then removed; guardians notified | Looks done, does nothing | Blocked |
-| Recover to a new device | Allowed, rate-limited; guardians notified; the old key is revoked (`key_revoked`); 24 h freeze on guardian changes and deletion | Looks done, does nothing | Blocked |
+| Recover to a new device | Allowed, rate-limited; guardians notified; the old key is revoked (`key_revoked`); 24 h freeze on guardian changes, deletion and bulk export (`GET /v1/subjects/{id}/export`; "for Lethabo to confirm at P3.L8") | **Not available on a new device (it holds no PIN hash).** Recovery on a new device is gated by the recovery code, guardian notification, the open-incident block and the 24 h freeze instead — "for Lethabo and Ipeleng to confirm at P3.L8" | Blocked |
 
-- **Removal trade-off, stated:** someone removing an abusive guardian keeps that guardian on alerts for up to 24 h. In return, a forced removal can't disarm the next emergency, and nobody is ever left with zero guardians.
+- **Removal trade-off, stated:** someone removing an abusive guardian keeps that guardian on alerts for up to 24 h. In return, a forced removal can't disarm the next emergency **within one forced session**, and nobody is ever left with zero guardians.
+- **Multi-session replacement risk (Ipeleng's review, B1).** The never-disarm property holds within one forced session. Across two forced normal-PIN sessions, an attacker's own accepted add (session 1) can become the "replacement" that unlocks the removal the attacker scheduled of the last real guardian (session 2), leaving the attacker as the sole guardian. This qualifies ADR-0036(5) — read that clause as holding for the single-session case only. Notifying the remaining guardians of every addition and every scheduled removal, naming the other party, is the control: a victim's trusted guardians see the attacker's add and the scheduled removal in time to act, even though the removed guardian is still never told (the silence rule that protects a victim removing an abusive guardian is unchanged). Recorded in `docs/ADR-ACCEPTANCE-RECORD.md`.
 - **Key revocation:** a key is revoked at the server receipt time of recovery. Events signed by a revoked key and received after revocation are rejected. The revocation is a chain entry.
 - **Guardian enrolment authority:** an invite exists only through a fresh PIN authorisation. Accepting it binds the guardian's key and FCM token, and later token updates are signed by the guardian key.
 - **Recovery:** a 10-word code is shown once at onboarding. The lookup handle is SHA-256 of the first two words, and the code is verified with Argon2id. **If the recovery endpoint is cut, no code is shown at all.**
@@ -416,7 +419,7 @@ Each test is executable or a recorded observation, named in the PR that delivers
 | **T21** | Changing `action`, `actor_id`, `target_type`, `target_id`, `ts` or `commitment` invalidates the device signature | §4 (B1) | negative vectors |
 | **T22** | A correct export paired with another batch's receipt, or with another topic or key, is rejected | §6 (B2) | two real batches |
 | **T23** | A normal result racing the `no_answer` deadline yields exactly one terminal outcome | §8 (B3) | controlled clock |
-| **T24** | A scheduled removal takes effect only after 24 h; removing the last guardian is refused until a replacement is accepted | §9 | controlled clock |
+| **T24** | A scheduled removal takes effect only after 24 h; removing the last guardian is refused until a replacement is accepted; remaining guardians are notified of an addition or a scheduled removal, naming the other party; the two-session replacement path (an accepted add later counted as the "replacement" for a scheduled removal) is exercised, or recorded as an observation if not automatable by Thursday | §9 (B1) | controlled clock |
 
 ---
 
@@ -448,3 +451,7 @@ Every result goes into `docs/EVIDENCE.md` with its method, configuration and n. 
 - No calibrated detection accuracy until M1/M2 are published, with n.
 - Testnet is testnet, and archived receipts are labelled archived. `sim_bank` is simulated. The 318 ms (n = 10) historical figure measured a retired relay and is never quoted for VIGIL.
 - No assurance we can't show a record for. "Reviewed" or "verified" needs a linkable record in the repository.
+- **A malicious or compromised server can suppress or fabricate escalation.** The chain is server-built, so a compromised ANCHOR could withhold a `guardian_alert` or `bank_signal` outbox effect, or fabricate `no_answer`, `incident_closed` or `key_revoked`. The independent witnesses are the guardian's own-key acknowledgement and the bank's own systems, not the server's own record of itself. Resistance to server suppression is not claimed (Ipeleng's review, B2).
+- **Anyone holding the unlocked phone can arm a journey and force a `no_answer` escalation**, no PIN required, including the bank signal after the 3-minute window with no `stand_down`. `signal_detected` carries location, so a false alarm this way can send guardians, and any police they call, toward the owner's own recorded position (Ipeleng's review, B3).
+- **A lone guardian sees every alert.** The never-zero rule guarantees at least one guardian, not two. Onboarding recommends at least two guardians who don't live with the user; one guardian is a single point of failure if they are asleep, unreachable, or the threat (Ipeleng's review, S2).
+- **Residual multi-session replacement risk** (§9, ADR-0036(5), Ipeleng's review B1): across two forced normal-PIN sessions, an attacker's own accepted add can become the "replacement" that unlocks a removal the attacker scheduled, ending with the attacker as the sole guardian. Notifying remaining guardians of adds and scheduled removals is the mitigation; it is not a closure of the risk.

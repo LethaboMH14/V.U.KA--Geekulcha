@@ -1,5 +1,7 @@
 # VUKA — Lean Business Canvas, ready to paste
 
+> **STALE — do not quote.** This page still describes the retired four-layer design and contains retired figures. It is being rewritten for VIGIL + ANCHOR under checklist row P3.B10 (Babatunde, reviewer Lethabo, due Thu 24 Sep 20:00).
+
 > **Superseded in part — 23 Sep 2026.** VUKA is now **VIGIL + ANCHOR** (ADR-0034). Anything here about KHAYA, UMOJA, cameras, entities, the R299 model or the four-layer design is parked lineage, not the current product. Current spec: `docs/VUKA-2-SPEC.md` · economics: `docs/ECONOMICS-VIGIL-ANCHOR.md` · context: `docs/MASTER-CONTEXT.md`.
 
 **Figures marked ⚑ are estimates to verify before the deck.** Everything unmarked comes from your own dataset or from costs I've computed. Criterion 2 wants money in it — so there's money in it.
@@ -128,7 +130,7 @@ Provable history is not.
 
 2. SIX WEEKS OF SHIPPED WORK THAT PREDATES THIS HACKATHON.
 ~33,600 lines, 440 test cases, 25 accepted architecture decision records, ~6,800
-lines of architecture documentation, and a measured p95 latency of 318ms against a
+lines of architecture documentation, and a measured p95 latency of 318 ms (n = 10, retired relay) against a
 2,000ms budget. All committed in July, all in public repos, all timestamped. No team
 compresses that into a weekend.
 
@@ -199,7 +201,7 @@ PAN-AFRICAN
 
 ```
 TECHNICAL — our referee numbers, published in the repo
-· Detection → alert render: ≤2.0s p95. CURRENT: 273ms p50, 318ms p95 (measured)
+· Detection → alert render: ≤2.0s p95. CURRENT: 273 ms p50, 318 ms p95 (n = 10, retired relay; not VIGIL)
 · False alerts surfaced to a member: ≤1 unverified per camera-week
 · Vision throughput on the appliance: ≥8 FPS person detection
 · Anchor liveness: % of hours with a successfully published Merkle root. Target 100%

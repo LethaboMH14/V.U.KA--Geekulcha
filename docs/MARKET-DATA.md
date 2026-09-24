@@ -1,0 +1,88 @@
+# Market Data Register
+
+**Status:** PROPOSED — working document. Owner: Babatunde Adelusi.
+**Purpose:** Verified market data points used in the VUKA pricing model.
+**Source rule (added at merge, 24 Sep):** a `FACT` row needs a linkable source and date in the row, or its entry in `docs/EVIDENCE.md`. Rows in §4 and the VAT row in §2 still need a URL and date. Until they have one, read them as ⚑ secondary, and don't quote them on a slide. Babatunde adds the links; Khutso confirms them into `docs/EVIDENCE.md`.
+**Relationship to EVIDENCE.md:** `docs/EVIDENCE.md` is Khutso's register. This file points to it. Where a figure also lives in EVIDENCE.md, this file cites the line and does not duplicate the row.
+
+## 1. Problem size — digital banking fraud
+
+| Figure | Value | Tag | Source | Note |
+|---|---|---|---|---|
+| SA digital banking fraud losses (2024) | R1.888bn | FACT | SABRIC 2024 | All digital banking crime. Mostly social engineering. NOT coerced transfers. |
+| SA digital banking fraud incidents (2024) | **97,975** | FACT | `docs/EVIDENCE.md:14` | Do not use 64,000. Conflict resolved in favour of EVIDENCE.md. |
+| SA digital banking fraud losses (2025) | R2.4bn | FACT | SABRIC 2025 | Same scope caveat. |
+| SA digital banking fraud incidents (2025) | 110,000+ | FACT | SABRIC 2025 | Same scope caveat. |
+
+**Scope warning:** SABRIC totals cover all digital banking crime. Most is social engineering, not coerced in-person transfers. Do not present these as the coerced-transfer market size.
+
+## 2. Industry benchmarks
+
+| Figure | Value | Tag | Source | Note |
+|---|---|---|---|---|
+| Short-term insurance claims ratio | **51.4%** | FACT | Prudential Authority, Dec 2025 | Quote the exact span with page. Do not use 53–54%. |
+| Compulsory VAT registration threshold (from 1 Apr 2026) | R2.3m | FACT | SARS | Confirm the current figure before quoting. |
+
+## 3. Market comparables — competitor pricing
+
+| Product | Price | Tag | Source | Date |
+|---|---|---|---|---|
+| FNB GuardMe | R19.90/month | FACT | FNB published pricing | **April 2022.** Carry the date. |
+| iTOO [My]Cylution (entry) | R22.50/month | FACT | iTOO published pricing | Current at time of writing. |
+| iTOO [My]Cylution (top tier) | R300/month | FACT | iTOO published pricing | Current at time of writing. |
+| Tracker subscriptions (vehicle) | R89–R335/month | FACT | Industry range | Confirms vehicle policyholders already pay this band. |
+
+## 4. VUKA operating costs — verified
+
+| Figure | Value | Tag | Source | Note |
+|---|---|---|---|---|
+| Hedera ConsensusSubmitMessage | $0.0008/message | FACT | Hedera, Jan 2026 | Increased from $0.0001. |
+| USD/ZAR used in script | R16.21 | FACT | Script input | Configurable. |
+| Anchoring ceiling (monthly) | R569.47 | ESTIMATE | Derived: 43,200 immediate + 720 hourly × $0.0008 × R16.21 | Moves with fee schedule and exchange rate. Per spec §10. |
+| Azure App Service (Shared) | $9.49/month | FACT | Azure published pricing | Starting tier. |
+| Azure PostgreSQL (B1ms) | ~$12/month | FACT | Azure published pricing | On-demand. |
+| Azure PostgreSQL (B2ms, ZA North) | $126/month | FACT | Azure published pricing | southafricanorth region. |
+| SMS gateway | R0.18–R0.29/SMS | FACT | WinSMS, 2026 | Volume-dependent. |
+| Customer support agent | R8,101–R30,000/month | FACT | Indeed, RecruiterFlow, City of Johannesburg | Average R25,000 used in script. |
+| Cyber insurance (SME) | R450/month | FACT | iTOO SureThing | Entry. Range up to R50,000/year. |
+| Professional indemnity (R2.5m) | R2,615/year | FACT | AON | R2.5m aggregate + 1 reinstatement. |
+| Accountant retainer (average) | R4,400/month | FACT | ProCompare | Range R1,950–R6,000. |
+| CIPC annual return | R100–R600/year | FACT | CIPC 2026 | By turnover band. |
+| UIF employer contribution | 1%, capped R17,712/month | FACT | Rivermate, Aug 2026 | |
+| SDL employer contribution | 1% if payroll > R500,000/year | FACT | Xero, Aug 2026 | |
+| Engineering tools (ChatGPT Plus) | $20/month (~R324) | FACT | OpenAI pricing | R400 is ESTIMATE if no invoice. |
+| Engineering tools (Claude Pro) | $20/month (~R324) | FACT | Anthropic pricing | R400 is ESTIMATE if no invoice. |
+
+## 5. Figures that must stay ESTIMATE
+
+| Figure | Why ESTIMATE |
+|---|---|
+| R5.72 operational cost per member | Inputs (cloud, support, compliance) are ESTIMATE in the script. Output cannot be FACT. |
+| R569.47 anchoring ceiling | Depends on fee schedule and one day's exchange rate. |
+| R400 per engineering tool | $20 × R16.21 = R324.15, or R372.77 with VAT. Only FACT if an invoice shows R400. |
+| Engineering tools total (R3,340) | Sum of ESTIMATE inputs. |
+
+## 6. Figures that are ASSUMPTION
+
+| Figure | Why ASSUMPTION |
+|---|---|
+| Frequency of coerced-transfer claims | Must come from the insurer's own data. |
+| Severity (average claim value) | Must come from the insurer's own data. |
+| Claims reduction (r) | Pilot measurement, not a promise. |
+| Founder stipends (5 × R30,000) | Team assumption. 5 stipends for 7 people. Open. |
+| Free-to-paying ratio | Not yet modelled. |
+
+## 7. Conflict resolutions
+
+| Conflict | Resolution |
+|---|---|
+| SABRIC 2024 incidents: 64,000 vs 97,975 | 97,975. `docs/EVIDENCE.md:14` is the register. |
+| Claims ratio: 53–54% vs 51.4% | 51.4%. Prudential Authority, Dec 2025. Quote exact span with page before use. |
+| "Free to users" | Do not say. Use "free to the uninsured; funded through the insurer's premium for policyholders." |
+| R1.09bn | Retired. Modelled exposure from third-party dataset, not a savings base. |
+
+## 8. What this file does not do
+
+- It does not duplicate `docs/EVIDENCE.md`. Khutso owns that register. This file points to it.
+- It does not decide the price. The price is an output of the model.
+- It does not promise claims savings. Those are pilot measurements.
