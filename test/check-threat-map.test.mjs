@@ -56,3 +56,8 @@ test('runs against the repository threat model and prints a summary', () => {
   });
   assert.match(output, /^\d+ rows, \d+ fully mapped$/m);
 });
+
+test('an SSDLC control ID counts as a control reference', () => {
+  const rows = parseThreatMap(`| ID | Threat | Control | Test |\n|---|---|---|---|\n| CI-4 | Swapped model weights | sha256 manifest (C-73) | T41; PT-49 |`);
+  assert.deepEqual(rows, [{ id: 'CI-4', missing: [] }]);
+});

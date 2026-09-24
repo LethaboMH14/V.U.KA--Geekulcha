@@ -2,7 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const SPEC_REF = /(?:§\s*\d+|\b(?:V|G|A|S|P|D|B)\d+\b|\bADR-\d{4}\b)/u;
+// A control reference is a spec section or requirement ID, an ADR, or an
+// SSDLC control (`C-nn` in docs/security/SSDLC.md), which carries its own
+// status and evidence column.
+const SPEC_REF = /(?:§\s*\d+|\b(?:V|G|A|S|P|D|B)\d+\b|\bADR-\d{4}\b|\bC-\d{2}\b)/u;
 const TEST_REF = /(?:\bT\d{2}\b|\bPT-\d{2}\b)/u;
 
 /** Parse Markdown table rows that look like threat rows and report missing map refs. */

@@ -72,7 +72,7 @@
 | P3.K7 | Criteria-coverage sweep under I/T/U/S/B/Q *(carried from OS.11)* | Khutso | all | Sep 25 | ☐ | Added 23 Sep, Lethabo |
 | P3.B10 | Rewrite the Sonke overview and Lean Canvas for VIGIL + ANCHOR with live figures only | Babatunde (reviewer: Lethabo) | B, I | Sep 24 20:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.S9 | `docs/security/SSDLC.md` accepted by Ipeleng, reviewed by Lethabo, merged; control counts re-computed | Ipeleng | S, T | Sep 26 11:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.S10 | `docs/security/THREAT-MODEL.md`: every STRIDE and coercion row has a spec ID and a test | Ipeleng | S | Sep 24 20:00 | ◐ | Added 23 Sep, Lethabo · 24 Sep: `scripts/check-threat-map.mjs` added — 41 of 63 rows fully mapped; 22 to map |
+| P3.S10 | `docs/security/THREAT-MODEL.md`: every STRIDE and coercion row has a spec ID and a test | Ipeleng | S | Sep 24 20:00 | ◐ | Added 23 Sep, Lethabo · 24 Sep: `scripts/check-threat-map.mjs` (column-aware) — 55 of 63 rows fully mapped after an independent mapping audit; 8 missing a test, listed in THREAT-MODEL §9 with owners |
 | P3.S11 | Test specifications for T30–T49 (fixture, oracle, prerequisites), each sent to its writer | Ipeleng | S, T | Sep 24 20:00 | ◐ | Added 23 Sep, Lethabo · 24 Sep: T30–T52 specified in `docs/security/TEST-SPECS.md`; sent to writers via the PR |
 | P3.S12 | Internal test plan executed: `docs/security/PENTEST-RESULTS.md` with pass / fail / not run for all 64 PT cases | Ipeleng | S | Sep 26 20:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S13 | `docs/security/COMPLIANCE-GOVERNANCE.md` reviewed; counsel questions Q-C1–Q-C7 logged | Ipeleng | S, B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
