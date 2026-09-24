@@ -504,3 +504,27 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 - The contract gains action `end_journey` and the `incident_closed.reason` field. Both are for Sibusiso in contract v2 (#51).
 - Vukosi builds the check-in attempt counter and the identical journey-end path; Mutarisi builds the screens.
 - The coercion catalogue (`scripts/coercion_scenarios.py`, rule H4) is re-run under these rules as a follow-up.
+
+---
+
+## ADR-0042: The device and guardian key registry (spec §4a), accepted with three security amendments
+**Status:** Accepted (2026-09-24). Proposed by Sibusiso (#64, merged as PROPOSED). Accepted by Lethabo, as co-lead and after a security review while she covers the security lane for Ipeleng. Sibusiso confirms the amendments on the PR that records this.
+**Owner:** Sibusiso Khumalo (§4a), Lethabo Hoaeane (security amendments)
+**Context:** §4 required a registered key per `signer_key_id` but never said where registration lives, or how "the" key for a subject is resolved. P3.A3 slice 2 (real request authentication) can't be built without it. §4a proposed a `signer_keys` table and resolution rules. Its security review found three places where the table could become a trusted authority it should not be.
+**Decision:** §4a is accepted, as amended:
+1. **The verifier rebuilds the registry from the chain, never from `signer_keys`.**
+   - Registration, guardian-accept and recovery entries carry `signer_pubkey`.
+   - `key_revoked` entries carry `revoked_key_id` and are exported.
+   - An entry is valid if it was received before its key's revocation.
+2. **No server keys in `signer_keys`.** `signer_role` is `device` or `guardian` only. Server keys come from the pinned manifest in `contracts/keys/`.
+3. **One non-revoked key per device and per guardian**, not "per role": a subject can have several guardians.
+
+**Rejected alternatives:**
+- Verifying against the server's `signer_keys`. A stranger would have to trust our database, which defeats "verify without trusting us".
+- A `server` role row. A database write could then mint a server key.
+- A "most recent key wins" rule. Already rejected in §4a: a stale key would silently lose authority.
+
+**Consequences:**
+- P3.A3 slice 2 is unblocked.
+- Contract v2 (#51) adds `revoked_key_id` to plain `details` on `key_revoked` entries, and drops `server` from `signer_role`.
+- `shared/verify.js` (verify-min, P3.S7) already builds keys from the chain. Revocation checking is added once `key_revoked` entries exist in an export.
