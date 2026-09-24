@@ -32,3 +32,10 @@ Who accepted which decision, when, and on which record. `RULES.md` requires a li
 None of B1–S4 blocks the PR #43 merge that already happened (`8c621dfc`, 19:24:39 UTC) — Ipeleng's review says so directly, and the merge landed after her review was posted.
 
 **Follow-up, 23 Sep 2026.** The spec text for B1, B2, B3, S1, S2 and S4 is proposed in the PR from branch `docs/pr43-review-followups`. S1 still needs Sibusiso to confirm it in contract v2; S4 and the recovery row still need Lethabo and Ipeleng to confirm them at P3.L8. S3, the privacy policy, stays with Ipeleng. The conditions close only once that PR merges.
+
+**P3.L8 checkpoint — 24 Sep 2026.** New rows below; the ADR-0040 row above is left as written, per this file's append-only rule.
+
+| ADR | Proposed by | Accepted by | When | Record | Conditions |
+|---|---|---|---|---|---|
+| ADR-0040 — PIN-authority rules agreed as one written surface | Ipeleng (draft) | Lethabo (co-lead) | 24 Sep 2026 | The PR that adds ADR-0041 (branch `docs/lethabo-p3l8-decisions`) | Accepted **as amended by ADR-0041**. Point (4), "never on a normal PIN", now reads with ADR-0041's member-ended closure |
+| ADR-0041 — the P3.L8 checkpoint decisions | Lethabo (co-lead, acting security lead) | **Pending** — Sibusiso (second lead) | — | Same PR | Changes an accepted rule (ADR-0036, closure), so the second lead must accept it. The contract items (`end_journey`, `incident_closed.reason`) land in contract v2 (#51) |
