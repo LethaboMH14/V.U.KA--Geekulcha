@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
 from anchor.canonical import canonical
+from server.outbox import OUTBOX_SCHEMA_SQL
 from server.payload_store import decode_payload_key, encrypt_payload
 
 
@@ -277,6 +278,7 @@ class PostgresDatabase:
                 with connection.cursor() as cursor:
                     cursor.execute(CREATE_SCHEMA_SQL)
                     cursor.execute(CREATE_EVENT_ID_INDEX_SQL)
+                    cursor.execute(OUTBOX_SCHEMA_SQL)
         finally:
             connection.close()
 
