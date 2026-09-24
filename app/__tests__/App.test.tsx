@@ -1,17 +1,18 @@
 /**
- * @format
+ * Smoke test: the app renders, effects run inside act, and it unmounts cleanly.
  */
-
 import 'react-native';
 import React from 'react';
 import App from '../App';
+import renderer, {act} from 'react-test-renderer';
 
-// Note: import explicitly to use the types shipped with jest.
-import {it} from '@jest/globals';
-
-// Note: test renderer must be required after react-native.
-import renderer from 'react-test-renderer';
-
-it('renders correctly', () => {
-  renderer.create(<App />);
+it('renders and unmounts cleanly', async () => {
+  let tree: renderer.ReactTestRenderer | undefined;
+  await act(async () => {
+    tree = renderer.create(<App />);
+  });
+  expect(tree!.toJSON()).toBeTruthy();
+  await act(async () => {
+    tree!.unmount();
+  });
 });

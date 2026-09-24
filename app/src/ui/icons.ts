@@ -14,3 +14,5 @@ export {default as ShieldCheck} from 'phosphor-react-native/lib/commonjs/icons/S
 export {default as ShieldChevron} from 'phosphor-react-native/lib/commonjs/icons/ShieldChevron';
 export {default as Users} from 'phosphor-react-native/lib/commonjs/icons/Users';
 export {default as Waveform} from 'phosphor-react-native/lib/commonjs/icons/Waveform';
+export {default as UserPlus} from 'phosphor-react-native/lib/commonjs/icons/UserPlus';
+export {default as WifiSlash} from 'phosphor-react-native/lib/commonjs/icons/WifiSlash';

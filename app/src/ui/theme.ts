@@ -35,6 +35,17 @@ export const colors = {
   /** Control edges: 3.1:1 on the ivory base (WCAG 1.4.11), so keys hold in daylight. */
   controlEdge: '#8F897E',
 
+  /** Primary pill gradient, top to bottom (one light source). */
+  actionTop: '#2A4C78',
+  actionBottom: '#1A3252',
+  /** Frosted glass: the hero bezel shell, card edge, and the orb on ink. */
+  bezelFill: 'rgba(255,255,255,0.5)',
+  glassEdge: 'rgba(255,255,255,0.88)',
+  orbOnInk: 'rgba(255,255,255,0.16)',
+  ghostFill: 'rgba(255,255,255,0.55)',
+  /** Android press ripple: identical on every control, both PIN paths. */
+  ripple: 'rgba(30,58,95,0.12)',
+  rippleOnInk: 'rgba(255,255,255,0.18)',
   /** Ink-tinted, single light source (never pure black). */
   shadow: '#1E2C46',
 } as const;

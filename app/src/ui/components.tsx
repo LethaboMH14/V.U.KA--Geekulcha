@@ -16,12 +16,12 @@ export function AmbientField() {
     <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <RadialGradient id="warm" cx="15%" cy="8%" r="80%" gradientUnits="objectBoundingBox">
-          <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0.9" />
-          <Stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+          <Stop offset="0" stopColor={colors.bgSurface} stopOpacity="0.9" />
+          <Stop offset="1" stopColor={colors.bgSurface} stopOpacity="0" />
         </RadialGradient>
         <RadialGradient id="ink" cx="95%" cy="100%" r="75%" gradientUnits="objectBoundingBox">
-          <Stop offset="0" stopColor="#1E3A5F" stopOpacity="0.07" />
-          <Stop offset="1" stopColor="#1E3A5F" stopOpacity="0" />
+          <Stop offset="0" stopColor={colors.action} stopOpacity="0.07" />
+          <Stop offset="1" stopColor={colors.action} stopOpacity="0" />
         </RadialGradient>
       </Defs>
       <Rect width="100%" height="100%" fill={colors.bgBase} />
@@ -56,6 +56,7 @@ export function Button({
       accessibilityRole="button"
       accessibilityHint={accessibilityHint}
       onPress={onPress}
+      android_ripple={{color: primary ? colors.rippleOnInk : colors.ripple, foreground: true}}
       style={({pressed}) => [
         styles.btn,
         primary ? styles.btnPrimary : styles.btnGhost,
@@ -65,8 +66,8 @@ export function Button({
         <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
           <Defs>
             <LinearGradient id="inkfill" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#2A4C78" />
-              <Stop offset="1" stopColor="#1A3252" />
+              <Stop offset="0" stopColor={colors.actionTop} />
+              <Stop offset="1" stopColor={colors.actionBottom} />
             </LinearGradient>
           </Defs>
           <Rect width="100%" height="100%" rx={26} ry={26} fill="url(#inkfill)" />
@@ -146,6 +147,7 @@ export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete
               accessibilityRole="button"
               accessibilityLabel={k === 'del' ? 'Delete' : k}
               onPress={() => press(k)}
+              android_ripple={{color: colors.ripple, borderless: false, foreground: true}}
               style={({pressed}) => [styles.key, pressed && styles.keyPressed]}>
               {k === 'del' ? (
                 <Backspace size={24} color={colors.textTitle} />
@@ -168,15 +170,15 @@ const styles = StyleSheet.create({
   bezel: {
     padding: 5,
     borderRadius: radii.xl + 5,
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: colors.bezelFill,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
+    borderColor: colors.glassEdge,
   },
   card: {
     backgroundColor: colors.card,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: colors.glassEdge,
     padding: space.lg,
     shadowColor: colors.shadow,
     shadowOpacity: 0.12,
@@ -209,7 +211,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   btnGhost: {
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: colors.ghostFill,
     borderWidth: 1,
     borderColor: colors.controlEdge,
     justifyContent: 'center',
@@ -220,7 +222,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: colors.orbOnInk,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -238,7 +240,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.75)',
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
