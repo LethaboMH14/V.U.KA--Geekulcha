@@ -1,6 +1,6 @@
 # VUKA threat model — VIGIL + ANCHOR (STRIDE plus coercion)
 
-> **Owner:** Ipeleng Constance Modise. **Issued** 23 Sep 2026 by Lethabo (co-lead) as the starting model for P3.S3. **Status:** `PROPOSED` until Ipeleng accepts it. Supersedes the path `docs/THREAT-MODEL-VIGIL-ANCHOR.md` in `team/ipeleng.md`.
+> **Owner:** Ipeleng Constance Modise. **Issued** 23 Sep 2026 by Lethabo (co-lead) as the starting model for P3.S3. **Status:** `ACCEPTED` — 24 Sep 2026, Ipeleng Constance Modise (owner), via the owner review in `docs/build-log/entries/2026-09-24-ipeleng-p3s2-s3-owner-review.md`. Accepted with §9 recorded: 55 of 63 rows map to a spec control and a test whose oracle would fail if the threat succeeded; the 8 rows marked "none yet — see §9" stand as recorded observations with named owners per the rule below. Nothing is treated as mitigated until its test passes. Supersedes the path `docs/THREAT-MODEL-VIGIL-ANCHOR.md` in `team/ipeleng.md`.
 > **Serves:** S, T. Every threat maps to a spec control (`docs/VUKA-2-SPEC.md` IDs) and a test (T01–T24 from spec §15, T30–T49 new, defined in §6). Not legal advice.
 > **Rule:** a threat with no test gets a recorded observation or "not measured". Nothing is marked mitigated because the spec says so; it is mitigated when its test passes.
 
