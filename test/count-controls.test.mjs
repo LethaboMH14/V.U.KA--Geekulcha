@@ -21,8 +21,7 @@ test('counts statuses and reports duplicate and missing IDs in a fixture', () =>
 });
 
 test('counts three-digit control IDs (C-100 and above)', () => {
-  const md = ['| ID | Control | Status | Evidence |', '|---|---|---|---|', '| C-99 | A | **Done** | f |', '| C-100 | B | **Planned** | f |', '| C-122 | C | **Not doing** — reason | f |'].join('
-');
+  const md = ['| ID | Control | Status | Evidence |', '|---|---|---|---|', '| C-99 | A | **Done** | f |', '| C-100 | B | **Planned** | f |', '| C-122 | C | **Not doing** — reason | f |'].join(String.fromCharCode(10));
   const r = countControls(md);
   assert.equal(r.total, 3);
   assert.equal(r.counts['Not doing'], 1);
