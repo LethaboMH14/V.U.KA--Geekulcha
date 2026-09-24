@@ -32,11 +32,23 @@
 - Owns outright: VIGIL on-device sensing, signing, queue, Android build and measurement (KHAYA sensors, edge runtime and hardware parked 23 Sep, ADR-0034).
 - Reviews only: Sensor, signer and device-contract assumptions.
 - Lead / escalation: Lethabo, then both leads.
-- AI tool / model: Codex / GPT-5 (assistant-run in this session; owner confirmation pending).
+- AI tool / model: **FACT (owner request, 23 Sep):** Codex/GPT for implementation; Claude Code for reasoning and independent review. Specific selected models are recorded per run; recommendations are in `docs/VUKOSI-VIGIL-WORKFLOW.md`. No Claude run is claimed by this entry.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
 - Current task / status: Work order issued 23 Sep 2026 (see the Work order section below); release APK gate Thu 24 Sep 22:00. PR #42 (KHAYA BOM) parked with KHAYA.
 - Claimed files / contract versions: `appliance/agent.py`, `appliance/tests/`, `appliance/README.md`; consumes `contracts/events.schema.json` v0.1.0 without changing it.
 - Last updated: 23 September 2026 — work order issued by Lethabo (co-lead) via Claude Code assistant.
+
+## Workflow preparation declaration — 23 September 2026
+
+**PROPOSED:** prepare the execution workflow for P3.V1–P3.V6 and P3.L4, not product implementation or acceptance of the issued deadlines. Intended files: this file, `docs/OVERLAPS.md`, `docs/VUKOSI-VIGIL-WORKFLOW.md`, `docs/reviews/VUKOSI-PR43-READINESS.md`, `docs/VUKOSI-CLAUDE-PROMPT.md`, and a new `docs/build-log/entries/2026-09-23-codex-vukosi-vigil-workflow.md`.
+
+Criteria: T, U, S (and historical C1/C3 coordination). Trust answer: the implementation and independent review use the same pinned spec, explicit prerequisites and real-device evidence. Four gates: no input-authenticity claim from signatures; budget-phone tests remain required; no new economic claim; no private audio, keys or personal data published.
+
+Acceptance: live PR disposition and actionable findings with references; every Vukosi work-order item mapped to its deadline, owner dependency, check and handoff; Claude reasoning/review and GPT execution separated in files; no feature, contract or approval changed. Blockers: PR #43 remains open at inspected head `0c6d202`; P3.L8 and security review remain pending; physical phone access, capacity, predecessor access and the full Android toolchain are unconfirmed. Workflow is a local draft pending Claude and human review, not a remote coordination update.
+
+## Review and first-packet declaration — 23 September 2026
+
+**PROPOSED (Claude Code assistant, `claude-opus-5-5`, at Vukosi's request):** independent review plus the first implementation packet. The review is documentation-only. New: `docs/reviews/VUKOSI-WORKFLOW-CLAUDE-REVIEW.md`, `docs/workflows/vukosi/p2a-yamnet-provenance/TASK.md`, and a new `docs/build-log/entries/2026-09-23-claude-vukosi-review-first-packet.md`. Refined: `docs/VUKOSI-VIGIL-WORKFLOW.md`, this file and `docs/OVERLAPS.md`. **Packet P2a (P3.V2) paths, for the executor only:** `scripts/fetch_models.py`, `scripts/tests/test_fetch_models.py`, `docs/workflows/vukosi/p2a-yamnet-provenance/IMPLEMENTATION.md`, a new build-log entry, and a running-log line here. Downloads go to the gitignored `app/android/app/src/main/assets/models/` and are never committed. No contract, `shared/`, `.gitignore`, `docs/MODEL-LICENCES.md`, `docs/EVIDENCE.md`, CI or other owner's file. Criterion T/S. The older `appliance/` claim above is parked with KHAYA (review R4). Its replacement is Vukosi's to confirm.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 
@@ -87,7 +99,14 @@ See your work order's **Depends on → hands off to** line. Shared files are cla
 
 ## Needs and blockers
 
-- Physical phones: at least two Android phones (user + guardian) and one budget 2–3 GB phone for M4/M5 → leads confirm who brings what by Thu 24 Sep 10:00.
+- **PROPOSED — predecessor-file access:** Vukosi and Lethabo to provide an authorised path and recorded confirmation that the individually reviewed predecessor files may be read for the port; no old history or wholesale checkout is authorised.
+- **PROPOSED — release signing and publication:** Lethabo to name the release-signing custodian and approve a publication route for the APK; evidence is a named person and protected secret location, with no credential values in chat or the repository.
+- **PROPOSED — YAMNet source of record:** Vukosi to designate an authorised model source whose observed SHA-256 matches `docs/MODEL-LICENCES.md`; evidence closes P2a review finding C2 without changing the register to fit a download.
+- **PROPOSED — inference runtime:** Vukosi to approve installation of `ai_edge_litert`; evidence is the recorded approval and an environment check before installation. P2a live checks remain NOT RUN meanwhile.
+- **PROPOSED — contract v2 gaps C5–C8:** Sibusiso to close the PR #51 contract gaps; evidence is the reviewed contract-v2 change and passing contract tests.
+- **PROPOSED — offline queue skew:** Sibusiso and Ipeleng to decide the accepted clock-skew rule for offline-queued events; evidence is a recorded cross-layer/security decision and matching tests.
+- **PROPOSED — reboot re-arm:** Lethabo to decide the V10 reboot re-arm trigger; evidence is the approved spec decision and an acceptance test.
+- **PROPOSED — measurement phones:** the leads to provide one budget 2–3 GB Android phone and a second phone for M3/M4/M5; leads confirm who brings what by Thu 24 Sep 10:00. Evidence is the named devices available for the documented procedures.
 - Add new blockers here with the person's name and the evidence needed.
 
 ## Decisions affecting others
@@ -104,6 +123,9 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 
 ## Running log
 
+- 2026-09-23 — Codex assistant at Vukosi's request: pulled the existing clean hardware branch (already up to date), inspected the pivot and related PRs, and prepared a separate local workflow branch based on PR #43 head `0c6d202`. Recorded the owner's GPT-implementation / Claude-reasoning-and-review preference. No product work, availability commitment, work-order acceptance, GitHub review, approval or merge is asserted. See `docs/VUKOSI-VIGIL-WORKFLOW.md` and `docs/reviews/VUKOSI-PR43-READINESS.md`.
+
+- 2026-09-23 — Claude Code assistant (`claude-opus-5-5`) at Vukosi's request: independent review of the Codex workflow draft. R1–R3 confirmed and R1 widened to offline-queued events. New findings C1–C4: `*.csv` gitignored, no source of record for the YAMNet digest, asset-path mismatch, stale toolchain line. Prepared packet P2a (P3.V2 provenance gate). Not implemented. No GitHub action, approval, work-order acceptance or availability asserted. See `docs/reviews/VUKOSI-WORKFLOW-CLAUDE-REVIEW.md`.
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
 - 2026-09-15 — Protocol correction: the WBS/path declaration for 3.2 was recorded in this file after implementation began, rather than before the first edit as RULES/AGENTS require. The paths are now explicit (`appliance/agent.py`, `appliance/tests/`, `appliance/README.md`, `team/vukosi.md`, `docs/BUILD-LOG.md`); no shared contract was edited. This correction is assistant-authored and included in PR #24.
 - 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Vukosi is asserted; owner acknowledgement pending.

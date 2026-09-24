@@ -25,7 +25,7 @@
 - **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — Pivot PR reviewed and ADR-0034–0038 accepted 23 Sep; vectors, PIN-authority/guardian governance and contract v2 done 23-24 Sep. Now on P3.A3 slice 1: local FastAPI skeleton, PostgreSQL append/read path and focused tests. Request authentication is an always-true stub, not real authentication; slices 2/3 remain outstanding.
+**Current task** — Contract v2 (vectors, PIN-authority/guardian governance, openapi.yaml v2, pinned mock server) and P3.S14/S17 (CI + SCA gates, PR #62) are merged. §4a device-key registry merged as `PROPOSED` (PR #64) — still needs Ipeleng's security review before it counts as accepted, since it governs §7 auth. Now on P3.A3 slice 2 (real signed-request auth), blocked until Ipeleng reviews §4a. Slice 1 (FastAPI skeleton, PostgreSQL append/read) is done; its request authentication is an always-true stub pending slice 2.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -38,7 +38,7 @@
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
 - Claimed files / contract versions: `contracts/events.schema.json` v0.1.0; `contracts/openapi.yaml` v0.1.0 proposed pending both-lead approval; `package.json`; `test/events-contract.test.mjs`.
-- Last updated: 23 September 2026 — work order issued by Lethabo (co-lead) via Claude Code assistant.
+- Last updated: 24 September 2026 — PR #62 checks green; Ipeleng and Lethabo review pending.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 
@@ -95,6 +95,9 @@ See your work order's **Depends on → hands off to** line. Shared files are cla
 ## Needs and blockers
 
 - Add new blockers here with the person's name and the evidence needed.
+- **P3.S14/S17 shared-path claim (24 Sep, Codex acting at Sibusiso's request):** editing `.github/workflows/checks.yml`, the root `package-lock.json`, and `docs/security/SCA-WAIVERS.md`; Ipeleng is a co-owner for CI/security settings per `docs/OVERLAPS.md`. Ipeleng: please review the gate behavior and waiver policy before merge. No contract or app behavior change.
+- **P3.A3 slice 2 / P3.A6 deployment:** blocked pending a defined persisted source for enrolled device keys and journey ownership. `contracts/keys/README.md` only defines the public server key manifest and explicitly leaves manifest byte serialization unspecified; slice 1's `verify_request()` remains always-allow and `server/README.md` says the app must not be exposed before slice 2. Do not deploy the slice-1 stub.
+- **P3.A3 slice 3 / P3.A5 export:** blocked pending slice 2 and the human decisions identified in the packets (including Lethabo's T30 agreement and the currently open incident-rule decisions in `docs/PIN-AUTHORITY-RULES.md`). No implementation or live testnet submission until those prerequisites are satisfied.
 
 ## Decisions affecting others
 
@@ -116,3 +119,4 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-15 — Codex acting for Sibusiso: implemented the bounded WBS 3.3 human-gate proof path and six standard-library unittest cases. Refused privileged attempts return evidence receipts; destructive actions require distinct co-signers; no `flagged` assignment exists.
 - 2026-09-15 — Codex acting for Sibusiso: added tested discard-by-default embedding matching, s57 decision record, anchoring-cost reconciliation and sweep inventory, blockchain attack rehearsal, OpenTimestamps decision, evidence-checkpoint runbook and fallback/hotfix runbook. Remaining approvals and live rehearsals are explicitly open.
 - 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Sibusiso is asserted; owner acknowledgement pending.
+- 2026-09-24 — Codex assistant, acting at Sibusiso's request: prepared the P3.S14/S17 workflow changes, root npm lockfile, and dependency waiver process on `feat/sibusiso-ci-security-gates`; PR #62 is open at `9ab9d1cf2273718dd6ea3868e38c3a1ff3454eb4`. All seven GitHub jobs pass. Ipeleng and Lethabo review remains pending; checklist rows are in progress, not complete. No human approval is inferred.

@@ -142,6 +142,20 @@ The frozen `EvidenceEntry` shape is unchanged: `action, actor_id, target_type, t
 - **Idempotency and replay** (§7): an identical retry returns the original receipt. A reused `event_id` with different content is rejected (409). Any unseen `counter` is accepted, and exact repeats are rejected. The `event_id` lookup runs **before** the nonce and counter checks (§7, order of checks), so a retry after a lost response is answered, not rejected as a replay.
 - **Legacy format v1** (PR #39: genesis `prev_hash = null`, floats accepted, no signed statement) is verified by a separate legacy path and never produced again. Format v1 and v2 entries never mix in one chain.
 
+> **§4a is `PROPOSED`, added 24 September 2026 by Sibusiso, not yet accepted.** §4 already requires a registered key per `signer_key_id` (the signed-statement bullet) and a `signer_pubkey` on registration (the "Registration entries" bullet), but never specifies where that registration is persisted or how the server resolves "the" key for a subject at verification time. P3.A3 slice 2 (real request auth) cannot be built without this. Binds when both leads agree it, recorded in `docs/ADR-ACCEPTANCE-RECORD.md` alongside a new ADR.
+
+### 4a · Device and guardian key registry (`PROPOSED`)
+
+- **Storage:** a `signer_keys` table, one row per registered key: `subject_id, signer_key_id, signer_role (device|guardian|server), public_key, revoked_at, revoked_reason`. Not a new concept — this is where §4's "the id registered for `signer_key_id`" (the signed-statement bullet) actually lives.
+- **Encoding:** `public_key` is stored exactly as transmitted — SPKI, base64 — matching the `signer_pubkey` encoding §4 already specifies in its "Registration entries" bullet. No new encoding is introduced.
+- **Enrollment:**
+  - The genesis `registration` entry's `signer_pubkey` (plain `details`, §4's "Registration entries" bullet) is the subject's first `device` key. The server inserts it into `signer_keys` when it accepts that entry — this is the one case §4's signed-statement bullet already names where "no key is registered before it".
+  - A guardian's key is inserted on **guardian-accept** (§9 governance table, "add guardian"): the accept event carries the guardian's `signer_pubkey` the same way registration does.
+  - A device key from **recovery** (`POST /v1/devices/recover`, `new_device_key`) inserts a new `signer_keys` row and sets `revoked_at` on the prior device key to the recovery's server receipt time — this is the `key_revoked` behaviour §9 already names, just naming where it's stored.
+- **Active-key resolution at verification time:** for a given `signer_key_id`, the request is authenticated only if `signer_keys.revoked_at IS NULL` for that row. A subject or guardian has at most one non-revoked key per role at a time — recovery revokes the old row in the same transaction that inserts the new one (row-locked, matching §8's `SELECT … FOR UPDATE` pattern). There is deliberately no "most recent wins" rule: an un-revoked prior key stays valid until recovery explicitly revokes it, so a stale key never silently loses authority.
+- **Journey-to-subject ownership** (§7's auth order of checks, step 1): a request's `signer_key_id` resolves to exactly one `subject_id` via `signer_keys`. For a journey-targeted entry, the journey's own `subject_id` (set at journey creation, `POST /v1/journeys`) must equal the resolved `subject_id` — a key belonging to subject A can never write to subject B's journey or chain, checked before authentication succeeds.
+- **Out of scope for 4a:** ML-DSA-65 keys (§10 names them as "if built" — not yet), key rotation outside recovery, and the guardian decoy-key behaviour under duress (§9's decoy guardian never receives a real key registration — it's `signer_keys`-invisible by design, already covered by §9, not repeated here).
+
 ---
 
 ## 5 · Canonical form

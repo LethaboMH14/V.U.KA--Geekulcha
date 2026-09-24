@@ -121,10 +121,34 @@ New task worktrees use resolved remote refs; refresh before trusting any cached 
 - **#58** (Ipeleng, `shared/canonical.js`+`der.js`+`merkle.js`, P3.S2) — the required JS-side twin of my Python `anchor/canonical.py`/`merkle.py`; she cross-checked it directly against real Python output (10/10 canonical cases, 8/8 Merkle roots byte-identical). T01/T02 vectors it's waiting on already exist on PR #51 (`contracts/vectors/canonical.json`+`merkle.json`) — pinged her on the PR that they'll unskip once #51 merges. **Approved.**
 - **#59** (CI fix) and **#60** (Khutso's P3 criterion-coverage sweep) — both small, honest, no overclaiming. **Approved.**
 
+**Merged 2026-09-24: #47, #54, #56, #58, #60.** #59 closed as superseded — `main` already carried its fix directly (`b8b40a6`, pushed before #59 could land).
+
+**P3.A1 — DONE.** Contract v2 + canonical/Merkle vectors were already on `feat/sibusiso-contract-v2`; the one gap (pinned mock server, named in `docs/VUKA-2-SPEC.md`'s Thu-24 handoff row) is now closed. Verified live: `npx @stoplight/prism-cli@5.16.0 mock contracts/openapi.yaml` mocks every v2 path including deprecated v1 UMOJA routes, `/healthz` returns 200. Added `scripts/mock-server.sh` (`npm run mock`) and `contracts/README.md`, pushed to PR #51 (`8d447b5`), CI green. Not ticked on `docs/CHECKLIST.md` yet — still gated on both-leads review of #51 per team discipline, not merged.
+
+**P3.S20 / T30 — accepted, posted to Lethabo for the Thursday-noon checkpoint.** The only drafted option (PR #56, PIN-AUTHORITY-RULES.md §8 item 5): export requires a fresh PIN authorisation for action `export`; during an open incident or under a duress authorisation, export ends at the last head before the incident — a chain prefix still verifies, keeping the no-op convincing. Posted acceptance on PR #56's thread; awaiting Lethabo's agreement at the checkpoint before it's final.
+
+**Five Codex task packets written, 2026-09-24 — implementation work, not decisions:**
+- `sibusiso-workflow/tasks/anchor-server-slice2/01-task.md` — P3.A3 slice 2: real signed-request auth (Ed25519, §7), journey-to-subject binding. Most time-critical — blocks P3.A6's 09:00 deadline.
+- `sibusiso-workflow/tasks/azure-deploy/01-task.md` — P3.A6: actually deploy server-min to the already-provisioned App Service (infra from P3.A4 is ready; nothing deployed yet). Equally time-critical.
+- `sibusiso-workflow/tasks/anchor-server-slice3/01-task.md` — P3.A3 slice 3: durable escalation/outbox (§8) + Hedera anchoring (§10), using the proven SDK method names from the P3.A2 spike.
+- `sibusiso-workflow/tasks/export-proof/01-task.md` — P3.A5: export + public proof, gated on the T30 decision above.
+- `sibusiso-workflow/tasks/ci-security-gates/01-task.md` — P3.S14/S17: `.github/workflows/checks.yml` currently only runs secret-scan + document-contracts (confirmed by direct read) — adds scoped `node --test`/pytest/vitest, semgrep, SCA (npm audit, pip-audit, osv-scanner) with a documented waiver path.
+
+Not posted to GitHub — matching every earlier task packet this session (vectors, PIN-authority, anchor-server slice 1), Codex picks these up directly from the local files, no GitHub noise needed. Handing off to Codex itself is Sibusiso's own step; this session has no tool to message Codex directly (checked via `ListAgents`, no such peer).
+
+**#47, #54, #56, #58, #60 — approved then merged at Sibusiso's explicit request.** #59 closed as superseded (see above).
+
+**P3.S14/S17 — DONE, PR #62.** Codex implemented all five task packets' most self-contained item first: `.github/workflows/checks.yml` gained `tests` (root `node --test` scoped correctly to `test/**/*.test.mjs`, `shared/`'s own `npm test`, pytest when Python tests exist), `npm-audit`, `python-audit`, `semgrep` (pinned 1.177.0, `p/security-audit`, documented choice), `osv-scan` (digest-pinned v2.6.0). All 7 checks green on both push and PR triggers — verified directly against the diff, not the summary: action/tool pins justified, the `node --test` scoping avoids the exact bare-recursive mistake that would've picked up `shared/`'s vitest files, negative-test claim (disposable `lodash@4.17.20` fixture, `npm audit` exit 1) consistent with build-log evidence. `docs/security/SCA-WAIVERS.md` added, correctly records the other four packets as blocked with real technical reasons. Couldn't formally approve (GitHub blocks self-approval — PR opened under Sibusiso-K); left a verification comment instead, tagged Ipeleng (CI/security co-owner per `docs/OVERLAPS.md`) and Lethabo.
+
+**Real blocker found, not a Codex failure: no device-key registry is defined.** Codex correctly refused to guess one when scoping P3.A3 slice 2 — flagged in `SCA-WAIVERS.md` that `contracts/keys/README.md` only covers the server's own key manifest, not device/guardian enrollment, and slice 1's auth stub can't safely be replaced without it. Confirmed directly against `docs/VUKA-2-SPEC.md`: §4 requires a registered key per `signer_key_id` (line 139-140) and a `signer_pubkey` on registration (line 141) but never specifies where that's persisted or how the active key is resolved at verification time. This was blocking slice 2, slice 3, P3.A6 deploy and P3.A5 — everything downstream of slice 1.
+
+**§4a drafted and posted — PR #64.** `PROPOSED`, not accepted: a `signer_keys` table (subject_id, signer_key_id, role, public_key, revoked_at), reuses §4's existing SPKI/base64 encoding (no new format), enrollment via registration/guardian-accept/recovery (all already named in §4/§9), journey-to-subject ownership checked before auth succeeds, deliberately no "most-recent-wins" key resolution. Per `team/sibusiso.md`'s contract-freeze rule this needs Lethabo's agreement and a new ADR before it binds — posted as a PR, not pushed to `main` directly. Tagged her; this is now the single blocker on P3.A3 slice 2 and everything downstream of it.
+
 **Still open / unblocked-for-Sibusiso:**
-- Ipeleng's SECURITY.md/intake-gate.json conflict (#47) — posted, awaiting her confirmation, not yet resolved.
+- **PR #64 (§4a device-key registry)** — awaiting Lethabo. This is the critical path: unblocks slice 2 → slice 3 → P3.A6 → P3.A5 → P3.L4, all currently stalled on it.
+- **PR #62 (P3.S14/S17)** — awaiting Ipeleng + Lethabo review; content verified, ready once reviewed.
+- Ipeleng's SECURITY.md/intake-gate.json conflict (#47's original finding) — posted, awaiting her confirmation, not yet resolved.
 - PR #39 rebase-vs-close — precise breakdown posted 2026-09-24, awaiting Lethabo's decision; pinged her again directly on the PR thread same day since main has moved further and #39 is still `CONFLICTING`.
 - PR #57 (ADR-0039, Lethabo) — my `CHANGES_REQUESTED` from earlier is still the latest word; waiting on her.
-- P3.A3 slices 2 (real signed-request auth, journey-to-subject binding) and 3 (durable escalation/outbox, Hedera anchoring, `/healthz`, `/ws/panel`, guardian/PIN endpoints) — not started, not yet packetized as task handoffs.
-- PR #51 itself still needs both-leads review before merge per `RULES.md` — Lethabo has only commented, not approved. Getting #51 merged also unblocks Ipeleng's #58 vectors.
-- PRs #47, #54, #56, #58, #59, #60 are approved on my end but not yet merged — merging is not my call.
+- PR #51 itself still needs both-leads review before merge per `RULES.md` — Lethabo has only commented, not approved. Getting #51 merged also unblocks Ipeleng's #58 vectors (already merged, T01/T02 currently skip until #51 lands).
+- P3.L4 (thin end-to-end slice, joint with Lethabo/Vukosi/Ipeleng) — not packetized; genuinely blocked on P3.A3/A6 landing first.
