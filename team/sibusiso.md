@@ -37,7 +37,7 @@
 - Lead / escalation: Both leads for contract changes.
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Claimed files / contract versions: P3.A3/P3.A4 hardening claim — `server/main.py`, `server/db.py`, `server/payload_store.py`, `server/tests/`, `server/requirements.txt`, root `requirements.txt`, `startup.sh`, `.gitattributes` (shell line endings), `server/README.md`; ADR-0041 contract clarification claim — `contracts/openapi.yaml`, `test/openapi-contract.test.mjs`. The latter shared paths need both leads and contract/domain review before merge; this local claim is not approval.
+- Claimed files / contract versions: P3.A3/P3.A4 hardening claim — `server/main.py`, `server/db.py`, `server/outbox.py`, `server/payload_store.py`, `server/tests/`, `server/requirements.txt`, root `requirements.txt`, `startup.sh`, `.gitattributes` (shell line endings), `server/README.md`, `anchor/publish.py`, `anchor/hedera-sidecar/`, `anchor/verify.py`, `anchor/tests/`, `.github/workflows/checks.yml`; ADR-0041 and live-receipt contract corrections — `contracts/openapi.yaml`, `test/openapi-contract.test.mjs`. The shared contract paths need both leads and contract/domain review before merge; this local claim is not approval.
 - Last updated: 24 September 2026 — Codex assistant's hardening and packaging work tested locally against PostgreSQL; no push or deployment.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)

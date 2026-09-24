@@ -264,6 +264,8 @@ test("proof, receipt and subject schemas carry the §6, §9 and §10 fields", ()
   for (const field of ["topic_id", "sequence_number", "consensus_timestamp", "running_hash", "topic_epoch"]) {
     assert.match(receipt, new RegExp(`^        ${field}:`, "m"));
   }
+  assert.ok(receipt.includes("pattern: '^[0-9]+\\.[0-9]{1,9}$'"));
+  assert.ok(!receipt.includes("format: date-time"));
 
   const manifest = document.slice(document.indexOf("    KeyManifest:"), document.indexOf("    SubjectExport:"));
   assert.match(manifest, /server_ed25519_public_key/);

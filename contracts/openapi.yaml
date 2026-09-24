@@ -907,7 +907,10 @@ components:
       properties:
         topic_id: { type: string, minLength: 1 }
         sequence_number: { type: integer, minimum: 1 }
-        consensus_timestamp: { type: string, format: date-time }
+        consensus_timestamp:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{1,9}$'
+          description: Hedera mirror consensus time as seconds.nanoseconds, not RFC 3339.
         running_hash: { type: string, minLength: 1 }
         topic_epoch: { type: integer, minimum: 1, description: Epoch of the pinned topic/key manifest. }
     KeyManifest:
