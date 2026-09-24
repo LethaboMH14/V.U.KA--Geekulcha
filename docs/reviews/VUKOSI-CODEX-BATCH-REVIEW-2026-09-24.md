@@ -31,3 +31,8 @@ It says device checks are NOT RUN in the protocol run, which is accurate for tha
 
 ## Not verified
 Any device check on the rebased heads; a rebuild of the P1a APKs; the paperwork's claims about GitHub state.
+
+## Follow-up, same day (after Codex's second run)
+
+- **P7a rebased to `0933ea66596a3d3d20e770761e0fcfb8ece512a7`: verified.** Six P7a commits above `origin/main` (`3a54073`), no P2a commit. `git range-diff` marks two commits as changed (`0f73263`→`c41fb6f`, `4214389`→`8a8e87a`); I confirmed the patches are identical **outside `team/vukosi.md`**, where the P2a running-log line was intentionally dropped. The tree differs from the old head only by P2a's four files, `team/vukosi.md`, and `docs/SIBUSISO-HANDOVER.md`, which is `main`'s own new commit and not a rebase change. 26 offline tests pass (the old 42 minus P2a's 16); `eval_yamnet.py` does not import `fetch_models`. Docs, intake, 13 contract tests, `git diff --check` and Gitleaks pass.
+- **B3 correction: my advice was wrong.** `scripts/check-docs.mjs` resolves markdown links relative to the file, so full repo-root paths written as links fail the docs check. A PR description also cannot use file-relative links. **Use plain code-formatted paths, not links**, in the PR bodies, for example `docs/workflows/vukosi/p1a-rn-scaffold/REVIEW.md`. That passes the check and stays readable when pasted into GitHub.
