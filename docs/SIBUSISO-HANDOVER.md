@@ -180,11 +180,39 @@ Not posted to GitHub — matching every earlier task packet this session (vector
 - `export-proof` — T30's final rule from ADR-0041 (6h post-incident hold, not just "while open").
 - `anchor-server-slice3` — ADR-0041's member-ended closure, fallback deadline, PIN-gated journey end, wrong-PIN `attempt` handling.
 
+**PR #68 (ADR-0042/§4a) merged — 2026-09-24 ~12:46, on Sibusiso's explicit instruction.** This immediately re-broke PR #51 the same way as every prior main-merge today, but in a new file this time: #68's own accepted §4a text landed on `docs/VUKA-2-SPEC.md`, conflicting with my now-superseded draft of the same section on the contract-v2 branch. Resolved by taking `main`'s version outright (it's the accepted, amended text — my draft was strictly inferior to it). Re-verified: 104/104 pytest, 20/20 node --test, `check-docs`/`git diff --check` clean. Pushed (`95b28ed`); PR #51 confirmed `MERGEABLE` again.
+
+**Real, bigger blocker found handing slice 2 to Codex: C5–C8 and SEC-1/SEC-2 on PR #51 were never actually implemented.** Codex correctly refused to invent §7's request-signature transport rather than guess. Checked PR #51's full comment thread — Lethabo (and Vukosi before her) had already found and proposed resolutions for four contract gaps (C5–C8: no device-submittable request schema, no payload/salt transport, no §7 header scheme, `PinAuthorisation` wrongly asks the device to sign `expires_at`) plus two security blockers I hadn't fully registered:
+- **SEC-1 (blocker):** `PinAuthorisation` has no `sig`/`signer_key_id` at all — confirmed directly in `anchor/pin_authority.py:20`, `_STATEMENT_FIELDS` still includes `expires_at` and nothing signs the statement. Any request with a valid bearer token could currently claim PIN authority, contradicting §9's own rule.
+- **SEC-2 (blocker):** `PUT /v1/guardians/{id}/token` still lets a subject redirect a guardian's alerts via device signature + normal PIN — a coercer forcing the real PIN can silently disarm a guardian, bypassing the 24h delay and never-zero rule with no notification to anyone.
+
+Confirmed none of C5–C8/SEC-1/SEC-2 had landed (grepped the contract and code directly). Accepted all of Lethabo's proposed resolutions as written on PR #51 — they're spec-consistent and don't expand scope. Wrote `sibusiso-workflow/tasks/contract-c5c8-sec1-sec2/01-task.md` for Codex: `EventSubmission` schema, payload/salt transport, the `X-Vuka-*` header auth scheme (this is literally the answer to slice 2's §7 question), and the `PinAuthorisationStatement`/server-record split (schema + `pin_authority.py` together, since they share the canonicalized shape). Updated `anchor-server-slice2`'s task packet to depend on this landing first and gave it the exact header scheme rather than leaving Codex to guess again. SEC-3 through SEC-6 flagged as follow-ups, not blocking this pass.
+
+**`contract-c5c8-sec1-sec2` — implemented locally by Codex, independently re-verified, NOT pushed.** Re-ran everything myself rather than trusting the build-log report: 97/97 pytest (up from 96), 23/23 node --test (up from 20), `check-docs`/`git diff --check` clean. Read the actual diff, not just the summary:
+- `EventSubmission` schema: no server-computed fields required, `commitment`/`payload`/`salt` present, applied correctly to registration/events/check-ins — including a correct edge case (registration's own signature verifies against its own `signer_pubkey`, since no key is enrolled yet, matching §4a's documented exception).
+- `X-Vuka-Key-Id`/`X-Vuka-Ts`/`X-Vuka-Nonce`/`X-Vuka-Signature`: all four correctly typed `apiKey`-in-header, applied consistently across every device/guardian route.
+- `PUT /v1/guardians/{id}/token` (SEC-2): now explicitly guardian-signed only, description states subject/device paths are rejected — matches the fix exactly.
+- `anchor/pin_authority.py` (SEC-1): `PinAuthorisationStatement` (6 fields, signed) split cleanly from `PinAuthorisationRecord` (adds server-derived `expires_at`); `canonical_pin_authorised` signs only the 4 real §9 fields, `sig`/`signer_key_id` validated but excluded from signed bytes to avoid self-signing.
+
+Codex correctly held off pushing pending my authorization (per the task's explicit instruction) and flagged its own real limitation: this is contract/helper shape only — no server enforces any of it yet, that's slice 2's job.
+
+**`contract-c5c8-sec1-sec2` — pushed to PR #51, then a real follow-up fix pushed too.** Pushed `f504082` on Sibusiso's go-ahead. Codex then found and fixed a real gap on its own: the payload envelope's own top-level keys weren't checked for ASCII-only (only nested object keys were) — added `propertyNames` pattern, pushed as `f3cd73d`. Independently re-verified both commits myself before and after push (23/23 node --test, 97/97 pytest each time).
+
+**GitHub Actions billing outage — found, flagged, now resolved.** PR #51's CI (and every other open PR's) started failing every job in 3-5 seconds with "recent account payments have failed or your spending limit needs to be increased." Not a code problem — posted this directly on PR #51 for Lethabo. Confirmed later: CI is running real jobs again across every PR.
+
+**Reviewed 3 new PRs from Ipeleng (back and active) — all approved:**
+- **#74** — improved T01/T02 vector harness (drops my temporary field-name aliasing now the real shapes are settled, adds genuine audit-path verification against `merkle.py`'s proof output). Independently tested against my real `contracts/vectors/*.json`: 5/5 pass, not just against `main` where it trivially skips.
+- **#79/#80** — key-manifest bootstrap (§10), closes the exact open note I left in `contracts/keys/README.md` ("must not emit a fingerprint until serialization is pinned"). Independently verified: 64/64 pass. **Updated `anchor-server-slice3`'s task packet** with the pinned fingerprint (`c1d90404...5c70a0a2`) so Codex's Hedera anchoring publishes the identical `0x02` message the verify page expects — this was a real cross-team dependency that needed catching before slice 3 starts.
+
+**6 more PRs checked (CI-only, outside my domain):** #71 (privacy/POPIA), #72 (SSDLC recount), #73/#77 (RN app shell, VIGIL screens), #75 (Ipeleng's THREAT-MODEL/TEST-SPECS acceptance), #76 (P3.L8 records), #78 (security governance/ADR-0043). All CI green, none need my technical review.
+
 **Still open / unblocked-for-Sibusiso:**
-- §4a (PR #68) and verify-min (PR #69) — both approved, awaiting Lethabo's merge.
+- PR #69 (verify-min) — approved, still awaiting Lethabo's merge.
 - PR #70's 13 decisions — posted, awaiting Lethabo's fold-in to `TEST-SPECS.md`.
-- Ipeleng's SECURITY.md/intake-gate.json conflict — **resolved by Lethabo** in #68 (gitleaks scan clean).
 - PR #65 (Babatunde) — `CHANGES_REQUESTED` stands, no fix pushed.
-- PR #51 — CI fully green (14/14); still needs Lethabo's actual approval (not just her comment) per `RULES.md`'s both-leads rule. Merging it also unblocks Ipeleng's #58 vectors (T01/T02 currently skip until #51 lands).
-- Once #68 merges: P3.A3 slice 2 is genuinely ready to hand to Codex — nothing else blocks it.
+- PR #51 — CI fully green, `MERGEABLE`, C5–C8/SEC-1/SEC-2 pushed; still needs Lethabo's actual approval.
 - P3.L4 (thin end-to-end slice, joint with Lethabo/Vukosi/Ipeleng) — not packetized; genuinely blocked on P3.A3/A6 landing first.
+
+**Sep 25 status check, ~18:20:** real state doesn't match `docs/CHECKLIST.md`'s stale ☐ marks. P3.A6 (09:00 deploy) effectively missed — infra ready, app not deployed. P3.L4 (12:00) not started, blocked on A3/A6. P3.A3 ~20% done (slice 1 only). P3.A5 not started. P3.A4 half done (infra+CI ready, app not deployed). Already done ahead of schedule: P3.A1, P3.A2, P3.S14/S17, P3.S20/S21.
+
+**Sent Codex the slice-2 prompt — genuinely unblocked, no caveats needed.** Pointed it at `sibusiso-workflow/tasks/anchor-server-slice2/01-task.md`, named the exact commits (`f504082`, `f3cd73d`) it should build auth against, reminded it to pull latest (§4a, ADR-0041, key-manifest bootstrap all landed today), and repeated the internal-DB-only journey-binding decision. Waiting on its report.
