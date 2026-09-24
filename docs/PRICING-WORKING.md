@@ -48,3 +48,21 @@ New figures go into `docs/EVIDENCE.md` (Khutso's register), so each lives in one
 - [ ] The sensitivity table at r = 5, 10, 15 and 20%, on `ASSUMPTION` inputs and on market-comparable inputs
 - [ ] The price decision posted here, with the script output quoted
 - [ ] Update `docs/ECONOMICS-VIGIL-ANCHOR.md` to match
+
+## 5 · Continue here — economics v2 (opened 24 Sep 2026 for Babatunde)
+
+PR #46 (this working file) and PR #53 (`docs/MARKET-DATA.md`) are merged. This branch carries the rest of the economics work to Friday.
+
+- [x] Market data committed (`docs/MARKET-DATA.md`, #53)
+- [ ] **Source links for `MARKET-DATA.md` §4 and the VAT row.** Each `FACT` row needs a URL and date, or it stays ⚑ secondary and off the slides. Khutso confirms them into `docs/EVIDENCE.md`.
+- [ ] **Claims ratio:** quote the exact Prudential Authority span and page for 51.4%.
+- [ ] **Script rebuild** (`scripts/economics_vigil_anchor.py`): a ceiling of F × S × r ÷ 12 against a floor of R5.72 + fixed ÷ members + margin. Every input is a tagged, configurable parameter; no price is hard-coded; the units are consistent (annualise both).
+- [ ] **Split the R5,090** into hosting R2,500, email R800, Sage R240, insurance R700, monitoring R400 and ticketing R450. Then add tools as a per-engineer input.
+- [ ] **Missing costs as tagged inputs:** SMS fallback per alert per guardian; 24/7 on-call cover; production hosting (managed PostgreSQL, backups, 90-day storage); cyber and PI insurance; accountant and CIPC; UIF/SDL if stipends become salaries; payment terms and working capital; USD exposure; real bank integration after `sim_bank`.
+- [ ] **VAT basis:** quote B2B prices excluding VAT. Model the VAT-inclusive case (at R50 inclusive, break-even rises to 4,123 on today's base).
+- [ ] **Free members:** add the free-to-paying ratio. The insurer pays R5.72 for every enrolled member.
+- [ ] **Stipends:** 5 or 7. At 7, break-even at R50 is 4,871 on today's base.
+- [ ] **Sensitivity table** at r = 5, 10, 15 and 20%, and at 1,000, 5,000 and 10,000 members: the ceiling next to the floor, printed by the script.
+- [ ] **Pitch rule (from PR #50):** show the tier and E-level only. Never a score, a percentage or a "likelihood".
+- [ ] **Price decision** posted on this PR with the script output quoted (Fri 25 Sep).
+- [ ] **Update `docs/ECONOMICS-VIGIL-ANCHOR.md`** to match.
