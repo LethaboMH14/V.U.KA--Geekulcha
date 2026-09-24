@@ -61,7 +61,7 @@
 | P3.B4 | Deck (>10 slides incl. privacy policy and the honesty slide), buyer = bank or insurer partner | Babatunde | B, U | Sep 26 | ☐ | Added 23 Sep, Lethabo |
 | P3.B5 | Pitch script + two timed rehearsals under 3:00 | Babatunde | B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.B6 | Problem statement with the mentors (with Lethabo) | Babatunde | B, I | Sep 25 19:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.L8 | PIN authority, incident closure and removal rules agreed (§8, §9) | Lethabo, Ipeleng | S | Sep 24 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo; draft `docs/PIN-AUTHORITY-RULES.md` + ADR-0040 up 24 Sep — awaiting Lethabo's agreement at the checkpoint |
+| P3.L8 | PIN authority, incident closure and removal rules agreed (§8, §9) | Lethabo, Ipeleng | S | Sep 24 12:00 | ☑ | Added 23 Sep (PR #43 review), Lethabo; draft `docs/PIN-AUTHORITY-RULES.md` + ADR-0040 up 24 Sep — awaiting Lethabo's agreement at the checkpoint; 24 Sep: Lethabo agreed ADR-0040 and decided all 8 open items (ADR-0041, `PROPOSED`); ☑ when Sibusiso accepts ADR-0041; accepted by Sibusiso 24 Sep 12:21 UTC (PR #67 review) |
 | P3.L9 | Commit a redacted copy of the organiser's pre-build confirmation | Lethabo | — | Sep 24 12:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.A6 | **Server-min** deployed: ingest + chain + export | Sibusiso | T | Sep 25 09:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
 | P3.S7 | **Verify-min**: hashes, links, device signatures | Ipeleng | T, S | Sep 25 10:00 | ☐ | Added 23 Sep (PR #43 review), Lethabo |
@@ -82,8 +82,8 @@
 | P3.S17 | Lockfiles committed; `npm audit`, `pip-audit`, `osv-scanner` clean or waived in the PR | Sibusiso | T, S | Sep 26 10:00 | ◐ | Added 23 Sep, Lethabo · PR #62 npm/OSV pass; no Python requirements to audit; review pending |
 | P3.S18 | PR #43 blockers B1–B3 in the spec; T37 specified | Lethabo, Ipeleng | S | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S19 | PR #43 should-fix S1–S4 each closed or carried with an owner | Sibusiso, Vukosi, Mutarisi, Ipeleng, Lethabo | S | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.S20 | Export during an open incident decided (PIN-gated, prefix-only) and T30 specified | Lethabo, Sibusiso | S | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.S21 | Wrong-PIN behaviour and attempt limit decided; T47 oracle written | Lethabo, Ipeleng | S, U | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S20 | Export during an open incident decided (PIN-gated, prefix-only) and T30 specified | Lethabo, Sibusiso | S | Sep 24 12:00 | ☑ | Added 23 Sep, Lethabo; 24 Sep: decided (ADR-0041) and T30 specified in spec §15; ☑ when Sibusiso accepts ADR-0041; accepted by Sibusiso 24 Sep 12:21 UTC (PR #67 review) |
+| P3.S21 | Wrong-PIN behaviour and attempt limit decided; T47 oracle written | Lethabo, Ipeleng | S, U | Sep 24 12:00 | ☑ | Added 23 Sep, Lethabo; 24 Sep: decided (ADR-0041) and T47 oracle written in spec §15; ☑ when Sibusiso accepts ADR-0041; accepted by Sibusiso 24 Sep 12:21 UTC (PR #67 review) |
 | P3.S22 | 15-minute incident tabletop (leaked key, location leak) recorded in a build-log entry | Ipeleng | S | Sep 25 12:00 | ☐ | Added 23 Sep, Lethabo |
 
 ---

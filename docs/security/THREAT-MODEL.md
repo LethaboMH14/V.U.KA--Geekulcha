@@ -150,8 +150,8 @@ Columns: threat · spec control · test · residual. **S**poofing, **T**ampering
 | TM-C6 | Compromised or malicious server | Chain and roots let a stranger detect rewriting of what was anchored | §4, §6, §10 | T04, T05, T22 | **B2:** it can suppress or fabricate escalation. Independent witnesses are the guardian's own-key ack and the bank's own systems |
 | TM-C7 | Staged fraud (accomplice screams, claim filed) | Anchor proves when, not what; history kept; bank hold blocks the payout | duress doc §3 | T11 | A real scream in a real room is accepted as a signal |
 | TM-C8 | Forced recovery (code dictated under threat), then bulk export | Recovery notifies guardians, revokes the old key | §9 | T13, T35 | **PR #43 S4:** extend the 24 h freeze to export (T39) |
-| TM-C9 | **Export during an open incident, from the held phone** | My Record hides incident events (V8), but `GET /v1/subjects/{id}/export` returns "genesis → head with payloads" (A5) to the device key. The payload of the current `checkin_result` contains `duress_pin`. Export is not in the §9 PIN table | A5, V8, S3 | **T30 (new)** | **Open — the largest gap this model found (§7)** |
-| TM-C10 | PIN guessing on the held phone | Not specified: no attempt limit or wrong-PIN behaviour at the check-in | §9 | T47 (oracle pending) | Open — decide at the Thu §8/§9 meeting |
+| TM-C9 | **Export during an open incident, from the held phone** | My Record hides incident events (V8), but `GET /v1/subjects/{id}/export` returns "genesis → head with payloads" (A5) to the device key. The payload of the current `checkin_result` contains `duress_pin`. Export is not in the §9 PIN table | A5, V8, S3 | **T30** | **Rule decided 24 Sep (ADR-0041): PIN-gated export, pre-incident hold** — open until T30 passes |
+| TM-C10 | PIN guessing on the held phone | Not specified: no attempt limit or wrong-PIN behaviour at the check-in | §8, §9 | T47 | **Rule decided 24 Sep (ADR-0041)** — open until T47 passes |
 
 ## 5 · OWASP API Security Top 10 (2023) mapping
 

@@ -459,3 +459,48 @@ Generative super-resolution was considered as a fix and **rejected**: PULSE-styl
 **Context:** ADR-0036's acceptance carried the condition that the PIN-verification mechanism (B5) is a pre-condition for implementing `docs/VUKA-2-SPEC.md` §9, tracked as P3.L8 (Lethabo + Ipeleng, due Thu 24 Sep 12:00). The rules already exist in the spec (§8, §9) but are spread across two sections and an ADR; the Thursday check needs one page the team can agree line by line, and Vukosi needs the discard boundary stated without reading the whole spec.
 **Decision:** (1) The rules are agreed **as written in `docs/PIN-AUTHORITY-RULES.md`**, which restates and does not change §8, §9 or ADR-0036. (2) The one-sentence rule: a normal PIN is authority to do things; a duress PIN is authority to pretend things happened while raising the alarm; neither a normal PIN nor a coercer holding the phone can close an incident, delete evidence immediately, or leave the user with zero guardians. (3) Under duress, every destructive or trust-changing action (remove guardian, delete evidence, recover to a new device) is a **hard no-op dressed as success**; guardian addition creates a decoy and notifies the real guardians. (4) Incidents close only on guardian `stand_down` or automatic 6 h closure — never on a normal PIN. (5) Guardian removal stays silent, scheduled, effective after 24 h, deferred during an open incident, and refused for the last guardian. (6) Any future change to these rules goes through a fresh ADR, never a config change — the contract-freeze discipline applies.
 **Consequences:** Tests T12, T13, T16 and T24 are the executable form of this agreement. Vukosi and Mutarisi build the settings surfaces against `docs/PIN-AUTHORITY-RULES.md` from the moment this ADR is accepted. If the Thursday check amends a rule, the spec section and this page change in the same PR that records the acceptance.
+
+---
+
+## ADR-0041: The P3.L8 checkpoint decisions: member-ended closure, a fallback deadline, a PIN-gated journey end, the pre-incident hold and the wrong-PIN rule
+**Status:** Accepted (2026-09-24). Decided by Lethabo (co-lead, acting as security lead while Ipeleng is away); accepted by Sibusiso (second lead), with no conditions, in his PR #67 review. **Partly supersedes** ADR-0036 and ADR-0040(4) on one point: incidents close only on `stand_down` or the 6 h close.
+**Owner:** Lethabo Hoaeane
+**Context:** ADR-0040 restated the PIN-authority rules and left eight points open (`docs/PIN-AUTHORITY-RULES.md` §8). Three of them are gaps the coercion catalogue exposed (PR #50):
+- **G33:** a false alarm answered normally never closes, so a later dead zone reaches the bank signal (E06, E10, E11).
+- **G34:** a check-in that is never shown escalates nothing (I01).
+- **G35:** an attacker can end the journey and silence `contact_lost` (F06).
+
+Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unlimited PIN guessing. The other three are the recovery freeze, the undefined "6 h identical-record hold", and what a duress no-op shows after its deadline. Lethabo decided all eight on 24 Sep 2026.
+**Decision:** The binding text is `docs/VUKA-2-SPEC.md` §8 and §9, with tests T30, T47 and T50–T52 in §15.
+1. **Member-ended closure (G33).** Ending the journey with a normal PIN closes an incident only when:
+   - every check-in outcome in it is `normal_pin`;
+   - no guardian alert has been sent in it;
+   - it holds no duress signal.
+
+   Otherwise it closes only on `stand_down` or the 6 h close. `incident_closed` records `reason: member_ended`.
+2. **No bank signal on an all-normal `contact_lost` (G33 backstop).** `contact_lost` after all-normal outcomes alerts guardians and never sends the bank signal.
+3. **Fallback deadline (G34).** `no_answer` fires at the receipt of `signal_detected` plus the window plus 30 s, unless `opened` arrives first.
+4. **PIN-gated journey end (G35).** `journey_ended` needs a fresh `end_journey` authorisation. A duress end looks exactly like a normal end on the phone, and the service stops. Server-side it is a duress signal: guardians are alerted and the S1 bank signal is sent.
+5. **Recovery freeze confirmed.** For 24 h after recovery to a new device, guardian changes, deletion and bulk export are frozen.
+6. **The pre-incident hold (T30 and the 6 h hold).** While an incident is open, and for 6 h after its last PIN entry, the member's own device reads only up to the head before the incident's first event. That covers My Record and export, identically for both PINs. Export always needs a fresh `export` authorisation.
+7. **Wrong PINs (T47).** Attempts 1–3 each show the identical "Try again".
+   - From the third wrong attempt, the outcome is fixed as `no_answer` at the deadline.
+   - Any later entry shows "Checked in".
+   - A duress PIN still counts as a duress signal.
+   - No lockout is ever shown.
+8. **A duress no-op keeps showing success** indefinitely after its promised delay.
+
+**Rejected alternatives:**
+- Keeping the rule that nothing but `stand_down` or 6 h closes an incident. False alarms would keep reaching the bank signal.
+- Only removing the bank signal from `contact_lost`. The incident would stay open, and guardians would still be called on every dead zone.
+- A one-tap journey end. An attacker could silence `contact_lost`.
+- A visible lockout after wrong PINs. It tells the coercer the PIN was wrong, and lets them wait it out.
+- Blocking export entirely during an incident. A refusal is itself a tell.
+- A "still processing" state after a no-op's deadline. A returning coercer could read it as failure.
+
+**Consequences:**
+- Closes the rule side of G33, G34 and G35. Each gap closes when its test passes (T50, T51, T52).
+- New residual, stated in §17: a coercer who forces out the **real** PIN can end a false-alarm incident. The member's defence is the duress PIN, which looks identical.
+- The contract gains action `end_journey` and the `incident_closed.reason` field. Both are for Sibusiso in contract v2 (#51).
+- Vukosi builds the check-in attempt counter and the identical journey-end path; Mutarisi builds the screens.
+- The coercion catalogue (`scripts/coercion_scenarios.py`, rule H4) is re-run under these rules as a follow-up.
