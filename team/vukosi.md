@@ -99,7 +99,14 @@ See your work order's **Depends on → hands off to** line. Shared files are cla
 
 ## Needs and blockers
 
-- Physical phones: at least two Android phones (user + guardian) and one budget 2–3 GB phone for M4/M5 → leads confirm who brings what by Thu 24 Sep 10:00.
+- **PROPOSED — predecessor-file access:** Vukosi and Lethabo to provide an authorised path and recorded confirmation that the individually reviewed predecessor files may be read for the port; no old history or wholesale checkout is authorised.
+- **PROPOSED — release signing and publication:** Lethabo to name the release-signing custodian and approve a publication route for the APK; evidence is a named person and protected secret location, with no credential values in chat or the repository.
+- **PROPOSED — YAMNet source of record:** Vukosi to designate an authorised model source whose observed SHA-256 matches `docs/MODEL-LICENCES.md`; evidence closes P2a review finding C2 without changing the register to fit a download.
+- **PROPOSED — inference runtime:** Vukosi to approve installation of `ai_edge_litert`; evidence is the recorded approval and an environment check before installation. P2a live checks remain NOT RUN meanwhile.
+- **PROPOSED — contract v2 gaps C5–C8:** Sibusiso to close the PR #51 contract gaps; evidence is the reviewed contract-v2 change and passing contract tests.
+- **PROPOSED — offline queue skew:** Sibusiso and Ipeleng to decide the accepted clock-skew rule for offline-queued events; evidence is a recorded cross-layer/security decision and matching tests.
+- **PROPOSED — reboot re-arm:** Lethabo to decide the V10 reboot re-arm trigger; evidence is the approved spec decision and an acceptance test.
+- **PROPOSED — measurement phones:** the leads to provide one budget 2–3 GB Android phone and a second phone for M3/M4/M5; leads confirm who brings what by Thu 24 Sep 10:00. Evidence is the named devices available for the documented procedures.
 - Add new blockers here with the person's name and the evidence needed.
 
 ## Decisions affecting others
