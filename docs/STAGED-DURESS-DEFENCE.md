@@ -1,6 +1,6 @@
 # Staged duress — why a faked event does not become "ground truth"
 
-> **Owner:** Ipeleng Constance Modise (security and privacy). **Drafted** 23 September 2026 by Lethabo's Claude Code assistant from the pivot analysis. **Status:** `PROPOSED`. Ipeleng reviews it, owns it from here, and turns every rule into an executable test in `docs/VUKA-2-SPEC.md` §15. Not legal advice. Statutory text marked ⚑ still needs a primary-source read before it goes on a slide.
+> **Owner:** Ipeleng Constance Modise (security and privacy). **Drafted** 23 September 2026 by Lethabo's Claude Code assistant from the pivot analysis. **Status:** `PROPOSED`. Ipeleng reviews it, owns it from here, and turns every rule into an executable test in `docs/VUKA-2-SPEC.md` §15. Not legal advice. Primary-source reads completed 23 September 2026: Cybercrimes Act 19 of 2020 ss 8–9 from the official Gazette PDF (No. 44651, 1 June 2021; ss 2–12 commenced 1 December 2021); POPIA s1 "biometrics" from the official Gazette PDF (No. 37067, 26 November 2013); the FTC Bureau of Economics staff report *Report on Emergency Technology for Use with ATMs* (April 2010) from ftc.gov. One ⚑ remains: the Justices of the Peace and Commissioners of Oaths Act 16 of 1963 s9 citation is still secondary-source only.
 
 ---
 
@@ -19,7 +19,7 @@ Blockchain people call this the **oracle problem**: a ledger guarantees what hap
 
 1. **It locks in the story before the fraudster knows what else exists.** ATM cameras, cell towers, the accomplice's phone, a vehicle tracker, the bank's own device fingerprint. A genuine victim's record agrees with the world. A staged one has to agree with every other record forever, and any mismatch is permanent.
 2. **It keeps what the fraudster would rather hide.** Cancelled alerts, a normal PIN entered minutes earlier, a guardian removed at 22:50, three convenient "emergencies" last month. A hash chain makes selective deletion detectable.
-3. **It turns one liar into several crimes.** Staging an event is ⚑ **cyber forgery and cyber uttering** (Cybercrimes Act 19 of 2020, s9) and, if a payout follows, ⚑ **cyber fraud** (s8). A false sworn statement to SAPS is a separate offence ⚑ (Justices of the Peace and Commissioners of Oaths Act 16 of 1963, s9 — secondary source only). Those laws exist whatever we build. We make the trail permanent.
+3. **It turns one liar into several crimes.** Staging an event is **cyber forgery and cyber uttering** (Cybercrimes Act 19 of 2020, s9): s9(1) reaches one who "unlawfully and with the intention to defraud makes— (a) false data; or (b) a false computer program, to the actual or potential prejudice of another person", and s9(2) makes passing off false data **cyber uttering**. If a payout follows, it is **cyber fraud** (s8): one who "unlawfully and with the intention to defraud makes a misrepresentation— (a) by means of data or a computer program … which causes actual or potential prejudice to another person". Both read 23 September 2026 from the official Gazette PDF (No. 44651, 1 June 2021; ss 2–12 commenced 1 December 2021). A false sworn statement to SAPS is a separate offence ⚑ (Justices of the Peace and Commissioners of Oaths Act 16 of 1963, s9 — still secondary source only; the Act's own text has not been read). Those laws exist whatever we build. We make the trail permanent.
 
 ---
 
@@ -74,7 +74,7 @@ Blockchain people call this the **oracle problem**: a ledger guarantees what hap
 **VUKA can** send a signed risk signal to a bank that has integrated. **The bank's own systems decide.** In the demo this is `sim_bank`, labelled SIMULATED.
 
 Rules:
-1. **Never reveal the duress at the point of coercion.** The US FTC's 2010 report on emergency ATM PINs ⚑ (primary text not yet read; conclusions reproduced from secondary sources) found the idea never deployed and warned it could increase danger to the victim.
+1. **Never reveal the duress at the point of coercion.** The US FTC's 2010 report on emergency ATM PINs — Bureau of Economics staff report *Report on Emergency Technology for Use with ATMs* (April 2010), mandated by s508 of the US CARD Act of 2009; primary text read 23 September 2026 — states: "FTC staff learned that emergency-PIN technologies have never been deployed at any ATMs, and alarm buttons have been deployed only at very few ATMs", and that the available information suggests such devices "(2) may in some instances increase the danger to customers who are targeted by offenders and also lead to some false alarms".
 2. **Use friction criminals already expect:** new-beneficiary holds, lower limits, "payment scheduled". Precedent: Capitec's Feature Lock already imposes a mandatory 4-hour delay before a locked feature can be unlocked (Capitec blog, 2024).
 3. **Explain only after the person is safe.** Release needs a human in a safe place: a branch visit with ID, or a verified call-back.
 4. **The bank decides; VUKA recommends.** A small "decoy" withdrawal is the bank's risk call, never ours.
@@ -102,12 +102,12 @@ Rules:
 
 ---
 
-## 8 · Legal hooks (⚑ until read from primary text by Ipeleng; ECTA s15(3) and RICA s1 "intercept" — primary text read 23 Sep)
+## 8 · Legal hooks (primary texts read 23 September 2026, except where noted ⚑)
 
 | Law | What it gives us |
 |---|---|
 | **ECTA 25 of 2002, s15(3)** (primary text read 23 Sep) | A court weighs the reliability of how a data message was generated, stored and communicated; how its integrity was maintained; and how its originator was identified. ANCHOR is built to those factors. Say **"built to maximise the ECTA s15 reliability factors"**, never "court-admissible" |
-| **Cybercrimes Act 19 of 2020, ss8–9** | Staging = cyber forgery/uttering; a payout = cyber fraud |
+| **Cybercrimes Act 19 of 2020, ss8–9** (primary text read 23 Sep; official Gazette PDF, No. 44651) | Staging = cyber forgery/uttering — s9(1): "unlawfully and with the intention to defraud makes— (a) false data; or (b) a false computer program, to the actual or potential prejudice of another person"; s9(2) adds cyber uttering (passing off false data). A payout = cyber fraud — s8: "makes a misrepresentation— (a) by means of data or a computer program … which causes actual or potential prejudice to another person" |
 | **RICA 70 of 2002, s1 "intercept"** (primary text read 23 Sep) | Interception needs a *communication* whose contents are made available to someone other than the parties. On-device classification of ambient sound, with nothing stored or transmitted, very likely falls outside it. This is our reading, not an opinion — counsel question stands (`docs/RICA-POSITION.md`) |
-| **POPIA s1 "biometrics"** | Covers "voice recognition", meaning identifying *who* is speaking. YAMNet classifies *what sound* occurred and identifies nobody. Each 0.975 s classification window is still personal information while it exists in memory — no audio is stored (spec V3) — so minimality applies |
+| **POPIA s1 "biometrics"** (primary text read 23 Sep; official Gazette PDF, No. 37067) | s1 defines "biometrics" to include "voice recognition" — identifying *who* is speaking. YAMNet classifies *what sound* occurred and identifies nobody. Each 0.975 s classification window is still personal information while it exists in memory — no audio is stored (spec V3) — so minimality applies |
 | **UK PSR APP reimbursement (from 7 Oct 2024)** | The comparison model: reimbursement is the default, with a high "gross negligence" bar. VUKA's record lowers the cost of investigating a claim; it is **not** a new bar victims must clear |
