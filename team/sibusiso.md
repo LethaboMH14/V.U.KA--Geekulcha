@@ -21,7 +21,7 @@
 - **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate keeps its `watch_candidate` ceiling and its tests stay green.
 - Never `--no-verify`.
 
-**Current task** — Work order below (issued 23 Sep). First: review the pivot PR as second lead, then contract v2 by Thu 12:00.
+**Current task** — P3.A3 slice 1: local FastAPI skeleton, PostgreSQL append/read path and focused tests. Request authentication is an always-true stub, not real authentication; slices 2/3 remain outstanding.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
