@@ -76,10 +76,10 @@
 | P3.S11 | Test specifications for T30–T49 (fixture, oracle, prerequisites), each sent to its writer | Ipeleng | S, T | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S12 | Internal test plan executed: `docs/security/PENTEST-RESULTS.md` with pass / fail / not run for all 64 PT cases | Ipeleng | S | Sep 26 20:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S13 | `docs/security/COMPLIANCE-GOVERNANCE.md` reviewed; counsel questions Q-C1–Q-C7 logged | Ipeleng | S, B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.S14 | CI runs `node --test` plus semgrep and SCA jobs | Sibusiso | T, S | Sep 25 12:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S14 | CI runs `node --test` plus semgrep and SCA jobs | Sibusiso | T, S | Sep 25 12:00 | ◐ | Added 23 Sep, Lethabo · PR #62 all checks green 24 Sep; review pending |
 | P3.S15 | ZAP baseline on staging API and verify page; report linked | Ipeleng | S | Sep 26 14:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S16 | MobSF static scan of the release APK; highs triaged | Vukosi | S | Sep 26 10:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.S17 | Lockfiles committed; `npm audit`, `pip-audit`, `osv-scanner` clean or waived in the PR | Sibusiso | T, S | Sep 26 10:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.S17 | Lockfiles committed; `npm audit`, `pip-audit`, `osv-scanner` clean or waived in the PR | Sibusiso | T, S | Sep 26 10:00 | ◐ | Added 23 Sep, Lethabo · PR #62 npm/OSV pass; no Python requirements to audit; review pending |
 | P3.S18 | PR #43 blockers B1–B3 in the spec; T37 specified | Lethabo, Ipeleng | S | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S19 | PR #43 should-fix S1–S4 each closed or carried with an owner | Sibusiso, Vukosi, Mutarisi, Ipeleng, Lethabo | S | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S20 | Export during an open incident decided (PIN-gated, prefix-only) and T30 specified | Lethabo, Sibusiso | S | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |

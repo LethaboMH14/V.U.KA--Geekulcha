@@ -25,7 +25,7 @@
 - **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — P3.S14/S17 CI and dependency-security gates, branch `feat/sibusiso-ci-security-gates` (started 24 Sep from local `main` at `3a5407394183b52f9c701e0fa24a8fa270ec2442`). The remaining local packets for ANCHOR slice 2, Azure deployment, slice 3, and export are under dependency/design review; see the build-log entry before treating them as implementation-ready.
+**Current task** — P3.S14/S17 CI and dependency-security gates, PR [#62](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/62), head `9ab9d1cf2273718dd6ea3868e38c3a1ff3454eb4` on base `3a5407394183b52f9c701e0fa24a8fa270ec2442`. All seven CI jobs pass; Ipeleng and Lethabo's reviews remain pending. Checklist rows stay in progress until review. The other local packets for ANCHOR slice 2, Azure deployment, slice 3, and export remain under dependency/design review; see the build-log entry before treating them as implementation-ready.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -38,7 +38,7 @@
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
 - Claimed files / contract versions: `contracts/events.schema.json` v0.1.0; `contracts/openapi.yaml` v0.1.0 proposed pending both-lead approval; `package.json`; `test/events-contract.test.mjs`.
-- Last updated: 24 September 2026 — P3.S14/S17 CI gate work recorded by Codex assistant at Sibusiso's request; PR acceptance pending.
+- Last updated: 24 September 2026 — PR #62 checks green; Ipeleng and Lethabo review pending.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 
@@ -119,4 +119,4 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-15 — Codex acting for Sibusiso: implemented the bounded WBS 3.3 human-gate proof path and six standard-library unittest cases. Refused privileged attempts return evidence receipts; destructive actions require distinct co-signers; no `flagged` assignment exists.
 - 2026-09-15 — Codex acting for Sibusiso: added tested discard-by-default embedding matching, s57 decision record, anchoring-cost reconciliation and sweep inventory, blockchain attack rehearsal, OpenTimestamps decision, evidence-checkpoint runbook and fallback/hotfix runbook. Remaining approvals and live rehearsals are explicitly open.
 - 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Sibusiso is asserted; owner acknowledgement pending.
-- 2026-09-24 — Codex assistant, acting at Sibusiso's request: prepared the P3.S14/S17 workflow changes, root npm lockfile, and dependency waiver process on `feat/sibusiso-ci-security-gates`. Local Node suites and npm audits pass; Semgrep, OSV-Scanner and remote PR acceptance still need Linux CI, and Ipeleng's review is pending. No checklist completion or human approval is inferred.
+- 2026-09-24 — Codex assistant, acting at Sibusiso's request: prepared the P3.S14/S17 workflow changes, root npm lockfile, and dependency waiver process on `feat/sibusiso-ci-security-gates`; PR #62 is open at `9ab9d1cf2273718dd6ea3868e38c3a1ff3454eb4`. All seven GitHub jobs pass. Ipeleng and Lethabo review remains pending; checklist rows are in progress, not complete. No human approval is inferred.
