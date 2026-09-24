@@ -1,6 +1,6 @@
 # VUKA security test specifications
 
-> **Owner:** Ipeleng; Lethabo covering the security lane from 24 Sep 2026. **Status:** `PROPOSED`.
+> **Owner:** Ipeleng; Lethabo covering the security lane from 24 Sep 2026. **Status:** `PROPOSED` — reviewed and accepted **with conditions** by Ipeleng (owner) on 24 Sep 2026: T04–T52 each carry fixture, oracle, prerequisites and a negative control; the T24 and T37 oracles satisfy PR #43 condition B1. Conditions: (1) every `UNDEFINED — needs contract v2 (#51)` value waits on the contract and is not invented by a writer; (2) no test is recorded as run or passed from this document — the coverage table stays `not written` until each runner executes.
 > **Serves:** S, T.
 > An oracle here is the pass criterion. A test that can't run yet is recorded as not run, never as passed.
 
