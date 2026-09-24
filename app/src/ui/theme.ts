@@ -32,6 +32,8 @@ export const colors = {
   borderSubtle: '#F0ECE4',
   borderEmphasis: '#E2DDD2',
   inputBorder: '#6F747D',
+  /** Control edges: 3.1:1 on the ivory base (WCAG 1.4.11), so keys hold in daylight. */
+  controlEdge: '#8F897E',
 
   /** Ink-tinted, single light source (never pure black). */
   shadow: '#1E2C46',
@@ -52,20 +54,28 @@ export const space = {
   xl: 24,
 } as const;
 
+/** IBM Plex, bundled as Android font assets (OFL). On Android a family name is the file name. */
+export const fonts = {
+  regular: 'IBMPlexSans-Regular',
+  medium: 'IBMPlexSans-Medium',
+  semibold: 'IBMPlexSans-SemiBold',
+  mono: 'IBMPlexMono-Regular',
+} as const;
+
 export const type = {
-  hero: {fontSize: 32, fontWeight: '600' as const, letterSpacing: -0.3, color: colors.textTitle},
-  title: {fontSize: 22, fontWeight: '600' as const, color: colors.textTitle},
+  hero: {fontFamily: fonts.semibold, fontSize: 32, lineHeight: 36, letterSpacing: -0.3, color: colors.textTitle},
+  title: {fontFamily: fonts.semibold, fontSize: 22, color: colors.textTitle},
   eyebrow: {
+    fontFamily: fonts.medium,
     fontSize: 11,
-    fontWeight: '500' as const,
     letterSpacing: 1.1,
     textTransform: 'uppercase' as const,
     color: colors.textDim,
   },
-  body: {fontSize: 15, lineHeight: 22, color: colors.textSecondary},
-  label: {fontSize: 15, fontWeight: '600' as const, color: colors.textLabel},
-  caption: {fontSize: 13, lineHeight: 19, color: colors.textDim},
-  mono: {fontFamily: 'monospace', fontSize: 13, color: colors.textMono},
+  body: {fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: colors.textSecondary},
+  label: {fontFamily: fonts.semibold, fontSize: 15, color: colors.textLabel},
+  caption: {fontFamily: fonts.regular, fontSize: 13, lineHeight: 19, color: colors.textDim},
+  mono: {fontFamily: fonts.mono, fontSize: 13, color: colors.textMono},
 } as const;
 
 /** Minimum touch target (WCAG 2.5.5 / Android guidance). */

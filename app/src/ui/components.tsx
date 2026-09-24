@@ -1,23 +1,39 @@
 /**
  * VIGIL UI primitives, rebuilt from the prototype reference for React Native:
- * a double-bezel hero card, pill buttons with a trailing orb, status chips
- * that always pair a mark with a word, and the PIN keypad.
+ * an ambient light field, a double-bezel hero card, a gradient pill button
+ * with a trailing orb, status chips that always pair a mark with a word, and
+ * the PIN keypad.
  */
 import React, {useState} from 'react';
 import {Pressable, StyleSheet, Text, View, type ViewStyle} from 'react-native';
-import {colors, radii, space, type, TOUCH} from './theme';
+import Svg, {Defs, LinearGradient, RadialGradient, Rect, Stop} from 'react-native-svg';
+import {Backspace} from 'phosphor-react-native';
+import {colors, fonts, radii, space, TOUCH} from './theme';
 
-export function Card({
-  hero,
-  style,
-  children,
-}: {
-  hero?: boolean;
-  style?: ViewStyle;
-  children: React.ReactNode;
-}) {
+/** Soft light from one source (top-left), drawn once behind the content. */
+export function AmbientField() {
+  return (
+    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Defs>
+        <RadialGradient id="warm" cx="15%" cy="8%" r="80%" gradientUnits="objectBoundingBox">
+          <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0.9" />
+          <Stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+        </RadialGradient>
+        <RadialGradient id="ink" cx="95%" cy="100%" r="75%" gradientUnits="objectBoundingBox">
+          <Stop offset="0" stopColor="#1E3A5F" stopOpacity="0.07" />
+          <Stop offset="1" stopColor="#1E3A5F" stopOpacity="0" />
+        </RadialGradient>
+      </Defs>
+      <Rect width="100%" height="100%" fill={colors.bgBase} />
+      <Rect width="100%" height="100%" fill="url(#warm)" />
+      <Rect width="100%" height="100%" fill="url(#ink)" />
+    </Svg>
+  );
+}
+
+export function Card({hero, style, children}: {hero?: boolean; style?: ViewStyle; children: React.ReactNode}) {
   const inner = <View style={[styles.card, hero && styles.cardHero, style]}>{children}</View>;
-  // Double bezel: a thin outer shell around the hero card.
+  // Double bezel: a thin frosted shell around the hero card.
   return hero ? <View style={styles.bezel}>{inner}</View> : inner;
 }
 
@@ -31,7 +47,7 @@ export function Button({
   label: string;
   onPress: () => void;
   variant?: 'primary' | 'ghost';
-  trailing?: string;
+  trailing?: React.ReactNode;
   accessibilityHint?: string;
 }) {
   const primary = variant === 'primary';
@@ -43,14 +59,21 @@ export function Button({
       style={({pressed}) => [
         styles.btn,
         primary ? styles.btnPrimary : styles.btnGhost,
-        pressed && {transform: [{scale: 0.98}], opacity: 0.92},
+        pressed && {transform: [{scale: 0.98}], opacity: 0.94},
       ]}>
-      <Text style={[styles.btnText, {color: primary ? colors.actionText : colors.action}]}>{label}</Text>
-      {trailing ? (
-        <View style={[styles.orb, !primary && {backgroundColor: colors.actionDim}]}>
-          <Text style={[styles.orbText, {color: primary ? colors.actionText : colors.action}]}>{trailing}</Text>
-        </View>
+      {primary ? (
+        <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Defs>
+            <LinearGradient id="inkfill" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor="#2A4C78" />
+              <Stop offset="1" stopColor="#1A3252" />
+            </LinearGradient>
+          </Defs>
+          <Rect width="100%" height="100%" rx={26} ry={26} fill="url(#inkfill)" />
+        </Svg>
       ) : null}
+      <Text style={[styles.btnText, {color: primary ? colors.actionText : colors.action}]}>{label}</Text>
+      {trailing ? <View style={[styles.orb, !primary && {backgroundColor: colors.actionDim}]}>{trailing}</View> : null}
     </Pressable>
   );
 }
@@ -65,23 +88,24 @@ export function StatusChip({label, tone}: {label: string; tone: 'received' | 'ne
           ? {backgroundColor: colors.greenFill, borderColor: colors.greenBorder}
           : {backgroundColor: colors.bgElevated, borderColor: colors.borderEmphasis},
       ]}>
-      <Text style={{fontSize: 12, color: received ? colors.greenText : colors.textSecondary}}>
-        {received ? '● ' : '○ '}
+      <View style={[styles.chipDot, {backgroundColor: received ? colors.greenText : colors.textDim}]} />
+      <Text style={{fontFamily: fonts.medium, fontSize: 12, color: received ? colors.greenText : colors.textSecondary}}>
         {label}
       </Text>
     </View>
   );
 }
 
-export function Leaf({mark}: {mark: string}) {
+/** Icon in a 40 dp frosted circle. Decorative: hidden from screen readers. */
+export function Leaf({children}: {children: React.ReactNode}) {
   return (
-    <View style={styles.leaf} accessibilityElementsHidden importantForAccessibility="no">
-      <Text style={{fontSize: 16, color: colors.textTitle}}>{mark}</Text>
+    <View style={styles.leaf} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {children}
     </View>
   );
 }
 
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
 
 /**
  * PIN keypad. Deliberately knows nothing about which PIN is which: it hands
@@ -91,11 +115,10 @@ const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
 export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete: (pin: string) => void}) {
   const [pin, setPin] = useState('');
   const press = (k: string) => {
-    if (k === '⌫') {
+    if (k === 'del') {
       setPin(p => p.slice(0, -1));
       return;
     }
-    if (!k) return;
     const next = (pin + k).slice(0, length);
     if (next.length === length) {
       setPin('');
@@ -106,7 +129,11 @@ export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete
   };
   return (
     <View>
-      <View style={styles.dots} accessibilityLabel={`${pin.length} of ${length} digits entered`}>
+      <View
+        style={styles.dots}
+        accessible
+        accessibilityLabel={`${pin.length} of ${length} digits entered`}
+        accessibilityLiveRegion="polite">
         {Array.from({length}).map((_, i) => (
           <View key={i} style={[styles.dot, i < pin.length && styles.dotFilled]} />
         ))}
@@ -117,10 +144,14 @@ export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete
             <Pressable
               key={i}
               accessibilityRole="button"
-              accessibilityLabel={k === '⌫' ? 'Delete' : k}
+              accessibilityLabel={k === 'del' ? 'Delete' : k}
               onPress={() => press(k)}
-              style={({pressed}) => [styles.key, pressed && {backgroundColor: colors.bgElevated}]}>
-              <Text style={styles.keyText}>{k}</Text>
+              style={({pressed}) => [styles.key, pressed && styles.keyPressed]}>
+              {k === 'del' ? (
+                <Backspace size={24} color={colors.textTitle} />
+              ) : (
+                <Text style={styles.keyText}>{k}</Text>
+              )}
             </Pressable>
           ) : (
             <View key={i} style={styles.keyBlank} importantForAccessibility="no" />
@@ -135,15 +166,15 @@ const styles = StyleSheet.create({
   bezel: {
     padding: 5,
     borderRadius: radii.xl + 5,
-    backgroundColor: 'rgba(255,255,255,0.45)',
+    backgroundColor: 'rgba(255,255,255,0.5)',
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: 'rgba(255,255,255,0.9)',
   },
   card: {
     backgroundColor: colors.card,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
+    borderColor: 'rgba(255,255,255,0.85)',
     padding: space.lg,
     shadowColor: colors.shadow,
     shadowOpacity: 0.12,
@@ -165,23 +196,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    overflow: 'hidden',
   },
   btnPrimary: {
     backgroundColor: colors.action,
     shadowColor: colors.shadow,
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    shadowOffset: {width: 0, height: 6},
-    elevation: 4,
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    shadowOffset: {width: 0, height: 8},
+    elevation: 5,
   },
   btnGhost: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255,255,255,0.55)',
     borderWidth: 1,
-    borderColor: colors.borderEmphasis,
+    borderColor: colors.controlEdge,
     justifyContent: 'center',
     paddingRight: 22,
   },
-  btnText: {fontSize: 16, fontWeight: '600'},
+  btnText: {fontFamily: fonts.semibold, fontSize: 16},
   orb: {
     width: 40,
     height: 40,
@@ -190,18 +222,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  orbText: {fontSize: 18, fontWeight: '700'},
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     borderWidth: 1,
     borderRadius: radii.pill,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
+  chipDot: {width: 6, height: 6, borderRadius: 3},
   leaf: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: 'rgba(255,255,255,0.75)',
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
@@ -217,12 +252,11 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     backgroundColor: colors.bgSurface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.controlEdge,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  keyPressed: {backgroundColor: colors.bgElevated},
   keyBlank: {width: 76, height: 64},
-  keyText: {fontSize: 24, fontWeight: '500', color: colors.textTitle},
+  keyText: {fontFamily: fonts.medium, fontSize: 24, color: colors.textTitle},
 });
-
-export const text = type;

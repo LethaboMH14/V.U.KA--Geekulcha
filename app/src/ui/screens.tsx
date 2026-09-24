@@ -5,13 +5,30 @@
  *
  * Duress rule: the Journey check and "Checked in" are one frame each for the
  * normal and the duress PIN. Nothing on screen depends on which PIN it was.
+ *
+ * Demo rule (prototype: "no demo controls on the phone"): the visible demo
+ * trigger exists only in debug builds. Pipeline builds keep a hidden
+ * long-press on the "Journey active" title so the check-in can be shown.
  */
 import React, {useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
-import {Button, Card, Leaf, PinKeypad, StatusChip} from './components';
-import {colors, space, type} from './theme';
+import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {
+  ArrowRight,
+  CaretLeft,
+  CaretRight,
+  CheckCircle,
+  DotsThreeCircle,
+  Microphone,
+  ShieldCheck,
+  ShieldChevron,
+  Users,
+  Waveform,
+} from 'phosphor-react-native';
+import {AmbientField, Button, Card, Leaf, PinKeypad, StatusChip} from './components';
+import {colors, fonts, space, TOUCH, type} from './theme';
+import {version} from '../../package.json';
 
-type JourneyState = 'ready' | 'active' | 'check' | 'checked';
+type Screen = 'ready' | 'active' | 'check' | 'checked' | 'settings';
 
 const SIM_GUARDIANS = [
   {name: 'Thandi M.', accepted: true},
@@ -19,39 +36,66 @@ const SIM_GUARDIANS = [
   {name: 'Ayanda N.', accepted: false},
 ];
 
-export function VigilApp() {
-  const [state, setState] = useState<JourneyState>('ready');
+const ICON = {size: 20, color: colors.textTitle} as const;
 
-  if (state === 'check') {
-    return <JourneyCheck onDone={() => setState('checked')} />;
+export function VigilApp() {
+  const [screen, setScreen] = useState<Screen>('ready');
+  const [armed, setArmed] = useState(false);
+
+  if (screen === 'check') {
+    return <JourneyCheck onDone={() => setScreen('checked')} />;
   }
-  if (state === 'checked') {
-    return <CheckedIn onDone={() => setState('active')} />;
+  if (screen === 'checked') {
+    return <CheckedIn onDone={() => setScreen('active')} />;
   }
   return (
-    <ScrollView style={{backgroundColor: colors.bgBase}} contentContainerStyle={styles.page}>
-      {state === 'ready' ? (
-        <Home onStart={() => setState('active')} />
-      ) : (
-        <JourneyActive onEnd={() => setState('ready')} onSimCheck={() => setState('check')} />
-      )}
-      <Text style={styles.sim}>SIMULATED demo data · pipeline build 0.0.1</Text>
-    </ScrollView>
+    <View style={{flex: 1}}>
+      <AmbientField />
+      <ScrollView contentContainerStyle={styles.page}>
+        {screen === 'settings' ? (
+          <Settings onBack={() => setScreen(armed ? 'active' : 'ready')} />
+        ) : screen === 'ready' ? (
+          <Home
+            onStart={() => {
+              setArmed(true);
+              setScreen('active');
+            }}
+            onMenu={() => setScreen('settings')}
+          />
+        ) : (
+          <JourneyActive
+            onEnd={() => {
+              setArmed(false);
+              setScreen('ready');
+            }}
+            onSimCheck={() => setScreen('check')}
+          />
+        )}
+        <Text style={styles.sim}>SIMULATED demo data · build {version}</Text>
+      </ScrollView>
+    </View>
   );
 }
 
-function Home({onStart}: {onStart: () => void}) {
+function Home({onStart, onMenu}: {onStart: () => void; onMenu: () => void}) {
   const accepted = SIM_GUARDIANS.filter(g => g.accepted).length;
   return (
     <View style={{gap: space.md}}>
-      <View>
-        <Text style={type.eyebrow}>Good evening</Text>
-        <Text style={styles.name}>Lerato</Text>
+      <View style={[styles.row, {justifyContent: 'space-between'}]}>
+        <View>
+          <Text style={type.eyebrow}>Good evening</Text>
+          <Text style={styles.name}>Lerato</Text>
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Menu" onPress={onMenu} hitSlop={8} style={styles.iconBtn}>
+          <DotsThreeCircle size={26} color={colors.textDim} />
+        </Pressable>
       </View>
 
       <Card hero>
         <View style={styles.row}>
-          <Leaf mark="◇" />
+          <Leaf>
+            <ShieldChevron {...ICON} />
+          </Leaf>
           <Text style={type.eyebrow}>VIGIL</Text>
         </View>
         <Text style={[type.hero, {marginTop: 12}]} accessibilityRole="header">
@@ -60,12 +104,14 @@ function Home({onStart}: {onStart: () => void}) {
         <Text style={[type.body, {marginTop: 10, marginBottom: 20}]}>
           VIGIL isn't listening yet. Start a journey and it will listen on this phone until you end it.
         </Text>
-        <Button label="Start journey" trailing="→" onPress={onStart} />
+        <Button label="Start journey" trailing={<ArrowRight size={18} weight="bold" color="#FFFFFF" />} onPress={onStart} />
       </Card>
 
       <Card>
         <View style={styles.row}>
-          <Leaf mark="◎" />
+          <Leaf>
+            <Users {...ICON} />
+          </Leaf>
           <Text style={type.label}>Guardians ready</Text>
         </View>
         <Text style={[type.body, {color: colors.textLabel, marginTop: 10}]}>
@@ -76,9 +122,12 @@ function Home({onStart}: {onStart: () => void}) {
         </Text>
       </Card>
 
-      <Text style={[type.caption, {paddingHorizontal: 4}]}>
-        Discreet, not invisible: Android shows a microphone dot while a journey is active.
-      </Text>
+      <View style={[styles.row, {alignItems: 'flex-start', paddingHorizontal: 4}]}>
+        <Microphone size={16} color={colors.textDim} style={{marginTop: 2}} />
+        <Text style={[type.caption, {flex: 1}]}>
+          Discreet, not invisible: Android shows a microphone dot while a journey is active.
+        </Text>
+      </View>
     </View>
   );
 }
@@ -89,12 +138,17 @@ function JourneyActive({onEnd, onSimCheck}: {onEnd: () => void; onSimCheck: () =
     <View style={{gap: space.md}}>
       <Card hero>
         <View style={styles.row}>
-          <Leaf mark="∿" />
+          <Leaf>
+            <Waveform {...ICON} />
+          </Leaf>
           <Text style={type.eyebrow}>VIGIL · listening</Text>
         </View>
-        <Text style={[type.hero, {marginTop: 12}]} accessibilityRole="header">
-          Journey active
-        </Text>
+        {/* Hidden, unlabelled: a long press shows the check-in in pipeline builds. */}
+        <Pressable onLongPress={onSimCheck} delayLongPress={1500} accessible={false}>
+          <Text style={[type.hero, {marginTop: 12}]} accessibilityRole="header">
+            Journey active
+          </Text>
+        </Pressable>
         <ListeningLine />
         <Text style={[type.body, {marginTop: 8}]}>Listening on this phone.</Text>
       </Card>
@@ -102,7 +156,9 @@ function JourneyActive({onEnd, onSimCheck}: {onEnd: () => void; onSimCheck: () =
       <Card>
         <View style={[styles.row, {justifyContent: 'space-between'}]}>
           <View style={styles.row}>
-            <Leaf mark="◎" />
+            <Leaf>
+              <Users {...ICON} />
+            </Leaf>
             <Text style={type.label}>Guardians ready</Text>
           </View>
           <StatusChip tone="received" label="Server reached" />
@@ -110,8 +166,8 @@ function JourneyActive({onEnd, onSimCheck}: {onEnd: () => void; onSimCheck: () =
         <View style={{marginTop: 14, gap: 10}}>
           {SIM_GUARDIANS.map(g => (
             <View key={g.name} style={[styles.row, {justifyContent: 'space-between'}]}>
-              <Text style={{fontSize: 14, color: colors.textLabel}}>{g.name}</Text>
-              <Text style={{fontSize: 13, color: g.accepted ? colors.textSecondary : colors.textDim}}>
+              <Text style={styles.guardian}>{g.name}</Text>
+              <Text style={[type.caption, {color: g.accepted ? colors.textSecondary : colors.textDim}]}>
                 {g.accepted ? 'Ready' : 'Pending'}
               </Text>
             </View>
@@ -124,12 +180,44 @@ function JourneyActive({onEnd, onSimCheck}: {onEnd: () => void; onSimCheck: () =
       </Card>
 
       <Button label="End journey" variant="ghost" onPress={onEnd} />
-      <Button
-        label="Demo: show a journey check"
-        variant="ghost"
-        onPress={onSimCheck}
-        accessibilityHint="Simulates the check-in that a detection would open"
-      />
+      {__DEV__ ? (
+        <Button
+          label="Demo: show a journey check"
+          variant="ghost"
+          onPress={onSimCheck}
+          accessibilityHint="Debug builds only. Simulates the check-in a detection would open"
+        />
+      ) : null}
+    </View>
+  );
+}
+
+function Settings({onBack}: {onBack: () => void}) {
+  return (
+    <View style={{gap: space.md}}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={onBack} style={[styles.row, styles.iconBtn]}>
+        <CaretLeft size={20} color={colors.action} />
+        <Text style={[type.label, {color: colors.action}]}>Back</Text>
+      </Pressable>
+      <Text style={type.hero} accessibilityRole="header">
+        Settings
+      </Text>
+      <Card>
+        <View style={[styles.row, {justifyContent: 'space-between'}]}>
+          <View style={[styles.row, {flex: 1}]}>
+            <Leaf>
+              <ShieldCheck {...ICON} />
+            </Leaf>
+            <View style={{flex: 1}}>
+              <Text style={type.label}>Security &amp; privacy</Text>
+              <Text style={[type.caption, {marginTop: 2}]}>
+                The live evidence score arrives with the security scorecard. No number is shown until it's computed.
+              </Text>
+            </View>
+          </View>
+          <CaretRight size={18} color={colors.textDim} />
+        </View>
+      </Card>
     </View>
   );
 }
@@ -141,9 +229,7 @@ function JourneyCheck({onDone}: {onDone: () => void}) {
       <Text style={[type.title, {textAlign: 'center'}]} accessibilityRole="header">
         Journey check
       </Text>
-      <Text style={[type.body, {textAlign: 'center', marginTop: 8, marginBottom: 32}]}>
-        Enter your PIN to continue
-      </Text>
+      <Text style={[type.body, {textAlign: 'center', marginTop: 8, marginBottom: 32}]}>Enter your PIN to continue</Text>
       <PinKeypad onComplete={() => onDone()} />
     </View>
   );
@@ -155,9 +241,9 @@ function CheckedIn({onDone}: {onDone: () => void}) {
     return () => clearTimeout(t);
   }, [onDone]);
   return (
-    <View style={[styles.flat, {alignItems: 'center'}]}>
+    <View style={[styles.flat, {alignItems: 'center'}]} accessibilityLiveRegion="assertive">
       <View style={styles.tick}>
-        <Text style={{fontSize: 34, color: colors.greenText}}>✓</Text>
+        <CheckCircle size={40} weight="fill" color={colors.greenText} />
       </View>
       <Text style={[type.hero, {marginTop: 18}]} accessibilityRole="header">
         Checked in
@@ -171,7 +257,7 @@ function ListeningLine() {
   // Static waveform bars; motion arrives with Reanimated in the native pass.
   const bars = [6, 12, 20, 14, 8, 18, 26, 16, 10, 22, 12, 7, 15, 24, 11, 6];
   return (
-    <View style={styles.wave} accessibilityElementsHidden importantForAccessibility="no">
+    <View style={styles.wave} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {bars.map((h, i) => (
         <View key={i} style={[styles.bar, {height: h}]} />
       ))}
@@ -181,8 +267,10 @@ function ListeningLine() {
 
 const styles = StyleSheet.create({
   page: {padding: space.xl, paddingTop: 36, gap: space.md},
-  name: {fontSize: 26, fontWeight: '600', color: colors.textTitle, letterSpacing: -0.2},
+  name: {fontFamily: fonts.semibold, fontSize: 26, color: colors.textTitle, letterSpacing: -0.2},
+  guardian: {fontFamily: fonts.regular, fontSize: 14, color: colors.textLabel},
   row: {flexDirection: 'row', alignItems: 'center', gap: 10},
+  iconBtn: {minHeight: TOUCH, minWidth: TOUCH, justifyContent: 'center', alignItems: 'center'},
   divider: {height: 1, backgroundColor: colors.border, marginVertical: 14},
   sim: {...type.caption, textAlign: 'center', marginTop: 8},
   flat: {flex: 1, backgroundColor: colors.bgBase, justifyContent: 'center', padding: space.xl},
