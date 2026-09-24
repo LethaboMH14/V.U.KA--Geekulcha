@@ -181,10 +181,14 @@ Not posted to GitHub — matching every earlier task packet this session (vector
 - `anchor-server-slice3` — ADR-0041's member-ended closure, fallback deadline, PIN-gated journey end, wrong-PIN `attempt` handling.
 
 **Still open / unblocked-for-Sibusiso:**
-- §4a (PR #68) and verify-min (PR #69) — both approved, awaiting Lethabo's merge.
+**PR #68 (ADR-0042/§4a) merged — 2026-09-24 ~12:46, on Sibusiso's explicit instruction.** This immediately re-broke PR #51 the same way as every prior main-merge today, but in a new file this time: #68's own accepted §4a text landed on `docs/VUKA-2-SPEC.md`, conflicting with my now-superseded draft of the same section on the contract-v2 branch. Resolved by taking `main`'s version outright (it's the accepted, amended text — my draft was strictly inferior to it). Re-verified: 104/104 pytest, 20/20 node --test, `check-docs`/`git diff --check` clean. Pushed (`95b28ed`); PR #51 confirmed `MERGEABLE` again.
+
+**§4a is now genuinely, fully unblocked.** Wrote the Codex handoff prompt for `anchor-server-slice2` — it now needs no "confirm #68 merged first" caveat, just "PR #68 merged, go ahead."
+
+**Still open / unblocked-for-Sibusiso:**
+- PR #69 (verify-min) — approved, still awaiting Lethabo's merge (not yet merged, unlike #68).
 - PR #70's 13 decisions — posted, awaiting Lethabo's fold-in to `TEST-SPECS.md`.
-- Ipeleng's SECURITY.md/intake-gate.json conflict — **resolved by Lethabo** in #68 (gitleaks scan clean).
 - PR #65 (Babatunde) — `CHANGES_REQUESTED` stands, no fix pushed.
-- PR #51 — CI fully green (14/14); still needs Lethabo's actual approval (not just her comment) per `RULES.md`'s both-leads rule. Merging it also unblocks Ipeleng's #58 vectors (T01/T02 currently skip until #51 lands).
-- Once #68 merges: P3.A3 slice 2 is genuinely ready to hand to Codex — nothing else blocks it.
+- PR #51 — CI fully green (14/14), `MERGEABLE`; still needs Lethabo's actual approval (not just her comment) per `RULES.md`'s both-leads rule. Merging it also unblocks Ipeleng's #58 vectors (T01/T02 currently skip until #51 lands).
+- **P3.A3 slice 2 is ready to hand to Codex right now** — nothing blocks it anymore.
 - P3.L4 (thin end-to-end slice, joint with Lethabo/Vukosi/Ipeleng) — not packetized; genuinely blocked on P3.A3/A6 landing first.
