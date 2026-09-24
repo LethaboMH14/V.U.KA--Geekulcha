@@ -122,7 +122,7 @@ Full provenance in `EVIDENCE.md` ("Verified 23 September 2026").
 
 | Figure | Value | Tag |
 |---|---|---|
-| Digital banking crime, SA | **R2.4bn, 110,074 incidents (2025)**; banking apps ≈ 89% of cases | `FACT` — SABRIC 2025 report |
+| Digital banking crime, SA | **R2.4bn gross losses (calendar 2025)**; incident and banking-app-share details remain secondary in `EVIDENCE.md` | `FACT` (gross losses); ⚑ (detailed figures) — SABRIC 2025 reporting |
 | Kidnappings | **17,061 (2023/24)**, up 264% since 2014/15; **44% during a hijacking** | `FACT` — SAPS via ISS Africa |
 | Bank fraud attempts rising | **75%** of SA banking leaders (vendor survey) | `FACT` — BioCatch, May 2026 |
 | Price anchor | FNB GuardMe **R19.90/month** (press report, Apr 2022); iTOO express-kidnapping cover **from R22.50/month** (2026) | `FACT` — re-check GuardMe's current price |
