@@ -38,7 +38,11 @@ const hasMerkle = existsSync(merklePath);
 // or throws — a rejection is anything that throws.
 const canonicalHexOf = (entry) => {
   if (typeof entry.json === "string") return bytesToHex(canonicalizeJson(entry.json));
-  return bytesToHex(canonicalJson(entry.value));
+  // canonicalJson(value) returns canonical JSON text, not bytes (unlike
+  // canonicalizeJson, which returns Uint8Array directly) — encode to UTF-8
+  // to get the same bytes §5 defines. This path was never exercised before
+  // (T01 always skipped until now), so the bug was latent, not introduced here.
+  return bytesToHex(new TextEncoder().encode(canonicalJson(entry.value)));
 };
 
 describe.skipIf(!hasCanonical)(
@@ -49,19 +53,29 @@ describe.skipIf(!hasCanonical)(
 
   it("matches every golden vector byte for byte", () => {
     const vectors = read();
+    // Sibusiso's actual drop uses golden[i] = {input, bytes}, not the
+    // positive[i] = {json|value, canonical_hex} shape sketched above —
+    // reconciled here per this file's own instruction.
     const positive = vectors.positive ?? vectors.golden;
     expect(Array.isArray(positive), "canonical.json needs a positive/golden array").toBe(true);
     for (const vector of positive) {
       const name = vector.name ?? "(unnamed)";
-      const actual = canonicalHexOf(vector);
-      expect(actual, `golden vector ${name}`).toBe(vector.canonical_hex.toLowerCase());
+      const entry = vector.value !== undefined || typeof vector.json === "string"
+        ? vector
+        : { value: vector.input };
+      const actual = canonicalHexOf(entry);
+      const expected = (vector.canonical_hex ?? vector.bytes).toLowerCase();
+      expect(actual, `golden vector ${name}`).toBe(expected);
     }
   });
 
   it("fails every rejection vector", () => {
     const vectors = read();
-    expect(Array.isArray(vectors.rejection), "canonical.json needs a rejection array").toBe(true);
-    for (const vector of vectors.rejection) {
+    // Sibusiso's drop uses "rejections" (plural); each entry carries a real
+    // "json" field (added alongside the Python input_repr for readability).
+    const rejections = vectors.rejection ?? vectors.rejections;
+    expect(Array.isArray(rejections), "canonical.json needs a rejection array").toBe(true);
+    for (const vector of rejections) {
       const name = vector.name ?? "(unnamed rejection)";
       if (typeof vector.json === "string") {
         expect(() => canonicalizeJson(vector.json), `rejection vector ${name}`).toThrow();
@@ -83,10 +97,15 @@ describe.skipIf(!hasMerkle)(
 
   it("recomputes every tree root for n = 1…8", async () => {
     const vectors = read();
-    const roots = vectors.roots ?? vectors.positive;
+    // Sibusiso's actual drop is a flat "vectors" array with {n, heads_hex,
+    // root_hex, rejection?} per entry, not separate roots/rejections arrays
+    // — reconciled here per this file's own instruction.
+    const roots = vectors.roots ?? vectors.positive
+      ?? vectors.vectors?.filter((v) => !v.rejection);
     expect(Array.isArray(roots), "merkle.json needs a roots/positive array").toBe(true);
     for (const vector of roots) {
-      const leaves = vector.leaves_hex.map(hexToBytes);
+      const leavesHex = vector.leaves_hex ?? vector.heads_hex;
+      const leaves = leavesHex.map(hexToBytes);
       const name = vector.name ?? `(n=${leaves.length})`;
       expect(bytesToHex(await merkleRoot(leaves)), `merkle vector ${name}`).toBe(
         vector.root_hex.toLowerCase(),
@@ -96,9 +115,14 @@ describe.skipIf(!hasMerkle)(
 
   it("rejects n = 0 and every other listed rejection", async () => {
     const vectors = read();
-    expect(Array.isArray(vectors.rejections), "merkle.json needs a rejections array").toBe(true);
-    for (const vector of vectors.rejections) {
-      const leaves = vector.leaves_hex.map(hexToBytes);
+    const rejections = vectors.rejections
+      ?? vectors.vectors?.filter((v) => v.rejection);
+    expect(Array.isArray(rejections), "merkle.json needs a rejections array").toBe(true);
+    for (const vector of rejections) {
+      // The n=0 rejection vector uses "heads" (already empty, no _hex suffix
+      // needed) rather than "heads_hex" like the positive vectors.
+      const leavesHex = vector.leaves_hex ?? vector.heads_hex ?? vector.heads;
+      const leaves = leavesHex.map(hexToBytes);
       await expect(merkleRoot(leaves), `merkle rejection ${vector.name ?? ""}`).rejects.toThrow(
         MerkleError,
       );

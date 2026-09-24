@@ -98,35 +98,40 @@
       "input_repr": "{'score': 0.5}",
       "raised": true,
       "error": "Float not allowed at score: 0.5",
-      "note": ""
+      "note": "",
+      "json": "{\"score\":0.5}"
     },
     {
       "name": "non-ASCII key",
       "input_repr": "{'têxt': 'value'}",
       "raised": true,
       "error": "Non-ASCII key at <root>: 'têxt'",
-      "note": ""
+      "note": "",
+      "json": "{\"têxt\":\"value\"}"
     },
     {
       "name": "integer 2^53",
       "input_repr": "{'big': 9007199254740992}",
       "raised": true,
       "error": "Integer 9007199254740992 outside safe range [-9007199254740991, 9007199254740991] at big",
-      "note": ""
+      "note": "",
+      "json": "{\"big\":9007199254740992}"
     },
     {
       "name": "negative integer -2^53",
       "input_repr": "{'big': -9007199254740992}",
       "raised": true,
       "error": "Integer -9007199254740992 outside safe range [-9007199254740991, 9007199254740991] at big",
-      "note": ""
+      "note": "",
+      "json": "{\"big\":-9007199254740992}"
     },
     {
       "name": "duplicate JSON key",
       "input_repr": "{\"a\":1,\"a\":2}",
       "raised": true,
       "error": "Duplicate key in JSON input: 'a'",
-      "note": ""
+      "note": "",
+      "json": "{\"a\":1,\"a\":2}"
     }
   ]
 }
