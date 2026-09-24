@@ -170,7 +170,7 @@ The phases follow **PTES** and **NIST SP 800-115** (plan → discover → attack
 | PIN authority and guardians | T12, T16, T36, T47, T52, T24 (never zero guardians, the two-session path) |
 | Authorisation | T49, PT-68 |
 | Chain and anchor | T04, T21, T22, T58 |
-| Hygiene | T46, secrets C-80–C-82 (with the CI failure shown) |
+| Hygiene and leaks | T46, T42, T63 (app network capture), secrets C-80–C-82 (with the CI failure shown) |
 
 Everything else runs after this set, and anything not run is recorded as **not run**.
 
@@ -206,7 +206,7 @@ Every failed case gets a **CVSS 4.0** vector and score, a reproduction, the comm
 "Two-operator rotation" is a team rule; one portal admin can still edit a secret. Nothing secret goes in the repo, a PR, the chat or a screenshot.
 
 ### 7.2 Principals and access
-The named principals are listed in the repo's `team/` files. Staging and database access: Sibusiso (owner) and one named backup. Cloud portals: owner plus a second admin. **Non-human principals** (CI tokens, deploy tokens, and the AI coding assistants some members use, which commit with their own tokens) are listed with their token scope. Any of them can open a PR, and none can merge alone. Branch protection needs a public repo or a paid plan (G17), so review is a team rule until then.
+The named principals are listed in the repo's `team/` files. Staging and database access: Sibusiso (owner) and one named backup. Cloud portals: owner plus a second admin. **Non-human principals** (CI tokens, deploy tokens, and the AI coding assistants some members use, which commit with their own tokens) are listed with their token scope. Any of them can open a PR, and none can merge alone. **The repo went public on 24 Sep 2026, so branch protection is now available (G17).** Required checks and a required non-author review on `main` are to be switched on by the repo owner. Until then, review is a team rule.
 
 ### 7.3 Monitoring and on-call
 `/healthz`, outbox lag, the age of the last anchor, and the failed-signature and replay rates, alarmed to the team channel. **On-call:** Fri night, Sibusiso; Sat night, Lethabo (named in the team channel). No personal information in logs; the outbox correlation rule is in §4.3.
@@ -293,3 +293,65 @@ The acting incident lead is **Lethabo** (Ipeleng is away).
 | 28 | The supply-chain test checked npm | **Accepted.** `--ignore-scripts` plus wrapper validation |
 | 29 | PIN-AUTHORITY-RULES contradicts the spec | **Accepted.** Banner added in this PR |
 | 30 | Revocation can be backdated | **Accepted.** Stated in §10 |
+
+## 12 · The security scorecard: measured, checkable, shown in the app
+
+**The question it answers:** *how much evidence stands behind each security claim, and what would raise it?* It does **not** answer "how secure is VUKA" as a probability. No calibrated number exists for that, and printing one would break the honesty ledger. Every score is computed by a script from repo artefacts. A judge re-runs the script and gets the same number.
+
+### 12.1 Evidence levels (per control)
+| Level | Name | What must exist, checked by the script |
+|---|---|---|
+| E0 | Specified | A `C-nn` row in `SSDLC.md`, or a new control in §5 here, with an owner |
+| E1 | Implemented | A file path in the control's evidence cell that exists on `main` |
+| E2 | Tested | At least one named test (`T-nn`, `PT-nn`, or a CI job) mapped to the control, **present in the code** and **passing in the latest CI run on `main`** |
+| E3 | Reviewed | E2, plus a linked review record by a non-author (a PR review URL, or a file in `docs/reviews/`) |
+| E4 | Independently verified | E3, plus an external party's report. **None today** (G8), and that is shown, not hidden |
+
+A control is never scored above the lowest level whose check fails. **A manual observation** (for example T17 on a named phone) counts toward E2 only with a dated build-log record naming the tester and the build.
+
+### 12.2 Weights and categories
+- **Weight** comes from the highest-severity threat the control mitigates in `THREAT-MODEL.md`: High = 3, Medium = 2, Low = 1. Coercion rows (TM-C) count as High.
+- **Categories:**
+  - Duress and coercion;
+  - Device (MASVS);
+  - API and server (ASVS, API Top 10);
+  - Chain and anchor;
+  - Privacy and POPIA (LINDDUN, L1–L16);
+  - Supply chain;
+  - Operations and governance.
+- **Category evidence score** = Σ(weight × level) ÷ Σ(weight × 4), shown as a percentage with the level mix beside it (for example "12 controls: 2×E3, 5×E2, 3×E1, 2×E0").
+- **Evidence confidence** for a category = the share of its weight at **E2 or above**. Its wording is fixed: "how much of this category is backed by a passing test". It is never "how secure".
+- **The overall number is shown only next to the category breakdown**, never alone.
+
+### 12.3 What each control shows
+For each control: **what** it protects (the threat IDs), **how** (the mechanism, one line), the **method** (the test IDs and how they run), **why it has this level** (the first failing check), and **what raises it** (the specific next artefact, for example "add T57 to CI → E2", or "independent review → E4").
+
+### 12.4 Build
+1. **`docs/security/scorecard/controls.json`**, the machine-readable register, one entry per control: `id`, `title`, `category`, `threats`, `mechanism`, `evidence_paths`, `tests`, `ci_jobs`, `review_links`, `external`. It is generated from `SSDLC.md` plus §5, then hand-completed. The markdown stays the human source, and the script fails if they disagree.
+2. **`scripts/security-score.mjs`** (Node, no dependencies):
+   - it reads the register;
+   - it checks that each evidence path exists;
+   - it finds each test ID in the test files;
+   - it reads the latest CI result for `main` (`gh run list --branch main --json`, or a `ci-status.json` artefact the CI job writes);
+   - it writes `security-score.json` with levels, scores, reasons and next steps;
+   - unit tests use fixtures for each level transition.
+3. **CI job `security-score`** runs the script on every push and uploads `security-score.json`. **It fails if any High-weight control drops a level** compared with `main`.
+4. **The public page `dashboard/security.html`** (static, the same CSP as the verify page) renders the categories as bars with the level mix, and a control table with level chips. Each row expands to show what, how, the method, why, and next.
+5. **In the app: Settings → "Security & privacy"** shows the overall evidence score, the seven category bars, and a link to the public page. The data is bundled at build time from `security-score.json`, and the screen shows its build date. **Duress check:** the screen is static and identical for every user and state, so it reveals nothing.
+
+### 12.5 Honesty rules for the scorecard
+- The label is **"Evidence score"**, with a one-line definition on every surface. Never "security score" alone, and never "% secure".
+- **E4 is shown as empty** until an external report exists.
+- A drop in score is published, not hidden (principle 12).
+
+## 13 · Leak checks (no personal information or secrets leave where they shouldn't)
+| Leak path | Check | Release-blocking |
+|---|---|---|
+| Secrets in the repo or history | gitleaks: the hook, plus CI on full history | Yes |
+| Personal information in logs | T46; outbox logs without IDs (§4.3) | Yes |
+| Personal information on the ledger | T58 (full transaction, memos) | Yes |
+| **App network traffic** | **T63 (new):** a demo journey on the release APK is captured through an intercepting proxy on a team test phone. Only the spec's fields leave the phone: no audio bytes, no location outside `signal_detected`, no device identifiers (V9, PH rows) | Yes |
+| On-device capture | T57 (`FLAG_SECURE`) | Yes |
+| Backups and readable storage | T42 (`allowBackup` off; nothing sensitive in shared storage) | Yes |
+| Exports during an incident | T30 | Yes |
+| Third-party SDK traffic | T63 also lists every host contacted. Only our API, FCM and the pinned mirror are allowed | Yes |
