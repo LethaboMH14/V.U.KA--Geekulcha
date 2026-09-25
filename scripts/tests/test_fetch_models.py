@@ -14,7 +14,11 @@ import socket
 import sys
 import tempfile
 import unittest
+from email.message import Message
 from unittest import mock
+from urllib.error import URLError
+from urllib.request import HTTPSHandler
+from urllib.response import addinfourl
 
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
@@ -180,6 +184,73 @@ class OfflineTests(unittest.TestCase):
                                        "--check-interpreter"])
             self.assertEqual(status, 3)
             self.assertIn("NOT RUN", output.getvalue())
+
+    def test_u20_non_https_urls_are_rejected_before_opener_creation(self):
+        for url in ("file:///sim_private.txt", "http://example.invalid/sim_model.tflite"):
+            with self.subTest(url=url):
+                with mock.patch.object(subject, "_make_https_opener") as make_opener:
+                    with self.assertRaises(subject.PrerequisiteMissing):
+                        subject._read_source(None, url, 32)
+                    make_opener.assert_not_called()
+
+    def test_u21_https_opener_has_no_file_or_ftp_handler(self):
+        opener = subject._make_https_opener()
+        handler_types = {type(handler) for handler in opener.handlers}
+        self.assertEqual(handler_types, {
+            HTTPSHandler,
+            subject.urllib.request.HTTPRedirectHandler,
+            subject.urllib.request.HTTPDefaultErrorHandler,
+            subject.urllib.request.HTTPErrorProcessor,
+            subject.urllib.request.UnknownHandler,
+        })
+
+    def test_u22_redirect_to_file_url_is_not_followed(self):
+        requests = []
+
+        class SimRedirectHandler(HTTPSHandler):
+            handler_order = 100
+
+            def https_open(self, request):
+                requests.append(request.full_url)
+                headers = Message()
+                headers["Location"] = "file:///sim_private.txt"
+                response = addinfourl(io.BytesIO(b""), headers, request.full_url, 302)
+                response.msg = "Found"
+                return response
+
+        opener = subject._make_https_opener()
+        opener.add_handler(SimRedirectHandler())
+        with self.assertRaises(URLError):
+            opener.open("https://example.invalid/sim_model.tflite", timeout=30)
+        self.assertEqual(requests, ["https://example.invalid/sim_model.tflite"])
+
+    def test_u23_download_size_cap_still_applies(self):
+        maximum = 4
+
+        class SimResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self, size):
+                self.read_size = size
+                return b"sim_oversized"
+
+        class SimOpener:
+            def open(self, url, timeout):
+                self.url = url
+                self.timeout = timeout
+                self.response = SimResponse()
+                return self.response
+
+        opener = SimOpener()
+        with mock.patch.object(subject, "_make_https_opener", return_value=opener), \
+             self.assertRaisesRegex(subject.PrerequisiteMissing, "maximum permitted size"):
+            subject._read_source(None, "https://example.invalid/sim_model.tflite", maximum)
+        self.assertEqual(opener.timeout, 30)
+        self.assertEqual(opener.response.read_size, maximum + 1)
 
 
 if __name__ == "__main__":

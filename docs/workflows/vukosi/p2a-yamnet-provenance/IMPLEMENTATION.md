@@ -78,3 +78,28 @@ Node: `C:\Users\khoza\.cache\codex-runtimes\codex-primary-runtime\dependencies\n
 The supplied `BASE_SHA` excludes the uncommitted TASK.md; the executor read it from the other checkout without editing or committing there. The dated build-log entry uses the actual local date, 2026-09-23, rather than the §4 example date. R2 is an inherited false-for-this-repository condition, not silently waived. No package was installed, no URL invented, and no live-model claim made. Lethabo/human review remains pending. Next: Vukosi decides the model source and any interpreter-install approval; the reviewer checks this commit and R2 scope before any merge.
 
 First local implementation commit: `a18dff2dd90b657d18e073f1cebbc1901e4084f7` (`git rev-parse HEAD` immediately after commit). The staged pre-commit hook reported `1 commits scanned`, `~28954 bytes (28.95 KB)`, `no leaks found`, and `Intake gate: documentation/repository tooling only.` This evidence-file update receives a second local commit; its final HEAD_SHA is in the handoff response, since a commit cannot contain its own SHA.
+
+## P2b — Semgrep dynamic-urllib finding (2026-09-25)
+
+Status: **FACT — locally implemented and tested; CI Semgrep result NOT RUN locally.** Criterion T/S: a user can trust that a supplied model URL cannot make the fetcher read a local file, including after an HTTP redirect. No model, CSV, audio or network call was used by these tests; no dependency was added.
+
+Executor: Codex / GPT-6 (runtime variant not exposed to this task). `BASE_SHA`: `f05a812af04cc3c496a344246f726ca1d4481638`. The resulting commit `HEAD_SHA` is reported in the handoff because a commit cannot contain its own SHA.
+
+The HTTPS-only scheme check remains. Fix 2 was used: `_make_https_opener()` constructs `urllib.request.OpenerDirector()` and adds only `HTTPSHandler`, `HTTPRedirectHandler`, `HTTPDefaultErrorHandler`, `HTTPErrorProcessor` and `UnknownHandler`; it does not use `build_opener`, `urlopen`, `FileHandler` or `FTPHandler`. A redirect to `file://` therefore has no file-protocol handler. The size cap and existing `PrerequisiteMissing` errors remain. No `nosemgrep` suppression was added: the unsafe handler path is structurally absent, but Semgrep was not available locally, so CI remains the oracle.
+
+Red-first command: `py -3.12 -m unittest discover -s scripts/tests -p test_fetch_models.py -v` → exit 1, `Ran 20 tests`; the four new checks errored because `_make_https_opener` did not yet exist (`AttributeError`), while the prior 16 tests passed. This was the expected pre-implementation result. A first post-implementation run exposed two fixture-construction errors in the new tests; those fixtures were corrected before the recorded green run.
+
+Green command: `py -3.12 -m unittest discover -s scripts/tests -v` → exit 0, `Ran 20 tests`, `OK`. The synthetic tests cover pre-open rejection of `file://` and `http://`, the absence of file/FTP handlers, a simulated HTTPS redirect to `file://`, and the unchanged read-size cap. Existing socket blocking remains active. There was no live fetch.
+
+Local Semgrep availability check: `Get-Command semgrep -ErrorAction SilentlyContinue` → no command found; `semgrep --version` was therefore **NOT RUN**. No claim is made about the CI result.
+
+| Check | Status | Actual command and output |
+|---|---|---|
+| A — offline unit suite | PASS | Red: `py -3.12 -m unittest discover -s scripts/tests -p test_fetch_models.py -v` → exit 1, `Ran 20 tests`; expected `AttributeError` for the not-yet-implemented opener in new tests. Green: `py -3.12 -m unittest discover -s scripts/tests -v` → exit 0, `Ran 20 tests`, `OK`. |
+| B — docs | PASS | `node scripts/check-docs.mjs` → `Document contracts, required counts, local links and selected claim safeguards passed. Human fact/quality review is still required.` |
+| B — intake | PASS | `node scripts/check-intake.mjs` → `Intake gate has evidence references and approval records; reviewers must verify their authenticity.` |
+| B — contract tests | PASS | `node --test "test/**/*.test.mjs"` → 23 tests, 23 pass, 0 fail. |
+| B — secret scan | PASS | `gitleaks dir --redact --config .gitleaks.toml .` → scanned ~3.08 MB; `no leaks found`. |
+| B — whitespace | PASS | `git diff --check` → exit 0, no whitespace errors (Git emitted working-copy LF-to-CRLF notices). |
+| C — Semgrep | NOT RUN | `Get-Command semgrep -ErrorAction SilentlyContinue` found no command; no package was installed. CI is the Semgrep oracle. |
+| D — scope and offline boundary | PASS | Unit tests use synthetic inputs and block `socket.socket`; no model, class-map file, audio or live request used; no dependency or files outside the allowed set changed. |

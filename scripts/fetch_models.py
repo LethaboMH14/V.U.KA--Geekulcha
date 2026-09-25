@@ -17,8 +17,8 @@ from pathlib import Path
 import re
 import sys
 import tempfile
+import urllib.request
 from urllib.parse import urlsplit
-from urllib.request import urlopen
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -159,6 +159,20 @@ def score_to_bp(score: float) -> int:
     return math.floor(score * 10000 + 0.5)
 
 
+def _make_https_opener() -> urllib.request.OpenerDirector:
+    """Build an opener that cannot handle file:// or ftp:// sources."""
+    opener = urllib.request.OpenerDirector()
+    for handler in (
+        urllib.request.HTTPSHandler(),
+        urllib.request.HTTPRedirectHandler(),
+        urllib.request.HTTPDefaultErrorHandler(),
+        urllib.request.HTTPErrorProcessor(),
+        urllib.request.UnknownHandler(),
+    ):
+        opener.add_handler(handler)
+    return opener
+
+
 def _read_source(file_path: str | None, url: str | None, maximum_bytes: int) -> bytes:
     if file_path is not None:
         source = Path(file_path)
@@ -170,7 +184,7 @@ def _read_source(file_path: str | None, url: str | None, maximum_bytes: int) -> 
     if url is None or urlsplit(url).scheme != "https":
         raise PrerequisiteMissing("supply an HTTPS URL or an existing local file")
     try:
-        with urlopen(url, timeout=30) as response:
+        with _make_https_opener().open(url, timeout=30) as response:
             data = response.read(maximum_bytes + 1)
     except OSError as error:
         raise PrerequisiteMissing(f"source download unavailable: {type(error).__name__}") from error
