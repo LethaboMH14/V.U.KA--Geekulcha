@@ -50,4 +50,8 @@ Proposed tests T70–T72 are added. Dispositions are in `SECURITY-PROGRAMME.md` 
 
 Two findings are partly accepted, with their residuals stated: automatic rotation of the recovery code, and silent acceptance after the deadline.
 
-Next: the second reviewer's round on revision 8 when its quota resets; the amendments land in the acceptance PR.
+**Revision 9 (same day).** The second reviewer's round on revision 8 resolved 8 of the red-team pass's 10 findings and left 2 partial. Its 2 new findings are both accepted:
+- the recovery code is not rotated by anyone until an independent recovery path exists;
+- at `effective_at` only retirement-caused `contact_lost` is suppressed, and a check-in opened before the deadline keeps its window and its `no_answer` fallback.
+
+Next: a confirmation round on revision 9; the amendments land in the acceptance PR.
