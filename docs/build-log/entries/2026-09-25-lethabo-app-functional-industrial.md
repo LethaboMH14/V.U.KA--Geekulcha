@@ -40,6 +40,8 @@ Business handoff: None.
   - key faces rendered narrower than the key on Android, because a percentage-sized SVG inside a Pressable lays out short; the SVG is now measured with `onLayout`;
   - the status-bar icons were dark on graphite; they now use `light-content`, and the Android theme gets a graphite window, status bar and navigation bar, so launch doesn't flash white.
 - **Not app defects:** on the first boot (software GPU, 1.5 GB) taps went unanswered and the system UI stopped responding. The ARM build also ran through the emulator's ARM translation there. On the host GPU, the x86_64 build answered every tap within 3 s.
-- **Not tested:** real phone hardware, font scale 1.3, TalkBack, and landscape on the device.
+- **Font scale 1.3:** Home and Journey active hold their layout; the footer note scrolls below the fold.
+- **Launcher icon:** it was still the React Native template robot, which also showed on the Android 12+ splash. It is now a VIGIL adaptive icon (the cobalt key on its graphite plinth, as on Home), with a monochrome layer for themed icons and PNG fallbacks for API 23–25. The splash is confirmed on the emulator.
+- **Not tested:** real phone hardware, TalkBack, and landscape on the device.
 
 Next: a real-phone pass; font scale 1.3 and TalkBack; then the live scorecard in Settings.
