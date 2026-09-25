@@ -355,6 +355,56 @@ def signed_post(client, entry, *, nonce=None, ts=None, private_key=SIM_PRIVATE_K
     return client.post("/v1/events", content=body, headers=headers)
 
 
+def make_genesis_registration(subject_id):
+    entry = make_entry(action="registration")
+    entry["target_id"] = subject_id
+    entry["details"]["signer_key_id"] = f"sim_key_{uuid.uuid4().hex}"
+    entry["details"]["signer_pubkey"] = SIM_PUBLIC_KEY
+    entry["details"]["counter"] = 0
+    sign_event_entry(entry, subject_id=subject_id)
+    return entry
+
+
+def test_simulation_only_defaults_on_and_refuses_non_sim_genesis_registration(monkeypatch):
+    monkeypatch.delenv("VUKA_SIM_ONLY", raising=False)
+    database = MemoryDatabase()
+    client = TestClient(create_app(database))
+    entry = make_genesis_registration(f"subject_{uuid.uuid4().hex}")
+
+    response = signed_post(client, entry)
+
+    assert response.status_code == 403
+    assert response.json()["code"] == "simulation_only"
+    assert entry["target_id"] not in database.rows
+    assert entry["details"]["signer_key_id"] not in database.signer_keys
+
+
+def test_simulation_only_accepts_sim_genesis_registration(monkeypatch):
+    monkeypatch.delenv("VUKA_SIM_ONLY", raising=False)
+    database = MemoryDatabase()
+    client = TestClient(create_app(database))
+    entry = make_genesis_registration(f"sim_subject_{uuid.uuid4().hex}")
+
+    response = signed_post(client, entry)
+
+    assert response.status_code == 201, response.text
+    assert response.json()["chain_index"] == 0
+    assert entry["target_id"] in database.rows
+
+
+def test_simulation_only_can_be_disabled_explicitly(monkeypatch):
+    monkeypatch.setenv("VUKA_SIM_ONLY", "0")
+    database = MemoryDatabase()
+    client = TestClient(create_app(database))
+    entry = make_genesis_registration(f"subject_{uuid.uuid4().hex}")
+
+    response = signed_post(client, entry)
+
+    assert response.status_code == 201, response.text
+    assert response.json()["chain_index"] == 0
+    assert entry["target_id"] in database.rows
+
+
 def signed_export(client, subject_id=SIM_SUBJECT_ID, *, nonce=None, ts=None, private_key=SIM_PRIVATE_KEY, key_id="sim_key_1"):
     path = f"/v1/subjects/{subject_id}/export"
     body = b""

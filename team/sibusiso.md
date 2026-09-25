@@ -25,7 +25,7 @@
 - **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — P3.A3 contract implementation-status metadata on PR #51 (`feat/sibusiso-contract-v2`): mark every OpenAPI operation against the routes actually registered by `server/main.py`, add a zero-dependency route-drift test, verify from a clean dependency install, and push for review. Claimed paths for this task: `contracts/openapi.yaml`, `test/openapi-contract.test.mjs`, `team/sibusiso.md`, and a new `docs/build-log/entries/` record. No server behavior or new routes are in scope.
+**Current task** — P3.A6/P3.A4 deployment preparation, Part A only, on PR #51 (`feat/sibusiso-contract-v2`): SEC-6 guard, commit-archive package builder, and signed smoke client are implemented and pushed. Clean dependency, PostgreSQL, Python/Node, docs, intake, package-safety, and SCA checks pass. Local append and DB persistence pass; export remains deliberately fail-closed with `pin_authorisation_required` until ADR-0041 PIN authority and prefix behavior are implemented, so Part A's successful export/restart acceptance is still blocked. Part B/Azure operations and the production encryption key remain with Sibusiso and are out of scope. See `docs/build-log/entries/2026-09-25-codex-p3a6-deploy-prep.md` for evidence.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 

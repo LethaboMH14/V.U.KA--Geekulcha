@@ -396,6 +396,14 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Genesis registration blocked while simulation-only mode is enabled.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                code: simulation_only
+                message: genesis registration target must use the sim_ prefix while simulation-only mode is enabled
         '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/IdempotencyConflict' }
   /v1/checkins/{id}/opened:

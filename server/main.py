@@ -13,6 +13,7 @@ import binascii
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import os
 import re
 from typing import Annotated, Any, Literal
 from uuid import UUID
@@ -418,6 +419,16 @@ def create_app(database=None) -> FastAPI:
     async def append_event(entry: EventSubmissionV2, request: Request):
         try:
             principal = verify_request(request, entry, database=store, body=await request.body())
+            if (
+                principal.genesis_registration
+                and os.getenv("VUKA_SIM_ONLY", "1") != "0"
+                and not entry.target_id.startswith("sim_")
+            ):
+                return _error_response(
+                    403,
+                    "simulation_only",
+                    "genesis registration target must use the sim_ prefix while simulation-only mode is enabled",
+                )
             subject_id = _subject_id_for(entry, principal, store)
             verify_event_integrity(entry, subject_id, principal.public_key)
         except ValueError:

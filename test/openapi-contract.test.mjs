@@ -191,6 +191,13 @@ test("OpenAPI contract preserves governance and receipt requirements", () => {
   assert.match(document, /Member streams never receive operator-room events/);
 });
 
+test("event registration documents the simulation-only refusal", () => {
+  const events = pathBlock("/v1/events");
+  assert.match(events, /'403':[\s\S]*?code: simulation_only/);
+  assert.match(events, /genesis registration target must use the sim_ prefix/);
+  assert.match(serverSource, /os\.getenv\("VUKA_SIM_ONLY", "1"\) != "0"/);
+});
+
 test("OpenAPI contract exposes no flagged or flag action setter", () => {
   assert.doesNotMatch(document, /action: flag\b/);
   const verify = document.slice(document.indexOf("    VerifyRequest:"), document.indexOf("    DeletionRequest:"));
