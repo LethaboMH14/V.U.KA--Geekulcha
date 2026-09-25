@@ -24,12 +24,19 @@ class AnchorPublicationError(RuntimeError):
     """Publication could not be confirmed; reconcile before retrying."""
 
 
+class AnchorNotSubmitted(AnchorPublicationError):
+    """The sidecar positively reported failure before its SDK execute call."""
+
+
 def _publish(
     request: dict[str, str], *,
     runner: Callable[..., Any] = subprocess.run,
     node_binary: str | None = None,
+    sim_stub: bool = False,
 ) -> dict[str, Any]:
     command = [node_binary or os.environ.get("VUKA_NODE_BINARY", "node"), str(_SIDECAR)]
+    if sim_stub:
+        command.append("--sim-stub")
     try:
         result = runner(
             command,
@@ -41,6 +48,8 @@ def _publish(
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise AnchorPublicationError("sidecar unavailable; reconcile before retry") from exc
+    if result.returncode == 2:
+        raise AnchorNotSubmitted("sidecar stopped before submission")
     if result.returncode != 0:
         # The SDK exception and process environment may include credentials.
         raise AnchorPublicationError("Hedera submission unconfirmed; reconcile before retry")
@@ -76,8 +85,8 @@ def publish_manifest(*, runner: Callable[..., Any] = subprocess.run) -> dict[str
     return _publish({"kind": "manifest"}, runner=runner)
 
 
-def publish_root(root: bytes, *, runner: Callable[..., Any] = subprocess.run) -> dict[str, Any]:
+def publish_root(root: bytes, *, runner: Callable[..., Any] = subprocess.run, sim_stub: bool = False) -> dict[str, Any]:
     """Submit a 0x01 root only after the sidecar verifies the 0x02 message."""
     if not isinstance(root, bytes) or len(root) != 32:
         raise ValueError("root must be exactly 32 bytes")
-    return _publish({"kind": "root", "root_hex": root.hex()}, runner=runner)
+    return _publish({"kind": "root", "root_hex": root.hex()}, runner=runner, sim_stub=sim_stub)

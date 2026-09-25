@@ -176,7 +176,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getLatestAnchor
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Read the latest public anchor receipt
       description: Public endpoint; exposes no subject data.
       security: []
@@ -216,23 +216,24 @@ paths:
     delete:
       tags: [Showcase]
       operationId: deleteSubjectData
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Request deletion of private subject payload while retaining proof residue
-      description: F15 showcase path. Subject-authenticated and PIN-authorised per §9; deletion is recorded and idempotent.
+      description: >-
+        F15 showcase path. PROPOSED (25 Sep): the fresh action=delete pin_authorised
+        authorisation is submitted through POST /v1/events (same superseded-transport
+        pattern as end_journey/export), not in this request's body; this route is now
+        bodyless and consumes that authorisation. A duress authorisation looks identical
+        and does nothing further. Normal starts a 72h cooling-off (section 13); the
+        pin_authorised event itself is what makes this PIN-authorised per section 9.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
-      parameters: [{ $ref: '#/components/parameters/SubjectId' }, { $ref: '#/components/parameters/IdempotencyKey' }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/SubjectDeletionRequest' }
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/InsufficientApproval' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+
   /ws/ops:
     get:
       tags: [Operations]
@@ -285,7 +286,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: recoverDevice
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Recover a subject onto a new device
       description: Recovery-code authenticated; PIN and signature verification are performed by the implementation, not this contract.
       requestBody:
@@ -308,21 +309,35 @@ paths:
     post:
       tags: [VIGIL]
       operationId: startJourney
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Start a journey by explicit user action
-      description: Device-signed request; arming requires the app in the foreground and granted microphone and notification permissions.
+      description: >-
+        Device-signed, bodyless request (§7; body_sha256 is SHA-256 of the empty byte
+        string). The server generates journey_id and binds it to the caller's subject;
+        it does not itself append a chain entry (journey_armed, if the device submits
+        one, is a separate POST /v1/events call, unchanged by this route). PROPOSED
+        (Sibusiso, 25 Sep): journey_id is a server-issued UUID, not device-generated,
+        because no chain-signed statement exists yet to derive one from at this point.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       responses:
-        '201': { $ref: '#/components/responses/AcceptedReceipt' }
+        '201':
+          description: Journey created; journey_id is server-issued.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JourneyReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /v1/journeys/{id}/heartbeat:
     post:
       tags: [VIGIL]
       operationId: sendJourneyHeartbeat
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Record a journey heartbeat
-      description: Device-signed; includes a speed bucket only and never location.
+      description: >-
+        Device-signed; includes a speed bucket only and never location. The server keeps
+        only the subject's last contact time, which starts the PROPOSED subject-wide
+        90 s contact_lost clock (any heartbeat or accepted device event counts as contact).
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       requestBody:
@@ -448,7 +463,7 @@ paths:
       operationId: submitPinAuthorisation
       x-vuka-implemented: false
       summary: Submit a PIN-authority statement scoped to one action
-      description: Device-signed PIN-authority statement per §9; signature verification is implementation behavior.
+      description: "PROPOSED - superseded transport: pin_authorised is submitted through POST /v1/events, kind pin_authorised, with its PIN statement inside the committed private payload. This standalone route is not implemented."
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       requestBody:
         required: true
@@ -575,7 +590,7 @@ paths:
     get:
       tags: [ANCHOR]
       operationId: getAnchorProof
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Read the proof and receipt for an anchored chain head
       description: Public; head-keyed and returns no chain segment.
       security: []
@@ -607,9 +622,11 @@ paths:
         pre-incident hold returns only genesis through the pre-incident head while
         an incident is open and for 6 hours after its last PIN entry, whichever ends
         later; normal and duress authorisations yield byte-identical visible results.
-        Otherwise the full chain is returned. The response is unpaginated. For this
-        bodyless request, body_sha256 is SHA-256 of the empty byte string.
-        INCOMPLETE — see ADR-0041 T30, implementation pending.
+        Otherwise the chain is returned up to the entry before the authorising
+        pin_authorised event (PROPOSED, so a normal and a duress authorisation return
+        the same prefix). The response is unpaginated. For this bodyless request,
+        body_sha256 is SHA-256 of the empty byte string. proofs and receipts hold at
+        most one item, for the returned head, only when it is in a confirmed anchor batch.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       responses:
@@ -833,8 +850,17 @@ components:
         state: { type: string, enum: [accepted, queued, pending, confirmed, refused] }
         sim: { type: boolean, const: true, description: Present and true on simulated bank receipts. }
         hold_ref: { type: string, minLength: 1, description: Present on a simulated risk-signal receipt; names the hold that a later release must cite. }
+        journey_id: { type: string, minLength: 1, maxLength: 128, description: Present on a POST /v1/journeys receipt; server-issued (PROPOSED, 25 Sep). }
         anchor_status: { type: string, enum: [not_submitted, submitted, pending, confirmed, gap] }
         pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation', description: Present when a verified PIN-authority statement is recorded; expiry is server-derived. }
+    JourneyReceipt:
+      description: PROPOSED (25 Sep) — Receipt plus the server-issued journey_id.
+      allOf:
+        - $ref: '#/components/schemas/Receipt'
+        - type: object
+          required: [journey_id]
+          properties:
+            journey_id: { type: string, minLength: 1, maxLength: 128 }
     SimBankReceipt:
       allOf:
         - $ref: '#/components/schemas/Receipt'
@@ -1018,8 +1044,14 @@ components:
       properties:
         subject_id: { type: string, minLength: 1 }
         entries: { type: array, items: { $ref: '#/components/schemas/EvidenceEntryV2' } }
-        payloads: { type: array, items: { type: object }, description: Private event payloads keyed by event_id. }
-        salts: { type: array, items: { type: string, contentEncoding: base64 }, description: Private salts keyed by event_id. }
+        payloads:
+          type: array
+          description: Private event payloads, one item per event_id (the shape shared/verify.js reads).
+          items: { type: object, required: [event_id, payload], additionalProperties: false, properties: { event_id: { type: string }, payload: { type: object } } }
+        salts:
+          type: array
+          description: Private 16-byte commitment salts, one item per event_id (the shape shared/verify.js reads).
+          items: { type: object, required: [event_id, salt], additionalProperties: false, properties: { event_id: { type: string }, salt: { type: string, contentEncoding: base64 } } }
         proofs: { type: array, items: { $ref: '#/components/schemas/Proof' } }
         receipts: { type: array, items: { $ref: '#/components/schemas/AnchorReceipt' } }
     SubjectDeletionRequest:

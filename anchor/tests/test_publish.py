@@ -8,6 +8,12 @@ import pytest
 from anchor.publish import AnchorPublicationError, publish_manifest, publish_root
 
 
+def test_sidecar_pre_submit_exit_is_distinct_from_ambiguous_failure():
+    from anchor.publish import AnchorNotSubmitted
+    with pytest.raises(AnchorNotSubmitted):
+        publish_root(bytes(32), runner=lambda *_a, **_kw: SimpleNamespace(returncode=2, stdout=""))
+
+
 def test_root_invokes_sidecar_without_putting_keys_in_arguments():
     root = bytes.fromhex("ab" * 32)
     seen = {}

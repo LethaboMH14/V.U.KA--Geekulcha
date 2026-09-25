@@ -110,6 +110,7 @@ export async function submitPinnedMessage(request, {
   sdkLoader = () => import("@hiero-ledger/sdk"),
   readBack = readMirror,
   fetchFn = fetch,
+  onBeforeSubmit = () => {},
 } = {}) {
   const { message, topicId, topicEpoch } = await pinnedAnchorMessage(request?.kind, request?.root_hex);
   const { HEDERA_OPERATOR_ID: operatorId, HEDERA_OPERATOR_KEY: operatorKey,
@@ -134,6 +135,7 @@ export async function submitPinnedMessage(request, {
     const transaction = new TopicMessageSubmitTransaction()
       .setTopicId(topicId).setMessage(message).freezeWith(client);
     await transaction.sign(submitPrivate);
+    onBeforeSubmit();
     const response = await transaction.execute(client);
     const receipt = await response.getReceipt(client);
     const sequenceNumber = Number(receipt.topicSequenceNumber?.toString());

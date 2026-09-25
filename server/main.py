@@ -13,10 +13,11 @@ import binascii
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import json
 import os
 import re
 from typing import Annotated, Any, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.exceptions import UnsupportedAlgorithm
@@ -30,6 +31,9 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_v
 from starlette.responses import JSONResponse
 
 from anchor.canonical import canonical
+from server.pin_records import EventRefused, require_authorisation
+from server.event_effects import append_server
+from server.server_signing import sign_key_revoked_entry
 from server.db import (
     DatabaseUnavailable,
     IdempotencyConflict,
@@ -460,6 +464,8 @@ def create_app(database=None) -> FastAPI:
                     nonce=principal.nonce,
                     request_ts=principal.request_ts,
                 )
+        except EventRefused as exc:
+            return _error_response(exc.status, exc.code, exc.code)
         except IdempotencyConflict:
             return _error_response(
                 409,
@@ -513,9 +519,257 @@ def create_app(database=None) -> FastAPI:
             return _error_response(404, "not_found", "subject was not found")
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
-        # ADR-0041 requires a fresh export PIN authorisation and an incident
-        # prefix check. Neither exists in slices 1/2, so no chain is released.
-        return _error_response(403, "pin_authorisation_required", "fresh export PIN authorisation is required")
+        subject_export = getattr(store, "subject_export", None)
+        if subject_export is None:
+            # A store without PIN-authority records can never release a chain.
+            return _error_response(403, "pin_authorisation_required", "fresh export PIN authorisation is required")
+        try:
+            return subject_export(subject_id, datetime.fromisoformat(_server_time().replace("Z", "+00:00")))
+        except EventRefused as exc:
+            return _error_response(exc.status, exc.code, "fresh export PIN authorisation is required")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+
+    @app.post("/v1/devices/recover", status_code=202)
+    async def recover_device(request: Request):
+        """PROPOSED §9. No §7 request signature: the whole point is the old
+        device/key is gone. Rate limited and code-verified inside recovery.py."""
+        from server.recovery import RecoveryRefused, has_open_incident, notify_guardians, set_freeze, verify_recovery_code
+        try:
+            body = json.loads(await request.body())
+            if (not isinstance(body, dict) or set(body) != {"recovery_code", "new_device_key"}
+                    or not isinstance(body["recovery_code"], str) or not body["recovery_code"]
+                    or not isinstance(body["new_device_key"], str) or not body["new_device_key"]):
+                raise ValueError("recovery body shape")
+            new_spki = base64.b64decode(body["new_device_key"], validate=True)
+            new_public_key = load_der_public_key(new_spki)
+            if not isinstance(new_public_key, ec.EllipticCurvePublicKey) or new_public_key.curve.name != "secp256r1":
+                raise ValueError("new_device_key must be a P-256 SPKI key")
+        except (ValueError, TypeError, KeyError, binascii.Error, UnsupportedAlgorithm):
+            return _error_response(400, "invalid_request", "recovery body is invalid")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        new_key_id = "dev_" + hashlib.sha256(new_spki).digest()[:8].hex()
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        try:
+                            subject_id = verify_recovery_code(cur, body["recovery_code"], now)
+                        except RecoveryRefused:
+                            return _error_response(401, "invalid_signature", "recovery code is invalid")
+                        if has_open_incident(cur, subject_id):
+                            return _error_response(400, "recovery_blocked_incident_open", "recovery is blocked during an open incident")
+                        cur.execute("SELECT signer_key_id FROM signer_keys WHERE subject_id=%s AND signer_role='device' AND revoked_at IS NULL", (subject_id,))
+                        prior = cur.fetchone()
+                        if prior is None:
+                            return _error_response(400, "invalid_request", "subject has no active device key to recover")
+                        prior_key_id = prior[0]
+            finally:
+                connection.close()
+            cur_now = store._connection()
+            try:
+                with cur_now.cursor() as cur:
+                    cur.execute("SELECT chain_index FROM subject_heads WHERE subject_id=%s", (subject_id,))
+                    approx_counter = int(cur.fetchone()[0]) + 1
+            finally:
+                cur_now.close()
+            revocation_entry = sign_key_revoked_entry(subject_id, prior_key_id, now, approx_counter)
+            store.recover_device_key(subject_id, prior_key_id, new_key_id, body["new_device_key"], _server_time(), revocation_entry)
+        except SubjectNotFound:
+            return _error_response(404, "not_found", "subject was not found")
+        except IdempotencyConflict:
+            return _error_response(409, "idempotency_conflict", "recovery was already recorded with a different key")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                        set_freeze(cur, subject_id, now)
+                        notify_guardians(cur, subject_id, "device_recovered", now)
+                        append_server(cur, store, subject_id, {"kind": "recovery_performed", "pv": 1}, now)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            pass  # the security-critical key swap above already committed; freeze/notify are best-effort here
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
+
+    @app.delete("/v1/subjects/{id}/data", status_code=202)
+    async def delete_subject_data(id: str, request: Request):
+        """PROPOSED §13/§9 F15. Consumes a fresh action=delete pin_authorised
+        authorisation (transport: POST /v1/events, same as export/end_journey)."""
+        from server.deletion import request_deletion
+        from server.recovery import is_frozen, notify_guardians
+        subject_id = id
+        try:
+            principal = verify_request(request, subject_id=subject_id, database=store, body=await request.body())
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != "device":
+            return _error_response(404, "not_found", "subject was not found")
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id, subject_id=principal.subject_id,
+                nonce=principal.nonce, request_ts=principal.request_ts,
+                now=datetime.now(timezone.utc),
+            )
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return _error_response(404, "not_found", "subject was not found")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                        if is_frozen(cur, subject_id, now):
+                            return _error_response(403, "pin_authorisation_required", "deletion is frozen after a recent recovery")
+                        try:
+                            mode = require_authorisation(cur, subject_id, "delete", subject_id, now, consume=True)
+                        except EventRefused as exc:
+                            return _error_response(exc.status, exc.code, exc.code)
+                        if mode == "normal":
+                            request_deletion(cur, subject_id, now)
+                            notify_guardians(cur, subject_id, "deletion_requested", now)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        # Duress: looks exactly the same, does nothing further (§9). The
+        # pin_authorised event itself (mode=duress) already raised the alarm.
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
+
+    @app.get("/v1/anchor/latest")
+    async def get_latest_anchor():
+        from server.anchor_reads import key_manifest, latest_anchor
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        receipt = latest_anchor(cur)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if receipt is None:
+            return _error_response(404, "not_found", "no anchor has been confirmed yet")
+        return {"receipt": receipt, "key_manifest": key_manifest()}
+
+    @app.get("/v1/anchor/proof/{head_hash}")
+    async def get_anchor_proof(head_hash: str):
+        import re as _re
+        from server.anchor_reads import ProofNotFound, anchor_proof
+        if _re.fullmatch(r"[0-9a-f]{64}", head_hash) is None:
+            return _error_response(400, "invalid_request", "head must be lowercase 32-byte hex")
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        return anchor_proof(cur, head_hash)
+            finally:
+                connection.close()
+        except ProofNotFound:
+            return _error_response(404, "not_found", "no confirmed anchor contains this head")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+
+    @app.post("/v1/journeys", status_code=201)
+    async def start_journey(request: Request):
+        """PROPOSED (25 Sep): server-issued journey_id; bodyless, device-only."""
+        body = await request.body()
+        try:
+            principal = verify_request(request, database=store, body=body)
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != "device":
+            return _error_response(404, "not_found", "subject was not found")
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id,
+                subject_id=principal.subject_id,
+                nonce=principal.nonce,
+                request_ts=principal.request_ts,
+                now=datetime.now(timezone.utc),
+            )
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return _error_response(404, "not_found", "subject was not found")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        journey_id = str(uuid4())
+        try:
+            store.bind_journey(journey_id, principal.subject_id)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        return {"receipt_id": str(uuid4()), "state": "accepted", "journey_id": journey_id}
+
+    @app.post("/v1/journeys/{id}/heartbeat", status_code=202)
+    async def journey_heartbeat(id: str, request: Request):
+        """PROPOSED contact clock input: records last contact only, never location."""
+        body = await request.body()
+        try:
+            subject_id = store.get_journey_subject(id)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if subject_id is None:
+            return _error_response(404, "not_found", "journey was not found")
+        try:
+            principal = verify_request(request, subject_id=subject_id, database=store, body=body)
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != "device":
+            return _error_response(404, "not_found", "journey was not found")
+        try:
+            heartbeat = json.loads(body)
+            if (not isinstance(heartbeat, dict) or set(heartbeat) != {"speed_bucket", "ts"}
+                    or not isinstance(heartbeat["speed_bucket"], str) or not heartbeat["speed_bucket"]
+                    or not isinstance(heartbeat["ts"], str)):
+                raise ValueError("heartbeat shape")
+            _validate_rfc3339(heartbeat["ts"], "ts")
+        except (ValueError, TypeError):
+            return _error_response(400, "invalid_request", "heartbeat body is invalid")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id,
+                subject_id=principal.subject_id,
+                nonce=principal.nonce,
+                request_ts=principal.request_ts,
+                now=datetime.now(timezone.utc),
+            )
+            store.record_heartbeat(subject_id, now)
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return _error_response(404, "not_found", "journey was not found")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
 
     return app
 

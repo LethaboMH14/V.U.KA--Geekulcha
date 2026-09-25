@@ -1,4 +1,6 @@
-import { submitPinnedMessage } from "./publish.mjs";
+import { pinnedAnchorMessage, submitPinnedMessage } from "./publish.mjs";
+
+let submissionMayHaveOccurred = false;
 
 async function main() {
   let body = "";
@@ -11,12 +13,20 @@ async function main() {
       Object.keys(request).some((key) => !["kind", "root_hex"].includes(key))) {
     throw new Error("sidecar request has unexpected fields");
   }
-  const result = await submitPinnedMessage(request);
+  if (process.argv.includes("--sim-stub")) {
+    const { message } = await pinnedAnchorMessage(request.kind, request.root_hex);
+    process.stdout.write(`${JSON.stringify({ sim: true, submitted: false, message_hex: Buffer.from(message).toString("hex") })}\n`);
+    process.exitCode = 2; // Positively not submitted, never a ledger receipt.
+    return;
+  }
+  const result = await submitPinnedMessage(request, {
+    onBeforeSubmit: () => { submissionMayHaveOccurred = true; },
+  });
   process.stdout.write(`${JSON.stringify(result)}\n`);
 }
 
 main().catch((error) => {
   // Do not print the SDK's exception: it may contain credentials or transaction data.
   process.stderr.write(`Hedera sidecar failed: ${error.message.startsWith("mirror ") ? error.message : "submission or validation failed"}\n`);
-  process.exitCode = 1;
+  process.exitCode = submissionMayHaveOccurred ? 1 : 2;
 });

@@ -271,6 +271,7 @@ class PostgresDatabase:
             raise DatabaseUnavailable("PostgreSQL connection failed") from exc
 
     def initialize(self) -> None:
+        from server import anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery, deletion
         self._payload_key()
         connection = self._connection()
         try:
@@ -279,6 +280,8 @@ class PostgresDatabase:
                     cursor.execute(CREATE_SCHEMA_SQL)
                     cursor.execute(CREATE_EVENT_ID_INDEX_SQL)
                     cursor.execute(OUTBOX_SCHEMA_SQL)
+                    for module in (anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery, deletion):
+                        cursor.execute(module.SCHEMA_SQL)
         finally:
             connection.close()
 
@@ -680,9 +683,13 @@ class PostgresDatabase:
                             return _row_entry(existing), False
 
                         skewed = _clock_skewed(request_ts, now)
-                        skew_exempt = entry["action"].removeprefix("sim_") in {
-                            "checkin_opened", "checkin_result", "pin_authorised"
-                        }
+                        # v2 carries the kind in the committed payload; `action` is the
+                        # coarse class (device_event). Checking only `action` never matched.
+                        _exempt = {"checkin_opened", "checkin_result", "pin_authorised"}
+                        skew_exempt = (
+                            (entry.get("payload") or {}).get("kind") in _exempt
+                            or entry["action"].removeprefix("sim_") in _exempt
+                        )
                         if skewed and not skew_exempt:
                             raise RequestTimestampExpired(request_ts)
                         _consume_nonce(cursor, signer_key_id, nonce, now)
@@ -737,6 +744,9 @@ class PostgresDatabase:
                             (next_index, stored["event_hash"], subject_id),
                         )
                         self._store_private_payload(cursor, subject_id, entry, now)
+                        from server.event_effects import apply_event
+                        with connection.cursor() as effects_cursor:
+                            apply_event(effects_cursor, self, subject_id, entry, stored, now)
                 return stored, True
             except IntegrityError as exc:
                 if getattr(exc, "pgcode", None) != "23505":
@@ -754,6 +764,32 @@ class PostgresDatabase:
                 connection.close()
 
         raise DatabaseUnavailable("Append retry loop exhausted")
+
+    def record_heartbeat(self, subject_id: str, now: datetime) -> None:
+        """Heartbeat carries no location; only the subject's last contact time is kept."""
+        from server.contact import record_contact
+
+        connection = self._connection()
+        try:
+            with connection:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                    record_contact(cursor, subject_id, now)
+        finally:
+            connection.close()
+
+    def subject_export(self, subject_id: str, now: datetime) -> dict[str, Any]:
+        """P3.A5 member export under the subject lock (server/export_view.py)."""
+        from server.export_view import build_export
+
+        connection = self._connection()
+        try:
+            with connection:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                    return build_export(cursor, self, subject_id, now)
+        finally:
+            connection.close()
 
     def export(self, subject_id: str) -> list[dict[str, Any]]:
         from psycopg2.extras import RealDictCursor
