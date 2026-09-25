@@ -103,3 +103,22 @@ Needs / blockers (Sibusiso):
 Rejected, with reason (review round):
 - "Allow a degraded offline journey": its events could never be accepted, so the screen would claim protection that doesn't exist.
 - "Hold My record at the pre-incident head": the phone can't see incident state, and its entries read the same for both PINs. The server export already applies the T30 hold.
+
+---
+
+## 2026-09-25 (22:00) | addendum: My record checks the server's copy on the phone
+
+Changed:
+- **After the PIN, My record fetches the member's export** (`GET /v1/subjects/{id}/export`, the T30 hold applied by the server). `app/src/api/verifyRecord.ts` then checks it on the phone with the phone's own SHA-256:
+  - every link;
+  - every event hash, over the canonical entry;
+  - every payload commitment;
+  - that every receipt this phone kept, up to the export's head, is in the chain at the same index with the same hash.
+- **It reports the first broken entry by index.** Signatures and the public anchor are left to the verify page (React Native has no WebCrypto), and the screen says so.
+- **Queue numbering fix:** numbers now continue past kept receipts. Before, the numbering restarted when the queue emptied and overwrote the phone's receipts. Found on the emulator: My record showed 2 of 8 entries.
+
+Evidence:
+- `npx jest`: 53/53 pass;
+- `node scripts/e2e/journey-e2e.mjs --fast`: 23/23;
+- on the real export, the phone check and `shared/verify.js` both pass, and a tampered payload fails both at the same entry (index 1).
+- **Emulator run:** onboarding, then a journey, then a glass clip through the phone's model. The Journey check opened. A duress PIN showed "Checked in", while the server recorded `duress_pin`, marked the incident duress, and queued a guardian alert and a bank signal. Ending the journey with the normal PIN left the incident open, as §8 requires.

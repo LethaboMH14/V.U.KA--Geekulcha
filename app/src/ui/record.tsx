@@ -15,6 +15,9 @@ import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {Lamp, Panel, Readout, Rule, TopAppBar} from './components';
 import {colors, fonts, space, type} from './theme';
 import {device, type Delivery, type RecordEntry} from '../api/device';
+import type {RecordCheck} from '../api/verifyRecord';
+
+type Check = {state: 'checking'} | {state: 'done'; result: RecordCheck} | {state: 'unreachable'; detail: string};
 
 const KIND: Record<string, string> = {
   registration: 'Record created',
@@ -37,6 +40,20 @@ export function MyRecord({onBack}: {onBack: () => void}) {
   const [entries, setEntries] = useState<RecordEntry[] | null>(null);
   const [d, setD] = useState<Delivery>(device.delivery());
   const [open, setOpen] = useState<number | null>(null);
+  const [check, setCheck] = useState<Check | null>(device.simulated ? null : {state: 'checking'});
+
+  // The server's copy of this record, checked on this phone (F14).
+  useEffect(() => {
+    if (device.simulated) return;
+    let live = true;
+    device
+      .checkMyRecord()
+      .then(result => live && setCheck({state: 'done', result}))
+      .catch(e => live && setCheck({state: 'unreachable', detail: String(e instanceof Error ? e.message : e)}));
+    return () => {
+      live = false;
+    };
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -73,11 +90,14 @@ export function MyRecord({onBack}: {onBack: () => void}) {
         {d.lastError ? <Text style={[type.caption, {marginTop: space.sm}]}>Last send: {d.lastError}</Text> : null}
       </Panel>
 
+      {check ? <ServerCheck check={check} /> : null}
+
       <Panel>
         <Text style={type.label}>Public anchor</Text>
         <Text style={[type.body, {marginTop: space.xs}]}>
-          Not published yet. This server doesn’t run the hourly anchor, so no entry has a public proof. Your hashes above are
-          still checkable against the server’s chain.
+          {check?.state === 'done' && check.result.anchored
+            ? 'Anchored: the server’s export includes a proof for its newest entry.'
+            : 'Not published yet. This server doesn’t run the hourly anchor, so no entry has a public proof. Your hashes are still checked against the server’s chain above.'}
         </Text>
       </Panel>
 
@@ -114,6 +134,45 @@ export function MyRecord({onBack}: {onBack: () => void}) {
         </Panel>
       ) : null}
     </View>
+  );
+}
+
+/** What the phone found when it checked the server's copy. */
+function ServerCheck({check}: {check: Check}) {
+  if (check.state === 'checking') {
+    return (
+      <Panel>
+        <Readout label="Server’s copy" value="checking…" lamp={<Lamp tone="unlit" />} />
+      </Panel>
+    );
+  }
+  if (check.state === 'unreachable') {
+    return (
+      <Panel>
+        <Readout label="Server’s copy" value="not checked" lamp={<Lamp tone="unlit" hollow />} />
+        <Text style={[type.caption, {marginTop: space.sm}]}>Couldn’t reach the server to fetch it. {check.detail}</Text>
+      </Panel>
+    );
+  }
+  const r = check.result;
+  return (
+    <Panel>
+      <Readout label="Server’s copy" value={r.ok ? 'checks out' : `broken at entry ${r.firstBroken}`} lamp={<Lamp tone={r.ok ? 'green' : 'unlit'} hollow={!r.ok} />} />
+      <Rule />
+      {r.ok ? (
+        <Text style={[type.body, {marginTop: space.xs}]}>
+          Checked on this phone: all {r.entries} entries link together, every payload matches what was signed, and
+          {r.mine.inside ? ` all ${r.mine.inside} receipts this phone kept are in it, unchanged.` : ' none of this phone’s receipts fall inside it yet.'}
+        </Text>
+      ) : (
+        <Text style={[type.body, {marginTop: space.xs, color: colors.textTitle}]}>
+          Entry {r.firstBroken} doesn’t check: {r.reason}
+        </Text>
+      )}
+      <Text style={[type.caption, {marginTop: space.sm}]}>
+        Signatures and the public anchor are checked by the verify page, not on this phone.
+      </Text>
+    </Panel>
   );
 }
 

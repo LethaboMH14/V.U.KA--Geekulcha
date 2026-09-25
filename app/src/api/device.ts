@@ -26,6 +26,7 @@ import {NativeModules, Platform} from 'react-native';
 import {canonicalJson} from '../../../shared/canonical.js';
 import {buildEvent, postEvent, rfc3339, signedRequest, uuid, type EventPayload, type EventSubmission, type Receipt, type Signer} from './events';
 import {checkPayload} from './payloads';
+import {checkRecord, type Export, type RecordCheck} from './verifyRecord';
 
 export const MODEL_SHA256 = '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de';
 /**
@@ -345,6 +346,19 @@ export function createDevice(b: Backend) {
     onDelivery(l: (d: Delivery) => void) {
       listeners.add(l);
       return () => listeners.delete(l);
+    },
+
+    /**
+     * After an export authorisation: fetch the member's export (§9, T30 hold
+     * applied by the server) and check it on this phone against the receipts
+     * this phone kept. Needs the authorisation to have reached the server.
+     */
+    async checkMyRecord(): Promise<RecordCheck> {
+      if (!profile) throw new Error('no profile');
+      await flush();
+      const exp = await b.request<Export>(profile.serverUrl, 'GET', `/v1/subjects/${encodeURIComponent(profile.subjectId)}/export`, '');
+      const mine = (await b.received()).map(it => JSON.parse(it.json) as RecordEntry);
+      return checkRecord(exp, b.signer, mine);
     },
 
     /** The member's own copy of their record: every receipt, oldest first. */

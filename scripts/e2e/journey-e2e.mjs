@@ -19,7 +19,7 @@ import {createHash, webcrypto} from 'node:crypto';
 import {mkdirSync, writeFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {dirname, join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 
 const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -145,6 +145,20 @@ async function detection(d, journey) {
   await d.flush();
   const exp = await api.signedRequest(base, phoneSigners.get(subject), 'GET', `/v1/subjects/${subject}/export`, '').catch(e => ({error: String(e)}));
   check('normal: server returns the member export after the PIN', !exp.error, exp.error ?? `${Object.keys(exp).join(',')}`);
+  // The phone's check and the stranger's verifier must agree, and fail at the same entry.
+  const {checkRecord} = require(join(build, 'app', 'src', 'api', 'verifyRecord.js'));
+  const {verifyExport} = await import(pathToFileURL(join(root, 'shared', 'verify.js')).href);
+  const hasher = phoneSigners.get(subject);
+  const mine = (await d.myRecord()).map(r => ({event_id: r.event_id, event_hash: r.event_hash, chain_index: r.chain_index}));
+  const onPhone = await checkRecord(exp, hasher, mine);
+  const stranger = await verifyExport(exp);
+  check('record: phone check and stranger verifier both pass the export', onPhone.ok && stranger.ok, `phone ${onPhone.entries} entries, ${onPhone.mine.inside} receipts matched; stranger ${stranger.entries_checked}`);
+  const bad = JSON.parse(JSON.stringify(exp));
+  const victim = bad.payloads[Math.min(2, bad.payloads.length - 1)];
+  victim.payload = {...victim.payload, pv: 2};
+  const badIndex = bad.entries.findIndex(e => e.details.event_id === victim.event_id);
+  const [p2, s2] = [await checkRecord(bad, hasher, mine), await verifyExport(bad)];
+  check('record: a tampered payload fails both, at the same entry', !p2.ok && !s2.ok && p2.firstBroken === badIndex && s2.first_broken_index === badIndex, `phone ${p2.firstBroken}, stranger ${s2.first_broken_index}, expected ${badIndex}`);
 }
 
 // ---- 2. Duress: same screens, server alarm -----------------------------------
