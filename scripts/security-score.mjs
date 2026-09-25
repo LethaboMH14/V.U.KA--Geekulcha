@@ -1,5 +1,6 @@
 ﻿#!/usr/bin/env node
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,10 +23,10 @@ function fail(message, code = 1) {
 }
 
 function argsOf(argv) {
-  const opts = { out: path.join(repo, 'security-score.json'), results: null, commit: null, regression: null };
+  const opts = { out: path.join(repo, 'security-score.json'), results: null, commit: null, generatedAt: null, regression: null };
   for (let i = 0; i < argv.length; i++) {
     const key = argv[i];
-    if (!['--out', '--results', '--commit', '--check-regression'].includes(key)) fail(`Unknown option: ${key}`);
+    if (!['--out', '--results', '--commit', '--generated-at', '--check-regression'].includes(key)) fail(`Unknown option: ${key}`);
     if (!argv[i + 1] || argv[i + 1].startsWith('--')) fail(`Missing value for ${key}`);
     const value = argv[++i];
     if (key === '--out') {
@@ -36,10 +37,13 @@ function argsOf(argv) {
     }
     if (key === '--results') opts.results = path.resolve(value);
     if (key === '--commit') opts.commit = value;
+    if (key === '--generated-at') opts.generatedAt = value;
     if (key === '--check-regression') opts.regression = path.resolve(value);
   }
   if (!opts.results) fail('--results <dir> is required');
   if (!opts.commit) fail('--commit <sha> is required');
+  if (!opts.generatedAt || Number.isNaN(Date.parse(opts.generatedAt))) fail('--generated-at <timestamp> is required and must be a valid date');
+  opts.generatedAt = new Date(opts.generatedAt).toISOString();
   return opts;
 }
 
@@ -66,24 +70,58 @@ function sourceOwners(text) {
 
 function isImplementationPath(value) {
   const normalized = value.replaceAll('\\', '/');
+  const filename = path.posix.basename(normalized);
+  if (normalized.split('/').some(segment => segment.toLowerCase() === 'docs') || /\.(?:md|txt|rst)$/i.test(filename) || /^(?:README|LICENSE)/i.test(filename)) return false;
   return !normalized.startsWith('/') && !normalized.split('/').includes('..') &&
     implementationRoots.some(root => normalized.startsWith(root));
 }
 
-function reportResults(resultsDir) {
-  const cases = [];
-  if (!fs.existsSync(resultsDir)) return cases;
+function resultFiles(resultsDir) {
+  const files = [];
+  if (!fs.existsSync(resultsDir)) return files;
   const visit = dir => {
     for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, item.name);
       if (item.isDirectory()) visit(full);
-      else if (item.isFile() && /\.(?:tap|xml)$/i.test(item.name)) {
-        const text = fs.readFileSync(full, 'utf8');
-        cases.push(...(/\.tap$/i.test(item.name) ? tapResults(text) : junitResults(text)));
-      }
+      else if (item.isFile() && /\.(?:tap|xml)$/i.test(item.name)) files.push(full);
     }
   };
   visit(resultsDir);
+  return files;
+}
+
+function verifyResultsManifest(resultsDir, commit) {
+  const manifestPath = path.join(resultsDir, 'results-manifest.json');
+  try {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    if (typeof manifest.head_sha !== 'string' || manifest.head_sha.toLowerCase() !== commit.toLowerCase() || !Array.isArray(manifest.files)) return false;
+    const declared = new Map();
+    for (const entry of manifest.files) {
+      if (!entry || typeof entry.name !== 'string' || typeof entry.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(entry.sha256)) return false;
+      const name = entry.name.replaceAll('\\', '/');
+      if (!name || name.startsWith('/') || name.split('/').includes('..') || declared.has(name)) return false;
+      declared.set(name, entry.sha256.toLowerCase());
+    }
+    const actualFiles = resultFiles(resultsDir);
+    if (actualFiles.length !== declared.size) return false;
+    for (const full of actualFiles) {
+      const name = path.relative(resultsDir, full).replaceAll('\\', '/');
+      const expected = declared.get(name);
+      if (!expected || crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex') !== expected) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function reportResults(resultsDir, manifestValid) {
+  const cases = [];
+  if (!manifestValid) return cases;
+  for (const full of resultFiles(resultsDir)) {
+    const text = fs.readFileSync(full, 'utf8');
+    cases.push(...(/\.tap$/i.test(full) ? tapResults(text) : junitResults(text)));
+  }
   return cases;
 }
 
@@ -113,7 +151,7 @@ function junitResults(text) {
 
 function statusFor(id, cases) {
   const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const token = new RegExp(`(^|[^A-Z0-9])${escaped}([^0-9]|$)`, 'i');
+  const token = new RegExp(`(^|[^A-Za-z0-9-])${escaped}([^A-Za-z0-9]|$)`, 'i');
   const matching = cases.filter(result => token.test(result.name));
   if (!matching.length) return 'missing';
   return matching.find(result => result.status === 'skipped' || result.status === 'todo')?.status ||
@@ -127,7 +165,8 @@ function scoreRegister(register, opts, owners) {
   if (ci && ((ci.head_sha !== null && typeof ci.head_sha !== 'string') || typeof ci.status !== 'string')) {
     fail('results/ci-status.json must contain {head_sha: string|null, status: string}');
   }
-  const reports = reportResults(opts.results);
+  const resultsBound = verifyResultsManifest(opts.results, opts.commit);
+  const reports = reportResults(opts.results, resultsBound);
   const matchingCommit = ci?.head_sha?.toLowerCase() === opts.commit.toLowerCase();
   const unratedCount = register.filter(control => control.severity === 'unrated').length;
   const rows = register.map(control => {
@@ -157,7 +196,10 @@ function scoreRegister(register, opts, owners) {
       const presentTests = testIds.filter(id => testIdExists(id));
       const testStatuses = presentTests.map(id => ({ id, status: statusFor(id, reports) }));
       const passingTest = testStatuses.find(result => result.status === 'pass');
-      if (!matchingCommit) {
+      if (!resultsBound) {
+        why = 'results not bound to scored commit';
+        next = 'Write a results-manifest.json for the exact scored commit and verify every TAP/JUnit file hash.';
+      } else if (!matchingCommit) {
         why = ci ? `CI head_sha ${ci.head_sha} does not match scored commit ${opts.commit}.` : 'No ci-status.json with a head_sha exists in the results directory.';
         next = 'Produce per-test results and ci-status.json for the exact scored commit.';
       } else if (!presentTests.length) {
@@ -175,14 +217,13 @@ function scoreRegister(register, opts, owners) {
         next = `Record a passing per-test result for ${testStatuses.map(result => result.id).join(' or ')} at this commit.`;
       } else {
         level = 2;
-        if (!existingReview(control)) {
-          why = 'No verified non-author review record is linked.';
-          next = 'Add a non-author review record under docs/reviews/.';
+        const review = existingReview(control, opts.commit);
+        if (!review.valid) {
+          why = review.why;
+          next = 'Add a valid non-author approval review record for the scored commit.';
         } else {
           level = 3;
-          const independentReport = (control.external || []).some(link =>
-            !/^https?:\/\//i.test(link) && fs.existsSync(path.resolve(repo, link))
-          );
+          const independentReport = validExternalReport(control.external || []);
           if (independentReport) {
             level = 4;
             why = 'No higher evidence level is defined.';
@@ -218,7 +259,7 @@ function scoreRegister(register, opts, owners) {
   };
   const all = summarize(rows);
   return {
-    generated_at: new Date().toISOString(),
+    generated_at: opts.generatedAt,
     commit: opts.commit,
     ci: ci ? { status: ci.status, head_sha: ci.head_sha, run_url: ci.run_url || '' } : null,
     overall: { evidence_score: all.evidence_score, evidence_confidence: all.evidence_confidence },
@@ -229,7 +270,9 @@ function scoreRegister(register, opts, owners) {
 }
 
 function testFiles() {
-  const roots = ['test', 'shared/test'];
+  const roots = new Set(['test', 'shared/test', 'anchor/tests', 'server/tests']);
+  const workflow = fs.readFileSync(path.join(repo, '.github/workflows/security-score.yml'), 'utf8');
+  for (const match of workflow.matchAll(/\b((?:[A-Za-z0-9_.-]+\/)*tests?)(?=\/|\b)/g)) roots.add(match[1]);
   const files = [];
   for (const root of roots) {
     const dir = path.join(repo, root);
@@ -246,9 +289,58 @@ function testFiles() {
   return files.filter(file => path.relative(repo, file).replaceAll('\\', '/') !== 'test/security-score.test.mjs');
 }
 const testSources = testFiles().map(file => fs.readFileSync(file, 'utf8'));
-function testIdExists(id) { return testSources.some(source => new RegExp(`\\b${id}\\b`).test(source)); }
-function existingReview(control) {
-  return (control.review_links || []).some(link => link.startsWith('docs/reviews/') && fs.existsSync(path.resolve(repo, link)));
+function testIdExists(id) { return testSources.some(source => new RegExp(`(^|[^A-Za-z0-9-])${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^A-Za-z0-9]|$)`, 'm').test(source)); }
+function parseReviewFrontMatter(text) {
+  const match = text.match(/^---\s*\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  if (!match) return {};
+  return Object.fromEntries(match[1].split(/\r?\n/).flatMap(line => {
+    const field = line.match(/^([a-z_]+):\s*(.*?)\s*$/i);
+    return field ? [[field[1], field[2].replace(/^['"]|['"]$/g, '')]] : [];
+  }));
+}
+function reviewValidity(record, commit, source) {
+  const missing = ['reviewer', 'author', 'decision', 'reviewed_commit'].filter(field => !String(record?.[field] ?? '').trim());
+  if (missing.length) return { valid: false, why: `Review record missing field: ${missing[0]}.` };
+  if (record.decision.toLowerCase() !== 'approve') return { valid: false, why: 'Review decision is not approve.' };
+  if (record.reviewer.toLowerCase() === record.author.toLowerCase()) return { valid: false, why: 'Review is self-review (reviewer equals author).' };
+  if (record.reviewed_commit.toLowerCase() !== commit.toLowerCase()) return { valid: false, why: 'Review reviewed_commit does not match scored commit.' };
+  return { valid: true, source };
+}
+function existingReview(control, commit) {
+  let failure = 'No review link is recorded.';
+  for (const link of control.review_links || []) {
+    if (typeof link === 'string' && /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+#pullrequestreview-\d+$/i.test(link)) {
+      failure = 'GitHub PR review URL requires reviewer, author, decision, and reviewed_commit fields in the register entry.';
+      continue;
+    }
+    if (link && typeof link === 'object' && typeof link.url === 'string' && /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+#pullrequestreview-\d+$/i.test(link.url)) {
+      const result = reviewValidity(link, commit, link.url);
+      if (result.valid) return result;
+      failure = result.why;
+      continue;
+    }
+    const file = typeof link === 'string' ? link : link?.path;
+    if (typeof file !== 'string' || !/^docs\/reviews\/(?!.*(?:^|\/)\.\.(?:\/|$)).+\.md$/i.test(file)) continue;
+    const full = path.resolve(repo, file);
+    if (!full.startsWith(`${path.resolve(repo, 'docs/reviews')}${path.sep}`) || !fs.existsSync(full) || !fs.statSync(full).isFile()) {
+      failure = 'Review markdown file is missing.';
+      continue;
+    }
+    const result = reviewValidity(parseReviewFrontMatter(fs.readFileSync(full, 'utf8')), commit, file);
+    if (result.valid) return result;
+    failure = result.why;
+  }
+  return { valid: false, why: failure };
+}
+function validExternalReport(entries) {
+  return entries.some(entry => {
+    if (!entry || typeof entry !== 'object' || entry.independent !== true ||
+      !['assessor', 'organisation', 'report_path', 'assessed_commit_or_release', 'date'].every(key => String(entry[key] ?? '').trim()) ||
+      Number.isNaN(Date.parse(entry.date)) || !/^[a-f0-9]{64}$/i.test(entry.report_sha256 || '')) return false;
+    const full = path.resolve(repo, entry.report_path);
+    if (!full.startsWith(`${repo}${path.sep}`) || !fs.existsSync(full) || !fs.statSync(full).isFile()) return false;
+    return crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex') === entry.report_sha256.toLowerCase();
+  });
 }
 function ciJobs() {
   const text = fs.readFileSync(ciJobsFile, 'utf8');
@@ -290,6 +382,8 @@ for (const control of register) {
   for (const id of control.threats || []) if (!threatIds.has(id)) fail(`${control.id}: threat ${id} not present in THREAT-MODEL.md`);
 }
 const result = scoreRegister(register, opts, sourceOwners(sourceText));
+// Coercion threats the threat model doesn't yet link to a control: weighted as unrated until it does.
+result.unmapped_coercion_threats = [...(registerDocument.unmapped_coercion_threats ?? [])].sort();
 if (opts.regression) {
   const old = readJson(opts.regression);
   const oldLevels = new Map((old.controls || []).map(c => [c.id, Number(String(c.level).replace('E', ''))]));

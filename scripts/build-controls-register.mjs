@@ -15,7 +15,7 @@ const SOURCES = {
 const IMPLEMENTATION_ROOTS = ['app/', 'server/', 'anchor/', 'shared/', 'dashboard/', 'scripts/', 'contracts/', '.github/'];
 const THREAT_ID = /^[A-Z]{1,4}(-[A-Z])?-?\d+[a-z]?$/;
 const CONTROL_ID = /\bC-\d{2,3}\b/g;
-const TEST_ID = /\b(?:T\d{2}|PT-\d{2})\b/g;
+const TEST_ID = /(^|[^A-Za-z0-9-])((?:T\d{2}|PT-\d{2}))(?=$|[^A-Za-z0-9])/g;
 
 const sortStrings = values => [...new Set(values)].sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
 const compareControlIds = (a, b) => {
@@ -64,7 +64,7 @@ function columnIndex(header, name) {
 }
 
 function extractTests(value) {
-  return [...(value ?? '').matchAll(TEST_ID)].map(match => match[0]);
+  return [...(value ?? '').matchAll(TEST_ID)].map(match => match[2]);
 }
 
 function extractPaths(evidence) {
@@ -72,7 +72,9 @@ function extractPaths(evidence) {
   const evidencePaths = [];
   const docPaths = [];
   for (const item of paths) {
-    if (IMPLEMENTATION_ROOTS.some(root => item.startsWith(root))) evidencePaths.push(item);
+    const filename = path.posix.basename(item);
+    const documentation = item.split('/').some(segment => segment.toLowerCase() === 'docs') || /\.(?:md|txt|rst)$/i.test(filename) || /^(?:README|LICENSE)/i.test(filename);
+    if (!documentation && IMPLEMENTATION_ROOTS.some(root => item.startsWith(root))) evidencePaths.push(item);
     else if (/^(?:\.\.\/|docs\/|[A-Za-z0-9_.-]+\.md(?:#.*)?$)/.test(item)) docPaths.push(item);
   }
   return { evidence_paths: sortStrings(evidencePaths), doc_paths: sortStrings(docPaths) };
@@ -235,12 +237,14 @@ export function buildRegister(root = REPO, { overridesText } = {}) {
   });
   const bySeveritySource = Object.fromEntries(['coercion-row', 'override', 'threat-model', 'unrated'].map(source => [source, resultControls.filter(control => control.severity_source === source).length]));
   const generatedFiles = [SOURCES.ssdcl, SOURCES.threatModel, ...(programmeExists ? [SOURCES.programme] : []), SOURCES.overrides];
+  const unmappedCoercionThreats = threatRows.filter(threat => threat.coercion && threat.controls.length === 0).map(threat => threat.id);
   const output = {
     generated_from: generatedFiles.map(file => ({ path: file, sha256: digest(resolve(file)) })),
     sources: {
       security_programme: { path: SOURCES.programme, available: programmeExists },
     },
     severity_rule: 'TM-C* coercion-row threat => high (weight 3); otherwise use only an explicit severity_override with reason; otherwise unrated (weight 1). Severity is never inferred from mapped threat presence.',
+    ...(unmappedCoercionThreats.length ? { unmapped_coercion_threats: unmappedCoercionThreats } : {}),
     counts: {
       controls: resultControls.length,
       by_severity_source: bySeveritySource,
@@ -286,6 +290,10 @@ function cli(argv) {
   }
   const outputFile = path.join(root, SOURCES.register);
   const generated = json(buildRegister(root));
+  const generatedDocument = JSON.parse(generated);
+  if (generatedDocument.unmapped_coercion_threats?.length) {
+    console.warn(`Unmapped coercion threats (no C-nn in Control column): ${generatedDocument.unmapped_coercion_threats.join(', ')}`);
+  }
   if (check) {
     const existing = fs.existsSync(outputFile) ? fs.readFileSync(outputFile, 'utf8') : '';
     if (existing !== generated) {

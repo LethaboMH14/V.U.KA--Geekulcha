@@ -164,6 +164,11 @@ function render(data) {
   }
   const e4Count = (data.controls || []).filter(control => control.level === 'E4').length;
   setText(byId('e4-note'), e4Count ? `E4: ${e4Count} independently verified control${e4Count === 1 ? '' : 's'}.` : 'No independent assessment yet (G8)');
+  const unmapped = Array.isArray(data.unmapped_coercion_threats) ? data.unmapped_coercion_threats : [];
+  setText(byId('weight-note'), [
+    typeof data.unrated_severity_notice === 'string' ? `${data.unrated_severity_notice}.` : '',
+    unmapped.length ? `Coercion threats not yet linked to a control, so not weighted high: ${unmapped.join(', ')}.` : '',
+  ].filter(Boolean).join(' '));
   const list = byId('category-list');
   for (const category of data.categories || []) list.append(categoryCard(category));
   const rows = byId('control-rows');

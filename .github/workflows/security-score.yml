@@ -55,16 +55,18 @@ jobs:
       - name: Write exact-commit CI status
         if: always()
         env:
-          GH_TOKEN: ${{ github.token }}
           NODE_OUTCOME: ${{ steps.node-tests.outcome }}
           VITEST_OUTCOME: ${{ steps.vitest.outcome }}
           PYTEST_OUTCOME: ${{ steps.pytest.outcome }}
           HEAD_SHA: ${{ github.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh run list --commit "${{ github.sha }}" --workflow checks.yml --json conclusion,url,headSha > checks-runs.json
           node --input-type=module <<'NODE'
+          import crypto from 'node:crypto';
           import fs from 'node:fs';
+          import path from 'node:path';
           const runs = JSON.parse(fs.readFileSync('checks-runs.json', 'utf8'));
           const latest = runs.find(run => run.headSha === process.env.HEAD_SHA);
           fs.mkdirSync('results', { recursive: true });
@@ -73,10 +75,29 @@ jobs:
             head_sha: latest?.headSha || null,
             run_url: latest?.url || process.env.RUN_URL
           }, null, 2) + '\n');
+          const files = [];
+          const visit = dir => {
+            for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, item.name);
+              if (item.isDirectory()) visit(full);
+              else if (item.isFile() && /\.(?:tap|xml)$/i.test(item.name)) {
+                files.push({ name: path.relative('results', full).split(path.sep).join('/'), sha256: crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex') });
+              }
+            }
+          };
+          visit('results');
+          files.sort((a, b) => a.name.localeCompare(b.name));
+          fs.writeFileSync('results/results-manifest.json', JSON.stringify({ head_sha: process.env.HEAD_SHA, files }, null, 2) + '\n');
           NODE
+      - name: Resolve scored commit timestamp
+        id: commit-metadata
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "timestamp=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}" --jq '.commit.committer.date')" >> "$GITHUB_OUTPUT"
       - name: Compute evidence score from per-test results
         if: always()
-        run: node scripts/security-score.mjs --commit "${{ github.sha }}" --results results --out security-score.json
+        run: node scripts/security-score.mjs --commit "${{ github.sha }}" --generated-at "${{ steps.commit-metadata.outputs.timestamp }}" --results results --out security-score.json
       - name: Select the latest completed main score as the regression baseline
         id: baseline
         if: always()
@@ -97,7 +118,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh run download "${{ steps.baseline.outputs.run_id }}" --name security-score --dir baseline && test -f baseline/security-score.json; then
-            node scripts/security-score.mjs --commit "${{ github.sha }}" --results results --check-regression baseline/security-score.json --out security-score.json
+            node scripts/security-score.mjs --commit "${{ github.sha }}" --generated-at "${{ steps.commit-metadata.outputs.timestamp }}" --results results --check-regression baseline/security-score.json --out security-score.json
           else
             echo 'No downloadable main score artifact; regression baseline unavailable on this run.'
           fi

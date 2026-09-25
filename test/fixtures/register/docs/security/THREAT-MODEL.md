@@ -7,3 +7,4 @@
 | Threat | Description | Control | Test |
 |---|---|---|---|
 | TM-C4 | coercion threat | C-123 | PT-04 |
+| TM-C5 | unmapped coercion threat | — | PT-05 |

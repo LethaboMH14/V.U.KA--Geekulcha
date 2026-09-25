@@ -32,6 +32,7 @@ test('SSDLC parser reads three-digit IDs, metadata, tests, paths and section hea
   assert.equal(threeDigit.section, '4 · Design and implementation');
   assert.deepEqual(threeDigit.evidence_paths, ['server/auth.js']);
   assert.deepEqual(threeDigit.tests, ['T02']);
+  assert.deepEqual(threeDigit.tests, ['T02']);
 });
 
 test('threat mapping reads Control by header name and ignores Residual C-IDs', () => {
@@ -59,6 +60,8 @@ test('generation preserves overrides, applies coercion severity and leaves ordin
   assert.deepEqual(coercion.ci_jobs, ['security-score']);
   assert.deepEqual(coercion.review_links, ['docs/reviews/fixture.md']);
   assert.deepEqual(coercion.external, ['https://example.test/report']);
+  assert.deepEqual(output.unmapped_coercion_threats, ['TM-C5']);
+  assert.match(first.stderr, /Unmapped coercion threats.*TM-C5/);
   assert.match(output.severity_rule, /never inferred/i);
 });
 
