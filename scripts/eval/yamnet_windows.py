@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """YAMNet windows for the detection harness (spec §16 M1/M2).
 
-Reads a clip list (CSV: filename, category, label), runs the registered YAMNet
+Reads a clip list (CSV text: filename, category, label, fold), runs the registered YAMNet
 model on each clip with the SAME windowing the phone uses (15 600-sample
 windows, hop 7 800, 16 kHz mono, a fixed cadence with no gate), and writes one
 JSON line per clip with integer windows ready for the engine, including the
@@ -12,7 +12,7 @@ are committed, audio is not (dataset licences).
 
 Usage:
   python scripts/eval/yamnet_windows.py --model yamnet.tflite --labels yamnet_labels.txt \
-      --clips scripts/eval/esc50-cliplist.csv --audio <folder> --out windows.jsonl
+      --clips scripts/eval/esc50-cliplist.txt --audio <folder> --out windows.jsonl
 """
 import argparse
 import csv

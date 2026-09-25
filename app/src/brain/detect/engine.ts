@@ -142,7 +142,9 @@ export function step(state: EngineState, input: Input, r: Ruleset): {state: Engi
     let best = 0;
     for (let i = 1; i < TARGETS.length; i++) if (w.targetBp[i] > w.targetBp[best]) best = i;
     const t = TARGETS[best];
-    reasons.push({rule: 'threshold', class_label: t.label, score_bp: w.targetBp[best], threshold_bp: r.thresholdBp[t.label], pass: false});
+    // State the comparison truthfully: a gun-like score can clear its bar and
+    // still be excluded by the neighbour rule (that reason is already listed).
+    reasons.push({rule: 'threshold', class_label: t.label, score_bp: w.targetBp[best], threshold_bp: r.thresholdBp[t.label], pass: w.targetBp[best] >= r.thresholdBp[t.label]});
     const history = [...state.history.filter(h => h.seq > w.seq - 3 && h.seq < w.seq), {seq: w.seq, family: null}];
     return {state: {...state, history}, decision: NO(reasons)};
   }

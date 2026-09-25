@@ -91,6 +91,13 @@ describe('gun-like sounds must beat their excluded neighbours', () => {
     expect(decisions[0].reasons).toContainEqual({rule: 'gun_neighbour', class_label: 'Gunshot, gunfire', score_bp: 8516, neighbour_bp: 9180, pass: false});
   });
 
+  it('states the threshold comparison truthfully when the neighbour rule is what excluded it', () => {
+    const w = {...win(1, 'Gunshot, gunfire', 4141), gunNeighbourBp: 6680};
+    const d = run([audio(w)]).decisions[0];
+    expect(d.record).toBe(false);
+    expect(d.reasons).toContainEqual({rule: 'threshold', class_label: 'Gunshot, gunfire', score_bp: 4141, threshold_bp: R.thresholdBp['Gunshot, gunfire'], pass: true});
+  });
+
   it('records when the gunshot is the stronger of the two', () => {
     const w = {...win(1, 'Gunshot, gunfire', 8516), gunNeighbourBp: 4000};
     expect(run([audio(w)]).decisions[0].record).toBe(true);

@@ -52,6 +52,23 @@ Added by Lethabo's Claude Code assistant from four research passes on 23 Sep (ma
 - The historical 318 ms p95 (n = 10) measured the predecessor's server relay (the UMOJA path). **It is never quoted as VIGIL's latency.** VIGIL's own latency is measurement M3 in `docs/VUKA-2-SPEC.md` §16.
 - R1.09bn (theft claims in a third party's dataset) is not a VIGIL market and not a saving. It is retired from all forward-facing material (ADR-0034, `docs/ECONOMICS-VIGIL-ANCHOR.md` §4).
 
+### Detection (measured 25 Sep 2026, ESC-50 proxy, ruleset `vigil-detect` v1, uncalibrated)
+
+Method: `scripts/eval/yamnet_windows.py` runs the registered YAMNet (sha256 `10c95ea3…17de`, confirmed identical to Google's TF Hub `google/lite-model/yamnet/classification/tflite/1`) with the phone's windowing (15 600 samples, hop 7 800, 16 kHz, no gate), and `scripts/eval/run-engine.mjs` replays the integer windows through the compiled `app/src/brain/detect` engine. Clips: `scripts/eval/esc50-cliplist.txt` (ESC-50, CC BY-NC 3.0, audio not committed). The thresholds were **not** tuned on folds 4–5. The neighbour rule was designed after seeing the fold-1 false gunshots.
+
+| Measure | Folds 1–3 (tuning) | **Folds 4–5 (held out)** | Tag |
+|---|---|---|---|
+| Glass recall (clips recorded as glass) | 21/24 (87.5 %) | **11/16 (68.8 %)** | `FACT` (n as shown) |
+| False records on negatives | 1 in 0.544 h (392 clips, 49 classes) | **4 in 0.544 h = 7.3/h** (392 clips) | `FACT` |
+| False prompts, negatives as one continuous stream | 1.8/h | **5.5/h** | `FACT` |
+| Main false triggers | crackling fire → Gunshot | pouring water → Glass (8008 bp), clock alarm → Glass, can opening → Gunshot | `FACT` |
+| Gun-like neighbour rule | false "Gunshot" records fell from 9 to 1 on the first 392-clip set | — | `FACT` |
+| On-device parity | the emulator's classification of `1-20133-A-39.wav` gave the same integer scores as the host (Breaking 3320, top class 374 at 5000) | — | `FACT` (n = 1 clip) |
+| Gunshot, scream, shout recall | **Not measured.** ESC-50 has none of these classes | — | — |
+| Field false alarms per armed hour (M2) | **Not measured.** ESC-50 is dense isolated events, not a commute | — | — |
+
+Say: "On a public dataset, held out from tuning, the phone detected 11 of 16 glass-break clips and falsely recorded 7 events per hour of dense everyday sounds." Never: "detects glass breaking" without the n, or any figure for screams or gunshots.
+
 ## Claim rules
 
 Use `sim_` for simulated event identifiers and spoken demo labels. Never imply that simulation is deployed capability. No guarantees about guilt, admissibility, fairness, invulnerability or prevention. Public hashes can remain personal information if linkable. Embeddings are sensitive representations, not anonymous data by default.
