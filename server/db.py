@@ -271,6 +271,7 @@ class PostgresDatabase:
             raise DatabaseUnavailable("PostgreSQL connection failed") from exc
 
     def initialize(self) -> None:
+        from server import escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker
         self._payload_key()
         connection = self._connection()
         try:
@@ -279,6 +280,8 @@ class PostgresDatabase:
                     cursor.execute(CREATE_SCHEMA_SQL)
                     cursor.execute(CREATE_EVENT_ID_INDEX_SQL)
                     cursor.execute(OUTBOX_SCHEMA_SQL)
+                    for module in (escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker):
+                        cursor.execute(module.SCHEMA_SQL)
         finally:
             connection.close()
 
@@ -737,6 +740,9 @@ class PostgresDatabase:
                             (next_index, stored["event_hash"], subject_id),
                         )
                         self._store_private_payload(cursor, subject_id, entry, now)
+                        from server.event_effects import apply_event
+                        with connection.cursor() as effects_cursor:
+                            apply_event(effects_cursor, self, subject_id, entry, stored, now)
                 return stored, True
             except IntegrityError as exc:
                 if getattr(exc, "pgcode", None) != "23505":

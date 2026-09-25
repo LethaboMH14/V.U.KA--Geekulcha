@@ -12,6 +12,7 @@ from anchor.canonical import canonical, canonicalize_json
 
 _SCHEMA_DIR = Path(__file__).resolve().parents[1] / "contracts" / "payloads"
 _SCHEMA_FILES = {
+    "pin_authorised": "pin_authorised.v1.json",
     "checkin_opened": "checkin_opened.v1.json",
     "checkin_result": "checkin_result.v1.json",
     "journey_ended": "journey_ended.v1.json",

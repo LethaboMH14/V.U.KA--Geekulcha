@@ -210,6 +210,12 @@ Scope: `checkin_opened`, `checkin_result` and `journey_ended`, the three kinds s
 
 ---
 
+### 4b.1 pin_authorised payload (PROPOSED)
+
+PROPOSED — Sibusiso's 25 September implementation instruction; Lethabo/domain review pending. `contracts/payloads/pin_authorised.v1.json` defines the private payload transported through `POST /v1/events`, inside the ordinary signed EventSubmission. Its inner `sig` covers canonical `{action, target_id, mode, nonce}`; the outer event signature still covers the complete §4 context and commitment. The server verifies both with the same non-revoked subject device key and records `expires_at = event receipt time + 120 s`. Only `end_journey` and `export` are in this implementation scope. The mode remains inside the committed private payload, never in a public field; normal and duress receipts/responses are identical in shape. No existing §4b decision or ADR acceptance is changed.
+
+---
+
 ## 5 · Canonical form
 
 The bytes are UTF-8 of Python `json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True)`. PR #39's implementation (`anchor/chain.py:65`) already hashes these compact bytes. `anchor/README.md` now states the compact form, and #39's stale docstring is corrected in its format-v2 rework (#39 is not merged).

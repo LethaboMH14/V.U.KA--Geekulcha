@@ -30,6 +30,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_v
 from starlette.responses import JSONResponse
 
 from anchor.canonical import canonical
+from server.pin_records import EventRefused
 from server.db import (
     DatabaseUnavailable,
     IdempotencyConflict,
@@ -460,6 +461,8 @@ def create_app(database=None) -> FastAPI:
                     nonce=principal.nonce,
                     request_ts=principal.request_ts,
                 )
+        except EventRefused as exc:
+            return _error_response(exc.status, exc.code, exc.code)
         except IdempotencyConflict:
             return _error_response(
                 409,

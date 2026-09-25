@@ -1,3 +1,4 @@
+import pinAuthorisedSchema from "../contracts/payloads/pin_authorised.v1.json" with { type: "json" };
 // Dependency-free validator for the proposed §4b payload schemas.
 // Validation keywords outside this explicit subset fail closed. Static JSON
 // imports keep this module usable in both Node tests and browser bundles.
@@ -26,6 +27,7 @@ const SCHEMAS = Object.freeze({
   checkin_opened: checkinOpenedSchema,
   checkin_result: checkinResultSchema,
   journey_ended: journeyEndedSchema,
+  pin_authorised: pinAuthorisedSchema,
 });
 
 export class PayloadError extends Error {

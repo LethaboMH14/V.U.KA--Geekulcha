@@ -448,7 +448,7 @@ paths:
       operationId: submitPinAuthorisation
       x-vuka-implemented: false
       summary: Submit a PIN-authority statement scoped to one action
-      description: Device-signed PIN-authority statement per §9; signature verification is implementation behavior.
+      description: "PROPOSED - superseded transport: pin_authorised is submitted through POST /v1/events, kind pin_authorised, with its PIN statement inside the committed private payload. This standalone route is not implemented."
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       requestBody:
         required: true

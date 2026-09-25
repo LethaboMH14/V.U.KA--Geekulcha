@@ -219,6 +219,18 @@ def build_vectors() -> dict:
             "duplicate JSON object keys are refused before parsing",
         ),
     ]
+    pin = {"kind": "pin_authorised", "pv": 1, "action": "export", "target_id": "sim_subject", "mode": "normal", "nonce": "sim_nonce", "sig": "MAA=", "signer_key_id": "sim_key"}
+    for mode in ("normal", "duress"):
+        golden.append(make_golden("sim_pin_authorised_" + mode, "pin_authorised", {**pin, "mode": mode}))
+    for name, invalid in (
+        ("action", {**pin, "action": "delete"}),
+        ("mode", {**pin, "mode": "other"}),
+        ("extra", {**pin, "extra": True}),
+        ("missing_nonce", {k: v for k, v in pin.items() if k != "nonce"}),
+        ("target_129", {**pin, "target_id": "s" * 129}),
+        ("signature_base64", {**pin, "sig": "!bad"}),
+    ):
+        rejections.append(rejection("sim_pin_authorised_" + name, "pin_authorised", raw_json(invalid), "invalid proposed PIN payload"))
     return {
         "description": "Simulated §4b payload golden and raw-JSON rejection vectors; schemas remain PROPOSED under ADR-0044.",
         "golden": golden,
