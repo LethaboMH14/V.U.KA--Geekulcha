@@ -70,7 +70,13 @@ class QueueModule(ctx: ReactApplicationContext) : ReactContextBaseJavaModule(ctx
     fun enqueue(json: String, promise: Promise) {
         try {
             synchronized(this) {
-                val next = (files().lastOrNull()?.name?.removeSuffix(".evt")?.toLongOrNull() ?: 0L) + 1
+                // Numbers never restart: they continue past both queued events and
+                // kept receipts, so a receipt is never overwritten when the queue empties.
+                val lastQueued = files().lastOrNull()?.name?.removeSuffix(".evt")?.toLongOrNull() ?: 0L
+                val lastReceived = (receipts.listFiles() ?: emptyArray())
+                    .mapNotNull { it.name.removeSuffix(".rcpt").toLongOrNull() }
+                    .maxOrNull() ?: 0L
+                val next = maxOf(lastQueued, lastReceived) + 1
                 val name = "%016d".format(next)
                 val tmp = File(dir, "$name.tmp")
                 tmp.writeBytes(seal(json))
