@@ -11,19 +11,13 @@
 ## BLOCK 1 — Problem
 **Criterion:** I, B · **Audience:** judge, insurer, bank
 
-> **A person is forced to authorise a bank transfer at gunpoint. Every record says they did it. Nobody can prove otherwise.**
+> **No one can prove the coercion. Both payers lose for it.**
 
-| Who | How they lose |
-|---|---|
-| The victim | Loses the money — then carries the debt and the burden of proof. |
-| The insurer | Cannot tell a real claim from a staged one: pays fraudsters, or fights real victims. |
-| The bank | Holds the transaction, not the duress. Cannot resolve what it cannot see. |
+When someone is forced to authorise a bank transfer, the payment completes and authenticates exactly like a voluntary one: the phone was unlocked, the app opened, the money moved. The structural gap is that **no party holds a verifiable record of the coercion** — proof is rebuilt after the fact from bank statements, ATM footage and a sworn affidavit, and the ombud has held that a victim who surrendered credentials under duress has no grounds to hold the bank liable. The victim carries the loss and the burden of proof at once.
 
-- Evidence: **~13,600 coerced transfers/year** `ESTIMATE` ⚑ (SAPS + ISS, calculated — **not yet in `docs/EVIDENCE.md`; confirm with Khutso**).
-- **R2.4bn** digital banking crime, 2025, across **110,074** incidents `FACT` (SABRIC 2025).
-- **743** Ombud disputes/month, **+25%** y/y `FACT` (NFO Annual Report 2025).
-- **R4,962** per escalated case `FACT` (OBS Annual Report 2024, 2023 data); **~61 days** to resolve a fraud complaint `FACT` (NFO via The Citizen, 16 Mar 2026).
-- **Scope caveat:** SABRIC's R2.4bn is **all** digital banking crime, mostly social engineering — **not** coerced transfers, and **not** our market.
+The cost compounds for both payers. An insurer cannot separate a staged coerced-transfer claim from a real one — both show the same completed transfer, unlocked phone and opened app — so it **either pays a fraudster or disputes a real victim**, at R4,962 and about 61 days a dispute. A bank has the mirror problem: it holds the transaction record but not the duress record, so it **cannot resolve what it cannot see** — banking disputes are already 743 formal cases a month, up 25% in a year. With no mandatory reimbursement in South Africa today, the bank's cost lands as ombud levies, investigation staff and customer churn.
+
+*Full evidence, sources and year-on-year trends: `docs/PROBLEM-STATEMENT-EVIDENCE.md`.*
 
 ---
 
