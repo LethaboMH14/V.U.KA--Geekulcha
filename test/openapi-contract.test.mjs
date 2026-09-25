@@ -321,7 +321,7 @@ test("guardian token updates exclude subject PIN authorization", () => {
 
 test("BankSignal distinguishes the three §9/S1 trigger outcomes", () => {
   const signal = document.slice(document.indexOf("    BankSignal:"), document.indexOf("    IntegrityResult:"));
-  assert.match(signal, /required: \[subject_id, triggering_outcome\]/);
+  assert.match(signal, /required: \[subject_id, triggering_outcome, idempotency_key\]/);
   assert.match(signal, /subject_id: \{ type: string, minLength: 1, description: sim_ subject identifier\. \}/);
   assert.match(signal, /triggering_outcome: \{ type: string, enum: \[duress_signal, no_answer, contact_lost\] \}/);
   assert.match(signal, /SIMULATED/);

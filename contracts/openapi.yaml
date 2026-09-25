@@ -659,7 +659,12 @@ paths:
       summary: Send a labelled simulated bank risk signal
       description: >-
         SIMULATED only; signed by ANCHOR with the pinned Ed25519 server key and requires an
-        Idempotency-Key.
+        Idempotency-Key. The key is carried inside the signed body as `idempotency_key`; the
+        `Idempotency-Key` header must equal it, otherwise 400 `idempotency_key_mismatch`.
+        The signature does not cover headers, so only the body copy is authenticated. Each
+        accepted new key opens one hold and the receipt's `hold_ref` names it (a subject can
+        have more than one). Same key and same body returns the original receipt and opens no
+        second hold; same key with a different body is 409 `idempotency_conflict`.
       security: [{ VukaTimestamp: [], VukaNonce: [], VukaServerSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
@@ -680,18 +685,24 @@ paths:
       summary: Release a labelled simulated bank hold
       description: >-
         SIMULATED only; signed by ANCHOR with the pinned Ed25519 server key and requires an
-        Idempotency-Key.
+        Idempotency-Key, carried inside the signed body as `idempotency_key` (the header must
+        equal it, otherwise 400 `idempotency_key_mismatch`). The body names the one hold to
+        lift with `hold_ref` (the `hold_ref` returned by risk-signal); other holds of the same
+        subject stay active. An unknown `hold_ref`, or one that belongs to another subject, is
+        404 `unknown_hold`. A hold already released by a different request is 409
+        `hold_already_released`. Same key and same body returns the original receipt.
       security: [{ VukaTimestamp: [], VukaNonce: [], VukaServerSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/BankSignal' }
+            schema: { $ref: '#/components/schemas/BankRelease' }
       responses:
         '202': { $ref: '#/components/responses/SimBankAcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/IdempotencyConflict' }
 components:
   securitySchemes:
@@ -821,6 +832,7 @@ components:
         receipt_id: { type: string }
         state: { type: string, enum: [accepted, queued, pending, confirmed, refused] }
         sim: { type: boolean, const: true, description: Present and true on simulated bank receipts. }
+        hold_ref: { type: string, minLength: 1, description: Present on a simulated risk-signal receipt; names the hold that a later release must cite. }
         anchor_status: { type: string, enum: [not_submitted, submitted, pending, confirmed, gap] }
         pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation', description: Present when a verified PIN-authority statement is recorded; expiry is server-derived. }
     SimBankReceipt:
@@ -1022,11 +1034,22 @@ components:
       description: >-
         SIMULATED bank signal for a sim_ subject; outcome identifies the qualifying S1
         trigger, never detection alone.
-      required: [subject_id, triggering_outcome]
+      required: [subject_id, triggering_outcome, idempotency_key]
       additionalProperties: false
       properties:
         subject_id: { type: string, minLength: 1, description: sim_ subject identifier. }
         triggering_outcome: { type: string, enum: [duress_signal, no_answer, contact_lost] }
+        idempotency_key: { type: string, minLength: 1, maxLength: 128, description: Inside the signed body so the retry binding is authenticated; must equal the Idempotency-Key header. }
+    BankRelease:
+      type: object
+      description: >-
+        SIMULATED release of exactly one hold, named by the hold_ref that risk-signal returned.
+      required: [subject_id, hold_ref, idempotency_key]
+      additionalProperties: false
+      properties:
+        subject_id: { type: string, minLength: 1, description: sim_ subject identifier. }
+        hold_ref: { type: string, minLength: 1, description: The hold_ref from the risk-signal receipt that opened the hold to lift. }
+        idempotency_key: { type: string, minLength: 1, maxLength: 128, description: Inside the signed body; must equal the Idempotency-Key header. }
     IntegrityResult:
       type: object
       description: >-
@@ -1126,7 +1149,10 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
     IdempotencyConflict:
-      description: Idempotency key was reused with a different request shape.
+      description: >-
+        Idempotency key was reused with a different request shape (`idempotency_conflict`); on
+        /sim_bank/v1/release also a hold already released by a different request
+        (`hold_already_released`).
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
