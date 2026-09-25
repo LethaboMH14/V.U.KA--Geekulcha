@@ -39,4 +39,15 @@ Business handoff: None.
 
 Proposed tests T70–T72 are added. Dispositions are in `SECURITY-PROGRAMME.md` §11, "Revision 6 review".
 
-Next: the next review round on revision 7; the amendments land in the acceptance PR.
+**Revision 8 (same day).** A Claude red-team pass on revision 7 ran while the second reviewer's quota was exhausted. It resolved 4 of the 6 earlier findings, left 2 partial and raised 8 new ones. The eighth draft answers them:
+- a retiring key's normal-PIN governance follows the duress path, and a duress PIN is an alarm from any unrevoked key;
+- the journey list is per device key;
+- the phone never shows export state;
+- removals and deletions during an incident are queued;
+- the member can rotate the recovery code;
+- journeys on a retiring key end with `key_retired`;
+- `no_effect` entries are added, and the snapshot head is anchored at the request.
+
+Two findings are partly accepted, with their residuals stated: automatic rotation of the recovery code, and silent acceptance after the deadline.
+
+Next: the second reviewer's round on revision 8 when its quota resets; the amendments land in the acceptance PR.

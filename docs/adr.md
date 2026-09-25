@@ -532,17 +532,19 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 ---
 
 ## ADR-0043: The verifiable record leaves the phone; after duress nothing resolves automatically; recovery never silences the old phone
-**Status:** Proposed (2026-09-25, seventh draft after six adversarial review rounds). Proposed by Lethabo (co-lead, acting security lead). Direction chosen by Lethabo on 24 Sep: **the verifiable record is available off the phone only**. Binds when Sibusiso (second lead) accepts it, after Ipeleng's security review.
+**Status:** Proposed (2026-09-25, eighth draft after seven adversarial review rounds). Proposed by Lethabo (co-lead, acting security lead). Direction chosen by Lethabo on 24 Sep: **the verifiable record is available off the phone only**. Binds when Sibusiso (second lead) accepts it, after Ipeleng's security review.
 **Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (server), Ipeleng Constance Modise (security review)
 **Amends, on acceptance, in the same PR that records it:**
 - spec §8: `stand_down`, the 6 h auto-close, incident scope;
-- §9: recovery (scheduled revocation), the pre-incident hold, guardian removal and deletion during an incident;
+- §9: recovery (scheduled revocation), the recovery code (member rotation), the pre-incident hold, guardian removal and deletion during an incident (queued, below);
+- §2 V6 and §3: a PIN-authorised action from a retiring key follows the duress path; a duress PIN from any unrevoked key is always an alarm;
 - §4a and ADR-0042: one **current** device key plus any number of **retiring** keys, each with a `key_revoked` entry carrying its own fixed `effective_at`; the verifier uses `effective_at`;
-- §4 and §7: member-facing receipts (`POST /v1/events`, the check-in and journey routes, and retries) return an opaque acknowledgement, not `event_hash` or `chain_index`; the clock-skew exception list gains outbox-delivered `signal_detected`;
+- §4, §7 and the §12 contract table: member-facing receipts (`POST /v1/events`, the check-in and journey routes, and retries) return an opaque acknowledgement, not `event_hash` or `chain_index`; the clock-skew exception list gains outbox-delivered safety events (`signal_detected`, `journey_armed`, `journey_ended`);
+- §13: the optional release-notice email is new personal information (purpose: the export notice only; deleted with the snapshot);
 - §2 A5 (export) and G4 (call unlock);
 - §12: `/sim_bank/v1/release` is not triggered by VUKA;
 - §14: recovery joins the never-cut list;
-- §15: T13 revised, plus T61, T64, T66 and T67;
+- §15: T13 and T16 revised, plus T61, T64, T66–T72;
 - ADR-0036(5a), ADR-0037(4), ADR-0040(4), ADR-0041(1), (6) and (8);
 - `docs/PIN-AUTHORITY-RULES.md` §1, §3, §5 and §7.
 
@@ -550,28 +552,33 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 **Decision:**
 1. **The verifiable record is not on the phone.**
    - My Record on the member's device shows **a plain journey list**: date, start and end time, "Journey completed". It is identical whatever happened during a journey.
-   - The member-device API returns only that list. No chain, payloads, salts, hashes, incident state or guardian activity.
+   - **The list is per device key:** a phone sees only the journeys its own key signed. After a recovery, the old phone's list is exactly what it was, and it never shows the new device's journeys.
+   - The member-device API returns only that list. No chain, payloads, salts, hashes, incident state, guardian activity or export state.
    - **The verifiable export** (A5: the chain with payloads, salts, proofs and receipts, which the verify page checks) is obtained **off the phone**: through a web route authenticated with the **recovery code**, rate-limited. Later it moves to a counsel-reviewed s23 process (Q-C10).
-   - **Every export is released 72 h after it is requested**, whatever the incident state. **It is a snapshot taken at the request:** retention expiry and deletion after that moment don't reach it. The snapshot is kept, encrypted, until it is collected or 7 days after release, then deleted. A deletion confirmation says when a pending export's snapshot will be removed. The delay is the same for every member and every journey, so it reveals nothing, and it never depends on an incident closing, so a member can always get their record after duress. It replaces the ADR-0041 pre-incident hold for this route; the phone no longer needs that hold.
-   - **Guardians are not told about exports.** A guardian may be the person the member is gathering evidence about. The member sees the pending export when they sign in to the route again, and may add an email address for the release notice.
+   - **Every export is released 72 h after it is requested**, whatever the incident state. **It is a snapshot taken at the request:** retention expiry and deletion after that moment don't reach it. The snapshot is kept, encrypted, and **can be collected any number of times** until 7 days after release, then deleted. **At the request the server anchors the snapshot's head immediately** (as it does for a PIN-gated event), and the release includes that proof, so the whole export verifies against the public anchor. **The phone never shows export state**, not even in a deletion confirmation; the snapshot-survival notice appears only on the off-phone route and in the release email. The delay is the same for every member and every journey, so it reveals nothing, and it never depends on an incident closing, so a member can always get their record after duress. It replaces the ADR-0041 pre-incident hold for this route; the phone no longer needs that hold.
+   - **Guardians are not told about exports.** A guardian may be the person the member is gathering evidence about. The member sees the pending export when they sign in to the route again, and may add an email address for the release notice. The route shows that address masked, and changing it needs the current device and the normal PIN.
+   - **The export route is rate-limited per recovery code and network address**, never per subject, so nobody can lock the member out by exhausting it. The 24 h post-recovery freeze doesn't apply to it; the 72 h release delay already covers that window.
 2. **A `stand_down` after any duress signal is an acknowledgement only.** No close, no S1 cancellation, no G4 call unlock.
 3. **VUKA never resolves a duress incident or releases a bank hold automatically.**
    - After 72 h with no new duress, `no_answer` or `contact_lost` signal *on that journey*, **guardians** see "status unknown". The member's device never sees incident state.
    - Lifting a bank hold is **the bank's own customer process**; VUKA sends no release.
    - **At "status unknown":**
-     - guardian removal (the 24 h rule) and deletion (the 72 h cooling-off) become available again;
+     - guardian removal (the 24 h rule) and deletion (the 72 h cooling-off) become available again. **Before then**, a removal or deletion authorised with the normal PIN is **queued**: the phone shows it done (ADR-0041(8)), the acknowledgement is the same as always, and it executes at "status unknown". The request never reveals that an incident is open;
      - the G4 call stays locked;
      - **the incident is scoped to its journey**, and a new journey starts with no carried-over incident, so `contact_lost` can't re-fire from an old one.
    - A human-reviewed safe-contact procedure for closing incidents is designed, not built.
 4. **Recovery never silences the old phone.** Recovery is allowed (never blocked, and on the never-cut list).
    - **Every recovery schedules revocation.** The old device key's revocation is **scheduled for exactly 72 h after the recovery's receipt**, for every recovery, whatever the journey state. That time is fixed when the recovery is recorded and nothing extends it. (The sixth draft applied this only near a journey; a queued or in-flight arm event could lose that race, so the condition is gone.)
    - **Recovery epochs.** A subject has one **current** device key and zero or more **retiring** keys. A second recovery before the first key retires makes the previous current key retiring too, with its own fixed deadline; no deadline ever moves. Recoveries are serialised under the subject's row lock, so concurrent recoveries are ordered and the last one received is current.
-   - **What a retiring key may do.** Until its `effective_at`, a retiring key is accepted for **safety events**: journey start and end, detections, `checkin_opened`, check-in results, `pin_authorised` for those, and heartbeats. The server-generated `no_answer` and `contact_lost` therefore keep working, and alarms queued offline or in flight are accepted if they arrive before the deadline. **Governance and data actions** (adding or removing guardians, deletion, settings, export) need the **current** key. From a retiring key they are recorded, have no effect, and get the same acknowledgement as any other request, so whoever holds the old phone can't replace guardians and learns nothing.
+   - **What a retiring key may do.** Until its `effective_at`, a retiring key is accepted for **safety events**: journey start and end, detections, `checkin_opened`, check-in results, heartbeats, and **every duress-PIN authorisation, whatever the action** (V6: a duress PIN anywhere is an alarm, from any unrevoked key). The server-generated `no_answer` and `contact_lost` therefore keep working, and alarms queued offline or in flight are accepted if they arrive before the deadline.
+   - **Governance from a retiring key follows the duress path.** A guardian change, deletion or settings change authorised on a retiring key with the normal PIN is handled exactly as the same action under the duress PIN (§9): it looks done, a guardian add issues a real code and its accept succeeds but that guardian never receives alerts (the decoy rule), and nothing changes. Guardians are told "the replaced phone tried to change settings". It opens no incident and sends no bank signal; under the duress PIN it is a full duress signal. The server appends a `no_effect{reason: retiring_key}` entry that points at the request, so a verifier shows it as attempted, not done. (Export is not a device action; it lives on the recovery-code route.)
    - **One answer for every request.** Member-facing endpoints return an **opaque acknowledgement** (`{accepted, receipt_id}`, where `receipt_id` is random and carries no chain position). Status, shape and timing are the same for current and retiring keys, with or without an open incident. Retries return the same `receipt_id`. `event_hash`, `chain_index` and proofs appear only in the off-phone export. What an event causes is never echoed back to a device.
-   - **Delayed detections.** A `signal_detected` delivered late from the phone's outbox is accepted when its per-device counter is unseen, even beyond the 120 s skew limit, and is flagged `clock_skew`. Its check-in deadline counts from server receipt (B4). A rejected stale event never blocks later events in the outbox.
+   - **Delayed safety events.** A `signal_detected`, `journey_armed` or `journey_ended` delivered late from the phone's outbox is accepted when its per-device counter is unseen, even beyond the 120 s skew limit, and is flagged `clock_skew`. Deadlines count from server receipt (B4). A rejected stale event never blocks later events in the outbox.
+   - **At `effective_at`.** A journey still armed on the retiring key is ended by the server with `journey_ended{reason: key_retired}`, which suppresses `no_answer` and `contact_lost` for it; an open incident stays open for guardians. After that the key's requests are rejected, and the old phone shows delivery truthfully as not sent (V8). Whoever holds it can then learn that a recovery happened, 72 h after it did.
    - **Recorded in the chain.** The `key_revoked` entry is written when the recovery is received and carries `revoked_key_id` and `effective_at`. The verifier accepts an entry from that key only if its `received_at` is before `effective_at`.
    - Guardians are notified of **every** recovery; their view adds "during an open alert" when one is open. The old phone's screens stay exactly as they were, so a member who recovers elsewhere doesn't tip off a coercer holding it.
    - There is no "revoke now" button: a coercer could use it to silence the phone.
+   - **The recovery code.** It is not rotated automatically: automatic rotation would let a coercer who recovers first lock the member out for good. The member can **rotate it from the current device with the normal PIN**. The duress PIN shows the same success, keeps the old code and raises the alarm. Recovery is rate-limited per code and network address, not per subject.
 5. **The armed-journey silence notice is not built** (a surveillance risk).
 6. **Demo hygiene:** a labelled script (`scripts/reset-sim-demo.mjs`) recreates the `sim_` demo subject, so a judge's duress-PIN test doesn't leave the demo stuck. It works on `sim_` subjects only.
 **Rejected alternatives:**
@@ -581,17 +588,21 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 - An alarm-only old key (fifth draft): unverifiable under ADR-0042, a normal-versus-duress oracle at the API, a broken alarm pipeline, and no end to a leaked key's power.
 - A "revoke now" option for the member: a coercer who forces out the recovery code would use it.
 - Notifying guardians of exports: it tells an abusive guardian that evidence is being gathered.
+- Silently dropping a retiring key's governance with a plain acknowledgement (seventh draft): it swallowed duress PINs at those prompts and couldn't hide a guardian invite.
+- Rotating the recovery code on every recovery: a coercer who recovers first would lock the member out.
+- Accepting a retired key's events silently after `effective_at`: the old phone would show alarms as delivered that were dropped (V8).
 **Consequences:**
 - Tests (added to spec §15 on acceptance):
   - T61: a stand-down after duress means no close, no call unlock, and the bank signal stands.
   - T64: the member-device API responses and My Record are byte-identical in shape for a journey with a duress incident and one with none, before and after 72 h.
   - T66: there is no VUKA release; "status unknown" is guardian-only.
-  - T67 (revised): every recovery schedules revocation for exactly 72 h after receipt. Safety events from a retiring key are accepted until then and rejected after; its governance and data actions have no effect. Responses are identical in status, shape and timing for current and retiring keys, with and without an open incident. Guardians are notified of every recovery, and the old phone's screens are unchanged.
+  - T67 (revised): every recovery schedules revocation for exactly 72 h after receipt. Safety events and duress authorisations from a retiring key are accepted until then; normal-PIN governance from it follows the duress path with a `no_effect` entry; a journey armed across `effective_at` ends with `key_retired` and no `no_answer`. Responses are identical in status, shape and timing for current and retiring keys, with and without an open incident. Guardians are notified of every recovery, and the old phone's journey list is byte-identical before and after it.
+  - T16 (revised): a duress PIN at any prompt raises the alarm from a current or a retiring key.
   - T70: two sequential recoveries and two concurrent ones each leave one current key, and retiring keys whose deadlines never move.
   - T71: `receipt_id` values across a sequence of events, retries included, reveal no chain position (no monotonic or hash relation).
-  - T72: a `signal_detected` delivered 10 min late from the outbox opens its check-in with a deadline from receipt, and a rejected stale event doesn't block the next queued event.
-  - T68: an export is released exactly 72 h after the request, identically with and without an open duress incident; no guardian is notified; a deletion or retention expiry after the request doesn't change the released snapshot.
-  - T69: a verifier that rebuilds the registry from the chain accepts an old-key entry received before `effective_at` and rejects one received after.
+  - T72: a `signal_detected` and a PIN-gated `journey_ended` delivered 10 min late from the outbox are accepted with deadlines from receipt; a rejected stale event doesn't block the next queued event.
+  - T68: an export is released exactly 72 h after the request, identically with and without an open duress incident; no guardian is notified; a deletion or retention expiry after the request doesn't change the released snapshot; the released export verifies end to end against the pinned topic; the phone shows no export state anywhere.
+  - T69: a verifier that rebuilds the registry from the chain accepts an old-key entry received before `effective_at`, rejects one received after, and shows a governance entry with a `no_effect` follow-up as attempted, not done.
   - T13 (revised): recovery isn't blocked.
 - Contract v2:
   - `GET /v1/subjects/{id}/journeys` (the member list);
@@ -604,6 +615,8 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
   - A coercer who forces out the recovery code can read the full record off the phone. Onboarding says to keep the code away from the phone.
   - A guardian-coercer still sees the alert.
   - A thief holding a lost phone keeps a retiring key for up to 72 h after any recovery, and could raise false alerts in that time, but can't change guardians, delete data or export. Guardians are told about the recovery.
-  - A pending export's snapshot outlives a later deletion request by up to 72 h plus 7 days, and the deletion confirmation says so.
+  - A pending export's snapshot outlives a later deletion request by up to 72 h plus 7 days; the off-phone route and the release email say so, the phone doesn't.
+  - Whoever holds the current recovery code controls recovery. A coercer who forces it out and recovers first can hold the account until the member rotates the code from a current device, or the safe-contact procedure exists.
+  - After `effective_at`, whoever holds the old phone can tell that a recovery happened.
   - Events the old phone delivers after `effective_at` are rejected; a phone offline for longer than 72 h loses what it queued.
   - A member who needs their record sooner than 72 h waits; the s23 process (Q-C10) is the route for urgency.
