@@ -4,11 +4,21 @@
   "title": "checkin_result payload, pv 1 (PROPOSED, docs/VUKA-2-SPEC.md §4b)",
   "description": "Committed private payload of a checkin_result event: a valid PIN was accepted at a check-in. `result: duress_pin` is a duress signal (§3); there is no separate duress_pin event kind. Numeric fields are integers (spec §5). Adding a field is a pv bump.",
   "type": "object",
-  "required": ["kind", "pv", "checkin_id", "result", "attempt"],
+  "required": [
+    "kind",
+    "pv",
+    "checkin_id",
+    "result",
+    "attempt"
+  ],
   "additionalProperties": false,
   "properties": {
-    "kind": { "const": "checkin_result" },
-    "pv": { "const": 1 },
+    "kind": {
+      "const": "checkin_result"
+    },
+    "pv": {
+      "const": 1
+    },
     "checkin_id": {
       "type": "string",
       "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
@@ -16,7 +26,10 @@
     },
     "result": {
       "type": "string",
-      "enum": ["normal_pin", "duress_pin"],
+      "enum": [
+        "normal_pin",
+        "duress_pin"
+      ],
       "description": "Which PIN was accepted. no_answer is never device-authored; it is a server event (§8)."
     },
     "attempt": {

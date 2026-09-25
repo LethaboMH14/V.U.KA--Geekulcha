@@ -160,7 +160,7 @@ The frozen `EvidenceEntry` shape is unchanged: `action, actor_id, target_type, t
   - An entry signed by a key verifies if its `details.received_at` is **before** the `received_at` of that key's `key_revoked` entry. An entry received at or after it is rejected (§9 key revocation).
 - **Out of scope for 4a:** ML-DSA-65 keys (§10 names them as "if built" — not yet), key rotation outside recovery, and the guardian decoy-key behaviour under duress (§9's decoy guardian never receives a real key registration — it's `signer_keys`-invisible by design, already covered by §9, not repeated here).
 
-> **§4b is `PROPOSED`, drafted 25 September 2026 by Sibusiso, not yet accepted.** §4 says every payload holds `kind` and its specifics, and §18 says per-kind schemas live in `contracts/payloads/<kind>.v<pv>.json`, but that directory does not exist and only `signal_detected` has a field table. The ANCHOR server (P3.A3 slice 3) cannot wire events to escalation without knowing the fields of the three kinds that drive it. Binds when both leads agree it, recorded in `docs/ADR-ACCEPTANCE-RECORD.md` alongside a new ADR (number assigned at acceptance). Until then the schema files under `contracts/payloads/` are proposals, not a frozen contract.
+> **§4b is `PROPOSED`, drafted 25 September 2026 by Sibusiso, not yet accepted.** §4 says every payload holds `kind` and its specifics, and §18 says per-kind schemas live in `contracts/payloads/<kind>.v<pv>.json`, but that directory does not exist and only `signal_detected` has a field table. The ANCHOR server (P3.A3 slice 3) cannot wire events to escalation without knowing the fields of the three kinds that drive it. Its three open points were decided by Lethabo on 24 Sep (recorded below and in ADR-0044), but the section stays `PROPOSED` until ADR-0044 is accepted, which needs Ipeleng's and Khutso's reviews. It binds when both leads agree it, recorded in `docs/ADR-ACCEPTANCE-RECORD.md`. Until then the schema files under `contracts/payloads/` are proposals, not a frozen contract.
 
 ### 4b · Per-kind payloads for the escalation path (`PROPOSED`)
 
@@ -173,7 +173,7 @@ Scope: `checkin_opened`, `checkin_result` and `journey_ended`, the three kinds s
   | `kind` | string | yes | `"checkin_opened"` |
   | `pv` | integer | yes | `1` |
   | `checkin_id` | string | yes | device-generated lowercase UUID; also the `{id}` in `/v1/checkins/{id}/opened` and `/result` |
-  | `journey_id` | string | yes | the journey this check-in belongs to, as in `signal_detected` |
+  | `journey_id` | string | yes | the journey this check-in belongs to, as in `signal_detected`; 1–128 characters (ADR-0044) |
   | `signal_event_id` | string | yes | lowercase UUID: the `details.event_id` of the `signal_detected` event that triggered this check-in |
   | `window_s` | integer | yes | `20` or `60` (§7) |
 
@@ -193,7 +193,7 @@ Scope: `checkin_opened`, `checkin_result` and `journey_ended`, the three kinds s
   |---|---|---|---|
   | `kind` | string | yes | `"journey_ended"` |
   | `pv` | integer | yes | `1` |
-  | `journey_id` | string | yes | the journey being ended; equals the `target_id` of the fresh `end_journey` authorisation |
+  | `journey_id` | string | yes | the journey being ended; 1–128 characters (ADR-0044); equals the `target_id` of the fresh `end_journey` authorisation |
 
 - **Why these fields, and what each one lets the server do:**
   - **`signal_event_id` links a check-in to its detection.** §8 (G34) schedules `no_answer_fallback` when `signal_detected` is received and says an `opened` arriving first cancels it, but nothing said how the server knows *which* signal an `opened` answers. Matching by `journey_id` alone is ambiguous when two detections arrive close together. The signal always precedes its `opened` in the device's ordered queue (V8), and only a detection can open a check-in (V4, V11), so the field is required.
@@ -203,10 +203,10 @@ Scope: `checkin_opened`, `checkin_result` and `journey_ended`, the three kinds s
   - **`attempt` implements the T47 rule** (ADR-0041): from the third wrong entry the outcome is fixed as `no_answer` at the deadline, so a `normal_pin` with `attempt >= 4` is appended but is never terminal and never retracts an alert. The wrong entries themselves produce no event (the §3 table lists no such kind), because the PIN is verified on the device (§9).
   - **`journey_ended` has no `mode` and no authorisation reference.** Its authority is the separate `pin_authorised` event for `end_journey` (submitted via `POST /v1/pin-authorisations`), matched by §9's rule of a fresh authorisation for "that exact action and target". Putting `mode` in this payload would make a duress end differ from a normal end in shape, which T52 and the T15 harness forbid.
 
-- **Open points for the leads** (each has a proposed answer; none is decided here):
-  1. **`attempt` is device-asserted.** The server cannot check it, so it enforces T47 against an honest app only. That is the same trust the server already places in every device event, and the PIN itself never leaves the phone. Proposed: accept and record it as a residual in §17.
-  2. **Is an `end_journey` authorisation single-use?** §9 says "fresh, unexpired" but not consumed. Proposed: the server consumes it on the first accepted `journey_ended` (keyed by its nonce), and a second `journey_ended` for an already-ended journey is refused as `journey not active`, so one authorisation cannot end two journeys or be replayed inside its 120 s.
-  3. **Id length cap.** `journey_id` is unbounded in the schema, as in `signal_detected`. Proposed: leave it, and decide one cap for every id in one place rather than per kind.
+- **Decisions on the three open points** (Lethabo, co-lead, 24 Sep 2026, recorded on #82; ADR-0044, `PROPOSED` until accepted):
+  1. **`attempt` stays device-asserted.** The server cannot check it, so it enforces T47 against an honest app only, and must not treat it as independently verified. The PIN itself never leaves the phone. It is recorded as an explicit residual in §17.
+  2. **An `end_journey` authorisation is single-use.** It is consumed atomically with the first accepted `journey_ended`. *Mechanism, proposed in the draft and not separately decided:* keyed by the authorisation's nonce, so a second `journey_ended` for an already-ended journey is refused as `journey not active`, and one authorisation cannot end two journeys or be replayed inside its 120 s.
+  3. **One shared maximum identifier length across all payload kinds**, 128 characters as Lethabo recommended. It applies to `journey_id` in every kind, including `signal_detected` (§18). `checkin_id` and `signal_event_id` are lowercase UUIDs, so their pattern already bounds them at 36 characters.
 
 ---
 
@@ -296,7 +296,7 @@ Rules:
   - **A normal PIN at a check-in never closes an incident on its own**, because a coercer can force it.
   - **Member-ended closure (G33, ADR-0041).** Ending the journey with a normal-PIN authorisation (G35 below) closes the incident only when all three hold: every check-in outcome in it is `normal_pin`, no guardian alert has been sent in it, and it holds no duress signal. That is the false-alarm case: a TV scream, answered normally, then the journey ended. Otherwise the incident stays open until `stand_down` or the 6 h close.
   - **`contact_lost` after a normal-PIN outcome (G33, ADR-0041).** If an incident's check-in outcomes are all `normal_pin` and heartbeats stop for 90 s, `contact_lost` alerts guardians and **never sends the bank signal**. The bank signal stays for a duress signal and for `no_answer` (S1).
-  - **Ending a journey needs a PIN (G35, ADR-0041).** `journey_ended` is accepted only with a fresh `pin_authorised` for action `end_journey` and the journey's id. A **normal** PIN ends the journey. A **duress** PIN makes the phone behave exactly like a normal end: the same "Journey ended" screen, and the service stops. The server records a duress signal (§3), opens or keeps the incident, alerts guardians and sends the S1 bank signal. It does not wait for heartbeats that will never come.
+  - **Ending a journey needs a PIN (G35, ADR-0041).** `journey_ended` is accepted only with a fresh `pin_authorised` for action `end_journey` and the journey's id. A **normal** PIN ends the journey. A **duress** PIN makes the phone behave exactly like a normal end: the same "Journey ended" screen, and the service stops. The server records a duress signal (§3), opens or keeps the incident, alerts guardians and sends the S1 bank signal. It does not wait for heartbeats that will never come. **The authorisation is single-use** (ADR-0044, `PROPOSED`): it is consumed atomically with the first accepted `journey_ended`, so a second `journey_ended` cannot reuse it (§4b).
   - `incident_closed` is a server event, anchored immediately. Its payload carries `reason ∈ {stand_down, auto_6h, member_ended}`.
 - **Chain appends:** `SELECT … FOR UPDATE` on `subject_heads(subject_id)`, plus `UNIQUE(subject_id, chain_index)`. No advisory-lock hashing.
 - **Tests (T08):** restart the server (a) between `opened` and the deadline, (b) between committing the outcome and sending, and (c) between sending and marking done. Every case must still produce exactly one visible alert.
@@ -535,6 +535,7 @@ Every result goes into `docs/EVIDENCE.md` with its method, configuration and n. 
 - **Anyone holding the unlocked phone can arm a journey and force a `no_answer` escalation**, no PIN required, including the bank signal after the 3-minute window with no `stand_down`. `signal_detected` carries location, so a false alarm this way can send guardians, and any police they call, toward the owner's own recorded position (Ipeleng's review, B3).
 - **A lone guardian sees every alert.** The never-zero rule guarantees at least one guardian, not two. Onboarding recommends at least two guardians who don't live with the user; one guardian is a single point of failure if they are asleep, unreachable, or the threat (Ipeleng's review, S2).
 - **A coercer who learns the real PIN can end a false-alarm incident** (ADR-0041). Member-ended closure needs a normal PIN, all-normal check-ins, no guardian alert and no duress signal. A coercer forcing the real PIN out of the member meets those conditions. The member's defence is the duress PIN, which looks identical and raises the full alarm.
+- **The wrong-PIN `attempt` count is device-asserted** (ADR-0044, `PROPOSED`). The T47 rule (a `normal_pin` with `attempt >= 4` is never terminal) is enforced from a number the phone reports and the server cannot verify, so it holds against the honest app only. A modified app could report `attempt: 1` for every entry. The PIN is verified on the device and never leaves it (§9), so the server has nothing to check the count against. The server must not treat `attempt` as independently verified.
 - **Residual multi-session replacement risk** (§9, ADR-0036(5), Ipeleng's review B1): across two forced normal-PIN sessions, an attacker's own accepted add can become the "replacement" that unlocks a removal the attacker scheduled, ending with the attacker as the sole guardian. Notifying remaining guardians of adds and scheduled removals is the mitigation; it is not a closure of the risk.
 
 ---
@@ -550,7 +551,7 @@ Specification only until D1 (Thu 22:00) and D2 (Fri 12:00) pass. Nothing here ch
   |---|---|---|---|
   | `kind` | string | yes | `"signal_detected"` |
   | `pv` | integer | yes | `1` |
-  | `journey_id` | string | yes | the journey's id, as issued by `POST /v1/journeys` |
+  | `journey_id` | string | yes | the journey's id, as issued by `POST /v1/journeys`; 1–128 characters (ADR-0044) |
   | `sense` | string | yes | enum `"sound"` (pv 1) |
   | `class_label` | string | yes | enum: `"Screaming"`, `"Shout"`, `"Yell"`, `"Glass"`, `"Shatter"`, `"Breaking"`, `"Gunshot, gunfire"`, `"Machine gun"`, `"Fusillade"` |
   | `class_index` | integer | yes | the YAMNet index of `class_label` (11, 6, 9, 435, 437, 464, 421, 422, 423) |

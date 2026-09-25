@@ -4,11 +4,22 @@
   "title": "checkin_opened payload, pv 1 (PROPOSED, docs/VUKA-2-SPEC.md §4b)",
   "description": "Committed private payload of a checkin_opened event: the check-in was confirmed shown on screen (V4). Numeric fields are integers (spec §5). Adding a field is a pv bump.",
   "type": "object",
-  "required": ["kind", "pv", "checkin_id", "journey_id", "signal_event_id", "window_s"],
+  "required": [
+    "kind",
+    "pv",
+    "checkin_id",
+    "journey_id",
+    "signal_event_id",
+    "window_s"
+  ],
   "additionalProperties": false,
   "properties": {
-    "kind": { "const": "checkin_opened" },
-    "pv": { "const": 1 },
+    "kind": {
+      "const": "checkin_opened"
+    },
+    "pv": {
+      "const": 1
+    },
     "checkin_id": {
       "type": "string",
       "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
@@ -17,6 +28,7 @@
     "journey_id": {
       "type": "string",
       "minLength": 1,
+      "maxLength": 128,
       "description": "The journey this check-in belongs to, as in signal_detected."
     },
     "signal_event_id": {
@@ -26,7 +38,10 @@
     },
     "window_s": {
       "type": "integer",
-      "enum": [20, 60],
+      "enum": [
+        20,
+        60
+      ],
       "description": "Device-chosen check-in window in seconds; §7 limits it to 20 or 60. Named window_s, not window_ms, so it is not confused with signal_detected's 975 ms audio window."
     }
   },
