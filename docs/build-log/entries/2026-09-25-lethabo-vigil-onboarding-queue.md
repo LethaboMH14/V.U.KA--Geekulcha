@@ -59,3 +59,47 @@ Next:
 - run the full flow on the emulator against the local server and record the result here;
 - Ipeleng: review PIN storage and parity;
 - Mutarisi: review the onboarding screens.
+
+---
+
+## 2026-09-25 (21:30) | addendum: the app now drives the slice-3 escalation (PR #89)
+
+Changed:
+- **Journeys:**
+  - `POST /v1/journeys` issues the journey id, and every journey event targets it;
+  - heartbeats go every 30 s with an activity bucket only (V9);
+  - a journey no longer starts when the server can't be reached. The member is told why, because a journey the server doesn't know about can never reach a guardian.
+- **§4b payloads:**
+  - `checkin_opened` carries a UUID `checkin_id`, the triggering `signal_event_id` and `window_s: 60`. It is recorded when the check is actually on screen, and never before the signal that caused it (the detection is queued first);
+  - `checkin_result` carries `attempt` (T47);
+  - `pin_authorised` carries the inner DER signature over `{action, target_id, mode, nonce}` and targets the subject, while `journey_ended` targets the journey;
+  - both end-journey events are queued before either is sent.
+  - `app/src/api/payloads.ts` refuses to queue anything the four schemas forbid.
+- **My record:**
+  - it opens behind the PIN (an `export` authorisation, §9); a duress PIN there is a duress signal (V6);
+  - entries are numbered in the phone's own order, never by chain index, because the server's own entries after a duress PIN would show up as a jump in the numbers.
+- **Detection:**
+  - after the journey ends, a late detection is still recorded but never opens a check-in;
+  - in test builds, a clip played during a journey runs through that journey's engine.
+- **Queue:** it sends again when something is queued mid-send, and a refusal reason stays visible until the queue is empty.
+
+Evidence:
+- `npx jest`: 47/47 pass;
+- `npx tsc --noEmit`: clean;
+- `node scripts/e2e/journey-e2e.mjs`: 21/21 against the slice-3 server and scheduler with PostgreSQL, run with `--fast`. The earlier full run was 20/20, including `no_answer` from the scheduler after 75 s.
+- Normal and duress `checkin_result` bodies were 646 B each.
+
+Decision:
+- the check-in window is 60 s (§7 allows 20 or 60);
+- `pin_authorised` targets the subject, since the server checks journey ownership itself.
+
+Needs / blockers (Sibusiso):
+1. **`server/server_signing.py`:** `_pinned_public_key()` returns the manifest's 44-byte SPKI, but it is compared with a 32-byte raw key, so the real path always fails. The tests patch it. Load it with `load_der_public_key` and compare raw bytes.
+2. **Skew exemption (`server/db.py`):** it matches `entry["action"]` against kinds, but §3 puts only the coarse class in `action` (`device_event`). The exemption never applies to real PIN events. Match on the payload kind instead.
+3. **Journey start:** it has no idempotency key, so a lost `POST /v1/journeys` response leaves an orphan journey that never ends, and the `contact_lost` clock counts it. Proposal: accept an `Idempotency-Key`.
+4. **Guardian worker:** `guardian_worker.py` has no run loop yet, so queued alerts are not delivered outside tests.
+5. **Offline journeys:** they can't be bound after the fact. Worth a contract decision.
+
+Rejected, with reason (review round):
+- "Allow a degraded offline journey": its events could never be accepted, so the screen would claim protection that doesn't exist.
+- "Hold My record at the pre-incident head": the phone can't see incident state, and its entries read the same for both PINs. The server export already applies the T30 hold.

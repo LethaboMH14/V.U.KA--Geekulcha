@@ -18,12 +18,12 @@ import {Dial, Key, Lamp, Panel, PinKeypad, QuietKey, Readout, RoundKey, Row, Rul
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
 import {Onboarding} from './onboarding';
 import {MyRecord} from './record';
-import {device, type Delivery} from '../api/device';
+import {device, JourneyStartError, type Delivery} from '../api/device';
 import {version} from '../../package.json';
 import {runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector} from '../sensors/detection';
 import type {Decision, Reason} from '../brain/detect';
 
-type Screen = 'boot' | 'onboarding' | 'ready' | 'active' | 'check' | 'checked' | 'end' | 'settings' | 'guardian' | 'record';
+type Screen = 'boot' | 'onboarding' | 'ready' | 'active' | 'check' | 'checked' | 'end' | 'settings' | 'guardian' | 'recordPin' | 'record';
 type CheckSession = Awaited<ReturnType<typeof device.openCheckin>>;
 type Guardian = {name: string; accepted: boolean};
 
@@ -54,6 +54,8 @@ export function VigilApp() {
   const journeyId = useRef<string | null>(null);
   const check = useRef<Promise<CheckSession> | null>(null);
   const [armError, setArmError] = useState<ArmResult | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
   const delivery = useDelivery();
 
   // First run goes through onboarding; after that, straight to Home.
@@ -72,39 +74,69 @@ export function VigilApp() {
     return () => clearInterval(t);
   }, []);
 
-  // A detection opens exactly the same Journey check as every other path (V4, V5).
-  const openCheck = () => {
+  // Heartbeats every 30 s while a journey runs (V9): activity bucket only.
+  useEffect(() => {
+    if (!startedAt || !journeyId.current) return;
+    const id = journeyId.current;
+    const beat = () => void device.heartbeat(id, detector.current?.speedBucket() ?? 'unknown');
+    beat();
+    const t = setInterval(beat, 30000);
+    return () => clearInterval(t);
+  }, [startedAt]);
+
+  // Only a detection opens a Journey check (V4, V11), and only once the
+  // detection is queued: the check-in names the signal that caused it.
+  const openCheck = (signalEventId: string) => {
     detector.current?.setCheckinOpen(true);
-    check.current = device.openCheckin(journeyId.current ?? 'sim_jny_none');
+    check.current = device.openCheckin(journeyId.current ?? 'sim_jny_none', signalEventId);
     setScreen('check');
   };
 
   const startJourney = async () => {
+    if (starting) return;
     setArmError(null);
-    const id = await device.newJourneyId();
-    const {result, detector: d} = await startDetection({
-      journeyId: id,
-      appVersion: version,
-      // Evidence first: every confirmed detection is signed and queued (V7, V8).
-      onRecord: (_decision, payload) => void device.signal(payload),
-      onPrompt: () => openCheck(),
-    });
-    // 'unsupported' is the browser preview and tests: no microphone, so the
-    // journey runs as a simulation. On a phone, a refused permission or a
-    // failed model check does not arm (V1).
-    if (!result.ok && result.reason !== 'unsupported') {
-      setArmError(result);
-      return;
+    setStartError(null);
+    setStarting(true);
+    try {
+      // The server issues the journey id; without it no check-in could reach a guardian.
+      let id: string;
+      try {
+        id = await device.startJourney(version);
+      } catch (e) {
+        setStartError(
+          e instanceof JourneyStartError && e.reason === 'offline'
+            ? "Journey not started: VIGIL can't reach its server, so your guardians couldn't be alerted. Check your data, then try again."
+            : `Journey not started: the server refused it (${e instanceof Error ? e.message : String(e)}).`,
+        );
+        return;
+      }
+      const {result, detector: d} = await startDetection({
+        journeyId: id,
+        appVersion: version,
+        // Evidence first: every confirmed detection is signed and queued (V7, V8).
+        onRecord: (_decision, payload) => device.signal(id, payload),
+        onPrompt: (_decision, signalEventId) => openCheck(signalEventId),
+      });
+      // 'unsupported' is the browser preview and tests: no microphone, so the
+      // journey runs as a simulation. On a phone, a refused permission or a
+      // failed model check does not arm (V1).
+      if (!result.ok && result.reason !== 'unsupported') {
+        setArmError(result);
+        return;
+      }
+      detector.current = d ?? null;
+      journeyId.current = id;
+      setStartedAt(Date.now());
+      setScreen('active');
+    } finally {
+      setStarting(false);
     }
-    detector.current = d ?? null;
-    journeyId.current = id;
-    await device.journeyArmed(id, version);
-    setStartedAt(Date.now());
-    setScreen('active');
   };
 
-  const endJourney = () => {
-    detector.current?.stop();
+  const endJourney = async () => {
+    // Stop listening and let any detection already in flight finish first,
+    // so nothing can open a check-in on a journey that has ended.
+    await detector.current?.stop().catch(() => undefined);
     detector.current = null;
     journeyId.current = null;
     setStartedAt(null);
@@ -120,7 +152,7 @@ export function VigilApp() {
         setScreen(home);
         return true;
       }
-      if (screen === 'guardian' || screen === 'record') {
+      if (screen === 'guardian' || screen === 'record' || screen === 'recordPin') {
         setScreen('settings');
         return true;
       }
@@ -135,10 +167,12 @@ export function VigilApp() {
   if (screen === 'onboarding') {
     return <Onboarding onDone={() => setScreen('ready')} />;
   }
-  if (screen === 'check') {
+  if (screen === 'check' && check.current) {
+    const session = check.current;
     return (
       <JourneyCheck
-        onEnter={async pin => (await (check.current ?? device.openCheckin(journeyId.current ?? 'sim_jny_none'))).enter(pin)}
+        onShown={() => void session.then(c => c.shown())}
+        onEnter={async pin => (await session).enter(pin)}
         onDone={() => setScreen('checked')}
       />
     );
@@ -165,6 +199,17 @@ export function VigilApp() {
   if (screen === 'guardian') {
     return <GuardianPreview onBack={() => setScreen('settings')} />;
   }
+  if (screen === 'recordPin') {
+    return (
+      <PinGate
+        title="My record"
+        prompt="Enter your PIN to see your record"
+        onEnter={pin => device.authoriseExport(pin)}
+        onDone={() => setScreen('record')}
+        onCancel={() => setScreen('settings')}
+      />
+    );
+  }
   return (
     <View style={{flex: 1}}>
       <Surface />
@@ -175,8 +220,9 @@ export function VigilApp() {
           <Settings
             onBack={() => setScreen(home)}
             onGuardian={() => setScreen('guardian')}
-            onRecord={() => setScreen('record')}
+            onRecord={() => setScreen(device.simulated ? 'record' : 'recordPin')}
             delivery={delivery}
+            detector={startedAt ? detector.current : null}
             noGuardians={guardians.length === 0}
             onToggleGuardians={() => setGuardians(g => (g.length ? [] : SIM_GUARDIANS))}
           />
@@ -185,6 +231,8 @@ export function VigilApp() {
             guardians={guardians}
             onStart={startJourney}
             armError={armError}
+            startError={startError}
+            starting={starting}
             onMenu={() => setScreen('settings')}
           />
         ) : (
@@ -193,7 +241,7 @@ export function VigilApp() {
             guardians={guardians}
             delivery={delivery}
             onEnd={() => setScreen('end')}
-            onSimCheck={openCheck}
+            onSimCheck={device.simulated ? () => openCheck('00000000-0000-4000-8000-000000000000') : undefined}
             onMenu={() => setScreen('settings')}
           />
         )}
@@ -280,11 +328,15 @@ function Home({
   onStart,
   onMenu,
   armError,
+  startError,
+  starting,
 }: {
   guardians: Guardian[];
   onStart: () => void;
   onMenu: () => void;
   armError: ArmResult | null;
+  startError: string | null;
+  starting: boolean;
 }) {
   return (
     <View style={styles.screen}>
@@ -308,10 +360,14 @@ function Home({
       )}
 
       <View style={styles.keyZone}>
-        <RoundKey label="Start journey" onPress={onStart} />
+        <RoundKey label={starting ? 'Starting…' : 'Start journey'} onPress={onStart} />
         {armError && !armError.ok ? (
           <Text style={[type.body, styles.armError]} accessibilityLiveRegion="polite">
             {armMessage(armError)}
+          </Text>
+        ) : startError ? (
+          <Text style={[type.body, styles.armError]} accessibilityLiveRegion="polite">
+            {startError}
           </Text>
         ) : null}
       </View>
@@ -338,7 +394,8 @@ function JourneyActive({
   guardians: Guardian[];
   delivery: Delivery;
   onEnd: () => void;
-  onSimCheck: () => void;
+  /** Browser preview only: a journey check with no detection behind it. */
+  onSimCheck?: () => void;
   onMenu: () => void;
 }) {
   const [now, setNow] = useState(Date.now());
@@ -351,12 +408,9 @@ function JourneyActive({
     <View style={styles.screen}>
       <TopBar onMenu={onMenu} />
       <View style={{gap: space.sm, marginTop: space.lg}}>
-        {/* Hidden, unlabelled: a long press shows the check-in in pipeline builds. */}
-        <Pressable onLongPress={onSimCheck} delayLongPress={1500} accessible={false}>
-          <Text style={type.display} accessibilityRole="header">
-            Journey active
-          </Text>
-        </Pressable>
+        <Text style={type.display} accessibilityRole="header">
+          Journey active
+        </Text>
         <View style={styles.lampLine}>
           <Lamp tone="signal" breathing />
           <Text style={type.body}>Listening on this phone</Text>
@@ -380,9 +434,9 @@ function JourneyActive({
         />
         <Rule />
         <Readout
-          label={device.simulated ? 'Server' : delivery.lastSentAt ? 'Last received' : 'Server'}
-          value={device.simulated ? 'preview' : delivery.lastSentAt ? hhmm(new Date(delivery.lastSentAt)) : 'not reached yet'}
-          lamp={<Lamp tone={delivery.lastSentAt && !offline(delivery) ? 'green' : 'unlit'} />}
+          label="Last contact"
+          value={device.simulated ? 'preview' : delivery.lastContactAt ? hhmm(new Date(delivery.lastContactAt)) : 'not yet'}
+          lamp={<Lamp tone={delivery.lastContactAt && Date.now() - Date.parse(delivery.lastContactAt) < 75000 ? 'green' : 'unlit'} />}
         />
         <Rule />
         <Readout
@@ -405,9 +459,7 @@ function JourneyActive({
       </Panel>
 
       <Key label="End journey" onPress={onEnd} accessibilityHint="Asks for your PIN" />
-      {__DEV__ ? (
-        <QuietKey label="Demo: show a journey check" onPress={onSimCheck} />
-      ) : null}
+      {onSimCheck ? <QuietKey label="Preview: show a journey check" onPress={onSimCheck} /> : null}
     </View>
   );
 }
@@ -420,6 +472,7 @@ function Settings({
   onGuardian,
   onRecord,
   delivery,
+  detector,
   noGuardians,
   onToggleGuardians,
 }: {
@@ -427,6 +480,7 @@ function Settings({
   onGuardian: () => void;
   onRecord: () => void;
   delivery: Delivery;
+  detector: Detector | null;
   noGuardians: boolean;
   onToggleGuardians: () => void;
 }) {
@@ -450,7 +504,7 @@ function Settings({
         <Row label="Guardian view" detail="Preview what a guardian sees (simulated)" onPress={onGuardian} />
       </Panel>
       {!device.simulated ? <ServerSetting /> : null}
-      {testFeedAvailable() ? <DetectorTest /> : null}
+      {testFeedAvailable() ? <DetectorTest detector={detector} /> : null}
       {__DEV__ ? (
         <Panel>
           <Text style={type.label}>Demo states (debug builds only)</Text>
@@ -527,12 +581,14 @@ function reasonText(r: Reason): string {
  * files folder through this phone's model and the same engine as a journey,
  * and shows the decision with every reason. Never in a normal build.
  */
-function DetectorTest() {
+function DetectorTest({detector}: {detector: Detector | null}) {
   const [out, setOut] = useState<string[]>([]);
   const run = async (name: string) => {
     setOut([`Running ${name}…`]);
     try {
-      const {windows, decisions} = await runTestClip(name);
+      // During a journey the clip goes through that journey: a detection is
+      // recorded and opens the Journey check exactly as the microphone would.
+      const {windows, decisions} = detector ? await detector.feedClip(name) : await runTestClip(name);
       const fired = decisions.find(d => d.record);
       const show: Decision | undefined = fired ?? decisions.reduce<Decision | undefined>((best, d) => {
         const score = (x?: Decision) => {
@@ -552,7 +608,10 @@ function DetectorTest() {
   return (
     <Panel>
       <Text style={type.label}>Detector test (test build only)</Text>
-      <Text style={[type.caption, {marginTop: 2}]}>Uncalibrated thresholds. Clips come from the app's files folder.</Text>
+      <Text style={[type.caption, {marginTop: 2}]}>
+        Uncalibrated thresholds. Clips come from the app's files folder.{' '}
+        {detector ? 'A journey is running: a detection is recorded and opens the Journey check.' : 'No journey: results only.'}
+      </Text>
       <View style={{gap: space.sm, marginTop: space.md}}>
         <Key label="Run glass.wav" onPress={() => run('glass.wav')} />
         <Key label="Run negative.wav" onPress={() => run('negative.wav')} />
@@ -570,9 +629,22 @@ function DetectorTest() {
  * Flat and plain: no panels, no motion, one frame for both PINs. It scrolls
  * when the window is short (landscape), so the keypad is never cut off.
  */
-function JourneyCheck({onEnter, onDone}: {onEnter: (pin: string) => Promise<'checked' | 'retry'>; onDone: () => void}) {
+function JourneyCheck({
+  onShown,
+  onEnter,
+  onDone,
+}: {
+  onShown: () => void;
+  onEnter: (pin: string) => Promise<'checked' | 'retry'>;
+  onDone: () => void;
+}) {
   const [retry, setRetry] = useState(false);
   const busy = useRef(false);
+  // checkin_opened means "shown on screen" (§3), so it is recorded on mount.
+  useEffect(() => {
+    onShown();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const submit = async (pin: string) => {
     if (busy.current) return;
     busy.current = true;
@@ -618,6 +690,54 @@ function CheckedIn({onDone}: {onDone: () => void}) {
         Checked in
       </Text>
       <Text style={[type.body, {marginTop: space.xs}]}>Journey continues</Text>
+    </ScrollView>
+  );
+}
+
+/**
+ * A PIN prompt for a settings action (§9). Same frame, wording and outcome
+ * for both PINs; a duress PIN here is a duress signal (V6).
+ */
+function PinGate({
+  title,
+  prompt,
+  onEnter,
+  onDone,
+  onCancel,
+}: {
+  title: string;
+  prompt: string;
+  onEnter: (pin: string) => Promise<'ok' | 'retry'>;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [retry, setRetry] = useState(false);
+  const busy = useRef(false);
+  const submit = async (pin: string) => {
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      if ((await onEnter(pin)) === 'ok') onDone();
+      else setRetry(true);
+    } catch {
+      onDone();
+    } finally {
+      busy.current = false;
+    }
+  };
+  return (
+    <ScrollView style={{backgroundColor: colors.bgBase}} contentContainerStyle={styles.flat}>
+      <Text style={[type.title, {textAlign: 'center'}]} accessibilityRole="header">
+        {title}
+      </Text>
+      <Text style={[type.body, {textAlign: 'center', marginTop: space.sm}]}>{prompt}</Text>
+      <Text style={styles.pinNote} accessibilityLiveRegion="polite">
+        {retry ? 'Try again' : ''}
+      </Text>
+      <PinKeypad onComplete={submit} />
+      <View style={{marginTop: space.lg}}>
+        <QuietKey label="Back" onPress={onCancel} />
+      </View>
     </ScrollView>
   );
 }

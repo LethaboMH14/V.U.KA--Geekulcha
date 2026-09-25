@@ -8,6 +8,7 @@
 import {NativeEventEmitter, NativeModules, PermissionsAndroid, Platform} from 'react-native';
 import {
   RULESET_V1,
+  activityBefore,
   buildSignalDetected,
   checkLabels,
   initialState,
@@ -60,16 +61,31 @@ async function permissions(): Promise<ArmResult> {
 export type Detector = {
   /** Tell the engine a check-in is showing (true) or closed (false). */
   setCheckinOpen(open: boolean): void;
+  /** V9: the activity bucket for heartbeats. Never location. */
+  speedBucket(): 'stationary' | 'walking' | 'other' | 'unknown';
+  /**
+   * Test builds only: run a clip from the app's files folder through this
+   * phone's model and this journey's engine, so it records and prompts
+   * exactly as the microphone would. Real inference on a file.
+   */
+  feedClip(name: string): Promise<{windows: number; decisions: Decision[]}>;
   stop(): Promise<void>;
 };
 
 export async function startDetection(opts: {
   journeyId: string;
   appVersion: string;
-  /** A confirmed detection: record it (queue the signed event). Evidence, always. */
-  onRecord: (decision: Decision, payload: SignalDetectedV1) => void;
-  /** Open the journey check (only after a record, never over an open check-in). */
-  onPrompt: (decision: Decision) => void;
+  /**
+   * A confirmed detection: sign and queue the event. Evidence, always.
+   * Resolves with the event's id once it is in the queue.
+   */
+  onRecord: (decision: Decision, payload: SignalDetectedV1) => Promise<string | undefined>;
+  /**
+   * Open the journey check (only after a record, never over an open
+   * check-in). Called only once the detection is queued, with its event id,
+   * so the check-in can never overtake the signal that caused it.
+   */
+  onPrompt: (decision: Decision, signalEventId: string) => void;
   onError?: (message: string) => void;
 }): Promise<{result: ArmResult; detector?: Detector}> {
   if (!native) return {result: {ok: false, reason: 'unsupported'}};
@@ -81,29 +97,43 @@ export async function startDetection(opts: {
   let armed = false;
   let sha256 = '';
   const emitter = new NativeEventEmitter(NativeModules.VigilDetection);
+  // Decisions are handled strictly in order: a record is queued before the
+  // next decision, and before the check-in it may open.
+  let chain: Promise<void> = Promise.resolve();
+  let lastEndMs = 0;
+  let lastSeq = 0;
+  const judge = (w: AudioWindow) => {
+    lastEndMs = Math.max(lastEndMs, w.endMs);
+    lastSeq = Math.max(lastSeq, w.seq);
+    const out = step(state, {type: 'audio', window: toWindow(w)}, RULESET_V1);
+    state = out.state;
+    const d = out.decision;
+    if (d?.record && d.candidate) {
+      const payload = buildSignalDetected({
+        journeyId: opts.journeyId,
+        candidate: d.candidate,
+        corroboration: d.corroboration,
+        modelSha256: sha256,
+        appVersion: opts.appVersion,
+      });
+      chain = chain.then(async () => {
+        const eventId = await opts.onRecord(d, payload);
+        // Once the journey has ended, a late detection is evidence but never a prompt.
+        if (d.prompt && eventId && armed) {
+          native.showCheckin();
+          opts.onPrompt(d, eventId);
+        }
+      }).catch(e => opts.onError?.(String(e)));
+    }
+    return d;
+  };
   // Arm right after the permission prompt, while the app is still in the
   // foreground (Android 14's rule for a microphone service); the model check
   // happens inside, and arming resolves only once capture is running.
   const subs = [
     emitter.addListener('vigil.window', (w: AudioWindow) => {
       if (!armed) return;
-      const out = step(state, {type: 'audio', window: toWindow(w)}, RULESET_V1);
-      state = out.state;
-      const d = out.decision;
-      if (d?.record && d.candidate) {
-        const payload = buildSignalDetected({
-          journeyId: opts.journeyId,
-          candidate: d.candidate,
-          corroboration: d.corroboration,
-          modelSha256: sha256,
-          appVersion: opts.appVersion,
-        });
-        opts.onRecord(d, payload);
-        if (d.prompt) {
-          native.showCheckin();
-          opts.onPrompt(d);
-        }
-      }
+      judge(w);
     }),
     emitter.addListener('vigil.motion', (f: MotionFrame) => {
       if (!armed) return;
@@ -135,8 +165,28 @@ export async function startDetection(opts: {
         state = step(state, {type: 'checkin', open}, RULESET_V1).state;
         if (!open) native.clearCheckin();
       },
+      speedBucket() {
+        return state.motion.length ? activityBefore(state.motion, state.motion.length, RULESET_V1) : 'unknown';
+      },
+      async feedClip(name) {
+        if (!native.testFeed) throw new Error('test feed not in this build');
+        const windows = await native.classifyTestClip(name);
+        // Clip times and sequence numbers start at 0: shift both past the
+        // journey's latest window, so no live window is mistaken for a clip one.
+        const base = lastEndMs + 1000;
+        const seqBase = lastSeq + 10;
+        const decisions: Decision[] = [];
+        for (const w of windows) {
+          const d = judge({...w, seq: seqBase + w.seq, endMs: base + w.endMs});
+          if (d) decisions.push(d);
+        }
+        await chain;
+        return {windows: windows.length, decisions};
+      },
       async stop() {
+        armed = false;
         stopListening();
+        await chain;
         native.clearCheckin();
         await native.disarm();
       },

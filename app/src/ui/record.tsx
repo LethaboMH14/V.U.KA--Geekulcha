@@ -5,8 +5,10 @@
  * The record's fingerprint is the hash of its newest entry: every entry's hash
  * covers the one before it, so a change anywhere earlier changes this value.
  *
- * Duress parity: entries are named by kind only. A check answered with the
- * duress PIN reads exactly like one answered normally.
+ * Duress parity: entries are named by kind only, so a check answered with the
+ * duress PIN reads exactly like one answered normally. Entries are numbered in
+ * this phone's own order, never by chain index: after a duress PIN the server
+ * appends its own entries, and a jump in the numbers would give that away.
  */
 import React, {useEffect, useState} from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
@@ -82,18 +84,18 @@ export function MyRecord({onBack}: {onBack: () => void}) {
       {entries && entries.length ? (
         <Panel style={{padding: 0, overflow: 'hidden'}}>
           {entries
-            .slice()
+            .map((e, n) => ({e, n: n + 1}))
             .reverse()
-            .map((e, i) => (
+            .map(({e, n}, i) => (
               <View key={e.seq}>
                 {i > 0 ? <View style={styles.rowRule} /> : null}
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Entry ${e.chain_index}, ${KIND[e.kind] ?? e.kind}, ${when(e.ts)}`}
+                  accessibilityLabel={`Entry ${n}, ${KIND[e.kind] ?? e.kind}, ${when(e.ts)}`}
                   accessibilityHint="Shows the full hash"
                   onPress={() => setOpen(open === e.seq ? null : e.seq)}
                   style={({pressed}) => [styles.entry, pressed && {backgroundColor: colors.keyFacePressed}]}>
-                  <Text style={styles.index}>#{e.chain_index}</Text>
+                  <Text style={styles.index}>{String(n).padStart(2, '0')}</Text>
                   <View style={{flex: 1, gap: 2}}>
                     <Text style={type.label}>{KIND[e.kind] ?? e.kind}</Text>
                     <Text style={type.caption}>{when(e.ts)}</Text>

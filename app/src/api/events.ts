@@ -54,8 +54,8 @@ export type EventSubmission = {
 /** RFC 3339 with seconds and an offset (the server rejects anything else). */
 export const rfc3339 = (d: Date): string => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
-/** A v4 UUID from native random bytes. */
-async function uuid(signer: Signer): Promise<string> {
+/** A lowercase v4 UUID from native random bytes. */
+export async function uuid(signer: Signer): Promise<string> {
   const b = Array.from(base64ToBytes(await signer.randomBytes(16)));
   b[6] = (b[6] & 0x0f) | 0x40;
   b[8] = (b[8] & 0x3f) | 0x80;
@@ -150,6 +150,20 @@ export async function signedHeaders(signer: Signer, method: string, path: string
 }
 
 export type Receipt = {event_hash: string; chain_index: number; received_at: string};
+
+/**
+ * Any signed request (§7). `body` is sent exactly as given (it is what the
+ * signature covers). Throws "<status> <code>: <message>" on a refusal, or the
+ * fetch error when there is no network.
+ */
+export async function signedRequest<T>(baseUrl: string, signer: Signer, method: string, path: string, body: string, now: () => Date = () => new Date()): Promise<T> {
+  const headers = await signedHeaders(signer, method, path, body, rfc3339(now()));
+  const res = await fetch(baseUrl.replace(/\/$/, '') + path, {method, headers, body: body.length ? body : undefined});
+  const text = await res.text();
+  const json = (text ? JSON.parse(text) : {}) as T & {code?: string; message?: string};
+  if (!res.ok) throw new Error(`${res.status} ${json.code ?? 'error'}: ${json.message ?? ''}`);
+  return json;
+}
 
 /** POST one event. Returns the receipt, or throws with the server's error code. */
 export async function postEvent(baseUrl: string, signer: Signer, entry: EventSubmission, now: () => Date = () => new Date()): Promise<Receipt> {
