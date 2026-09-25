@@ -56,3 +56,19 @@ def test_a_decoy_guardian_sees_the_same_empty_shape(sim_api):
 def test_a_device_key_cannot_read_guardian_alerts(sim_api):
     store, client, subject, key, *_ = sim_api
     assert device_call(client, "GET", "/v1/guardians/me/alerts", key).status_code == 403
+
+
+def test_the_worker_step_delivers_and_completes_the_outbox_row(sim_api):
+    from server.run_workers import step
+    store, client, subject, key, event, post, now, connect = sim_api
+    _gid, gkey, gkid = add_real_guardian(sim_api)
+    assert post(signal(event)).status_code == 201
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject,))
+        cur.execute("SELECT incident_id::text FROM incidents")
+        request_alarm(cur, cur.fetchone()[0], trigger="no_answer", now=now[0])
+    assert step(store, now[0]) == 1
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT state FROM outbox WHERE kind='guardian_alert'")
+        assert cur.fetchone()[0] == "done"
+    assert len(alerts(client, gkey, gkid).json()["alerts"]) == 1
