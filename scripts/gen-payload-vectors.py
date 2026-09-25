@@ -224,7 +224,7 @@ def build_vectors() -> dict:
         golden.append(make_golden("sim_pin_authorised_" + mode, "pin_authorised", {**pin, "mode": mode}))
     golden.append(make_golden("sim_pin_authorised_delete", "pin_authorised", {**pin, "action": "delete"}))
     for name, invalid in (
-        ("action", {**pin, "action": "add_guardian"}),
+        ("action", {**pin, "action": "not_an_action"}),
         ("mode", {**pin, "mode": "other"}),
         ("extra", {**pin, "extra": True}),
         ("missing_nonce", {k: v for k, v in pin.items() if k != "nonce"}),
