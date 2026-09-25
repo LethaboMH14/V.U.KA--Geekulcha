@@ -55,7 +55,7 @@
 | P3.S4 | Verify-page cryptography (T03–T05) | Ipeleng | I, T, S | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.S5 | SSDLC submitted on Sonke | Ipeleng | S | **Sep 26 12:30** | ☐ | Added 23 Sep, Lethabo |
 | P3.S6 | Privacy policy (the required slide's source) | Ipeleng | S, B | Sep 26 18:00 | ◐ | Added 23 Sep, Lethabo · 24 Sep: `docs/PRIVACY-POLICY.md` + `docs/security/POPIA-ONE-PAGER.md` drafted and claim-checked (Lethabo covering); PR open |
-| P3.B1 | Own the economics doc and script; challenge inputs in the script | Babatunde | B | Sep 24 | ☐ | Added 23 Sep, Lethabo |
+| P3.B1 | Own the economics doc and script; challenge inputs in the script | Babatunde | B | Sep 24 | ☑ | Added 23 Sep, Lethabo · **Done 24 Sep: rebased PR #65, reverted unsupported R5,090 resolution, rebuilt `scripts/economics_vigil_anchor.py` v2 with tagged configurable inputs (no hardcoded price), generated sensitivity table, updated `docs/PRICING-WORKING.md` and `docs/ECONOMICS-VIGIL-ANCHOR.md`, added source links to `docs/MARKET-DATA.md`; price decision pending** |
 | P3.B2 | `docs/COMPETITORS.md` rewritten for the two-layer product | Babatunde | B, I | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.B3 | Lean Canvas with figures — repo and Sonke | Babatunde | B | Sep 26 night | ☐ | Added 23 Sep, Lethabo |
 | P3.B4 | Deck (>10 slides incl. privacy policy and the honesty slide), buyer = bank or insurer partner | Babatunde | B, U | Sep 26 | ☐ | Added 23 Sep, Lethabo |
