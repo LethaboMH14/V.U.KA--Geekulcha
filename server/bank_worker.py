@@ -3,7 +3,8 @@ import hashlib
 import json
 import uuid
 from contextlib import closing
-from urllib.request import Request, urlopen
+import http.client
+from urllib.parse import urlsplit
 
 from anchor.canonical import canonical
 from server.event_effects import append_server
@@ -20,13 +21,27 @@ CREATE TABLE IF NOT EXISTS bank_requests (
 class SimBankHTTP:
     """No simulated response: this adapter requires a real sim_bank receipt."""
     def __init__(self, base_url):
-        self.base_url = base_url.rstrip("/")
+        # Operator configuration, never request input. http.client cannot open
+        # file:// or other schemes; plain http is only allowed on loopback.
+        parts = urlsplit(base_url)
+        loopback = parts.hostname in ("localhost", "127.0.0.1", "::1")
+        if parts.scheme not in ("https", "http") or (parts.scheme == "http" and not loopback) or not parts.netloc:
+            raise ValueError("sim_bank base URL must be https (or http on loopback)")
+        self.scheme, self.netloc = parts.scheme, parts.netloc
+        self.prefix = parts.path.rstrip("/")
 
     def send(self, body, headers):
-        request = Request(self.base_url + "/sim_bank/v1/risk-signal", data=body,
-                          headers={**headers, "Content-Type": "application/json"}, method="POST")
-        with urlopen(request, timeout=10) as response:
+        connection_class = http.client.HTTPSConnection if self.scheme == "https" else http.client.HTTPConnection
+        conn = connection_class(self.netloc, timeout=10)
+        try:
+            conn.request("POST", self.prefix + "/sim_bank/v1/risk-signal", body=body,
+                         headers={**headers, "Content-Type": "application/json"})
+            response = conn.getresponse()
+            if response.status not in (200, 202):
+                raise ValueError(f"sim_bank returned HTTP {response.status}")
             receipt = json.load(response)
+        finally:
+            conn.close()
         if receipt.get("sim") is not True or not isinstance(receipt.get("hold_ref"), str) or not receipt["hold_ref"]:
             raise ValueError("sim_bank returned no simulated hold receipt")
         return receipt

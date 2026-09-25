@@ -15,7 +15,7 @@ import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.request import urlopen
+import http.client
 from urllib.parse import urlparse
 
 from anchor.merkle import build_merkle_proof, build_merkle_root
@@ -75,8 +75,19 @@ def reconcile_mirror_root(root_hex, submitted_at, *, fetch=None):
     if PINS["network"] != "testnet":
         raise AnchorPublicationError("only pinned testnet reconciliation is supported")
     def fetch_json(url):
-        with urlopen(url, timeout=10) as response:
+        # http.client, not urllib: only the pinned HTTPS mirror host is reachable.
+        parts = urlparse(url)
+        if parts.scheme != "https" or parts.netloc != "testnet.mirrornode.hedera.com":
+            raise AnchorPublicationError("invalid mirror URL")
+        conn = http.client.HTTPSConnection(parts.netloc, timeout=10)
+        try:
+            conn.request("GET", parts.path + ("?" + parts.query if parts.query else ""))
+            response = conn.getresponse()
+            if response.status != 200:
+                raise AnchorPublicationError(f"mirror returned HTTP {response.status}")
             return json.load(response)
+        finally:
+            conn.close()
     fetch = fetch or fetch_json
     seconds = int(submitted_at.timestamp())
     url = f"{origin}/api/v1/topics/{PINS['topic_id']}/messages?order=asc&limit=100&timestamp=gte:{seconds}"

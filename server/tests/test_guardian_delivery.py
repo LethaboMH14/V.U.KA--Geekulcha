@@ -129,3 +129,12 @@ def test_bank_delivery_at_three_minutes_signed_body_retry_and_hold_ref(sim_api):
     with connect() as conn, conn.cursor() as cur:
         cur.execute("SELECT hold_ref,bank_sent_at FROM incidents")
         assert cur.fetchone() == ("sim_hold_1", now[0])
+
+
+def test_sim_bank_adapter_refuses_non_http_and_remote_plain_http():
+    from server.bank_worker import SimBankHTTP
+    for url in ("file:///etc/passwd", "ftp://bank.example", "http://bank.example", "https://"):
+        with pytest.raises(ValueError):
+            SimBankHTTP(url)
+    SimBankHTTP("https://bank.example")
+    SimBankHTTP("http://127.0.0.1:9000")
