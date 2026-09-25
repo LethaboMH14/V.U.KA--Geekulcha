@@ -31,7 +31,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_v
 from starlette.responses import JSONResponse
 
 from anchor.canonical import canonical
-from server.pin_records import EventRefused
+from server.pin_records import EventRefused, require_authorisation
 from server.event_effects import append_server
 from server.server_signing import sign_key_revoked_entry
 from server.db import (
@@ -595,6 +595,60 @@ def create_app(database=None) -> FastAPI:
                 connection.close()
         except DatabaseUnavailable:
             pass  # the security-critical key swap above already committed; freeze/notify are best-effort here
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
+
+    @app.delete("/v1/subjects/{id}/data", status_code=202)
+    async def delete_subject_data(id: str, request: Request):
+        """PROPOSED §13/§9 F15. Consumes a fresh action=delete pin_authorised
+        authorisation (transport: POST /v1/events, same as export/end_journey)."""
+        from server.deletion import request_deletion
+        from server.recovery import is_frozen, notify_guardians
+        subject_id = id
+        try:
+            principal = verify_request(request, subject_id=subject_id, database=store, body=await request.body())
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != "device":
+            return _error_response(404, "not_found", "subject was not found")
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id, subject_id=principal.subject_id,
+                nonce=principal.nonce, request_ts=principal.request_ts,
+                now=datetime.now(timezone.utc),
+            )
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return _error_response(404, "not_found", "subject was not found")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                        if is_frozen(cur, subject_id, now):
+                            return _error_response(403, "pin_authorisation_required", "deletion is frozen after a recent recovery")
+                        try:
+                            mode = require_authorisation(cur, subject_id, "delete", subject_id, now, consume=True)
+                        except EventRefused as exc:
+                            return _error_response(exc.status, exc.code, exc.code)
+                        if mode == "normal":
+                            request_deletion(cur, subject_id, now)
+                            notify_guardians(cur, subject_id, "deletion_requested", now)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        # Duress: looks exactly the same, does nothing further (§9). The
+        # pin_authorised event itself (mode=duress) already raised the alarm.
         return {"receipt_id": str(uuid4()), "state": "accepted"}
 
     @app.get("/v1/anchor/latest")

@@ -271,7 +271,7 @@ class PostgresDatabase:
             raise DatabaseUnavailable("PostgreSQL connection failed") from exc
 
     def initialize(self) -> None:
-        from server import anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery
+        from server import anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery, deletion
         self._payload_key()
         connection = self._connection()
         try:
@@ -280,7 +280,7 @@ class PostgresDatabase:
                     cursor.execute(CREATE_SCHEMA_SQL)
                     cursor.execute(CREATE_EVENT_ID_INDEX_SQL)
                     cursor.execute(OUTBOX_SCHEMA_SQL)
-                    for module in (anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery):
+                    for module in (anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery, deletion):
                         cursor.execute(module.SCHEMA_SQL)
         finally:
             connection.close()

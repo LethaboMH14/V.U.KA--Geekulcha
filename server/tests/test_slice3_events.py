@@ -104,7 +104,9 @@ def test_pin_signature_replay_ownership_and_expiry(sim_api):
         cur.execute("SELECT count(*) FROM pin_authorisations")
         assert cur.fetchone()[0] == 0
     assert post(event(pin_payload(key, "sim_not_owned"))).status_code == 403
-    assert post(event(pin_payload(key, subject, action="delete"), subject_target=True)).json()["code"] == "action_not_supported"
+    # "delete" is itself a supported action as of the deletion route (server/deletion.py);
+    # this checks an action still outside that set is refused.
+    assert post(event(pin_payload(key, subject, action="add_guardian"), subject_target=True)).json()["code"] == "action_not_supported"
     receipt = post(event(good))
     assert receipt.status_code == 201, receipt.text
     assert set(receipt.json()) == {"event_hash", "chain_index", "received_at"}

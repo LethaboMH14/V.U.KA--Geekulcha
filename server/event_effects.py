@@ -73,7 +73,7 @@ def apply_event(cur, store, subject_id, entry, stored, now):
         from server.contact import record_contact
         record_contact(cur, subject_id, now)
     if kind != "signal_detected":
-        if kind == "pin_authorised" and payload.get("action") not in {"export", "end_journey"}:
+        if kind == "pin_authorised" and payload.get("action") not in {"export", "end_journey", "delete"}:
             raise EventRefused("action_not_supported")
         try:
             validate_payload(kind, payload)

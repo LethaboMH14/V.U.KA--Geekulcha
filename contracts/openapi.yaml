@@ -216,23 +216,24 @@ paths:
     delete:
       tags: [Showcase]
       operationId: deleteSubjectData
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Request deletion of private subject payload while retaining proof residue
-      description: F15 showcase path. Subject-authenticated and PIN-authorised per §9; deletion is recorded and idempotent.
+      description: >-
+        F15 showcase path. PROPOSED (25 Sep): the fresh action=delete pin_authorised
+        authorisation is submitted through POST /v1/events (same superseded-transport
+        pattern as end_journey/export), not in this request's body; this route is now
+        bodyless and consumes that authorisation. A duress authorisation looks identical
+        and does nothing further. Normal starts a 72h cooling-off (section 13); the
+        pin_authorised event itself is what makes this PIN-authorised per section 9.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
-      parameters: [{ $ref: '#/components/parameters/SubjectId' }, { $ref: '#/components/parameters/IdempotencyKey' }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/SubjectDeletionRequest' }
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/InsufficientApproval' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+
   /ws/ops:
     get:
       tags: [Operations]
