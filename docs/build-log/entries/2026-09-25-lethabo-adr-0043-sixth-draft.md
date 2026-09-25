@@ -56,4 +56,6 @@ Two findings are partly accepted, with their residuals stated: automatic rotatio
 
 **Revision 10 (same day).** The confirmation round resolved both revision-8 findings and raised one more: the late check-in result had to verify as well as be accepted. The same narrow exception now applies at ingestion and in the verifier, with T69 extended to cover it.
 
-Next: a final confirmation round on revision 10; then Ipeleng's review and Sibusiso's acceptance; the amendments land in the acceptance PR.
+A confirmation round scoped to the revision-10 change approved it, with no new High findings. It was not a fresh review of the whole programme, and the tests are proposed, not run.
+
+Next: Ipeleng's security review and Sibusiso's acceptance; the amendments land in the acceptance PR.

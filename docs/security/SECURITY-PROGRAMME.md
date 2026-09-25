@@ -11,7 +11,7 @@
 >
 > It adds a legal register built from quoted sources, a standards baseline with versions, new controls, a pentest methodology with scoring, day-to-day operations, governance, and what we can show live.
 > **Evidence base:** `docs/security/research/SA-LAW.md`, `STANDARDS.md` and `THREAT-DATA.md`, researched 24 Sep 2026. Each claim carries a literal quote and URL, or ⚑ (unverified).
-> **Review record:** revision 1 was attacked by an independent red-team review (30 findings); revisions 2 and 3 by a second, different-model adversarial review (12 and 10 findings); revision 4 by a further red-team round (6 findings); revision 5 by the second reviewer again (7 findings), revision 6 by the same reviewer (6 findings), revision 7 by a Claude red-team pass while the second reviewer's quota was exhausted (8 findings), revision 8 by the second reviewer (2 findings), and revision 9 by the same reviewer (1 finding). Every finding is dispositioned in §11. That review read `main`, so artefacts still in open PRs showed as missing. They are cited by PR number here, and **nothing in the showcase (§9) is used until its artefact is on `main`.**
+> **Review record:** revision 1 was attacked by an independent red-team review (30 findings); revisions 2 and 3 by a second, different-model adversarial review (12 and 10 findings); revision 4 by a further red-team round (6 findings); revision 5 by the second reviewer again (7 findings), revision 6 by the same reviewer (6 findings), revision 7 by a Claude red-team pass while the second reviewer's quota was exhausted (8 findings), revision 8 by the second reviewer (2 findings), revision 9 by the same reviewer (1 finding), and revision 10 by a confirmation round scoped to that change (**approved**, no new High findings). Every finding is dispositioned in §11. That review read `main`, so artefacts still in open PRs showed as missing. They are cited by PR number here, and **nothing in the showcase (§9) is used until its artefact is on `main`.**
 > **Not legal advice. This is an internal programme, not an independent assessment.** Gap G8 (no independent penetration test) stays open whatever this programme achieves.
 
 ---
@@ -390,6 +390,9 @@ The acting incident lead is **Lethabo** (Ipeleng is away).
 | # | Finding | Disposition |
 |---|---|---|
 | 1 | A check-in result accepted after `effective_at` would fail verification | **Accepted.** One exception, identical at ingestion and in the verifier: a `checkin_result` for a check-in opened before `effective_at`, received before that check-in's deadline (T69) |
+
+### Revision 10 review (confirmation round, scoped to the revision-10 change)
+The previous finding is resolved, and the change introduces no new High findings: **verdict approved**. The round's scope was the revision-10 change only, not a fresh review of the whole programme. Its tests (T61, T64, T66–T72) are **proposed coverage, not executed passes**, and none of ADR-0043 is implemented yet.
 
 ## 12 · The security scorecard: measured, checkable, shown in the app
 
