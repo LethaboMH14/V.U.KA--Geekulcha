@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import http.client
 import json
+import ssl
 from dataclasses import dataclass
 from typing import Callable, Mapping
 
@@ -88,7 +89,11 @@ class FcmSender:
         else:
             # The host and path are fixed by this adapter; credentials remain
             # in the Authorization header and never appear in exception text.
-            connection = http.client.HTTPSConnection("fcm.googleapis.com", timeout=self.config.timeout_seconds)  # nosemgrep: controlled FCM host
+            connection = http.client.HTTPSConnection(
+                "fcm.googleapis.com",
+                timeout=self.config.timeout_seconds,
+                context=ssl.create_default_context(),
+            )
             try:
                 connection.request("POST", path, body=body, headers=headers)
                 raw = connection.getresponse()

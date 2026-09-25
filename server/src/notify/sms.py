@@ -7,8 +7,9 @@ contract are complete, the supported production posture is push-only.
 from __future__ import annotations
 
 import json
+import http.client
+import ssl
 import urllib.parse
-import urllib.request
 from dataclasses import dataclass
 from typing import Mapping
 
@@ -43,16 +44,26 @@ class SmsSender:
     def send(self, *, to: str, body: str, idempotency_key: str) -> str:
         if not to or not body or not idempotency_key:
             raise ValueError("SMS recipient, body and idempotency key are required")
-        request = urllib.request.Request(
-            self.config.api_url,
-            data=json.dumps({"to": to, "from": self.config.sender, "body": body}).encode(),
-            headers={"Authorization": "Bearer " + self.config.api_token,
-                     "Content-Type": "application/json", "Idempotency-Key": idempotency_key},
-            method="POST",
+        parsed = urllib.parse.urlparse(self.config.api_url)
+        path = parsed.path or "/"
+        if parsed.query:
+            path += "?" + parsed.query
+        payload = json.dumps({"to": to, "from": self.config.sender, "body": body}).encode()
+        connection = http.client.HTTPSConnection(
+            parsed.netloc, timeout=10, context=ssl.create_default_context()
         )
         # Provider-specific response parsing is intentionally deferred until a
         # verified SA trial contract exists; HTTP success is the only evidence.
-        with urllib.request.urlopen(request, timeout=10) as response:  # nosec B310: HTTPS validated above
+        try:
+            connection.request("POST", path, body=payload, headers={
+                "Authorization": "Bearer " + self.config.api_token,
+                "Content-Type": "application/json",
+                "Idempotency-Key": idempotency_key,
+            })
+            response = connection.getresponse()
+            response.read()
             if response.status < 200 or response.status >= 300:
                 raise SmsError(f"SMS provider returned HTTP {response.status}")
+        finally:
+            connection.close()
         return "sms_http:" + idempotency_key
