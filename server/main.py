@@ -868,7 +868,8 @@ def create_app(database=None) -> FastAPI:
                 alerts = alerts_for(cur, guardian_id) if guardian_id else []
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
-        return {"alerts": alerts}
+        # The member's subject id lets the guardian sign a guardian_ack for it (G5).
+        return {"subject_id": principal.subject_id, "alerts": alerts}
 
     @app.websocket("/ws/panel")
     async def panel_stream(websocket: WebSocket):

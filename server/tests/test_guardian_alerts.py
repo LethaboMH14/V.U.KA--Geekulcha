@@ -32,7 +32,8 @@ def alerts(client, gkey, gkid):
 def test_a_guardian_reads_the_alert_delivered_to_them(sim_api):
     store, client, *_ = sim_api
     _gid, gkey, gkid = add_real_guardian(sim_api)
-    assert alerts(client, gkey, gkid).json() == {"alerts": []}
+    store, client, subject, *_ = sim_api
+    assert alerts(client, gkey, gkid).json() == {"subject_id": subject, "alerts": []}
     incident = raise_and_deliver(sim_api)
     body = alerts(client, gkey, gkid).json()
     assert [a["incident_id"] for a in body["alerts"]] == [incident]
@@ -49,7 +50,7 @@ def test_a_decoy_guardian_sees_the_same_empty_shape(sim_api):
     response, dkey, dkid = accept(client, decoy["invite_code"])
     assert response.status_code == 201
     raise_and_deliver(sim_api)
-    assert alerts(client, dkey, dkid).json() == {"alerts": []}
+    assert alerts(client, dkey, dkid).json() == {"subject_id": sim_api[2], "alerts": []}
 
 
 def test_a_device_key_cannot_read_guardian_alerts(sim_api):
