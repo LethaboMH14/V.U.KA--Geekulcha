@@ -93,6 +93,9 @@ android {
         ndk { abiFilters(*reactNativeArchitectures()) }
         // Test-only clip feed for device tests of the detector; off unless -PvigilTestFeed=true.
         buildConfigField "boolean", "VIGIL_TEST_FEED", (project.findProperty("vigilTestFeed") ?: "false").toString()
+        // Test builds may reach a laptop server over plain HTTP (emulator 10.0.2.2 or
+        // localhost via adb reverse). Every other build is HTTPS-only.
+        manifestPlaceholders = [netConfig: (project.findProperty("vigilTestFeed") == "true") ? "@xml/net_test" : "@xml/net_release"]
     }
     signingConfigs {
         debug {
@@ -143,6 +146,8 @@ dependencies {
     // LiteRT (ADR D3): the maintained TFLite runtime, for on-device YAMNet.
     implementation("com.google.ai.edge.litert:litert:1.0.1")
     implementation("androidx.core:core-ktx:1.13.1")
+    // Argon2id for the member's PINs (Bouncy Castle, MIT licence).
+    implementation("org.bouncycastle:bcprov-jdk15to18:1.78.1")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

@@ -19,6 +19,7 @@
       android:fullBackupContent="@xml/backup_rules"
       android:dataExtractionRules="@xml/data_extraction_rules"
       android:usesCleartextTraffic="false"
+      android:networkSecurityConfig="${netConfig}"
       tools:targetApi="31"
       android:theme="@style/AppTheme">
       <activity

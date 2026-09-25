@@ -1,6 +1,7 @@
 /**
- * VIGIL member screens and the guardian preview. All data here is SIMULATED
- * until the native modules and contract v2 client land.
+ * VIGIL member screens and the guardian preview. Journeys, checks, PINs and
+ * the record are real on a phone (signed, queued, sent); guardians are still
+ * SIMULATED until the guardian app lands.
  *
  * Duress rule: the Journey check, "Checked in" and the end-journey PIN are one
  * frame each for the normal and the duress PIN (ADR-0041). Nothing on screen
@@ -11,15 +12,19 @@
  * "Journey active" heading so the check-in can be shown.
  */
 import React, {useEffect, useRef, useState} from 'react';
-import {BackHandler, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, View} from 'react-native';
+import {BackHandler, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import {CheckCircle, GearSix, Microphone, Phone, WifiSlash} from './icons';
 import {Dial, Key, Lamp, Panel, PinKeypad, QuietKey, Readout, RoundKey, Row, Rule, Surface, TopAppBar} from './components';
-import {colors, fonts, space, TOUCH, type} from './theme';
+import {colors, fonts, radii, space, TOUCH, type} from './theme';
+import {Onboarding} from './onboarding';
+import {MyRecord} from './record';
+import {device, type Delivery} from '../api/device';
 import {version} from '../../package.json';
 import {runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector} from '../sensors/detection';
 import type {Decision, Reason} from '../brain/detect';
 
-type Screen = 'ready' | 'active' | 'check' | 'checked' | 'end' | 'settings' | 'guardian';
+type Screen = 'boot' | 'onboarding' | 'ready' | 'active' | 'check' | 'checked' | 'end' | 'settings' | 'guardian' | 'record';
+type CheckSession = Awaited<ReturnType<typeof device.openCheckin>>;
 type Guardian = {name: string; accepted: boolean};
 
 /** SIMULATED until the contract v2 client lands. */
@@ -40,28 +45,48 @@ const hhmm = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 const TOP_INSET = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
 
 export function VigilApp() {
-  const [screen, setScreen] = useState<Screen>('ready');
+  const [screen, setScreen] = useState<Screen>('boot');
   const [startedAt, setStartedAt] = useState<number | null>(null);
-  // Debug-only state previews (offline, no guardians); fixed in release builds.
-  const [online, setOnline] = useState(true);
+  // Debug-only preview of the no-guardians state.
   const [guardians, setGuardians] = useState<Guardian[]>(SIM_GUARDIANS);
   const home: Screen = startedAt ? 'active' : 'ready';
   const detector = useRef<Detector | null>(null);
+  const journeyId = useRef<string | null>(null);
+  const check = useRef<Promise<CheckSession> | null>(null);
   const [armError, setArmError] = useState<ArmResult | null>(null);
+  const delivery = useDelivery();
+
+  // First run goes through onboarding; after that, straight to Home.
+  useEffect(() => {
+    device
+      .load()
+      .then(({profile, pinsSet}) => setScreen(profile && pinsSet ? 'ready' : 'onboarding'))
+      .catch(() => setScreen('onboarding'));
+  }, []);
+
+  // Anything still waiting is retried every 30 s while the app is open.
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (device.delivery().queued > 0) void device.flush();
+    }, 30000);
+    return () => clearInterval(t);
+  }, []);
 
   // A detection opens exactly the same Journey check as every other path (V4, V5).
   const openCheck = () => {
     detector.current?.setCheckinOpen(true);
+    check.current = device.openCheckin(journeyId.current ?? 'sim_jny_none');
     setScreen('check');
   };
 
   const startJourney = async () => {
     setArmError(null);
+    const id = await device.newJourneyId();
     const {result, detector: d} = await startDetection({
-      journeyId: `sim_jny_${Date.now()}`,
+      journeyId: id,
       appVersion: version,
-      // The queue that signs and sends the event lands with the native signer (V7, V8).
-      onRecord: () => undefined,
+      // Evidence first: every confirmed detection is signed and queued (V7, V8).
+      onRecord: (_decision, payload) => void device.signal(payload),
       onPrompt: () => openCheck(),
     });
     // 'unsupported' is the browser preview and tests: no microphone, so the
@@ -72,6 +97,8 @@ export function VigilApp() {
       return;
     }
     detector.current = d ?? null;
+    journeyId.current = id;
+    await device.journeyArmed(id, version);
     setStartedAt(Date.now());
     setScreen('active');
   };
@@ -79,6 +106,7 @@ export function VigilApp() {
   const endJourney = () => {
     detector.current?.stop();
     detector.current = null;
+    journeyId.current = null;
     setStartedAt(null);
     setScreen('ready');
   };
@@ -92,7 +120,7 @@ export function VigilApp() {
         setScreen(home);
         return true;
       }
-      if (screen === 'guardian') {
+      if (screen === 'guardian' || screen === 'record') {
         setScreen('settings');
         return true;
       }
@@ -101,8 +129,19 @@ export function VigilApp() {
     return () => sub.remove();
   }, [screen, home]);
 
+  if (screen === 'boot') {
+    return <View style={{flex: 1, backgroundColor: colors.bgBase}} />;
+  }
+  if (screen === 'onboarding') {
+    return <Onboarding onDone={() => setScreen('ready')} />;
+  }
   if (screen === 'check') {
-    return <JourneyCheck onDone={() => setScreen('checked')} />;
+    return (
+      <JourneyCheck
+        onEnter={async pin => (await (check.current ?? device.openCheckin(journeyId.current ?? 'sim_jny_none'))).enter(pin)}
+        onDone={() => setScreen('checked')}
+      />
+    );
   }
   if (screen === 'checked') {
     return (
@@ -117,6 +156,7 @@ export function VigilApp() {
   if (screen === 'end') {
     return (
       <EndJourney
+        onEnter={pin => device.endJourney(journeyId.current ?? 'sim_jny_none', pin)}
         onDone={endJourney}
         onCancel={() => setScreen('active')}
       />
@@ -129,12 +169,14 @@ export function VigilApp() {
     <View style={{flex: 1}}>
       <Surface />
       <ScrollView contentContainerStyle={styles.page}>
-        {screen === 'settings' ? (
+        {screen === 'record' ? (
+          <MyRecord onBack={() => setScreen('settings')} />
+        ) : screen === 'settings' ? (
           <Settings
             onBack={() => setScreen(home)}
             onGuardian={() => setScreen('guardian')}
-            online={online}
-            onToggleOnline={() => setOnline(o => !o)}
+            onRecord={() => setScreen('record')}
+            delivery={delivery}
             noGuardians={guardians.length === 0}
             onToggleGuardians={() => setGuardians(g => (g.length ? [] : SIM_GUARDIANS))}
           />
@@ -149,18 +191,30 @@ export function VigilApp() {
           <JourneyActive
             startedAt={startedAt ?? Date.now()}
             guardians={guardians}
-            online={online}
+            delivery={delivery}
             onEnd={() => setScreen('end')}
             onSimCheck={openCheck}
             onMenu={() => setScreen('settings')}
           />
         )}
         <Text style={styles.sim}>
-          SIMULATED demo data · build <Text style={styles.simId}>{version}</Text>
+          {device.simulated ? 'SIMULATED preview: nothing signed or sent' : 'Guardians SIMULATED'} · build{' '}
+          <Text style={styles.simId}>{version}</Text>
         </Text>
       </ScrollView>
     </View>
   );
+}
+
+function useDelivery(): Delivery {
+  const [d, setD] = useState<Delivery>(device.delivery());
+  useEffect(() => {
+    const off = device.onDelivery(setD);
+    return () => {
+      off();
+    };
+  }, []);
+  return d;
 }
 
 function TopBar({onMenu}: {onMenu: () => void}) {
@@ -275,14 +329,14 @@ function Home({
 function JourneyActive({
   startedAt,
   guardians,
-  online,
+  delivery,
   onEnd,
   onSimCheck,
   onMenu,
 }: {
   startedAt: number;
   guardians: Guardian[];
-  online: boolean;
+  delivery: Delivery;
   onEnd: () => void;
   onSimCheck: () => void;
   onMenu: () => void;
@@ -326,11 +380,17 @@ function JourneyActive({
         />
         <Rule />
         <Readout
-          label={online ? 'Server reached' : 'Server'}
-          value={online ? hhmm(new Date(now)) : 'Offline'}
-          lamp={<Lamp tone={online ? 'green' : 'unlit'} />}
+          label={device.simulated ? 'Server' : delivery.lastSentAt ? 'Last received' : 'Server'}
+          value={device.simulated ? 'preview' : delivery.lastSentAt ? hhmm(new Date(delivery.lastSentAt)) : 'not reached yet'}
+          lamp={<Lamp tone={delivery.lastSentAt && !offline(delivery) ? 'green' : 'unlit'} />}
         />
-        {!online ? (
+        <Rule />
+        <Readout
+          label="Waiting on this phone"
+          value={String(delivery.queued)}
+          lamp={<Lamp tone={delivery.queued ? 'bone' : 'unlit'} hollow={!delivery.queued} />}
+        />
+        {offline(delivery) ? (
           <View style={[styles.note, {marginTop: space.sm}]}>
             <WifiSlash size={16} color={colors.textDim} style={{marginTop: 2}} />
             <Text style={[type.caption, {flex: 1}]}>
@@ -352,18 +412,21 @@ function JourneyActive({
   );
 }
 
+/** A send that failed for want of a network, not because the server refused it. */
+const offline = (d: Delivery) => Boolean(d.lastError && !/^\d{3} /.test(d.lastError));
+
 function Settings({
   onBack,
   onGuardian,
-  online,
-  onToggleOnline,
+  onRecord,
+  delivery,
   noGuardians,
   onToggleGuardians,
 }: {
   onBack: () => void;
   onGuardian: () => void;
-  online: boolean;
-  onToggleOnline: () => void;
+  onRecord: () => void;
+  delivery: Delivery;
   noGuardians: boolean;
   onToggleGuardians: () => void;
 }) {
@@ -371,6 +434,12 @@ function Settings({
     <View style={styles.screen}>
       <TopAppBar title="Settings" onBack={onBack} />
       <Panel style={{padding: 0, overflow: 'hidden'}}>
+        <Row
+          label="My record"
+          detail={`${delivery.received} received · ${delivery.queued} waiting on this phone`}
+          onPress={onRecord}
+        />
+        <View style={styles.rowRule} />
         <View style={styles.infoRow}>
           <Text style={type.label}>Security scorecard</Text>
           <Text style={[type.caption, {marginTop: 2}]}>
@@ -380,17 +449,52 @@ function Settings({
         <View style={styles.rowRule} />
         <Row label="Guardian view" detail="Preview what a guardian sees (simulated)" onPress={onGuardian} />
       </Panel>
+      {!device.simulated ? <ServerSetting /> : null}
       {testFeedAvailable() ? <DetectorTest /> : null}
       {__DEV__ ? (
         <Panel>
           <Text style={type.label}>Demo states (debug builds only)</Text>
           <View style={{gap: space.sm, marginTop: space.md}}>
-            <Key label={online ? 'Show offline' : 'Show online'} onPress={onToggleOnline} />
             <Key label={noGuardians ? 'Restore guardians' : 'Show no guardians'} onPress={onToggleGuardians} />
           </View>
         </Panel>
       ) : null}
     </View>
+  );
+}
+
+/** Where this phone sends its record. Release builds accept https only. */
+function ServerSetting() {
+  const [url, setUrl] = useState(device.profile?.serverUrl ?? '');
+  const [saved, setSaved] = useState(false);
+  const valid = /^https:\/\/[^\s/]+/.test(url.trim()) || (testFeedAvailable() && /^http:\/\/(10\.0\.2\.2|localhost|127\.0\.0\.1)(:\d+)?\/?$/.test(url.trim()));
+  return (
+    <Panel>
+      <Text style={type.label}>Server</Text>
+      <Text style={[type.caption, {marginTop: 2}]}>Where this phone sends its record. Only https addresses are accepted.</Text>
+      <TextInput
+        value={url}
+        onChangeText={t => {
+          setUrl(t);
+          setSaved(false);
+        }}
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="url"
+        style={styles.field}
+        accessibilityLabel="Server address"
+      />
+      <View style={{marginTop: space.sm}}>
+        <Key
+          label={saved ? 'Saved' : 'Save server'}
+          onPress={() => {
+            if (!valid) return;
+            void device.setServer(url).then(() => setSaved(true));
+          }}
+        />
+      </View>
+      {!valid ? <Text style={[type.caption, {marginTop: space.sm}]}>That isn’t an https address.</Text> : null}
+    </Panel>
   );
 }
 
@@ -466,16 +570,33 @@ function DetectorTest() {
  * Flat and plain: no panels, no motion, one frame for both PINs. It scrolls
  * when the window is short (landscape), so the keypad is never cut off.
  */
-function JourneyCheck({onDone}: {onDone: () => void}) {
+function JourneyCheck({onEnter, onDone}: {onEnter: (pin: string) => Promise<'checked' | 'retry'>; onDone: () => void}) {
+  const [retry, setRetry] = useState(false);
+  const busy = useRef(false);
+  const submit = async (pin: string) => {
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      // The screen learns only "checked" or "try again", never which PIN.
+      if ((await onEnter(pin)) === 'checked') onDone();
+      else setRetry(true);
+    } catch {
+      // The evidence couldn't be written: behave as a normal check, never reveal it.
+      onDone();
+    } finally {
+      busy.current = false;
+    }
+  };
   return (
     <ScrollView style={{backgroundColor: colors.bgBase}} contentContainerStyle={styles.flat}>
       <Text style={[type.title, {textAlign: 'center'}]} accessibilityRole="header">
         Journey check
       </Text>
-      <Text style={[type.body, {textAlign: 'center', marginTop: space.sm, marginBottom: space.xl}]}>
-        Enter your PIN to continue
+      <Text style={[type.body, {textAlign: 'center', marginTop: space.sm}]}>Enter your PIN to continue</Text>
+      <Text style={styles.pinNote} accessibilityLiveRegion="polite">
+        {retry ? 'Try again' : ''}
       </Text>
-      <PinKeypad onComplete={() => onDone()} />
+      <PinKeypad onComplete={submit} />
     </ScrollView>
   );
 }
@@ -502,16 +623,39 @@ function CheckedIn({onDone}: {onDone: () => void}) {
 }
 
 /** Ending a journey needs the PIN (ADR-0041). Same frame for both PINs. */
-function EndJourney({onDone, onCancel}: {onDone: () => void; onCancel: () => void}) {
+function EndJourney({
+  onEnter,
+  onDone,
+  onCancel,
+}: {
+  onEnter: (pin: string) => Promise<'ended' | 'retry'>;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [retry, setRetry] = useState(false);
+  const busy = useRef(false);
+  const submit = async (pin: string) => {
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      if ((await onEnter(pin)) === 'ended') onDone();
+      else setRetry(true);
+    } catch {
+      onDone();
+    } finally {
+      busy.current = false;
+    }
+  };
   return (
     <ScrollView style={{backgroundColor: colors.bgBase}} contentContainerStyle={styles.flat}>
       <Text style={[type.title, {textAlign: 'center'}]} accessibilityRole="header">
         End journey
       </Text>
-      <Text style={[type.body, {textAlign: 'center', marginTop: space.sm, marginBottom: space.xl}]}>
-        Enter your PIN to end this journey
+      <Text style={[type.body, {textAlign: 'center', marginTop: space.sm}]}>Enter your PIN to end this journey</Text>
+      <Text style={styles.pinNote} accessibilityLiveRegion="polite">
+        {retry ? 'Try again' : ''}
       </Text>
-      <PinKeypad onComplete={() => onDone()} />
+      <PinKeypad onComplete={submit} />
       <View style={{marginTop: space.lg}}>
         <QuietKey label="Keep the journey going" onPress={onCancel} />
       </View>
@@ -652,6 +796,19 @@ const styles = StyleSheet.create({
   rowRule: {height: 1, backgroundColor: colors.hairline, marginHorizontal: space.md},
   sim: {...type.caption, fontSize: 12, textAlign: 'center', marginTop: space.md},
   simId: {fontFamily: fonts.mono, fontSize: 11},
+  pinNote: {...type.body, color: colors.textTitle, textAlign: 'center', minHeight: 48, marginTop: space.sm, marginBottom: space.sm},
+  field: {
+    minHeight: 52,
+    marginTop: space.md,
+    borderRadius: radii.key,
+    borderWidth: 1,
+    borderColor: colors.controlEdge,
+    backgroundColor: colors.keyFace,
+    paddingHorizontal: space.md,
+    fontFamily: fonts.mono,
+    fontSize: 14,
+    color: colors.textTitle,
+  },
   flat: {flexGrow: 1, justifyContent: 'center', padding: space.lg, paddingVertical: space.xl, paddingTop: space.xl + TOP_INSET},
   tick: {
     width: 72,
