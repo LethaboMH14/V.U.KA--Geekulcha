@@ -92,3 +92,16 @@ Changed:
 - **The old `com.example.myapplication` install was uninstalled** from the emulator at the operator's request. Before that, a snapshot of `za.co.vuka.app` (all 5 `shared_prefs` files and every permission grant) was taken; it was identical afterwards (`diff` produced no output). The new app then launched with no FATAL in logcat, on guardian Standby. The old app's own test data is gone with it, as expected.
 
 Evidence: `./gradlew :app:assembleDebug :app:lintDebug` → EXIT=0, 0 lint errors. On the emulator, with the permission revoked, the flow ran Stop being a guardian → I'm a guardian → code → "STEP 2 OF 3" → consent → "Turn on alerts" (STEP 3 OF 3) → Allow notifications → Allow → Standby, with no warning and `POST_NOTIFICATIONS: granted=true`. Not tried: "Not now".
+
+### Follow-up (same day): the notification request is a pop-up on the consent screen
+
+Operator clarification: the request should be a pop-up **on the "What is recorded about you" screen**, not a separate step.
+
+Changed:
+- Removed the "Turn on alerts" stage; enrolment is 2 steps again.
+- When the consent screen opens and notification permission is missing (Android 13+), a `MaterialAlertDialog` appears over it: "Turn on alerts?", a bell and the reason (new `res/layout/dialog_turn_on_alerts.xml`), with **Not now** and **Allow**. Allow raises Android's prompt. It is asked once per enrolment (`EnrolViewModel.alertsAsked`), so it doesn't reappear on rotation. The person then reads the consent and taps "I understand"; the answer doesn't block enrolment, and Standby's notice covers "Not now".
+- Nothing appears when notifications are already allowed (for example after member setup), because Android never re-asks for a granted permission. This was the likely reason the operator saw no request on their own profile.
+
+Evidence: `./gradlew :app:assembleDebug :app:lintDebug` → EXIT=0, 0 lint errors. On `emulator-5554` with the permission revoked: I'm a guardian → code → the consent screen opened with the pop-up (screenshot) → Allow → Android prompt → Allow (`granted=true`) → tick → I understand → Standby with no warning, `guardian_enrolled=true`. Not tried: "Not now".
+
+Not committed yet (the previous commit `89f8f1c` is pushed).

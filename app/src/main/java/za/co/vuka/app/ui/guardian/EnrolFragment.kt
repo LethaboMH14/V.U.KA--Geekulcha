@@ -17,19 +17,22 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import za.co.vuka.app.R
 import za.co.vuka.app.ui.onboarding.OnboardingViewModel
 
 class EnrolViewModel : ViewModel() {
     var stage = EnrolFragment.Stage.CODE
+    var alertsAsked = false
     var scanMethod = false
     var code = ""
 }
 
 /**
  * Guardian enrolment (Enrol.tsx): enter or scan the 6-digit invite code, then
- * give explicit consent to what is recorded, then (only if notifications are
- * off) a "turn on alerts" step that explains why before Android's prompt.
+ * give explicit consent to what is recorded. When the consent screen opens and
+ * notifications aren't allowed yet, a "Turn on alerts?" pop-up explains why
+ * before Android's own prompt.
  *
  * SIMULATED: there is no invite backend, so any complete code continues and
  * the scanner is a placeholder that opens no camera. The prototype's
@@ -37,15 +40,16 @@ class EnrolViewModel : ViewModel() {
  */
 class EnrolFragment : Fragment(R.layout.fragment_guardian_enrol) {
 
-    enum class Stage { CODE, CONSENT, ALERTS }
+    enum class Stage { CODE, CONSENT }
 
     private val vm: EnrolViewModel by viewModels()
     private val onboardingViewModel: OnboardingViewModel by activityViewModels()
     private lateinit var boxes: List<TextView>
 
+    // The answer doesn't change the flow: Standby shows how to turn notifications on later.
     private val requestNotifications = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { finishEnrolment() }
+    ) { }
 
     // Back steps through the stages before leaving enrolment.
     private val backOneStage = object : OnBackPressedCallback(false) {
@@ -77,18 +81,27 @@ class EnrolFragment : Fragment(R.layout.fragment_guardian_enrol) {
         val checkbox = view.findViewById<CheckBox>(R.id.cbUnderstood)
         val understand = view.findViewById<View>(R.id.btnUnderstand)
         checkbox.setOnCheckedChangeListener { _, _ -> render() }
-        // Alerts reach a guardian as a notification (spec G3). If permission is missing,
-        // a step of its own explains why before Android's prompt appears.
-        understand.setOnClickListener {
-            if (needsNotificationPermission()) goTo(Stage.ALERTS) else finishEnrolment()
-        }
-        view.findViewById<View>(R.id.btnAllowAlerts).setOnClickListener {
-            requestNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-        // Enrolment finishes either way; Standby then shows how to turn notifications on.
-        view.findViewById<View>(R.id.btnNotNow).setOnClickListener { finishEnrolment() }
+        understand.setOnClickListener { finishEnrolment() }
 
         render()
+    }
+
+    /**
+     * Alerts reach a guardian as a notification (spec G3). On the consent screen,
+     * ask once, with the reason, before Android's prompt. Only when permission is
+     * missing: Android never re-asks for one that's already granted.
+     */
+    private fun askForAlertsIfNeeded() {
+        if (vm.alertsAsked || !needsNotificationPermission()) return
+        vm.alertsAsked = true
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Turn on alerts?")
+            .setView(R.layout.dialog_turn_on_alerts)
+            .setPositiveButton("Allow") { _, _ ->
+                requestNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            .setNegativeButton("Not now", null)
+            .show()
     }
 
     private fun needsNotificationPermission() =
@@ -112,6 +125,7 @@ class EnrolFragment : Fragment(R.layout.fragment_guardian_enrol) {
             // SIMULATED: replace with the real invite-code check.
             vm.code = ""
             goTo(Stage.CONSENT)
+            askForAlertsIfNeeded()
         }
     }
 
@@ -120,24 +134,20 @@ class EnrolFragment : Fragment(R.layout.fragment_guardian_enrol) {
         render()
     }
 
-    private fun stepBack() = goTo(if (vm.stage == Stage.ALERTS) Stage.CONSENT else Stage.CODE)
+    private fun stepBack() = goTo(Stage.CODE)
 
     private fun render() {
         val view = view ?: return
         val stage = vm.stage
         backOneStage.isEnabled = stage != Stage.CODE
 
-        // Three steps only when the alerts step will be shown.
-        val total = if (needsNotificationPermission() || stage == Stage.ALERTS) 3 else 2
-        view.findViewById<TextView>(R.id.tvStep).text = "STEP ${stage.ordinal + 1} OF $total"
+        view.findViewById<TextView>(R.id.tvStep).text = "STEP ${stage.ordinal + 1} OF 2"
         view.findViewById<TextView>(R.id.tvTitle).text = when (stage) {
             Stage.CODE -> "Join as a guardian"
             Stage.CONSENT -> "Before you continue"
-            Stage.ALERTS -> "Turn on alerts"
         }
         view.findViewById<View>(R.id.stageCode).visibility = if (stage == Stage.CODE) View.VISIBLE else View.GONE
         view.findViewById<View>(R.id.stageConsent).visibility = if (stage == Stage.CONSENT) View.VISIBLE else View.GONE
-        view.findViewById<View>(R.id.stageAlerts).visibility = if (stage == Stage.ALERTS) View.VISIBLE else View.GONE
 
         view.findViewById<View>(R.id.tabCode).setBackgroundResource(
             if (vm.scanMethod) R.drawable.bg_tab_inactive else R.drawable.bg_input_field_error
