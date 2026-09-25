@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The tokens Silver changes (index.css [data-theme='silver']). Layouts use
+         ?attr/ for these so a theme overlay can swap them; every other token
+         stays a plain @color (Ivory in values/, Midnight in values-night/). -->
+    <attr name="vukaBgBase" format="color" />
+    <attr name="vukaBgElevated" format="color" />
+    <attr name="vukaBorder" format="color" />
+    <attr name="vukaBorderSubtle" format="color" />
+    <attr name="vukaBorderEmphasis" format="color" />
+    <attr name="vukaAction" format="color" />
+</resources>

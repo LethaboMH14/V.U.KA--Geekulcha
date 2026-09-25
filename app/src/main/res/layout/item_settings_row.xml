@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ListRow.tsx: leading icon square, label + sublabel, trailing text, optional chevron -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:baselineAligned="false"
+    android:gravity="center_vertical"
+    android:minHeight="52dp"
+    android:orientation="horizontal"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
+
+    <FrameLayout
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="@drawable/bg_row_icon">
+
+        <ImageView
+            android:id="@+id/ivIcon"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            app:tint="@color/vuka_text_secondary"
+            tools:src="@drawable/ic_user" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/vuka_text_label"
+            android:textSize="15sp"
+            tools:text="Name" />
+
+        <TextView
+            android:id="@+id/tvSublabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:lineSpacingExtra="2dp"
+            android:textColor="@color/vuka_text_secondary"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:text="Thandi Dlamini" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvTrailing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:textColor="@color/vuka_text_secondary"
+        android:textSize="13sp"
+        android:visibility="gone"
+        tools:text="Edit" />
+
+    <ImageView
+        android:id="@+id/ivChevron"
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:layout_marginStart="8dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_caret_right"
+        android:visibility="gone"
+        app:tint="@color/vuka_text_dim" />
+</LinearLayout>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet_card"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="24dp">
+
+    <!-- Handle bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:paddingBottom="12dp">
+
+        <View
+            android:layout_width="36dp"
+            android:layout_height="4dp"
+            android:background="@drawable/bg_handle_bar" />
+    </LinearLayout>
+
+    <!-- Header row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:accessibilityHeading="true"
+            android:text="Stop being a guardian?"
+            android:textColor="@color/vuka_text_title"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/btnClose"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_close_button"
+            android:contentDescription="Close"
+            android:padding="9dp"
+            android:src="@drawable/ic_x"
+            app:tint="@color/vuka_text_secondary" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:lineSpacingExtra="3dp"
+        android:text="You'll stop getting alerts from the person you protect, and this phone goes back to the start screen. To be their guardian again, they'll need to send you a new invite."
+        android:textColor="@color/vuka_text_secondary"
+        android:textSize="14sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnConfirmLeave"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_button_primary"
+        app:backgroundTint="@null"
+        android:text="Stop being a guardian"
+        android:textAllCaps="false"
+        android:textColor="@color/vuka_text_inverse"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:cornerRadius="27dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCancel"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="10dp"
+        android:text="Keep being a guardian"
+        android:textAllCaps="false"
+        android:textColor="@color/vuka_text_secondary"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:cornerRadius="27dp"
+        app:strokeColor="?attr/vukaBorder"
+        app:strokeWidth="1dp" />
+
+</LinearLayout>

@@ -1,13 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
--->
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto Backup rules for API 23–30. PIN hashes never leave the phone
+     (PIN-AUTHORITY-RULES §2), so the interim PIN store is excluded. The saved
+     account is excluded with it: restored without its PINs, every PIN gate would fail. -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <exclude domain="sharedpref" path="vuka_pin_interim.xml" />
+    <exclude domain="sharedpref" path="vuka_password_interim.xml" />
+    <exclude domain="sharedpref" path="vuka_account.xml" />
+    <exclude domain="sharedpref" path="vuka_record.xml" />
 </full-backup-content>

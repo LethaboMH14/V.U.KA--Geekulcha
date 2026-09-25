@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- VUKA — Ivory theme (default), matches src/index.css :root -->
+    <color name="vuka_bg_base">#F5F3EE</color>
+    <color name="vuka_bg_elevated">#F2EFE9</color>
+    <color name="vuka_bg_surface">#FFFFFF</color>
+
+    <color name="vuka_text_title">#1F2328</color>
+    <color name="vuka_text_label">#2B3037</color>
+    <color name="vuka_text_secondary">#5B6068</color>
+    <color name="vuka_text_dim">#636870</color>
+    <color name="vuka_text_inverse">#FFFFFF</color>
+    <color name="vuka_link">#1E3A5F</color>
+
+    <!-- Accent — deep ink -->
+    <color name="vuka_action">#1E3A5F</color>
+    <color name="vuka_action_grad_top">#2A4A73</color>
+    <color name="vuka_action_grad_bottom">#1A3354</color>
+
+    <!-- Guardian urgent only: the alert screen's lead card, nowhere else -->
+    <color name="vuka_amber_fill">#FEF3C7</color>
+    <color name="vuka_amber_text">#92400E</color>
+
+    <!-- Glass card — solid fallback (92% white), since real backdrop-blur
+         isn't practical below API 31 -->
+    <color name="vuka_card_solid">#EBFFFFFF</color>
+
+    <color name="vuka_border">#ECE8E0</color>
+    <color name="vuka_border_subtle">#F0ECE4</color>
+    <color name="vuka_border_emphasis">#E2DDD2</color>
+    <color name="vuka_input_border">#6F747D</color>
 </resources>

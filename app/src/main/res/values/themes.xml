@@ -1,9 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.MyApplication" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/vuka_action</item>
+        <item name="android:statusBarColor">@color/vuka_bg_base</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/vuka_bg_base</item>
+        <!-- Silver-swappable tokens: Ivory/Midnight read them from @color -->
+        <item name="vukaBgBase">@color/vuka_bg_base</item>
+        <item name="vukaBgElevated">@color/vuka_bg_elevated</item>
+        <item name="vukaBorder">@color/vuka_border</item>
+        <item name="vukaBorderSubtle">@color/vuka_border_subtle</item>
+        <item name="vukaBorderEmphasis">@color/vuka_border_emphasis</item>
+        <item name="vukaAction">@color/vuka_action</item>
+    </style>
+    <style name="ThemeOverlay.Vuka.BottomSheet" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.Vuka.BottomSheet</item>
+    </style>
+
+    <style name="Widget.Vuka.BottomSheet" parent="Widget.Material3.BottomSheet">
+        <item name="android:background">@android:color/transparent</item>
     </style>
 
     <style name="Theme.MyApplication" parent="Base.Theme.MyApplication" />
+
+    <!-- Silver (index.css [data-theme='silver']): cooler greys and a graphite
+         accent over the Ivory palette. Applied on top of the light theme. -->
+    <style name="ThemeOverlay.Vuka.Silver" parent="">
+        <item name="vukaBgBase">#EEF0F3</item>
+        <item name="vukaBgElevated">#E6E9EE</item>
+        <item name="vukaBorder">#E3E6EC</item>
+        <item name="vukaBorderSubtle">#EBEDF1</item>
+        <item name="vukaBorderEmphasis">#D7DBE2</item>
+        <item name="vukaAction">#2B2F36</item>
+        <item name="android:windowBackground">#EEF0F3</item>
+        <item name="android:statusBarColor">#EEF0F3</item>
+    </style>
 </resources>

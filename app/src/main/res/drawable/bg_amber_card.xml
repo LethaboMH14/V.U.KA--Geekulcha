@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GuardianView amber lead card. Amber appears here and nowhere else. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/vuka_amber_fill" />
+    <corners android:radius="20dp" />
+</shape>

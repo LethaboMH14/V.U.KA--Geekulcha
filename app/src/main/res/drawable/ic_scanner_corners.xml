@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ScannerFrame (shared.tsx): four 22dp corner brackets, 3dp stroke, 8dp radius -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="140dp"
+    android:height="140dp"
+    android:viewportWidth="140"
+    android:viewportHeight="140">
+    <path
+        android:pathData="M1.5,22.5V9.5a8,8 0,0 1,8 -8h13"
+        android:strokeColor="@color/vuka_text_title"
+        android:strokeWidth="3" />
+    <path
+        android:pathData="M117.5,1.5h13a8,8 0,0 1,8 8v13"
+        android:strokeColor="@color/vuka_text_title"
+        android:strokeWidth="3" />
+    <path
+        android:pathData="M1.5,117.5v13a8,8 0,0 0,8 8h13"
+        android:strokeColor="@color/vuka_text_title"
+        android:strokeWidth="3" />
+    <path
+        android:pathData="M117.5,138.5h13a8,8 0,0 0,8 -8v-13"
+        android:strokeColor="@color/vuka_text_title"
+        android:strokeWidth="3" />
+</vector>

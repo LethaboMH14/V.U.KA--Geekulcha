@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet_card"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="24dp">
+
+    <!-- Handle bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:paddingBottom="12dp">
+
+        <View
+            android:layout_width="36dp"
+            android:layout_height="4dp"
+            android:background="@drawable/bg_handle_bar" />
+    </LinearLayout>
+
+    <!-- Header row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:accessibilityHeading="true"
+            android:text="Invite a guardian"
+            android:textColor="@color/vuka_text_title"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/btnClose"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_close_button"
+            android:contentDescription="Close"
+            android:padding="9dp"
+            android:src="@drawable/ic_x"
+            app:tint="@color/vuka_text_secondary" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:lineSpacingExtra="3dp"
+        android:text="Share this code, or have them scan the QR block. Valid for 10 minutes, single use, 5 attempts."
+        android:textColor="@color/vuka_text_secondary"
+        android:textSize="14sp" />
+
+    <!-- Filled CodeBoxes: every box holds a digit, so every box has the ink border -->
+    <LinearLayout
+        android:id="@+id/inviteCode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:contentDescription="Invite code 4 8 2 9 1 5"
+        android:focusable="true"
+        android:orientation="horizontal">
+
+        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="4" />
+        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="8" />
+        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="2" />
+        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="9" />
+        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="1" />
+        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="5" />
+    </LinearLayout>
+
+    <za.co.vuka.app.ui.onboarding.SimulatedQrView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:letterSpacing="0.06"
+        android:text="SIMULATED — not a real invite link"
+        android:textAllCaps="true"
+        android:textColor="@color/vuka_text_dim"
+        android:textSize="11sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnDone"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="28dp"
+        android:background="@drawable/bg_button_primary"
+        app:backgroundTint="@null"
+        android:textAllCaps="false"
+        android:textColor="@color/vuka_text_inverse"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:cornerRadius="27dp" />
+
+</LinearLayout>

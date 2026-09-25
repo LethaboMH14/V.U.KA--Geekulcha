@@ -1,0 +1,28 @@
+## Status
+VUKA is a hackathon prototype on Hedera testnet. sim_bank is SIMULATED. There are no real bank integrations. Team SONAR has no registered legal entity. Information Officer registration is prepared, not submitted. Contact route: UNDEFINED — team to set.
+
+This notice explains what the prototype is designed to process. Most product controls are specified or in build; this notice does not claim they are all operating. Your data is not proof that an event happened as described. The anchor proves when, not what.
+
+## What the prototype collects
+### Onboarding
+Your name and a +27 phone number. Google sign-in is optional; Google shares basic account profile information at sign-in. We do not ask for an ID number.
+### Journey
+Heartbeats while journey mode is armed. A heartbeat carries a speed bucket, not location. Location is attached only to signal_detected.
+### Sound detection
+A sound label and score from on-device classification. Audio is processed in a 0.975-second in-memory window (the model's fixed input size, spec V3); audio is not stored or sent. The current spec does not define ring-buffer behavior.
+### PIN
+A hash used on your device to verify the PIN. The PIN itself does not leave the device.
+### Guardian
+Guardian name, phone number and FCM notification token, plus their signed acknowledgements.
+### Evidence chain
+Event payloads, salts, actor and journey identifiers, coarse event classes, times, hashes, public keys, signatures and receipts needed to check the chain.
+
+Never collected: audio recordings, camera images, background location, ID numbers, and contacts beyond guardians you choose. VUKA operates in a journey you start; it is not always-on.
+
+## How long information stays
+Retention (specified; not yet verified as implemented): Payloads and salts are kept for 90 days, unless you place a dispute hold. After deletion, these residuals remain: "the coarse class, time, actor id, journey id, hashes and public keys". They remain for the integrity of the evidence chain you asked us to keep. Hashes are permanent: a hash cannot be reversed into your data, but it stays in the chain.
+
+## Limits you should know
+VUKA is discreet, not invisible: Android shows a microphone indicator while a journey is armed. Detection works offline, but delivery needs data. If the phone is switched off before anything is detected, nothing escalates. A signature shows that a key was used; it does not prove the event was genuine. The prototype has an internal test plan, not an independent penetration test. It is not described as "secure", "unhackable" or "court-admissible".
+
+Children: the repo says the demo and any pilot are for adults aged 18 and over, with no child accounts. PROPOSED.

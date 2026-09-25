@@ -1,0 +1,14 @@
+## About the record
+Your record proves when each entry was made, not what happened. The anchor proves when, not what.
+
+## What goes on the ledger
+Hedera receives a public anchor containing a 32-byte root in a typed 33-byte message. It contains no personal data. The anchor does not contain your event payload.
+
+## What stays
+Hashes are permanent: a hash cannot be reversed into your data, but it stays in the chain.
+
+## Limits
+A signature shows that a key was used; it does not prove the event was genuine. VUKA is a hackathon prototype on Hedera testnet.
+
+## In this app today
+ANCHOR isn't connected to this app yet. Journeys you start here are recorded on this phone only and are not anchored.

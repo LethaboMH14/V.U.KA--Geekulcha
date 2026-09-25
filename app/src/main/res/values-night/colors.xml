@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- VUKA — Midnight theme, matches src/index.css [data-theme='midnight'].
+         Only tokens midnight redefines are listed; the rest fall back to values/. -->
+    <color name="vuka_bg_base">#0E1420</color>
+    <color name="vuka_bg_elevated">#1C2432</color>
+    <color name="vuka_bg_surface">#141B28</color>
+
+    <color name="vuka_text_title">#F5F6F8</color>
+    <color name="vuka_text_label">#D7DBE2</color>
+    <color name="vuka_text_secondary">#9AA1AD</color>
+    <color name="vuka_text_dim">#8B93A1</color>
+    <color name="vuka_link">#9DB8E8</color>
+    <!-- vuka_text_inverse stays #FFFFFF: the app uses it as the CSS action-text token
+         (button labels on the ink gradient), which midnight keeps white. -->
+
+    <color name="vuka_action">#4166A0</color>
+
+    <!-- rgba(26, 33, 48, 0.92) -->
+    <color name="vuka_card_solid">#EB1A2130</color>
+
+    <!-- rgba(255, 255, 255, 0.10 / 0.05 / 0.16) -->
+    <color name="vuka_border">#1AFFFFFF</color>
+    <color name="vuka_border_subtle">#0DFFFFFF</color>
+    <color name="vuka_border_emphasis">#29FFFFFF</color>
+    <color name="vuka_input_border">#7D8595</color>
+</resources>

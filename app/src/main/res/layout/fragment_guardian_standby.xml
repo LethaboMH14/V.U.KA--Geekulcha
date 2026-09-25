@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/vukaBgBase"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="28dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Shown when this phone also has a member account: back to their own app -->
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/bg_back_button"
+                android:contentDescription="Back"
+                android:padding="13dp"
+                android:src="@drawable/ic_caret_left"
+                android:visibility="gone"
+                app:tint="@color/vuka_text_secondary" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_shield_chevron"
+                app:tint="@color/vuka_text_secondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:accessibilityHeading="true"
+                android:letterSpacing="0.06"
+                android:text="GUARDIAN"
+                android:textColor="@color/vuka_text_title"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Hero: who you protect. There's no invite backend, so nobody is
+             linked yet. The prototype's demo member name is not shown. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_glass_card"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_circle_icon">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:alpha="0.85"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_shield_chevron"
+                        app:tint="@color/vuka_text_title" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:letterSpacing="0.1"
+                    android:text="WHO YOU PROTECT"
+                    android:textColor="@color/vuka_text_dim"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:letterSpacing="-0.01"
+                android:text="Not linked yet"
+                android:textColor="@color/vuka_text_title"
+                android:textSize="32sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:lineSpacingExtra="3dp"
+                android:text="This build can't look up invite codes, so it doesn't know who invited you. Once it can, you'll hear from VIGIL only if they don't answer a check, or if they use their duress PIN."
+                android:textColor="@color/vuka_text_secondary"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_glass_card"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_bell"
+                    app:tint="@color/vuka_text_secondary" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:text="Alerts"
+                    android:textColor="@color/vuka_text_label"
+                    android:textSize="15sp" />
+
+                <TextView
+                    style="@style/Widget.Vuka.StatusChip"
+                    android:text="Not connected" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:background="?attr/vukaBorder" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_clock_counter"
+                    app:tint="@color/vuka_text_secondary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="Last test alert"
+                    android:textColor="@color/vuka_text_label"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="monospace"
+                android:text="None yet"
+                android:textColor="@color/vuka_text_secondary"
+                android:textSize="13sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="14dp"
+                android:alpha="0.4"
+                android:backgroundTint="@color/vuka_card_solid"
+                android:enabled="false"
+                android:text="Send a test alert"
+                android:textAllCaps="false"
+                android:textColor="@color/vuka_text_title"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="27dp"
+                app:strokeColor="?attr/vukaBorder"
+                app:strokeWidth="1dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:lineSpacingExtra="3dp"
+                android:text="Test alerts need the alert server, which isn't connected yet."
+                android:textColor="@color/vuka_text_dim"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Shown when notifications are off: an alert could not reach this guardian -->
+        <LinearLayout
+            android:id="@+id/notificationsOff"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:accessibilityLiveRegion="polite"
+            android:background="@drawable/bg_input_field_error"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="4dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="1dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_warning_circle"
+                    app:tint="@color/vuka_text_title" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:lineSpacingExtra="3dp"
+                    android:text="Notifications are off for VUKA, so an alert can't reach you until you open the app."
+                    android:textColor="@color/vuka_text_label"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btnTurnOnNotifications"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="44dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:text="Turn on notifications"
+                android:textColor="@color/vuka_link"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Not in the prototype: stands in for a real alert (notification + banner) until FCM exists -->
+        <TextView
+            android:id="@+id/linkPreview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:text="Simulate an incoming alert"
+            android:textColor="@color/vuka_link"
+            android:textSize="14sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:minHeight="14dp" />
+
+        <!-- Stepping down as a guardian: a labelled settings row in its own
+             section, not a bottom button that could read as "exit the app" -->
+        <LinearLayout style="@style/Widget.Vuka.SettingsSection">
+
+            <TextView
+                style="@style/Widget.Vuka.SettingsSectionTitle"
+                android:text="Your guardian role" />
+
+            <!-- Guardian-only phones: become a protected member too -->
+            <include
+                android:id="@+id/rowSetUpForYourself"
+                layout="@layout/item_settings_row"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/rowStopGuardian"
+                layout="@layout/item_settings_row" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

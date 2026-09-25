@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Registration: three ways to create an account, and a link for people who already have one -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/vukaBgBase"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="28dp">
+
+        <!-- Step header: back button + step eyebrow + title -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_back_button"
+                android:contentDescription="Back"
+                android:padding="13dp"
+                android:src="@drawable/ic_caret_left"
+                app:tint="@color/vuka_text_secondary" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.1"
+                    android:text="STEP 2 OF 8"
+                    android:textColor="@color/vuka_text_dim"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:accessibilityHeading="true"
+                    android:letterSpacing="-0.01"
+                    android:text="Create your account"
+                    android:textColor="@color/vuka_text_title"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_glass_card"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="3dp"
+                android:text="Choose how you'd like to sign up. Whichever you pick, we'll also verify your mobile number."
+                android:textColor="@color/vuka_text_secondary"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoogle"
+            style="@style/Widget.Vuka.Button.Option"
+            android:layout_marginTop="18dp"
+            android:text="Continue with Google"
+            app:icon="@drawable/ic_user" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEmail"
+            style="@style/Widget.Vuka.Button.Option"
+            android:layout_marginTop="10dp"
+            android:text="Sign up with email"
+            app:icon="@drawable/ic_mail" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPhone"
+            style="@style/Widget.Vuka.Button.Option"
+            android:layout_marginTop="10dp"
+            android:text="Use your phone number"
+            app:icon="@drawable/ic_phone" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:lineSpacingExtra="2dp"
+            android:text="With Google we use your name and email to set up your profile. We never see your Google password."
+            android:textColor="@color/vuka_text_dim"
+            android:textSize="12sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:minHeight="20dp" />
+
+        <TextView
+            android:id="@+id/linkSignIn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:text="Already have an account? Sign in"
+            android:textColor="@color/vuka_link"
+            android:textSize="15sp" />
+    </LinearLayout>
+</ScrollView>

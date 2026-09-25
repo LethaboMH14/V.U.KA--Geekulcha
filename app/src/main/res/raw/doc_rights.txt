@@ -1,0 +1,22 @@
+## Your choices and rights
+The spec uses your consent for your journey data, and each guardian's own consent for their data. A guardian receives a privacy notice at acceptance.
+### Access
+Request your record export. While an incident is open and for six hours (specified) after its last PIN entry, your phone shows a verifiable prefix ending before the incident. After recovery, bulk export is frozen for 24 hours (specified).
+### Correction
+UNDEFINED — needs a decision. The chain is append-only; the repo does not define a correction request process.
+### Deletion
+PIN-gated request, 72-hour (specified) cooling-off, then payload and salt removal; residuals remain.
+### Objection
+The repo does not define an objection process. Contact route: UNDEFINED — team to set.
+### Complaint
+You may complain to the Information Regulator of South Africa. The repo provides no general contact route to include here.
+
+## Deletion and duress
+You can request deletion with your PIN. There is a 72-hour cooling-off period (specified). Guardians are notified. After that, the payloads and salts are removed; the residuals listed above remain so the chain can still be checked.
+
+If you are forced to request deletion with a duress PIN, it will look deleted but your record is protected: the request does nothing, and guardians can see the true status. If a duress action has a delay, the phone keeps showing success even after the delay passes. This is intended to avoid alerting a person who may be holding your phone.
+
+## Guardians
+You add a guardian by creating an invite with a fresh PIN authorisation. The guardian accepts and sees a privacy notice before their data is used. Existing guardians are notified of an addition and told who was added.
+
+Removing a guardian is scheduled and takes effect after a 24-hour (specified) delay. Until then, the guardian continues receiving alerts. The last guardian cannot be removed until a replacement has accepted. Remaining guardians are told who is scheduled for removal; the guardian being removed is not told.

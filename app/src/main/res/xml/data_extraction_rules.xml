@@ -1,19 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
--->
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backup and device-transfer rules for API 31+. PIN hashes never leave the
+     phone (PIN-AUTHORITY-RULES §2), so the interim PIN store is excluded from both.
+     The saved account goes with it: restored without its PINs, every PIN gate would fail. -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="sharedpref" path="vuka_pin_interim.xml" />
+        <exclude domain="sharedpref" path="vuka_password_interim.xml" />
+        <exclude domain="sharedpref" path="vuka_account.xml" />
+        <exclude domain="sharedpref" path="vuka_record.xml" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="sharedpref" path="vuka_pin_interim.xml" />
+        <exclude domain="sharedpref" path="vuka_password_interim.xml" />
+        <exclude domain="sharedpref" path="vuka_account.xml" />
+        <exclude domain="sharedpref" path="vuka_record.xml" />
     </device-transfer>
-    -->
 </data-extraction-rules>

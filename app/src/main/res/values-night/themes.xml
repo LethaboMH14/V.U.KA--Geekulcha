@@ -1,7 +1,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Midnight: same theme as values/, with dark status-bar icons turned off -->
     <style name="Base.Theme.MyApplication" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="colorPrimary">@color/vuka_action</item>
+        <item name="android:statusBarColor">@color/vuka_bg_base</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/vuka_bg_base</item>
+        <!-- Silver-swappable tokens: Ivory/Midnight read them from @color -->
+        <item name="vukaBgBase">@color/vuka_bg_base</item>
+        <item name="vukaBgElevated">@color/vuka_bg_elevated</item>
+        <item name="vukaBorder">@color/vuka_border</item>
+        <item name="vukaBorderSubtle">@color/vuka_border_subtle</item>
+        <item name="vukaBorderEmphasis">@color/vuka_border_emphasis</item>
+        <item name="vukaAction">@color/vuka_action</item>
     </style>
 </resources>
