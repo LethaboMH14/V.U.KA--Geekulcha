@@ -25,13 +25,15 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 from cryptography.hazmat.primitives.serialization import load_der_public_key
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
 from starlette.responses import JSONResponse
 
 from anchor.canonical import canonical
-from server.pin_records import EventRefused
+from server.pin_records import EventRefused, require_authorisation
+from server.event_effects import append_server
+from server.server_signing import sign_key_revoked_entry
 from server.db import (
     DatabaseUnavailable,
     IdempotencyConflict,
@@ -525,6 +527,414 @@ def create_app(database=None) -> FastAPI:
             return subject_export(subject_id, datetime.fromisoformat(_server_time().replace("Z", "+00:00")))
         except EventRefused as exc:
             return _error_response(exc.status, exc.code, "fresh export PIN authorisation is required")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+
+    @app.post("/v1/devices/recover", status_code=202)
+    async def recover_device(request: Request):
+        """PROPOSED §9. No §7 request signature: the whole point is the old
+        device/key is gone. Rate limited and code-verified inside recovery.py."""
+        from server.recovery import RecoveryRefused, has_open_incident, notify_guardians, set_freeze, verify_recovery_code
+        try:
+            body = json.loads(await request.body())
+            if (not isinstance(body, dict) or set(body) != {"recovery_code", "new_device_key"}
+                    or not isinstance(body["recovery_code"], str) or not body["recovery_code"]
+                    or not isinstance(body["new_device_key"], str) or not body["new_device_key"]):
+                raise ValueError("recovery body shape")
+            new_spki = base64.b64decode(body["new_device_key"], validate=True)
+            new_public_key = load_der_public_key(new_spki)
+            if not isinstance(new_public_key, ec.EllipticCurvePublicKey) or new_public_key.curve.name != "secp256r1":
+                raise ValueError("new_device_key must be a P-256 SPKI key")
+        except (ValueError, TypeError, KeyError, binascii.Error, UnsupportedAlgorithm):
+            return _error_response(400, "invalid_request", "recovery body is invalid")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        new_key_id = "dev_" + hashlib.sha256(new_spki).digest()[:8].hex()
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        try:
+                            subject_id = verify_recovery_code(cur, body["recovery_code"], now)
+                        except RecoveryRefused:
+                            return _error_response(401, "invalid_signature", "recovery code is invalid")
+                        if has_open_incident(cur, subject_id):
+                            return _error_response(400, "recovery_blocked_incident_open", "recovery is blocked during an open incident")
+                        cur.execute("SELECT signer_key_id FROM signer_keys WHERE subject_id=%s AND signer_role='device' AND revoked_at IS NULL", (subject_id,))
+                        prior = cur.fetchone()
+                        if prior is None:
+                            return _error_response(400, "invalid_request", "subject has no active device key to recover")
+                        prior_key_id = prior[0]
+            finally:
+                connection.close()
+            cur_now = store._connection()
+            try:
+                with cur_now.cursor() as cur:
+                    cur.execute("SELECT chain_index FROM subject_heads WHERE subject_id=%s", (subject_id,))
+                    approx_counter = int(cur.fetchone()[0]) + 1
+            finally:
+                cur_now.close()
+            revocation_entry = sign_key_revoked_entry(subject_id, prior_key_id, now, approx_counter)
+            store.recover_device_key(subject_id, prior_key_id, new_key_id, body["new_device_key"], _server_time(), revocation_entry)
+        except SubjectNotFound:
+            return _error_response(404, "not_found", "subject was not found")
+        except IdempotencyConflict:
+            return _error_response(409, "idempotency_conflict", "recovery was already recorded with a different key")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                        set_freeze(cur, subject_id, now)
+                        notify_guardians(cur, subject_id, "device_recovered", now)
+                        append_server(cur, store, subject_id, {"kind": "recovery_performed", "pv": 1}, now)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            pass  # the security-critical key swap above already committed; freeze/notify are best-effort here
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
+
+    @app.delete("/v1/subjects/{id}/data", status_code=202)
+    async def delete_subject_data(id: str, request: Request):
+        """PROPOSED §13/§9 F15. Consumes a fresh action=delete pin_authorised
+        authorisation (transport: POST /v1/events, same as export/end_journey)."""
+        from server.deletion import request_deletion
+        from server.recovery import is_frozen, notify_guardians
+        subject_id = id
+        try:
+            principal = verify_request(request, subject_id=subject_id, database=store, body=await request.body())
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != "device":
+            return _error_response(404, "not_found", "subject was not found")
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id, subject_id=principal.subject_id,
+                nonce=principal.nonce, request_ts=principal.request_ts,
+                now=datetime.now(timezone.utc),
+            )
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return _error_response(404, "not_found", "subject was not found")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                        if is_frozen(cur, subject_id, now):
+                            return _error_response(403, "pin_authorisation_required", "deletion is frozen after a recent recovery")
+                        try:
+                            mode = require_authorisation(cur, subject_id, "delete", subject_id, now, consume=True)
+                        except EventRefused as exc:
+                            return _error_response(exc.status, exc.code, exc.code)
+                        if mode == "normal":
+                            request_deletion(cur, subject_id, now)
+                            notify_guardians(cur, subject_id, "deletion_requested", now)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        # Duress: looks exactly the same, does nothing further (§9). The
+        # pin_authorised event itself (mode=duress) already raised the alarm.
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
+
+    async def _signed_caller(request, *, role, subject_id=None):
+        """§7 request authentication + nonce, for bodyless or small-body routes."""
+        body = await request.body()
+        try:
+            principal = verify_request(request, subject_id=subject_id, database=store, body=body)
+        except RequestAuthenticationFailure as exc:
+            return None, _error_response(404 if exc.code == "not_found" else 401, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return None, _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != role:
+            return None, _error_response(403, "insufficient_approval", f"a {role} key is required")
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id, subject_id=principal.subject_id,
+                nonce=principal.nonce, request_ts=principal.request_ts, now=datetime.now(timezone.utc))
+        except SignerKeyRevoked:
+            return None, _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return None, _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return None, _error_response(404, "not_found", "subject was not found")
+        except DatabaseUnavailable:
+            return None, _error_response(503, "database_unavailable", "database unavailable")
+        return principal, None
+
+    @app.post("/v1/guardians/invites", status_code=201)
+    async def create_guardian_invite(request: Request):
+        """PROPOSED: bodyless; consumes a fresh add_guardian pin_authorised (via /v1/events).
+        A duress authorisation creates a decoy invite with an identical response (§9)."""
+        from server.guardians import create_invite
+        from server.recovery import is_frozen
+        principal, refused = await _signed_caller(request, role="device")
+        if refused:
+            return refused
+        subject_id = principal.subject_id
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        try:
+            connection = store._connection()
+            try:
+                with connection, connection.cursor() as cur:
+                    cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                    if is_frozen(cur, subject_id, now):
+                        return _error_response(403, "pin_authorisation_required", "guardian changes are frozen after a recent recovery")
+                    try:
+                        mode = require_authorisation(cur, subject_id, "add_guardian", subject_id, now, consume=True)
+                    except EventRefused as exc:
+                        return _error_response(exc.status, exc.code, exc.code)
+                    guardian_id, code = create_invite(cur, subject_id, decoy=(mode == "duress"), now=now)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        return JSONResponse(status_code=201, content={"receipt_id": str(uuid4()), "state": "accepted",
+                                                      "guardian_id": guardian_id, "invite_code": code})
+
+    _ACCEPT_FIELDS = (
+        "invite_code",
+        "guardian_key",
+        "fcm_token",
+        "popia_s18_acknowledged",
+    )
+
+    @app.post("/v1/guardians/accept", status_code=201)
+    async def accept_guardian_invite(request: Request):
+        """PROPOSED: the request is signed by the guardian_key in the body (proof of
+        possession, like the device genesis bootstrap); X-Vuka-Key-Id must equal the id
+        derived from that key. Every invite failure returns the same 401 shape."""
+        from server.db import _clock_skewed, _consume_nonce
+        from server.guardian_effects import record_accept
+        from server.guardians import GuardianRefused, activate, check_invite, guardian_actor_id, guardian_key_id
+        raw = await request.body()
+        try:
+            body = json.loads(raw)
+            if (not isinstance(body, dict)
+                    or set(body) != set(_ACCEPT_FIELDS)
+                    or body["popia_s18_acknowledged"] is not True
+                    or not all(isinstance(body[k], str) and body[k] for k in ("invite_code", "guardian_key", "fcm_token"))):
+                raise ValueError("accept body shape")
+            spki = base64.b64decode(body["guardian_key"], validate=True)
+            key = load_der_public_key(spki)
+            if not isinstance(key, ec.EllipticCurvePublicKey) or key.curve.name != "secp256r1":
+                raise ValueError("guardian_key must be P-256 SPKI")
+        except (ValueError, TypeError, KeyError, binascii.Error, UnsupportedAlgorithm):
+            return _error_response(400, "invalid_request", "accept body is invalid")
+        key_id = request.headers.get("X-Vuka-Key-Id")
+        ts = request.headers.get("X-Vuka-Ts")
+        nonce = request.headers.get("X-Vuka-Nonce")
+        signature = request.headers.get("X-Vuka-Signature")
+        if not (key_id and ts and nonce and signature) or key_id != guardian_key_id(spki):
+            return _error_response(401, "invalid_signature", "signed request is invalid")
+        try:
+            raw_sig = base64.b64decode(signature, validate=True)
+            if len(raw_sig) != 64:
+                raise ValueError("signature must be raw r||s")
+            statement = {"method": "POST", "path": request.url.path, "ts": ts,
+                         "body_sha256": hashlib.sha256(raw).hexdigest(), "nonce": nonce}
+            key.verify(encode_dss_signature(int.from_bytes(raw_sig[:32], "big"), int.from_bytes(raw_sig[32:], "big")),
+                       canonical(statement), ec.ECDSA(hashes.SHA256()))
+            _validate_rfc3339(ts, "X-Vuka-Ts")
+        except (InvalidSignature, ValueError, binascii.Error):
+            return _error_response(401, "invalid_signature", "signed request is invalid")
+        wall = datetime.now(timezone.utc)
+        if _clock_skewed(ts, wall):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        client_ip = request.client.host if request.client else "unknown"
+        try:
+            connection = store._connection()
+            try:
+                refused = None
+                with connection:
+                    with connection.cursor() as cur:
+                        try:
+                            guardian_id, subject_id, decoy = check_invite(cur, body["invite_code"], client_ip, now)
+                        except GuardianRefused as exc:
+                            refused = _error_response(exc.status, exc.code, "invite code is invalid")
+                if refused is not None:
+                    return refused  # the attempt counters above are committed
+                with connection:
+                    with connection.cursor() as cur:
+                        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                        actor_id = guardian_actor_id(guardian_id)
+                        try:
+                            activate(cur, guardian_id, signer_key_id=key_id, actor_id=actor_id,
+                                     public_key=body["guardian_key"], fcm_token=body["fcm_token"], now=now)
+                        except GuardianRefused as exc:
+                            return _error_response(exc.status, exc.code, "guardian key is already enrolled")
+                        _consume_nonce(cur, key_id, nonce, wall)
+                        record_accept(cur, store, subject_id, guardian_id, decoy=decoy, actor_id=actor_id, now=now)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        return JSONResponse(status_code=201, content={"receipt_id": str(uuid4()), "state": "accepted",
+                                                      "guardian_id": guardian_id})
+
+    @app.delete("/v1/guardians/{id}", status_code=202)
+    async def remove_guardian(id: str, request: Request):
+        """PROPOSED: bodyless; consumes a fresh remove_guardian authorisation whose
+        target_id is this guardian id. Duress looks identical and does nothing (§9)."""
+        from server.guardian_effects import record_removal_scheduled
+        from server.guardians import GuardianRefused, schedule_removal
+        from server.recovery import is_frozen
+        principal, refused = await _signed_caller(request, role="device")
+        if refused:
+            return refused
+        subject_id = principal.subject_id
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        try:
+            connection = store._connection()
+            try:
+                with connection, connection.cursor() as cur:
+                    cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                    if is_frozen(cur, subject_id, now):
+                        return _error_response(403, "pin_authorisation_required", "guardian changes are frozen after a recent recovery")
+                    try:
+                        mode = require_authorisation(cur, subject_id, "remove_guardian", id, now, consume=True)
+                    except EventRefused as exc:
+                        return _error_response(exc.status, exc.code, exc.code)
+                    if mode == "normal":
+                        try:
+                            schedule_removal(cur, subject_id, id, now)
+                        except GuardianRefused as exc:
+                            connection.rollback()
+                            return _error_response(exc.status, exc.code, exc.code)
+                        record_removal_scheduled(cur, store, subject_id, id, now)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
+
+    @app.put("/v1/guardians/{id}/token", status_code=202)
+    async def update_guardian_token(id: str, request: Request):
+        """Guardian-signed only (x-vuka-required-signer-role: guardian). Not a chain kind."""
+        principal, refused = await _signed_caller(request, role="guardian")
+        if refused:
+            return refused
+        try:
+            body = json.loads(await request.body())
+            if (not isinstance(body, dict) or set(body) != {"fcm_token"}
+                    or not isinstance(body["fcm_token"], str) or not body["fcm_token"]):
+                raise ValueError("token body")
+        except (ValueError, TypeError):
+            return _error_response(400, "invalid_request", "token body is invalid")
+        try:
+            connection = store._connection()
+            try:
+                with connection, connection.cursor() as cur:
+                    cur.execute("""UPDATE guardians SET fcm_token=%s WHERE guardian_id=%s AND signer_key_id=%s
+                                   AND status IN ('active','removal_scheduled') RETURNING 1""",
+                                (body["fcm_token"], id, principal.signer_key_id))
+                    if cur.fetchone() is None:
+                        return _error_response(403, "insufficient_approval", "this key does not belong to that guardian")
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
+
+    stream_interval = float(os.getenv("VUKA_STREAM_POLL_SECONDS", "1"))
+
+    @app.websocket("/ws/panel")
+    async def panel_stream(websocket: WebSocket):
+        """PROPOSED public opaque panel (see server/streams.py)."""
+        import asyncio
+        from server.streams import panel_batch, start_cursor
+        await websocket.accept()
+        cursor = start_cursor(store)
+        try:
+            while True:
+                messages, cursor = panel_batch(store, cursor)
+                for message in messages:
+                    await websocket.send_json(message)
+                await asyncio.sleep(stream_interval)
+        except (WebSocketDisconnect, RuntimeError):
+            return
+
+    @app.websocket("/ws/member")
+    async def member_stream(websocket: WebSocket):
+        """PROPOSED: authenticated by the §7 signed-request headers on the handshake
+        (method GET, path /ws/member, empty body) instead of bearerAuth, because no
+        bearer issuer exists and the member client is the Android app, which can set
+        handshake headers. Device keys only. Opaque, and held per T30."""
+        import asyncio
+        from types import SimpleNamespace
+        from server.streams import member_batch, start_cursor
+        shim = SimpleNamespace(headers=websocket.headers, method="GET", url=websocket.url, app=websocket.app)
+        try:
+            principal = verify_request(shim, database=store, body=b"")
+            if principal.signer_role != "device":
+                raise RequestAuthenticationFailure("not_found", "subject was not found")
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id, subject_id=principal.subject_id,
+                nonce=principal.nonce, request_ts=principal.request_ts, now=datetime.now(timezone.utc))
+        except (RequestAuthenticationFailure, SignerKeyRevoked, RequestReplay, RequestTimestampExpired,
+                SignerKeyNotFound, SignerSubjectMismatch, DatabaseUnavailable):
+            await websocket.close(code=1008)
+            return
+        await websocket.accept()
+        cursor = start_cursor(store)
+        try:
+            while True:
+                now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+                messages, cursor = member_batch(store, principal.subject_id, cursor, now)
+                for message in messages:
+                    await websocket.send_json(message)
+                await asyncio.sleep(stream_interval)
+        except (WebSocketDisconnect, RuntimeError):
+            return
+
+    @app.get("/v1/anchor/latest")
+    async def get_latest_anchor():
+        from server.anchor_reads import key_manifest, latest_anchor
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        receipt = latest_anchor(cur)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if receipt is None:
+            return _error_response(404, "not_found", "no anchor has been confirmed yet")
+        return {"receipt": receipt, "key_manifest": key_manifest()}
+
+    @app.get("/v1/anchor/proof/{head_hash}")
+    async def get_anchor_proof(head_hash: str):
+        import re as _re
+        from server.anchor_reads import ProofNotFound, anchor_proof
+        if _re.fullmatch(r"[0-9a-f]{64}", head_hash) is None:
+            return _error_response(400, "invalid_request", "head must be lowercase 32-byte hex")
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        return anchor_proof(cur, head_hash)
+            finally:
+                connection.close()
+        except ProofNotFound:
+            return _error_response(404, "not_found", "no confirmed anchor contains this head")
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
 

@@ -26,7 +26,10 @@
       "type": "string",
       "enum": [
         "end_journey",
-        "export"
+        "export",
+        "delete",
+        "add_guardian",
+        "remove_guardian"
       ]
     },
     "target_id": {

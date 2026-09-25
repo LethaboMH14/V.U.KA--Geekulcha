@@ -123,8 +123,9 @@ test("OpenAPI implementation flags exactly match routes registered by the server
       .map(({ method, path }) => `${method} ${normalisePath(path)}`)
   );
   const registeredRoutes = new Set(
-    [...serverSource.matchAll(/^\s*@app\.(get|post|put|delete)\(\s*["']([^"']+)["']/gm)]
-      .map(([, method, path]) => `${method.toUpperCase()} ${normalisePath(path)}`)
+    // A WebSocket route is declared in the contract as its GET upgrade.
+    [...serverSource.matchAll(/^\s*@app\.(get|post|put|delete|websocket)\(\s*["']([^"']+)["']/gm)]
+      .map(([, method, path]) => `${method === "websocket" ? "GET" : method.toUpperCase()} ${normalisePath(path)}`)
   );
   assert.deepEqual(
     [...implementedOperations].sort(),

@@ -271,7 +271,7 @@ class PostgresDatabase:
             raise DatabaseUnavailable("PostgreSQL connection failed") from exc
 
     def initialize(self) -> None:
-        from server import escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact
+        from server import anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery, deletion, guardians
         self._payload_key()
         connection = self._connection()
         try:
@@ -280,7 +280,7 @@ class PostgresDatabase:
                     cursor.execute(CREATE_SCHEMA_SQL)
                     cursor.execute(CREATE_EVENT_ID_INDEX_SQL)
                     cursor.execute(OUTBOX_SCHEMA_SQL)
-                    for module in (escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact):
+                    for module in (anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery, deletion, guardians):
                         cursor.execute(module.SCHEMA_SQL)
         finally:
             connection.close()
@@ -683,9 +683,13 @@ class PostgresDatabase:
                             return _row_entry(existing), False
 
                         skewed = _clock_skewed(request_ts, now)
-                        skew_exempt = entry["action"].removeprefix("sim_") in {
-                            "checkin_opened", "checkin_result", "pin_authorised"
-                        }
+                        # v2 carries the kind in the committed payload; `action` is the
+                        # coarse class (device_event). Checking only `action` never matched.
+                        _exempt = {"checkin_opened", "checkin_result", "pin_authorised"}
+                        skew_exempt = (
+                            (entry.get("payload") or {}).get("kind") in _exempt
+                            or entry["action"].removeprefix("sim_") in _exempt
+                        )
                         if skewed and not skew_exempt:
                             raise RequestTimestampExpired(request_ts)
                         _consume_nonce(cursor, signer_key_id, nonce, now)

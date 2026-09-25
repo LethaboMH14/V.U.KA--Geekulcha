@@ -38,8 +38,18 @@ DUE_SQL = """SELECT i.incident_id::text FROM incidents i
                  AND NOT EXISTS(SELECT 1 FROM ended_journeys e WHERE e.journey_id=j.journey_id))"""
 
 
+def contact_lost_enabled() -> bool:
+    """Off by default (Khutso #89): the app sends no heartbeats yet, so the
+    90 s clock would false-alarm while the phone is fine. Enable only with a
+    heartbeat producer and an integration test."""
+    import os
+    return os.getenv("VUKA_CONTACT_LOST_ENABLED", "0") == "1"
+
+
 def fire_contact_lost(cur, store, subject_id, now):
     from server.event_effects import append_server
+    if not contact_lost_enabled():
+        return False
     cur.execute(DUE_SQL + " FOR UPDATE OF i", (subject_id, CONTACT_LOST_AFTER, now))
     row = cur.fetchone()
     if row is None:

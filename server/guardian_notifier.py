@@ -72,7 +72,9 @@ class SimulatedGuardianNotifier:
         self._require_sim(subject_id)
         with closing(self.connect()) as conn, conn, conn.cursor() as cur:
             cur.execute("SELECT guardian_ref FROM sim_guardians WHERE subject_id=%s ORDER BY guardian_ref", (subject_id,))
-            return [r[0] for r in cur.fetchall()]
+            refs = [r[0] for r in cur.fetchall()]
+            from server.guardians import alerting_guardians
+            return refs + alerting_guardians(cur, subject_id)  # decoys never included
 
     def deliver(self, outbox_row):
         self._require_sim(outbox_row["subject_id"])
@@ -81,7 +83,8 @@ class SimulatedGuardianNotifier:
             raise ValueError("delivery clock must be timezone-aware")
         with closing(self.connect()) as conn, conn, conn.cursor() as cur:
             cur.execute("SELECT 1 FROM sim_guardians WHERE subject_id=%s AND guardian_ref=%s", (outbox_row["subject_id"], outbox_row["guardian_ref"]))
-            if cur.fetchone() is None:
+            from server.guardians import alerting_guardians
+            if cur.fetchone() is None and outbox_row["guardian_ref"] not in alerting_guardians(cur, outbox_row["subject_id"]):
                 return DeliveryResult(False, None, None)
             evidence = "sim_delivery:" + outbox_row["idempotency_key"] + ":" + outbox_row["guardian_ref"]
             cur.execute("INSERT INTO sim_notification_receipts VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING", (outbox_row["idempotency_key"], outbox_row["guardian_ref"], now, evidence))

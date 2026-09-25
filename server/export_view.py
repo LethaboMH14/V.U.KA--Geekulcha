@@ -10,6 +10,7 @@ from datetime import timedelta
 from server.db import _row_entry
 from server.payload_store import decrypt_payload
 from server.pin_records import EventRefused
+from server.recovery import is_frozen
 
 HOLD_AFTER_LAST_PIN = timedelta(hours=6)
 
@@ -62,6 +63,9 @@ def _anchor_material(cur, head_hex):
 
 
 def build_export(cur, store, subject_id, now):
+    if is_frozen(cur, subject_id, now):
+        # PROPOSED (25 Sep): the 24h post-recovery freeze covers export too (§9).
+        raise EventRefused("pin_authorisation_required", 403)
     head = _authorising_index(cur, subject_id, now) - 1
     held = held_head_index(cur, subject_id, now)
     if held is not None:
