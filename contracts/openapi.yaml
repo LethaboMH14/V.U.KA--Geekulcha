@@ -3,6 +3,10 @@ info:
   title: VIGIL + ANCHOR service contract
   version: 2.0.0
   description: >-
+    INCOMPLETE — x-vuka-implemented reports route registration only, not that
+    all specified behavior is complete; only operations marked
+    x-vuka-implemented: true are served by the ANCHOR server at this head;
+    every other operation is a contract for future work.
     Contract v2 for VIGIL + ANCHOR. Device, guardian and server events are
     signed as specified in docs/VUKA-2-SPEC.md; the contract describes the
     interface and does not itself implement authentication or verification.
@@ -25,6 +29,7 @@ paths:
     post:
       tags: [Operations]
       operationId: ingestSightings
+      x-vuka-implemented: false
       deprecated: true
       summary: Ingest one or more signed sightings
       security: [{ bearerAuth: [] }]
@@ -46,6 +51,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getEntity
+      x-vuka-implemented: false
       deprecated: true
       summary: Read an entity and its current review state
       security: [{ bearerAuth: [] }]
@@ -62,6 +68,7 @@ paths:
     post:
       tags: [Operations]
       operationId: verifyEntity
+      x-vuka-implemented: false
       deprecated: true
       summary: Submit an authenticated human review action
       description: >-
@@ -87,6 +94,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getRisk
+      x-vuka-implemented: false
       deprecated: true
       summary: Read the three-tier risk fallback
       security: [{ bearerAuth: [] }]
@@ -102,6 +110,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getHotspots
+      x-vuka-implemented: false
       deprecated: true
       summary: Read available hotspot cells
       security: [{ bearerAuth: [] }]
@@ -117,6 +126,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getSafestRoute
+      x-vuka-implemented: false
       deprecated: true
       summary: Read a member-facing safest route
       security: [{ bearerAuth: [] }]
@@ -135,6 +145,7 @@ paths:
     post:
       tags: [Operations]
       operationId: createPatrolRoute
+      x-vuka-implemented: false
       deprecated: true
       summary: Request a patrol route under the declared fuel budget
       security: [{ bearerAuth: [] }]
@@ -151,6 +162,7 @@ paths:
     get:
       tags: [Operations]
       operationId: verifyEvidenceIntegrity
+      x-vuka-implemented: false
       summary: Return the first broken evidence link by index
       security: [{ bearerAuth: [] }]
       responses:
@@ -164,6 +176,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getLatestAnchor
+      x-vuka-implemented: false
       summary: Read the latest public anchor receipt
       description: Public endpoint; exposes no subject data.
       security: []
@@ -183,6 +196,7 @@ paths:
     get:
       tags: [Showcase]
       operationId: getSubjectRecord
+      x-vuka-implemented: false
       summary: Subject access with an independently checkable proof package
       description: >-
         F14 showcase path. Private payload and proof are returned subject to signed subject
@@ -202,6 +216,7 @@ paths:
     delete:
       tags: [Showcase]
       operationId: deleteSubjectData
+      x-vuka-implemented: false
       summary: Request deletion of private subject payload while retaining proof residue
       description: F15 showcase path. Subject-authenticated and PIN-authorised per §9; deletion is recorded and idempotent.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -222,6 +237,7 @@ paths:
     get:
       tags: [Operations]
       operationId: openOpsStream
+      x-vuka-implemented: false
       deprecated: true
       summary: Open the authenticated operator event stream
       security: [{ bearerAuth: [] }]
@@ -232,6 +248,7 @@ paths:
     get:
       tags: [Showcase]
       operationId: openMemberStream
+      x-vuka-implemented: false
       summary: Open the member event stream
       description: Member streams never receive operator-room events.
       security: [{ bearerAuth: [] }]
@@ -242,8 +259,11 @@ paths:
     post:
       tags: [ANCHOR]
       operationId: createSubject
+      x-vuka-implemented: false
       summary: Create a subject and genesis registration entry
       description: >-
+        INCOMPLETE — this dedicated route is not implemented. Genesis registration is
+        currently accepted at POST /v1/events with action: registration.
         Device-signed registration request; target_id is the random 128-bit subject id.
         Because no key is enrolled yet, the request signature is verified with the registration
         signer_pubkey and signer_key_id in the submission before the key is enrolled.
@@ -265,6 +285,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: recoverDevice
+      x-vuka-implemented: false
       summary: Recover a subject onto a new device
       description: Recovery-code authenticated; PIN and signature verification are performed by the implementation, not this contract.
       requestBody:
@@ -287,6 +308,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: startJourney
+      x-vuka-implemented: false
       summary: Start a journey by explicit user action
       description: Device-signed request; arming requires the app in the foreground and granted microphone and notification permissions.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -298,6 +320,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: sendJourneyHeartbeat
+      x-vuka-implemented: false
       summary: Record a journey heartbeat
       description: Device-signed; includes a speed bucket only and never location.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -322,6 +345,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: endJourney
+      x-vuka-implemented: false
       summary: End an active journey
       description: >-
         Device-signed request. ADR-0041 requires a fresh pin_authorised record for
@@ -340,6 +364,7 @@ paths:
     post:
       tags: [ANCHOR]
       operationId: appendEvidenceEvent
+      x-vuka-implemented: true
       summary: Append a signed v2 evidence entry
       description: >-
         Device/guardian-signed event submission. The signed details.sig binds the event context;
@@ -377,6 +402,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: openCheckin
+      x-vuka-implemented: false
       summary: Record that a check-in was shown
       description: Device-signed event; posted only after the check-in is confirmed shown.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -394,6 +420,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: submitCheckinResult
+      x-vuka-implemented: false
       summary: Record a check-in result
       description: Device-signed event; normal and duress outcomes use the same request shape.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -411,6 +438,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: submitPinAuthorisation
+      x-vuka-implemented: false
       summary: Submit a PIN-authority statement scoped to one action
       description: Device-signed PIN-authority statement per §9; signature verification is implementation behavior.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -427,6 +455,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: createGuardianInvite
+      x-vuka-implemented: false
       summary: Create a PIN-authorised guardian invite
       description: Device-signed with fresh PIN authorisation per §§7 and 9.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -443,6 +472,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: acceptGuardianInvite
+      x-vuka-implemented: false
       summary: Accept a one-time guardian invite
       description: Guardian-signed request; the guardian acknowledges the POPIA s18 notice.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -467,6 +497,7 @@ paths:
     delete:
       tags: [VIGIL]
       operationId: removeGuardian
+      x-vuka-implemented: false
       summary: Request delayed removal of a guardian
       description: Device-signed with fresh PIN authorisation; normal removal has a 24-hour delay and duress is a no-op.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -485,6 +516,7 @@ paths:
     put:
       tags: [VIGIL]
       operationId: updateGuardianToken
+      x-vuka-implemented: false
       summary: Update a guardian notification token
       description: >-
         Guardian-signed only. The X-Vuka-Key-Id must resolve to this guardian's active guardian key;
@@ -511,6 +543,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: acknowledgeAlert
+      x-vuka-implemented: false
       summary: Record a guardian alert acknowledgement
       description: Guardian-signed acknowledgement.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -534,6 +567,7 @@ paths:
     get:
       tags: [ANCHOR]
       operationId: getAnchorProof
+      x-vuka-implemented: false
       summary: Read the proof and receipt for an anchored chain head
       description: Public; head-keyed and returns no chain segment.
       security: []
@@ -556,6 +590,7 @@ paths:
     get:
       tags: [ANCHOR]
       operationId: exportSubjectRecord
+      x-vuka-implemented: true
       summary: Export the authenticated subject's permitted evidence prefix
       description: >-
         Subject-authenticated with the §7 signed-request headers and a fresh
@@ -581,6 +616,7 @@ paths:
     get:
       tags: [ANCHOR]
       operationId: getHealth
+      x-vuka-implemented: true
       summary: Read public service health and queue state
       security: []
       responses:
@@ -601,6 +637,7 @@ paths:
     get:
       tags: [ANCHOR]
       operationId: openPublicPanelStream
+      x-vuka-implemented: false
       summary: Open the public opaque-hash panel stream
       description: Exposes opaque hashes, chain indices and receipts; event kinds are emitted only for sim_ subjects and are labelled simulated.
       security: []
@@ -610,6 +647,7 @@ paths:
     post:
       tags: [Simulation]
       operationId: sendSimulatedBankRiskSignal
+      x-vuka-implemented: false
       summary: Send a labelled simulated bank risk signal
       description: >-
         SIMULATED only; signed by ANCHOR with the pinned Ed25519 server key and requires an
@@ -630,6 +668,7 @@ paths:
     post:
       tags: [Simulation]
       operationId: releaseSimulatedBankSignal
+      x-vuka-implemented: false
       summary: Release a labelled simulated bank hold
       description: >-
         SIMULATED only; signed by ANCHOR with the pinned Ed25519 server key and requires an

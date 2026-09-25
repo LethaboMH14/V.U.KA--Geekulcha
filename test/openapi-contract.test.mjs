@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const document = await readFile(new URL("../contracts/openapi.yaml", import.meta.url), "utf8");
+const serverSource = await readFile(new URL("../server/main.py", import.meta.url), "utf8");
 const architecture = await readFile(new URL("../archive/2026-09-four-layer/docs/01-ARCHITECTURE.md", import.meta.url), "utf8");
 const sdlc = await readFile(new URL("../archive/2026-09-four-layer/docs/SDLC.md", import.meta.url), "utf8");
 const team = await readFile(new URL("../archive/2026-09-four-layer/docs/TEAM.md", import.meta.url), "utf8");
@@ -56,10 +57,87 @@ function pathBlock(path) {
   return document.slice(start, end === -1 ? document.length : end);
 }
 
+function parseOperations(source) {
+  const methods = new Set(["get", "post", "put", "delete", "patch", "options", "head", "trace"]);
+  const operations = [];
+  let path;
+  let operation;
+
+  function finishOperation() {
+    if (operation) operations.push(operation);
+    operation = undefined;
+  }
+
+  for (const line of source.split(/\r?\n/)) {
+    const pathMatch = line.match(/^  (\/[^:]+):$/);
+    if (pathMatch) {
+      finishOperation();
+      path = pathMatch[1];
+      continue;
+    }
+    if (line === "components:") {
+      finishOperation();
+      path = undefined;
+      continue;
+    }
+    const methodMatch = line.match(/^    ([a-z]+):$/);
+    if (methodMatch && methods.has(methodMatch[1])) {
+      finishOperation();
+      assert.ok(path, `OpenAPI operation ${methodMatch[1]} has no path`);
+      operation = { method: methodMatch[1].toUpperCase(), path, flagCount: 0 };
+      continue;
+    }
+    if (operation && /^      x-vuka-implemented:/.test(line)) {
+      operation.flagCount += 1;
+      const flagMatch = line.match(/^      x-vuka-implemented: (true|false)$/);
+      if (flagMatch) operation.implemented = flagMatch[1] === "true";
+    }
+  }
+  finishOperation();
+  return operations;
+}
+
+function normalisePath(path) {
+  return path.replace(/\{[^}/]+\}/g, "{}");
+}
+
 test("OpenAPI contract declares only the documented service paths", () => {
   assert.match(document, /^openapi: 3\.1\.0$/m);
   assert.match(document, /^  version: 2\.0\.0$/m);
   for (const path of requiredPaths) assert.match(document, new RegExp(`^  ${path.replace(/[{}]/g, "\\$&")}$`, "m"));
+});
+
+test("OpenAPI implementation flags exactly match routes registered by the server", () => {
+  const operations = parseOperations(document);
+  const operationIdCount = (document.match(/^      operationId: /gm) ?? []).length;
+  assert.equal(operations.length, operationIdCount, "expected every declared operation to be parsed");
+  for (const operation of operations) {
+    const name = `${operation.method} ${operation.path}`;
+    assert.equal(operation.flagCount, 1, `${name} must carry exactly one x-vuka-implemented flag`);
+    assert.equal(typeof operation.implemented, "boolean", `${name} must set x-vuka-implemented to true or false`);
+  }
+
+  const implementedOperations = new Set(
+    operations
+      .filter(({ implemented }) => implemented)
+      .map(({ method, path }) => `${method} ${normalisePath(path)}`)
+  );
+  const registeredRoutes = new Set(
+    [...serverSource.matchAll(/^\s*@app\.(get|post|put|delete)\(\s*["']([^"']+)["']/gm)]
+      .map(([, method, path]) => `${method.toUpperCase()} ${normalisePath(path)}`)
+  );
+  assert.deepEqual(
+    [...implementedOperations].sort(),
+    [...registeredRoutes].sort(),
+    "x-vuka-implemented flags must match server/main.py routes in both directions"
+  );
+
+  assert.match(document, /x-vuka-implemented reports route registration only, not that\s+all specified behavior is complete/);
+  assert.match(document, /only operations marked\s+x-vuka-implemented: true are served by\s+the ANCHOR server at this head;\s+every other operation is a contract for\s+future work\./);
+  const subjectCreation = operations.find(({ method, path }) => method === "POST" && path === "/v1/subjects");
+  assert.equal(subjectCreation?.implemented, false, "POST /v1/subjects is not a registered route");
+  assert.match(pathBlock("/v1/subjects"), /INCOMPLETE — this dedicated route is not implemented/);
+  assert.match(pathBlock("/v1/subjects"), /Genesis registration is\s+currently accepted at POST \/v1\/events with action: registration\./);
 });
 
 test("v1 UMOJA paths remain present and are marked deprecated", () => {
