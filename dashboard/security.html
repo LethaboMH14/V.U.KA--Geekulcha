@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>VUKA security evidence</title>
+  <script src="./security.js" defer></script>
+</head>
+<body>
+  <header class="wrap">
+    <p class="eyebrow">VUKA · Security &amp; privacy</p>
+    <h1>Security evidence</h1>
+    <p class="intro">A live record of how much evidence stands behind each security claim, and what would raise it.</p>
+  </header>
+  <main class="wrap" id="main-content">
+    <p id="load-state" role="status" aria-live="polite">Loading the published evidence record…</p>
+    <section id="score-content" hidden aria-labelledby="score-heading">
+      <h2 id="score-heading">Evidence score</h2>
+      <p class="definition">How much evidence stands behind the security claims, weighted by threat severity.</p>
+      <p class="mix"><strong>FACT:</strong> Scores and level mixes are computed from repository artefacts and the linked CI result for this commit.</p>
+      <div class="score-grid">
+        <article class="score-card">
+          <h3>Evidence score</h3>
+          <p class="score-value" id="overall-score">—</p>
+          <p>Weighted evidence level as a share of the maximum possible score.</p>
+        </article>
+        <article class="score-card">
+          <h3>Evidence confidence</h3>
+          <p class="score-value" id="overall-confidence">—</p>
+          <p>How much of the register's weight is backed by a passing test.</p>
+        </article>
+      </div>
+      <div class="meta-grid" aria-label="Score provenance">
+        <p><strong>Commit</strong><br><code id="commit-hash">Unavailable</code></p>
+        <p><strong>Computed</strong><br><time id="computed-time">Unavailable</time></p>
+        <p><strong>Checks CI</strong><br><span id="ci-state">Unavailable</span></p>
+      </div>
+      <p id="ci-link-container" hidden><a id="ci-link" rel="noopener">Open the checks CI run</a></p>
+      <p id="e4-note" class="e4-note"></p>
+      <section aria-labelledby="categories-heading">
+        <h2 id="categories-heading">Evidence by category</h2>
+        <div id="category-list" class="category-list"></div>
+      </section>
+      <section aria-labelledby="controls-heading">
+        <h2 id="controls-heading">Control evidence</h2>
+        <div class="table-scroll" tabindex="0" aria-label="Scrollable control evidence table">
+          <table>
+            <caption>Current evidence level and details for each registered security control</caption>
+            <thead>
+              <tr>
+                <th scope="col">Control</th>
+                <th scope="col">Category</th>
+                <th scope="col">Level</th>
+                <th scope="col">Weight</th>
+                <th scope="col">Details</th>
+              </tr>
+            </thead>
+            <tbody id="control-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+  <footer class="wrap">
+    <p>Evidence levels describe repository evidence. They are not a probability that VUKA is secure.</p>
+  </footer>
+</body>
+</html>
