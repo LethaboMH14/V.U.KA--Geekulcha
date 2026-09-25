@@ -357,3 +357,18 @@ Posted a correction on PR #79 acknowledging the gap explicitly rather than letti
 - **Verified from a clean `git archive` copy, real PostgreSQL, no skips:** pytest 219 passed (up from 213); root node 50/50; docs/intake clean. 5 new tests in `server/tests/test_journey_start.py` (uniqueness, a journey accepting a real `signal_detected`, unknown key, guardian key refused, nonce replay); 3 mutation checks each broke a test.
 - Commented on #89 and told Lethabo on #88 to call it once at arming and send `signal_detected` with `targetType: 'journey'`.
 - Eighth PROPOSED item for Lethabo's list on #82 (server-issued `journey_id`).
+
+## 2026-09-25 (~21:00) — 4 of 7 backend gaps built myself; 2 packets queued for Codex
+
+Working from the "what's left to build" list I gave the user, built 4 of 7 directly on #89 (`feat/sibusiso-slice3-escalation`), same rigor as slice 3: real PostgreSQL, mutation checks, clean-archive full-suite verification before each push.
+
+- **Guardian ack/stand-down** (`2f7c3ee`): `guardian_ack` via `/v1/events` (supersedes the non-chain `/v1/alerts/{id}/ack`); `stand_down` now actually closes the incident (was previously only cancelling the bank timer) and can never cancel a duress bank signal.
+- **Public anchor reads** (`2f7c3ee`): `GET /v1/anchor/latest`, `GET /v1/anchor/proof/{head}` — wired the already-built internal Merkle-proof logic to HTTP; found and fixed a real gap where `anchoring.SCHEMA_SQL` was never in `PostgresDatabase.initialize()`'s module list.
+- **Device recovery** (`0135fab`): `POST /v1/devices/recover` — found `server/db.py` already had a fully-built, tested `recover_device_key()` with a docstring naming "the recovery route" as deliberately out of scope for an earlier slice; built the route around it (Argon2id via the already-pinned `cryptography` package, no new dependency; rate-limited; blocked during an open incident; 24h freeze). Provisioning (storing the code at onboarding) is NOT built — flagged as needing a genesis-registration contract decision.
+- **Deletion (F15)** (`d447f77`): `DELETE /v1/subjects/{id}/data`, 72h cooling-off, duress is a true no-op that still alarms via the pin_authorised event. Retrofitted the 24h freeze into both export and delete.
+- All four share the same transport pattern as `pin_authorised`/`journey_id` from earlier today: a fresh action goes through `POST /v1/events`, not a bespoke non-chain route. `POST /v1/subjects` per Codex's earlier journey work.
+- **Full suite now 244 pytest / 0 skipped, 50 node, 137 vitest**, all green from a clean `git archive` copy. Server now implements 11 of 30 declared routes (was 5 this morning).
+- **Two more PROPOSED decisions posted to Lethabo on #82** (items 10 and 11: recovery provisioning deferred, deletion transport). Eleven PROPOSED decisions now stacked there in total; none accepted yet.
+- **Two Codex packets written**, queued (not urgent — after the deploy): `sibusiso-workflow/tasks/guardian-lifecycle/01-task.md` (invite/accept/removal/token — genuinely the hardest remaining piece: decoy guardians, 24h delayed removal, last-guardian block) and `sibusiso-workflow/tasks/sim-bank-service-and-websockets/01-task.md` (an actual sim_bank HTTP service — currently only a client exists — plus `/ws/panel` and `/ws/member`; `/ws/ops` explicitly skipped, contract marks it deprecated).
+- Local test PostgreSQL cluster (port 55441, scratch) stopped after each verification pass, as before.
+- **Unchanged:** Azure deploy still blocked on the `az webapp` permission; no scheduler/outbox/anchor-coordinator process is started by `startup.sh`; Ipeleng's Semgrep call on #89 still pending.
