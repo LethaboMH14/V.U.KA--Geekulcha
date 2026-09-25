@@ -33,4 +33,13 @@ Needs/blockers: Mutarisi reviews it against the prototype and the P3.U1 checklis
 
 Business handoff: None.
 
-Next: an emulator pass (dark theme is the only theme; font scale 1.3), then the live scorecard in Settings.
+**Android emulator pass (25 Sep, 03:00–04:25).** The `vuka_demo` virtual device ran API 34 google_apis x86_64 with WHPX acceleration, the host GPU, 3 GB of RAM and 4 cores. Screens were captured with `adb exec-out screencap`.
+- **Walked through:** Home; Start journey; Journey active (the clock ticks, and the lamp and readouts show); End journey with the PIN, back to Ready; Settings; the guardian preview (standby and alert); Android Back from the guardian preview to Home; the hidden long-press to the Journey check; and two different PINs, each showing "Checked in" and returning to the journey.
+- **Crashes:** none in the app. The only crash-buffer entry was the emulator's own Bluetooth service.
+- **Found and fixed in 0.0.5:**
+  - key faces rendered narrower than the key on Android, because a percentage-sized SVG inside a Pressable lays out short; the SVG is now measured with `onLayout`;
+  - the status-bar icons were dark on graphite; they now use `light-content`, and the Android theme gets a graphite window, status bar and navigation bar, so launch doesn't flash white.
+- **Not app defects:** on the first boot (software GPU, 1.5 GB) taps went unanswered and the system UI stopped responding. The ARM build also ran through the emulator's ARM translation there. On the host GPU, the x86_64 build answered every tap within 3 s.
+- **Not tested:** real phone hardware, font scale 1.3, TalkBack, and landscape on the device.
+
+Next: a real-phone pass; font scale 1.3 and TalkBack; then the live scorecard in Settings.

@@ -13,7 +13,7 @@ import {colors} from './src/ui/theme';
 function App(): React.JSX.Element {
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: colors.bgBase}}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.bgBase} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.bgBase} />
       <VigilApp />
     </SafeAreaView>
   );

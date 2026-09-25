@@ -11,7 +11,7 @@
  * "Journey active" heading so the check-in can be shown.
  */
 import React, {useEffect, useState} from 'react';
-import {BackHandler, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {BackHandler, Pressable, ScrollView, StatusBar, StyleSheet, Text, View} from 'react-native';
 import {CaretLeft, CheckCircle, GearSix, Microphone, Phone, WifiSlash} from './icons';
 import {Dial, Key, Lamp, Panel, PinKeypad, QuietKey, Readout, RoundKey, Row, Rule, Surface} from './components';
 import {colors, fonts, space, TOUCH, type} from './theme';
@@ -398,6 +398,7 @@ function GuardianPreview({onBack}: {onBack: () => void}) {
   const [called, setCalled] = useState(false);
   return (
     <View style={{flex: 1}}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.guardianBase} />
       <Surface tone="guardian" />
       <ScrollView contentContainerStyle={styles.page}>
         <View style={styles.screen}>

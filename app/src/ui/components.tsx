@@ -52,16 +52,26 @@ const FACE: Record<KeyVariant, {top: string; bottom: string; text: string; rippl
 function KeyFace({variant, pressed, radius}: {variant: KeyVariant; pressed: boolean; radius: number}) {
   const f = FACE[variant];
   const id = `face-${variant}-${pressed ? 'p' : 'r'}`;
+  // Measured, not percentage-sized: on Android an SVG sized "100%" inside a
+  // Pressable can lay out narrower than the key (seen on the emulator).
+  const [size, setSize] = useState({w: 0, h: 0});
   return (
-    <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">
-      <Defs>
-        <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={pressed ? f.bottom : f.top} />
-          <Stop offset="1" stopColor={pressed ? f.top : f.bottom} />
-        </LinearGradient>
-      </Defs>
-      <Rect width="100%" height="100%" rx={radius} ry={radius} fill={`url(#${id})`} />
-    </Svg>
+    <View
+      style={[StyleSheet.absoluteFill, {backgroundColor: pressed ? f.top : f.bottom, borderRadius: radius}]}
+      pointerEvents="none"
+      onLayout={e => setSize({w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height})}>
+      {size.w > 0 ? (
+        <Svg width={size.w} height={size.h}>
+          <Defs>
+            <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={pressed ? f.bottom : f.top} />
+              <Stop offset="1" stopColor={pressed ? f.top : f.bottom} />
+            </LinearGradient>
+          </Defs>
+          <Rect width={size.w} height={size.h} rx={radius} ry={radius} fill={`url(#${id})`} />
+        </Svg>
+      ) : null}
+    </View>
   );
 }
 
