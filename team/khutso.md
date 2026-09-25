@@ -21,7 +21,7 @@
 - **If it cannot be reproduced, it does not ship.**
 - The judging criteria published (MASTER-CONTEXT v3, 23 Sep). I re-tag every new row with I / T / U / S / B / Q and run the coverage sweep under the new criteria.
 
-**Current task** — P3.K3's requirements trace merged to `main` in PR #63, but its acceptance record is not closed: Sibusiso approved an earlier head, Lethabo approved the merged head, and the A5 wording follow-up is in open PR #70. Reconcile the final-head first-review requirement and A5 trace wording before ticking P3.K3. P3.K1 corrections are on `main`; P3.K2's separate status must be checked before claiming completion.
+**Current task** — P3.K3's requirements trace merged to `main` in PR #63, but its acceptance record is not closed: Sibusiso approved an earlier head, Lethabo approved the merged head, and the A5 wording correction is merged in PR #70. Reconcile the final-head first-review requirement and A5 trace wording before ticking P3.K3. P3.K1 corrections are on `main`; P3.K2's separate status must be checked before claiming completion.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: nothing enters `docs/EVIDENCE.md` without a command or source I have personally checked.
 
@@ -33,9 +33,9 @@
 - Lead / escalation: Sibusiso, then both leads.
 - AI tool / model: UNDECLARED — owner must enter actual values.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: P3.K3 trace merged in PR #63 on 24 Sep 2026; final-head Sibusiso acceptance and A5 wording follow-up remain open. The Thu 24 Sep 20:00 date is the work-order schedule, not proof of completion.
+- Current task / status: P3.K3 trace merged in PR #63 on 24 Sep 2026; final-head Sibusiso acceptance and seventeen complete-behaviour test gaps remain open; PR #70 A5 wording correction is merged. The Thu 24 Sep 20:00 date is the work-order schedule, not proof of completion.
 - Claimed files / contract versions: `docs/EVIDENCE.md` for P3.K1/P3.K2; `team/khutso.md`, `docs/CHECKLIST.md` P3.K3 status note, and a new `docs/build-log/entries/` record for this reconciliation. No contract version change or checklist tick.
-- Last updated: 24 September 2026 — Codex assistant, at Khutso's request, reconciled the merged P3.K3 PR with its review/check evidence and outstanding follow-up. No personal source confirmation or reviewer approval is inferred.
+- Last updated: 25 September 2026 — Codex assistant, at Khutso's request, reconciled current PR evidence and task records. No personal source confirmation or reviewer approval is inferred.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 
