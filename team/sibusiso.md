@@ -94,6 +94,8 @@ See your work order's **Depends on → hands off to** line. Shared files are cla
 
 ## Needs and blockers
 
+- **25 Sep slice-3 claim (Codex, explicitly assigned by Sibusiso):** isolated `feat/sibusiso-slice3-escalation` from PR #85 `2acefbc`; `server/escalation.py`, `server/anchoring.py`, related server tests, and new build logs. The 60-second assumed G34 window is PROPOSED pending Lethabo, not an accepted spec change. Incident grouping and live PIN-authority ingestion need decisions; independent anchoring work proceeds. No schema, ADR, app or Azure edits.
+
 - **Payload vector/validator claim (25 Sep, Codex acting at Sibusiso's request):** `contracts/vectors/payloads.json`, `scripts/gen-payload-vectors.py`, `anchor/payloads.py`, `shared/payloads.js`, and their Python/Vitest/root Node tests, on `feat/sibusiso-payload-vectors` based on PR #51's initial head `af8629d` and latest merged head `bb6a446`, plus PR #82 head `d69cb19`. This adds validation evidence only: no schema edits, no server enforcement, no ADR acceptance. Report any cross-language disagreement and leave ADR-0044 `PROPOSED` pending its reviewers.
 - Add new blockers here with the person's name and the evidence needed.
 - **P3.S14/S17 shared-path claim (24 Sep, Codex acting at Sibusiso's request):** editing `.github/workflows/checks.yml`, the root `package-lock.json`, and `docs/security/SCA-WAIVERS.md`; Ipeleng is a co-owner for CI/security settings per `docs/OVERLAPS.md`. Ipeleng: please review the gate behavior and waiver policy before merge. No contract or app behavior change.
