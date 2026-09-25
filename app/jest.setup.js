@@ -2,3 +2,9 @@
 jest.mock('react-native/Libraries/Utilities/BackHandler', () =>
   require('react-native/Libraries/Utilities/__mocks__/BackHandler'),
 );
+
+// The blur view is native; in tests it is a plain view.
+jest.mock('@react-native-community/blur', () => {
+  const {View} = require('react-native');
+  return {BlurView: View};
+});

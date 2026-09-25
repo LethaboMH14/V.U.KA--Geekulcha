@@ -38,7 +38,7 @@ export type EventSubmission = {
   target_id: string;
   details: {
     v: 2;
-    signer: 'device';
+    signer: 'device' | 'guardian';
     signer_key_id: string;
     counter: number;
     event_id: string;
@@ -93,9 +93,13 @@ export async function buildEvent(args: {
   ts: string;
   /** The genesis registration carries the public key so the server can enrol it. */
   genesis?: boolean;
+  /** A guardian signs with the same Keystore key under its guardian key id (G5). */
+  as?: {role: 'guardian'; keyId: string};
 }): Promise<EventSubmission> {
   const {signer} = args;
-  const {publicKey, keyId} = await signer.identity();
+  const id = await signer.identity();
+  const publicKey = id.publicKey;
+  const keyId = args.as?.keyId ?? id.keyId;
   const salt = await signer.randomBytes(16);
   const commitment = await signer.commitment(salt, canonicalJson(args.payload));
   const counter = await signer.nextCounter();
@@ -121,7 +125,7 @@ export async function buildEvent(args: {
     target_id: args.targetId,
     details: {
       v: 2,
-      signer: 'device',
+      signer: args.as?.role ?? 'device',
       signer_key_id: keyId,
       counter,
       event_id: eventId,
@@ -136,8 +140,8 @@ export async function buildEvent(args: {
 }
 
 /** Headers for a signed request (§7). `body` must be the exact bytes sent. */
-export async function signedHeaders(signer: Signer, method: string, path: string, body: string, ts: string): Promise<Record<string, string>> {
-  const {keyId} = await signer.identity();
+export async function signedHeaders(signer: Signer, method: string, path: string, body: string, ts: string, keyIdOverride?: string): Promise<Record<string, string>> {
+  const keyId = keyIdOverride ?? (await signer.identity()).keyId;
   const nonce = await signer.randomBytes(16);
   const statement = {method: method.toUpperCase(), path, ts, body_sha256: await signer.sha256Hex(body), nonce};
   return {
@@ -156,8 +160,16 @@ export type Receipt = {event_hash: string; chain_index: number; received_at: str
  * signature covers). Throws "<status> <code>: <message>" on a refusal, or the
  * fetch error when there is no network.
  */
-export async function signedRequest<T>(baseUrl: string, signer: Signer, method: string, path: string, body: string, now: () => Date = () => new Date()): Promise<T> {
-  const headers = await signedHeaders(signer, method, path, body, rfc3339(now()));
+export async function signedRequest<T>(
+  baseUrl: string,
+  signer: Signer,
+  method: string,
+  path: string,
+  body: string,
+  now: () => Date = () => new Date(),
+  keyId?: string,
+): Promise<T> {
+  const headers = await signedHeaders(signer, method, path, body, rfc3339(now()), keyId);
   const res = await fetch(baseUrl.replace(/\/$/, '') + path, {method, headers, body: body.length ? body : undefined});
   const text = await res.text();
   const json = (text ? JSON.parse(text) : {}) as T & {code?: string; message?: string};
@@ -169,7 +181,7 @@ export async function signedRequest<T>(baseUrl: string, signer: Signer, method: 
 export async function postEvent(baseUrl: string, signer: Signer, entry: EventSubmission, now: () => Date = () => new Date()): Promise<Receipt> {
   const body = canonicalJson(entry);
   const path = '/v1/events';
-  const headers = await signedHeaders(signer, 'POST', path, body, rfc3339(now()));
+  const headers = await signedHeaders(signer, 'POST', path, body, rfc3339(now()), entry.details.signer_key_id);
   const res = await fetch(baseUrl.replace(/\/$/, '') + path, {method: 'POST', headers, body});
   const json = (await res.json()) as Receipt & {code?: string; message?: string};
   if (!res.ok) throw new Error(`${res.status} ${json.code ?? 'error'}: ${json.message ?? ''}`);

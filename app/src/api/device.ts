@@ -36,6 +36,14 @@ export const MODEL_SHA256 = '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce16
  */
 const fingerprint = String(((Platform.constants ?? {}) as {Fingerprint?: string}).Fingerprint ?? '');
 export const DEFAULT_SERVER = /generic|emulator|sdk_gphone/i.test(fingerprint) ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+/**
+ * Where installed apps learn the current server: a small file on the public
+ * GitHub release. The demo server runs behind a tunnel whose address can
+ * change; the release file is updated, and every app follows it.
+ */
+export const DISCOVERY_URL = 'https://github.com/LethaboMH14/V.U.KA--Geekulcha/releases/download/vigil-demo/server.json';
+/** Where the app itself is downloaded from (the guardian invite links here). */
+export const DOWNLOAD_URL = 'https://github.com/LethaboMH14/V.U.KA--Geekulcha/releases/tag/vigil-demo';
 /** Spec §7 allows 20 or 60. The member gets the longer window. */
 export const CHECKIN_WINDOW_S = 60;
 
@@ -53,15 +61,35 @@ export type Backend = {
   setPins(normal: string, duress: string): Promise<boolean>;
   verify(pin: string): Promise<'normal' | 'duress' | 'wrong'>;
   post(url: string, entry: EventSubmission): Promise<Receipt>;
-  request<T>(url: string, method: string, path: string, body: string): Promise<T>;
+  request<T>(url: string, method: string, path: string, body: string, keyId?: string): Promise<T>;
+  /** The current server from DISCOVERY_URL, or null. */
+  discover(): Promise<string | null>;
 };
 
 export type Profile = {
   v: 1;
+  /** A member (listens, signs their own record) or a guardian (receives alerts). */
+  role?: 'member' | 'guardian';
   firstName: string;
   subjectId: string;
   actorId: string;
   serverUrl: string;
+  /** Set when the member typed a server in Settings: discovery then leaves it alone. */
+  serverPinned?: boolean;
+  /** Members: the guardian invites they created (id and time), newest last. */
+  invites?: {guardianId: string; at: string}[];
+  /** Guardians: who they guard and the guardian key id (G5). */
+  guardian?: {guardianId: string; keyId: string; memberName: string};
+};
+
+/** One alert delivered to this guardian (GET /v1/guardians/me/alerts). */
+export type GuardianAlert = {
+  incident_id: string;
+  trigger: 'duress_signal' | 'no_answer' | 'contact_lost' | 'unknown';
+  delivered_at: string;
+  opened_at: string;
+  closed_at: string | null;
+  close_reason: string | null;
 };
 
 /** What the phone keeps about each received event. Never the PIN mode. */
@@ -139,7 +167,7 @@ export function createDevice(b: Backend) {
   }
 
   /** §4b.1: the inner signature covers exactly {action, target_id, mode, nonce}. */
-  async function pinAuthorised(action: 'end_journey' | 'export', targetId: string, mode: 'normal' | 'duress'): Promise<EventPayload> {
+  async function pinAuthorised(action: 'end_journey' | 'export' | 'add_guardian', targetId: string, mode: 'normal' | 'duress'): Promise<EventPayload> {
     const {keyId} = await b.signer.identity();
     const statement = {action, target_id: targetId, mode, nonce: await b.signer.randomBytes(16)};
     const sig = await b.signer.signDer(canonicalJson(statement));
@@ -212,7 +240,17 @@ export function createDevice(b: Backend) {
       const s = await b.getProfile();
       profile = s ? (JSON.parse(s) as Profile) : null;
       const pinsSet = await b.pinsSet();
-      if (profile) await refreshCounts();
+      if (profile) {
+        await refreshCounts();
+        // Follow the demo server if its address moved (never over a pinned one).
+        if (!profile.serverPinned) {
+          const found = await b.discover().catch(() => null);
+          if (found && found !== profile.serverUrl) {
+            profile = {...profile, serverUrl: found};
+            await b.setProfile(JSON.stringify(profile));
+          }
+        }
+      }
       return {profile, pinsSet};
     },
 
@@ -230,7 +268,8 @@ export function createDevice(b: Backend) {
       const {keyId} = await b.signer.identity();
       const short = keyId.replace(/^dev_/, '').slice(0, 8);
       // sim_ prefixes: the server accepts only simulation subjects (VUKA_SIM_ONLY).
-      profile = {v: 1, firstName, subjectId: `sim_subj_${short}`, actorId: `sim_member_${short}`, serverUrl: DEFAULT_SERVER};
+      const found = await b.discover().catch(() => null);
+      profile = {v: 1, role: 'member', firstName, subjectId: `sim_subj_${short}`, actorId: `sim_member_${short}`, serverUrl: found ?? DEFAULT_SERVER};
       await b.setProfile(JSON.stringify(profile));
       // §18 registration: never IMEI, serial, Android ID or phone number.
       await record(
@@ -243,7 +282,7 @@ export function createDevice(b: Backend) {
 
     async setServer(url: string) {
       if (!profile) return;
-      profile = {...profile, serverUrl: url.trim().replace(/\/$/, '')};
+      profile = {...profile, serverUrl: url.trim().replace(/\/$/, ''), serverPinned: true};
       await b.setProfile(JSON.stringify(profile));
       void flush();
     },
@@ -343,6 +382,90 @@ export function createDevice(b: Backend) {
       return 'ok';
     },
 
+    /**
+     * Members: invite a guardian (§9, #96). The PIN authorises `add_guardian`;
+     * the server then issues a one-time code (10 minutes, 5 tries). A duress
+     * PIN gets an identical-looking code for a decoy guardian who never
+     * receives alerts, and real guardians are told.
+     */
+    async inviteGuardian(pin: string): Promise<{code: string; guardianId: string} | 'retry'> {
+      if (!profile) throw new Error('no profile');
+      const mode = await b.verify(pin);
+      if (mode === 'wrong') return 'retry';
+      await record(await pinAuthorised('add_guardian', profile.subjectId, mode), subject());
+      await flush();
+      const r = await b.request<{guardian_id: string; invite_code: string}>(profile.serverUrl, 'POST', '/v1/guardians/invites', '');
+      profile = {...profile, invites: [...(profile.invites ?? []), {guardianId: r.guardian_id, at: new Date().toISOString()}]};
+      await b.setProfile(JSON.stringify(profile));
+      return {code: r.invite_code, guardianId: r.guardian_id};
+    },
+
+    /**
+     * Guardians: accept a member's invite with this phone's own key (#96).
+     * The consent (POPIA s18) is given on screen before this is called. No
+     * push token yet: alerts are fetched while the app is open.
+     */
+    async becomeGuardian(code: string, memberName: string): Promise<Profile> {
+      const {publicKey} = await b.signer.identity();
+      // gdn_ + the first 8 bytes of SHA-256 over the SPKI key (server/guardians.py).
+      const keyId = 'gdn_' + (await b.signer.commitment(publicKey, '')).slice(0, 16);
+      const serverUrl = (await b.discover().catch(() => null)) ?? DEFAULT_SERVER;
+      const body = JSON.stringify({
+        invite_code: code.trim(),
+        guardian_key: publicKey,
+        fcm_token: 'sim_poll_while_open',
+        popia_s18_acknowledged: true,
+      });
+      const r = await b.request<{guardian_id: string}>(serverUrl, 'POST', '/v1/guardians/accept', body, keyId);
+      profile = {
+        v: 1,
+        role: 'guardian',
+        firstName: '',
+        subjectId: '',
+        actorId: `guardian_${r.guardian_id}`,
+        serverUrl,
+        guardian: {guardianId: r.guardian_id, keyId, memberName: memberName.trim() || 'your member'},
+      };
+      await b.setProfile(JSON.stringify(profile));
+      return profile;
+    },
+
+    /** Guardians: the alerts delivered to this guardian, newest first. */
+    async guardianAlerts(): Promise<GuardianAlert[]> {
+      if (!profile?.guardian) return [];
+      const r = await b.request<{subject_id: string; alerts: GuardianAlert[]}>(
+        profile.serverUrl,
+        'GET',
+        '/v1/guardians/me/alerts',
+        '',
+        profile.guardian.keyId,
+      );
+      publish({lastContactAt: new Date().toISOString()});
+      if (r.subject_id && r.subject_id !== profile.subjectId) {
+        profile = {...profile, subjectId: r.subject_id};
+        await b.setProfile(JSON.stringify(profile));
+      }
+      return r.alerts;
+    },
+
+    /** Guardians: a signed acknowledgement (G5): called_10111, handling or stand_down. */
+    async acknowledge(incidentId: string, action: 'called_10111' | 'handling' | 'stand_down'): Promise<void> {
+      if (!profile?.guardian || !profile.subjectId) throw new Error('not a guardian yet');
+      checkPayload({kind: 'guardian_ack', pv: 1, incident_id: incidentId, action});
+      const entry = await buildEvent({
+        signer: b.signer,
+        subjectId: profile.subjectId,
+        actorId: profile.actorId,
+        action: 'guardian_event',
+        targetType: 'subject',
+        targetId: profile.subjectId,
+        payload: {kind: 'guardian_ack', pv: 1, incident_id: incidentId, action},
+        ts: rfc3339(new Date()),
+        as: {role: 'guardian', keyId: profile.guardian.keyId},
+      });
+      await b.post(profile.serverUrl, entry);
+    },
+
     flush,
 
     delivery: () => delivery,
@@ -413,7 +536,21 @@ function nativeBackend(): Backend | null {
     setPins: (n, d) => pins.setPins(n, d),
     verify: p => pins.verify(p),
     post: (url, entry) => postEvent(url, signer, entry),
-    request: (url, method, path, body) => signedRequest(url, signer, method, path, body),
+    request: (url, method, path, body, keyId) => signedRequest(url, signer, method, path, body, undefined, keyId),
+    discover: async () => {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 8000);
+      try {
+        const res = await fetch(DISCOVERY_URL, {signal: ctl.signal, cache: 'no-store'} as RequestInit);
+        if (!res.ok) return null;
+        const j = (await res.json()) as {server?: unknown};
+        return typeof j.server === 'string' && /^https:\/\/[^\s/]+$/.test(j.server) ? j.server : null;
+      } catch {
+        return null;
+      } finally {
+        clearTimeout(t);
+      }
+    },
   };
 }
 
@@ -472,6 +609,7 @@ export function simBackend(): Backend {
     request: async () => {
       throw new Error('simulated: nothing is sent');
     },
+    discover: async () => null,
   };
 }
 

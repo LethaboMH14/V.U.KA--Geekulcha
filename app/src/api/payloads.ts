@@ -36,10 +36,16 @@ const SCHEMAS: Record<string, Record<string, Rule>> = {
     pv: oneOf(1),
     journey_id: str(1, 128),
   },
+  guardian_ack: {
+    kind: oneOf('guardian_ack'),
+    pv: oneOf(1),
+    incident_id: match(UUID),
+    action: oneOf('called_10111', 'handling', 'stand_down'),
+  },
   pin_authorised: {
     kind: oneOf('pin_authorised'),
     pv: oneOf(1),
-    action: oneOf('end_journey', 'export'),
+    action: oneOf('end_journey', 'export', 'delete', 'add_guardian', 'remove_guardian'),
     target_id: str(1, 128),
     mode: oneOf('normal', 'duress'),
     nonce: str(1, 128),

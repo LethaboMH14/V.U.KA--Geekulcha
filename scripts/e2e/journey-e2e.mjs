@@ -94,7 +94,8 @@ async function phone(tag) {
       sizes.push({kind: entry.payload.kind, bytes: Buffer.byteLength(JSON.stringify(entry))});
       return api.postEvent(url, signer, entry);
     },
-    request: (url, method, path, body) => api.signedRequest(url, signer, method, path, body),
+    request: (url, method, path, body, keyId) => api.signedRequest(url, signer, method, path, body, undefined, keyId),
+    discover: async () => base,
   });
   await d.setPins('1234', '9876');
   const p = await d.register(`sim ${tag}`, '0.0.6');
@@ -105,6 +106,28 @@ async function phone(tag) {
 }
 
 const phoneSigners = new Map();
+
+/** A second phone that becomes a guardian: the same device layer, its own key. */
+async function guardianPhone() {
+  const signer = await softwareSigner();
+  let profile = null;
+  return createDevice({
+    simulated: false,
+    signer,
+    enqueue: async () => 1,
+    pending: async () => [],
+    markReceived: async () => true,
+    received: async () => [],
+    setProfile: async j => ((profile = j), true),
+    getProfile: async () => profile,
+    pinsSet: async () => false,
+    setPins: async () => true,
+    verify: async () => 'wrong',
+    post: (url, entry) => api.postEvent(url, signer, entry),
+    request: (url, method, path, body, keyId) => api.signedRequest(url, signer, method, path, body, undefined, keyId),
+    discover: async () => base,
+  });
+}
 const results = [];
 const check = (name, ok, detail = '') => {
   results.push({name, ok});
@@ -204,6 +227,37 @@ if (!fast) {
   console.log('      waiting 75 s for the check-in deadline (60 s window + 10 s grace)…');
   await new Promise(r => setTimeout(r, 75000));
   check('no answer: scheduler fixed the outcome as no_answer', sql(`SELECT outcome FROM checkins WHERE checkin_id='${q(c.checkinId)}'`) === 'no_answer');
+}
+
+// ---- 5b. Guardians: invite, accept, alert, stand down (#96 + guardian alerts) ----
+{
+  const member = await phone('guarded');
+  const inv = await member.d.inviteGuardian('1234');
+  check('guardian: member invite gives a one-time code', typeof inv === 'object' && /^[0-9a-f]{8}-\d{6}$/.test(inv.code), JSON.stringify(inv));
+  const g = await guardianPhone();
+  const gp = await g.becomeGuardian(inv.code, 'Lerato');
+  check('guardian: accepted with its own key', gp.role === 'guardian' && /^gdn_[0-9a-f]{16}$/.test(gp.guardian.keyId), gp.guardian.keyId);
+  check('guardian: no alerts yet', (await g.guardianAlerts()).length === 0);
+  // A duress invite: the member sees the same shape of code; that "guardian" is a decoy.
+  const decoyInv = await member.d.inviteGuardian('9876');
+  const decoy = await guardianPhone();
+  await decoy.becomeGuardian(decoyInv.code, 'Lerato');
+  // Duress at a check-in raises the alarm; the workers deliver it.
+  const journey = await member.d.startJourney('0.0.6');
+  const c = await detection(member.d, journey);
+  await c.enter('9876');
+  await member.d.flush();
+  let alerts = [];
+  for (let i = 0; i < 20 && alerts.length === 0; i++) {
+    await new Promise(r => setTimeout(r, 1000));
+    alerts = await g.guardianAlerts();
+  }
+  check('guardian: the duress alert reached the real guardian', alerts.length === 1 && alerts[0].trigger === 'duress_signal', JSON.stringify(alerts[0] ?? null));
+  check('guardian: the decoy sees nothing, same shape', (await decoy.guardianAlerts()).length === 0);
+  await g.acknowledge(alerts[0].incident_id, 'called_10111');
+  await g.acknowledge(alerts[0].incident_id, 'stand_down');
+  const closed = (await g.guardianAlerts())[0];
+  check('guardian: stand down closes the incident', closed.closed_at !== null && closed.close_reason === 'stand_down', JSON.stringify(closed));
 }
 
 // ---- 5. Parity: request size ---------------------------------------------------

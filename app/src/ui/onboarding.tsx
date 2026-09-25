@@ -18,7 +18,7 @@ type Step = 'welcome' | 'name' | 'pin' | 'pinAgain' | 'duressIntro' | 'duress' |
 
 const TOP_INSET = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
 
-export function Onboarding({onDone}: {onDone: () => void}) {
+export function Onboarding({onDone, onGuardian}: {onDone: () => void; onGuardian: () => void}) {
   const [step, setStep] = useState<Step>('welcome');
   const [name, setName] = useState('');
   const [pin, setPin] = useState('');
@@ -93,7 +93,7 @@ export function Onboarding({onDone}: {onDone: () => void}) {
       <Surface />
       <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
         {step === 'welcome' ? (
-          <Welcome onNext={() => setStep('name')} />
+          <Welcome onNext={() => setStep('name')} onGuardian={onGuardian} />
         ) : step === 'name' ? (
           <NameStep name={name} setName={setName} onBack={() => setStep('welcome')} onNext={() => setStep('pin')} />
         ) : step === 'duressIntro' ? (
@@ -111,7 +111,7 @@ export function Onboarding({onDone}: {onDone: () => void}) {
   );
 }
 
-function Welcome({onNext}: {onNext: () => void}) {
+function Welcome({onNext, onGuardian}: {onNext: () => void; onGuardian: () => void}) {
   const lines = [
     'It listens on this phone all the time, for trouble like breaking glass or a scream.',
     'A distress sound shows a quiet check-in, not an alarm.',
@@ -149,7 +149,10 @@ function Welcome({onNext}: {onNext: () => void}) {
         </Text>
       </View>
       <View style={{flexGrow: 1}} />
-      <Key label="Get started" variant="signal" arrow onPress={onNext} />
+      <View style={{gap: 10}}>
+        <Key label="Get started" variant="signal" arrow onPress={onNext} />
+        <Key label="I'm a guardian" variant="ghost" onPress={onGuardian} accessibilityHint="Someone sent you a code" />
+      </View>
     </View>
   );
 }

@@ -10,27 +10,35 @@
  * on which PIN it was, and none of those frames moves.
  */
 import React, {useEffect, useRef, useState} from 'react';
-import {BackHandler, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
-import {CheckCircle, GearSix, Microphone, Phone, ShieldChevron, Users, Waveform, WifiSlash} from './icons';
+import {BackHandler, Platform, Pressable, ScrollView, Share, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
+import {CheckCircle, GearSix, Microphone, Phone, ShareNetwork, ShieldChevron, UserPlus, Users, Waveform, WifiSlash} from './icons';
 import {Chip, Eyebrow, GlassIcon, Key, Lamp, LevelMeter, ListeningLine, Panel, PinKeypad, QuietKey, Readout, Row, Rule, Surface, TopAppBar} from './components';
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
 import {Onboarding} from './onboarding';
+import {GuardianHome, GuardianSetup} from './guardian';
 import {MyRecord} from './record';
-import {device, JourneyStartError, type Delivery} from '../api/device';
+import {device, DOWNLOAD_URL, JourneyStartError, type Delivery} from '../api/device';
 import {version} from '../../package.json';
 import {runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
 import type {Decision, Reason} from '../brain/detect';
 
-type Screen = 'boot' | 'onboarding' | 'home' | 'check' | 'checked' | 'end' | 'settings' | 'guardian' | 'recordPin' | 'record';
+type Screen =
+  | 'boot'
+  | 'onboarding'
+  | 'home'
+  | 'check'
+  | 'checked'
+  | 'end'
+  | 'settings'
+  | 'guardian'
+  | 'recordPin'
+  | 'record'
+  | 'invitePin'
+  | 'invite'
+  | 'guardianSetup'
+  | 'guardianHome';
 type CheckSession = Awaited<ReturnType<typeof device.openCheckin>>;
-type Guardian = {name: string; accepted: boolean};
-
-/** SIMULATED until the contract v2 client lands. */
-const SIM_GUARDIANS: Guardian[] = [
-  {name: 'Thandi M.', accepted: true},
-  {name: 'Sipho K.', accepted: true},
-  {name: 'Ayanda N.', accepted: false},
-];
+type Invite = {code: string; guardianId: string; at: number};
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 const hhmm = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
@@ -42,8 +50,7 @@ export function VigilApp() {
   const [screen, setScreen] = useState<Screen>('boot');
   // When listening began (a server-issued session is running), or null.
   const [startedAt, setStartedAt] = useState<number | null>(null);
-  // Debug-only preview of the no-guardians state.
-  const [guardians, setGuardians] = useState<Guardian[]>(SIM_GUARDIANS);
+  const [invite, setInvite] = useState<Invite | null>(null);
   const home: Screen = 'home';
   const detector = useRef<Detector | null>(null);
   const journeyId = useRef<string | null>(null);
@@ -60,7 +67,9 @@ export function VigilApp() {
   useEffect(() => {
     device
       .load()
-      .then(({profile, pinsSet}) => setScreen(profile && pinsSet ? 'home' : 'onboarding'))
+      .then(({profile, pinsSet}) =>
+        setScreen(profile?.role === 'guardian' ? 'guardianHome' : profile && pinsSet ? 'home' : 'onboarding'),
+      )
       .catch(() => setScreen('onboarding'));
   }, []);
 
@@ -163,7 +172,7 @@ export function VigilApp() {
         setScreen(home);
         return true;
       }
-      if (screen === 'guardian' || screen === 'record' || screen === 'recordPin') {
+      if (screen === 'guardian' || screen === 'record' || screen === 'recordPin' || screen === 'invitePin' || screen === 'invite') {
         setScreen('settings');
         return true;
       }
@@ -176,7 +185,29 @@ export function VigilApp() {
     return <View style={{flex: 1, backgroundColor: colors.bgBase}} />;
   }
   if (screen === 'onboarding') {
-    return <Onboarding onDone={() => setScreen('home')} />;
+    return <Onboarding onDone={() => setScreen('home')} onGuardian={() => setScreen('guardianSetup')} />;
+  }
+  if (screen === 'guardianSetup') {
+    return <GuardianSetup onDone={() => setScreen('guardianHome')} onBack={() => setScreen('onboarding')} />;
+  }
+  if (screen === 'guardianHome') {
+    return <GuardianHome />;
+  }
+  if (screen === 'invitePin') {
+    return (
+      <PinGate
+        title="Add a guardian"
+        prompt="Enter your PIN to invite a guardian"
+        onEnter={async pin => {
+          const r = await device.inviteGuardian(pin);
+          if (r === 'retry') return 'retry';
+          setInvite({...r, at: Date.now()});
+          return 'ok';
+        }}
+        onDone={() => setScreen('invite')}
+        onCancel={() => setScreen('settings')}
+      />
+    );
   }
   if (screen === 'check' && check.current) {
     const session = check.current;
@@ -227,20 +258,21 @@ export function VigilApp() {
       <ScrollView contentContainerStyle={styles.page}>
         {screen === 'record' ? (
           <MyRecord onBack={() => setScreen('settings')} />
+        ) : screen === 'invite' && invite ? (
+          <InviteShare invite={invite} onDone={() => setScreen('home')} />
         ) : screen === 'settings' ? (
           <Settings
             onBack={() => setScreen(home)}
             onGuardian={() => setScreen('guardian')}
             onRecord={() => setScreen(device.simulated ? 'record' : 'recordPin')}
+            onInvite={() => setScreen('invitePin')}
             delivery={delivery}
             detector={startedAt ? detector.current : null}
-            noGuardians={guardians.length === 0}
-            onToggleGuardians={() => setGuardians(g => (g.length ? [] : SIM_GUARDIANS))}
           />
         ) : startedAt ? (
           <Listening
             since={startedAt}
-            guardians={guardians}
+            onInvite={() => setScreen('invitePin')}
             delivery={delivery}
             level={level}
             onPause={() => setScreen('end')}
@@ -249,7 +281,7 @@ export function VigilApp() {
           />
         ) : (
           <NotListening
-            guardians={guardians}
+            onInvite={() => setScreen('invitePin')}
             paused={paused}
             starting={starting}
             armError={armError}
@@ -263,7 +295,7 @@ export function VigilApp() {
           />
         )}
         <Text style={styles.sim}>
-          {device.simulated ? 'SIMULATED preview: nothing signed or sent' : 'Guardians SIMULATED'} · build{' '}
+          {device.simulated ? 'SIMULATED preview: nothing signed or sent' : 'Demo server'} · build{' '}
           <Text style={styles.simId}>{version}</Text>
         </Text>
       </ScrollView>
@@ -302,8 +334,8 @@ function Greeting({onMenu}: {onMenu: () => void}) {
 }
 
 /** Guardians and server contact, merged into one supporting card. */
-function GuardiansCard({guardians, delivery, live}: {guardians: Guardian[]; delivery: Delivery; live: boolean}) {
-  const ready = guardians.filter(g => g.accepted).length;
+function GuardiansCard({delivery, live, onInvite}: {delivery: Delivery; live: boolean; onInvite: () => void}) {
+  const invites = device.profile?.invites ?? [];
   const contact = delivery.lastContactAt && Date.now() - Date.parse(delivery.lastContactAt) < 75000;
   return (
     <Panel>
@@ -312,7 +344,7 @@ function GuardiansCard({guardians, delivery, live}: {guardians: Guardian[]; deli
           <GlassIcon>
             <Users size={20} color={colors.textTitle} />
           </GlassIcon>
-          <Text style={styles.cardTitle}>Guardians ready</Text>
+          <Text style={styles.cardTitle}>Guardians</Text>
         </View>
         {device.simulated ? (
           <Chip status="simulated" label="Simulated" />
@@ -324,44 +356,78 @@ function GuardiansCard({guardians, delivery, live}: {guardians: Guardian[]; deli
           )
         ) : null}
       </View>
-      {guardians.length === 0 ? (
-        <Text style={[type.body, {marginTop: space.md}]}>
-          No guardians yet, so an unanswered check alerts no one. Add two people who don't live with you.
-        </Text>
-      ) : (
-        <View style={{marginTop: space.md, gap: 10}}>
-          {guardians.map(g => (
-            <View key={g.name} style={styles.guardianRow} accessible accessibilityLabel={`${g.name}, ${g.accepted ? 'ready' : 'invitation pending'}`}>
-              <Text style={[type.body, {color: colors.textLabel, fontSize: 14}]}>{g.name}</Text>
-              <Text style={[type.caption, {color: g.accepted ? colors.textSecondary : colors.textDim}]}>{g.accepted ? 'Ready' : 'Pending'}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-      {live ? (
+      <Text style={[type.body, {marginTop: space.md}]}>
+        {invites.length
+          ? `You've invited ${invites.length} guardian${invites.length === 1 ? '' : 's'}. If you don't answer a check-in, they're told.`
+          : "No guardians yet, so an unanswered check-in alerts no one. Invite two people who don't live with you."}
+      </Text>
+      <View style={{marginTop: space.md}}>
+        <Key label="Add a guardian" variant="plain" icon={<UserPlus size={18} color={colors.textTitle} />} onPress={onInvite} />
+      </View>
+      {live && delivery.lastContactAt ? (
         <>
           <Rule />
-          {offline(delivery) ? (
-            <View style={styles.note}>
-              <WifiSlash size={16} color={colors.textDim} style={{marginTop: 2}} />
-              <Text style={[type.caption, {flex: 1, color: colors.textSecondary}]}>
-                No network. Alerts need data. Events wait on this phone and are lost if it's wiped before they're sent.
-              </Text>
-            </View>
-          ) : (
-            <Text style={[type.caption, {color: colors.textSecondary}]}>
-              {ready} of {guardians.length} would be alerted if you don't answer a check.
-              {delivery.lastContactAt ? (
-                <>
-                  {' '}Last server contact <Text style={type.readout}>{hhmm(new Date(delivery.lastContactAt))}</Text>.
-                </>
-              ) : null}
-              {delivery.queued && !device.simulated ? ` ${delivery.queued} waiting on this phone.` : ''}
-            </Text>
-          )}
+          <Text style={[type.caption, {color: colors.textSecondary}]}>
+            Last server contact <Text style={type.readout}>{hhmm(new Date(delivery.lastContactAt))}</Text>.
+            {delivery.queued && !device.simulated ? ` ${delivery.queued} waiting on this phone.` : ''}
+          </Text>
         </>
       ) : null}
+      {live && offline(delivery) ? (
+        <View style={[styles.note, {marginTop: space.sm}]}>
+          <WifiSlash size={16} color={colors.textDim} style={{marginTop: 2}} />
+          <Text style={[type.caption, {flex: 1, color: colors.textSecondary}]}>
+            No network. Alerts need data. Events wait on this phone and are lost if it's wiped before they're sent.
+          </Text>
+        </View>
+      ) : null}
     </Panel>
+  );
+}
+
+/** The invite: a one-time code (10 minutes) and a message to share. */
+function InviteShare({invite, onDone}: {invite: Invite; onDone: () => void}) {
+  const [left, setLeft] = useState(600 - Math.floor((Date.now() - invite.at) / 1000));
+  useEffect(() => {
+    const t = setInterval(() => setLeft(600 - Math.floor((Date.now() - invite.at) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, [invite.at]);
+  const name = device.profile?.firstName || 'Someone';
+  const message =
+    `${name} asked you to be their VIGIL guardian.\n\n` +
+    `1. Install VIGIL: ${DOWNLOAD_URL}\n` +
+    `2. Open it and tap "I'm a guardian"\n` +
+    `3. Enter the code ${invite.code} (valid for 10 minutes)`;
+  const expired = left <= 0;
+  return (
+    <View style={styles.screen}>
+      <TopAppBar title="Add a guardian" onBack={onDone} />
+      <Panel hero>
+        <Eyebrow>One-time code</Eyebrow>
+        <Text style={styles.code} selectable accessibilityLabel={`Code ${invite.code.split('').join(' ')}`}>
+          {invite.code}
+        </Text>
+        <Text style={[type.body, {marginTop: space.sm}]}>
+          {expired
+            ? 'This code has expired. Make a new one.'
+            : `Valid for ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}. Send it with the download link to the person you trust.`}
+        </Text>
+        <View style={{marginTop: space.lg}}>
+          <Key
+            label="Share invite"
+            variant="signal"
+            icon={<ShareNetwork size={18} weight="bold" color={colors.textInverse} />}
+            disabled={expired}
+            onPress={() => void Share.share({message})}
+          />
+        </View>
+      </Panel>
+      <Text style={type.caption}>
+        They install VIGIL, tap "I'm a guardian", enter the code and agree. They are then told if you don't answer a
+        check-in, or if you use your second PIN.
+      </Text>
+      <Key label="Done" variant="ghost" onPress={onDone} />
+    </View>
   );
 }
 
@@ -383,7 +449,7 @@ function armMessage(e: ArmResult): string {
 }
 
 function NotListening({
-  guardians,
+  onInvite,
   paused,
   starting,
   armError,
@@ -391,7 +457,7 @@ function NotListening({
   onStart,
   onMenu,
 }: {
-  guardians: Guardian[];
+  onInvite: () => void;
   paused: boolean;
   starting: boolean;
   armError: ArmResult | null;
@@ -421,7 +487,7 @@ function NotListening({
         </Text>
         <Key label={starting ? 'Starting…' : 'Turn on listening'} variant="signal" arrow onPress={onStart} disabled={starting} />
       </Panel>
-      <GuardiansCard guardians={guardians} delivery={device.delivery()} live={false} />
+      <GuardiansCard delivery={device.delivery()} live={false} onInvite={onInvite} />
       <View style={styles.note}>
         <Microphone size={16} color={colors.textDim} style={{marginTop: 2}} />
         <Text style={[type.caption, {flex: 1}]}>Discreet, not invisible: Android shows a microphone dot while VIGIL is listening.</Text>
@@ -432,7 +498,7 @@ function NotListening({
 
 function Listening({
   since,
-  guardians,
+  onInvite,
   delivery,
   level,
   onPause,
@@ -440,7 +506,7 @@ function Listening({
   onMenu,
 }: {
   since: number;
-  guardians: Guardian[];
+  onInvite: () => void;
   delivery: Delivery;
   level: Level;
   onPause: () => void;
@@ -476,7 +542,7 @@ function Listening({
         </Text>
         <LevelMeter score={level.score} threshold={level.threshold} label={level.label} />
       </Panel>
-      <GuardiansCard guardians={guardians} delivery={delivery} live />
+      <GuardiansCard delivery={delivery} live onInvite={onInvite} />
       <Key label="Pause listening" variant="ghost" onPress={onPause} accessibilityHint="Asks for your PIN" />
       {onSimCheck ? <QuietKey label="Preview: show a check-in" onPress={onSimCheck} /> : null}
     </View>
@@ -490,18 +556,16 @@ function Settings({
   onBack,
   onGuardian,
   onRecord,
+  onInvite,
   delivery,
   detector,
-  noGuardians,
-  onToggleGuardians,
 }: {
   onBack: () => void;
   onGuardian: () => void;
   onRecord: () => void;
+  onInvite: () => void;
   delivery: Delivery;
   detector: Detector | null;
-  noGuardians: boolean;
-  onToggleGuardians: () => void;
 }) {
   return (
     <View style={styles.screen}>
@@ -520,18 +584,13 @@ function Settings({
           </Text>
         </View>
         <View style={styles.rowRule} />
+        <Row label="Add a guardian" detail="Needs your PIN; gives a one-time code to share" onPress={onInvite} />
+        <View style={styles.rowRule} />
         <Row label="Guardian view" detail="Preview what a guardian sees (simulated)" onPress={onGuardian} />
       </Panel>
       {!device.simulated ? <ServerSetting /> : null}
       {testFeedAvailable() ? <DetectorTest detector={detector} /> : null}
-      {__DEV__ ? (
-        <Panel>
-          <Text style={type.label}>Demo states (debug builds only)</Text>
-          <View style={{gap: space.sm, marginTop: space.md}}>
-            <Key label={noGuardians ? 'Restore guardians' : 'Show no guardians'} onPress={onToggleGuardians} />
-          </View>
-        </Panel>
-      ) : null}
+
     </View>
   );
 }
@@ -953,6 +1012,7 @@ const styles = StyleSheet.create({
   iconBtn: {minHeight: TOUCH, minWidth: TOUCH, justifyContent: 'center', alignItems: 'flex-end'},
   rowHeader: {flexDirection: 'row', alignItems: 'center', gap: 10},
   cardTitle: {fontFamily: fonts.semibold, fontSize: 15, color: colors.textTitle},
+  code: {fontFamily: fonts.mono, fontSize: 30, lineHeight: 38, letterSpacing: 1, color: colors.textTitle, marginTop: space.sm},
   panelHead: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm},
   guardianRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 28},
   note: {flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, paddingHorizontal: 4},

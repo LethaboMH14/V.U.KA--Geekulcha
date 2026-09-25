@@ -9,6 +9,7 @@
  */
 import React, {useEffect, useRef, useState} from 'react';
 import {AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View, type ViewStyle} from 'react-native';
+import {BlurView} from '@react-native-community/blur';
 import Svg, {Defs, LinearGradient, Path, RadialGradient, Rect, Stop} from 'react-native-svg';
 import {ArrowLeft, ArrowRight, Backspace, CaretRight} from './icons';
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
@@ -69,9 +70,35 @@ function Orb({color, opacity, id}: {color: string; opacity: number; id: string})
   );
 }
 
+/** A soft white sheen along the top of a glass surface: light from above. */
+function Sheen({radius}: {radius: number}) {
+  const [w, setW] = useState(0);
+  return (
+    <View
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, {borderRadius: radius, overflow: 'hidden'}]}
+      onLayout={e => setW(e.nativeEvent.layout.width)}>
+      {w > 0 ? (
+        <Svg width={w} height={90}>
+          <Defs>
+            <LinearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.55} />
+              <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Rect width={w} height={90} fill="url(#sheen)" />
+        </Svg>
+      ) : null}
+    </View>
+  );
+}
+
 /**
- * A calm glass card: white at 74% over the orbs, a white hairline edge and one
- * soft ink shadow. `hero` sets it in the thin machined tray (the double bezel).
+ * A frosted glass card: the orbs behind it are blurred for real, a white
+ * wash and a top sheen sit over the blur, a white hairline edge catches the
+ * light, and one soft ink shadow lifts it. `hero` sets it in the thin
+ * machined tray (the double bezel). Blur falls back to warm white where the
+ * phone can't blur.
  */
 export function Panel({
   tone = 'member',
@@ -85,9 +112,46 @@ export function Panel({
   children: React.ReactNode;
 }) {
   const card = (
-    <View style={[styles.card, hero && styles.cardHero, tone === 'guardian' && styles.cardGuardian, style]}>{children}</View>
+    <View style={[styles.card, hero && styles.cardHero, tone === 'guardian' && styles.cardGuardian, style]}>
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.glassClip]}>
+        <BlurView
+          style={StyleSheet.absoluteFill}
+          blurType="light"
+          blurAmount={18}
+          overlayColor="transparent"
+          reducedTransparencyFallbackColor="#FBFAF7"
+        />
+        <View style={[StyleSheet.absoluteFill, {backgroundColor: hero ? 'rgba(255,255,255,0.62)' : 'rgba(255,255,255,0.5)'}]} />
+      </View>
+      <Sheen radius={radii.panel} />
+      {children}
+    </View>
   );
   return hero ? <View style={styles.bezel}>{card}</View> : card;
+}
+
+/**
+ * Press depth: a surface sinks a little and its shadow tightens while it is
+ * pressed, then springs back. Every key and row uses it; the PIN keypad does
+ * not (it stays still for both PINs, V5).
+ */
+export function usePressDepth() {
+  const reduce = useReduceMotion();
+  const v = useRef(new Animated.Value(0)).current;
+  const to = (x: number) => {
+    if (reduce) return v.setValue(0);
+    Animated.spring(v, {toValue: x, useNativeDriver: true, speed: 40, bounciness: x ? 0 : 8}).start();
+  };
+  return {
+    style: {
+      transform: [
+        {scale: v.interpolate({inputRange: [0, 1], outputRange: [1, 0.965]})},
+        {translateY: v.interpolate({inputRange: [0, 1], outputRange: [0, 1.5]})},
+      ],
+    },
+    onPressIn: () => to(1),
+    onPressOut: () => to(0),
+  };
 }
 
 /** An icon in a 40 dp glass circle. */
@@ -151,21 +215,24 @@ export function Key({
 }) {
   const ink = variant === 'signal' || variant === 'guardian';
   const textColor = ink ? colors.textInverse : variant === 'ghost' ? colors.textSecondary : variant === 'guardianPlain' ? colors.amberText : colors.textTitle;
+  const depth = usePressDepth();
   return (
+    <Animated.View style={depth.style}>
     <Pressable
       accessibilityRole="button"
       accessibilityHint={accessibilityHint}
       accessibilityState={{disabled: Boolean(disabled)}}
       disabled={disabled}
       onPress={onPress}
+      onPressIn={depth.onPressIn}
+      onPressOut={depth.onPressOut}
       android_ripple={{color: ink ? colors.rippleOnAction : colors.ripple, foreground: true}}
-      style={({pressed}) => [
+      style={[
         styles.pill,
         ink && styles.pillInk,
         variant === 'plain' && styles.pillGlass,
         variant === 'ghost' && styles.pillGhost,
         variant === 'guardianPlain' && styles.pillGuardianPlain,
-        pressed && styles.pressed,
         disabled && {opacity: 0.4},
       ]}>
       {ink ? (
@@ -185,6 +252,7 @@ export function Key({
         </View>
       ) : null}
     </Pressable>
+    </Animated.View>
   );
 }
 
@@ -300,11 +368,15 @@ export function Rule() {
 
 /** A list row: label, optional detail, and a caret. 52 dp minimum. */
 export function Row({label, detail, onPress, leading}: {label: string; detail?: string; onPress: () => void; leading?: React.ReactNode}) {
+  const depth = usePressDepth();
   return (
+    <Animated.View style={depth.style}>
     <Pressable
       accessibilityRole="button"
       accessibilityHint={detail}
       onPress={onPress}
+      onPressIn={depth.onPressIn}
+      onPressOut={depth.onPressOut}
       android_ripple={{color: colors.ripple}}
       style={({pressed}) => [styles.row, pressed && {backgroundColor: colors.actionDim}]}>
       {leading ? <View style={styles.rowLeading}>{leading}</View> : null}
@@ -314,6 +386,7 @@ export function Row({label, detail, onPress, leading}: {label: string; detail?: 
       </View>
       <CaretRight size={14} color={colors.textDim} />
     </Pressable>
+    </Animated.View>
   );
 }
 
@@ -460,16 +533,17 @@ const shadow = {
 const styles = StyleSheet.create({
   orb: {position: 'absolute', width: 420, height: 420},
   card: {
-    // Opaque warm white (the prototype's solid fallback): on Android an
-    // elevation shadow shows through a translucent card as a grey block.
-    backgroundColor: '#FBFAF7',
+    // The blurred backdrop (BlurView) makes the card opaque, so its elevation
+    // shadow never shows through it.
+    backgroundColor: 'transparent',
     borderRadius: radii.panel,
     borderWidth: 1,
     borderColor: colors.cardEdge,
     padding: 20,
     ...shadow,
   },
-  cardHero: {backgroundColor: '#FDFCFA', shadowOpacity: 0.22, shadowRadius: 26, elevation: 6},
+  cardHero: {shadowOpacity: 0.22, shadowRadius: 26, elevation: 6},
+  glassClip: {borderRadius: radii.panel, overflow: 'hidden'},
   cardGuardian: {borderColor: 'rgba(255,255,255,0.8)'},
   bezel: {
     padding: 6,
