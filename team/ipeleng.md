@@ -1,6 +1,6 @@
 # Ipeleng Constance Modise
 
-**Proposed planning package; owner has not confirmed availability or started these tasks.**
+**Work order acknowledged 25 Sep 2026; AI tool/model declared; security reviews posted on 5 open PRs; P3.S2/P3.S3/P3.L8/P3.S7 delivered via merged PRs #74/#75/#76/#79/#80. SSDLC preparation in progress for Sat 11:00 internal deadline.**
 
 ## Agent operating spec
 
@@ -23,7 +23,7 @@
 - **An attacker must never be able to tell a duress path from a normal one.** That is a security boundary, tested (T15, T16), not a UI preference.
 - **Duress-session no-ops and the decoy guardian are tested, not asserted** (T12).
 
-**Current task** — Work order below (issued 23 Sep). PR #43 security review posted 23 Sep (APPROVE WITH CONDITIONS; recorded in `docs/ADR-ACCEPTANCE-RECORD.md`). Next: `shared/canonical.js`, `shared/der.js` and `shared/merkle.js` against Sibusiso's vectors by Thu 12:00, then the STRIDE model and test specifications by Thu 20:00. The SSDLC is due Sat 12:30 (internal Sat 11:00).
+**Current task** — SSDLC pack preparation for Sat 26 Sep 11:00 internal deadline (programme 12:30). Security reviews posted on PRs #78 (security programme docs), #51 (contract v2), #89 (slice 3 escalation/PIN authority), #88 (VIGIL events/Keystore), #87 (evidence scorecard). P3.S2 (canonical/DER/Merkle) and P3.S3 (THREAT-MODEL + TEST-SPECS) delivered and merged. P3.L8 PIN-authority rules documented. P3.S7 verify-min delivered. Next: close B1–B3/S1–S4 conditions from PR #43 review via contract v2 and follow-up PRs; populate PENTEST-RESULTS.md from Thu 22:00 runs; ensure tooling evidence (SAST, SCA, ZAP, MobSF) has run dates.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every abuse case I sign off exists as a test that actually runs and actually fails the attack.
 
@@ -33,11 +33,11 @@
 - Owns outright: Threat model, secure lifecycle, OWASP mapping, physical security.
 - Reviews only: Every privacy/security boundary and sensitive release.
 - Lead / escalation: Lethabo, then both leads.
-- AI tool / model: UNDECLARED — owner must enter actual values.
-- Availability / timezone: unconfirmed / Africa/Johannesburg.
-- Current task / status: Work order issued 23 Sep 2026 (see the Work order section below); SSDLC due Sat 26 Sep 12:30 (internal 11:00). P2.3/P2.6 parked with UMOJA/KHAYA.
-- Claimed files / contract versions: none; reserve before editing.
-- Last updated: 23 September 2026 — work order issued by Lethabo (co-lead) via Claude Code assistant.
+- AI tool / model: Cline (Claude Sonnet 4) — declared 25 Sep 2026
+- Availability / timezone: Full weekend (Fri 25 Sep – Sun 27 Sep) / Africa/Johannesburg
+- Current task / status: Security reviews posted on PRs #78, #51, #89, #88, #87 (25 Sep). P3.S2 canonical/DER/Merkle verified against vectors (PR #74 merged). P3.S3 THREAT-MODEL accepted, TEST-SPECS T04–T52 accepted with conditions (PR #75 merged). P3.L8 PIN-authority rules documented with self-review (PR #76 merged). Key manifest + verify-min delivered (PRs #79, #80 merged). SSDLC pack preparation in progress (Sat 11:00 internal).
+- Claimed files / contract versions: `docs/security/COMPLIANCE-GOVERNANCE.md`, `docs/security/PENTEST-PLAN.md`, `docs/security/SSDLC.md`, `docs/STAGED-DURESS-DEFENCE.md`, `docs/security/THREAT-MODEL.md`, `shared/canonical.js`, `shared/der.js`, `shared/merkle.js`, `shared/verify.js`, `shared/keys.js`
+- Last updated: 25 September 2026 — security reviews posted, work order acknowledged and in progress.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 
@@ -238,3 +238,4 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Ipeleng is asserted; owner acknowledgement pending.
 - 2026-09-24 — Lethabo (co-lead), via Claude Code assistant: **Lethabo is covering the security lane while Ipeleng is away, and hands it back when she returns.** Security reviews go to Lethabo in the meantime: request her on any PR that touches security, privacy, PIN authority or the contract. Nothing Ipeleng wrote is changed or asserted as hers. First action: the P3.L8 checkpoint decisions (ADR-0041, `docs/PIN-AUTHORITY-RULES.md` §8). Next: verify-min (P3.S7), the test specifications, the threat model and the SSDLC pack.
 - 2026-09-24 — Lethabo (covering the security lane): security reviews posted to unblock Sibusiso. §4a accepted with three amendments (ADR-0042). #62 CI gates approved. The #47 intake question answered with a full-history gitleaks scan (no leaks). #51 reviewed: SEC-1 to SEC-6.
+- 2026-09-25 — Ipeleng (via Cline assistant): returned to security lane. Posted security reviews on 5 open PRs: #78 (COMPLIANCE-GOVERNANCE/PENTEST-PLAN/SSDLC acceptance verified), #51 (contract v2 B1–B3/S1–S4 conditions checklist), #89 (slice 3 escalation/PIN authority/anchoring duress-indistinguishability), #88 (VIGIL Keystore signer + canonical form), #87 (evidence scorecard no-secrets/honest-labels). Updated team/ipeleng.md with AI tool (Cline/Claude Sonnet 4), full weekend availability, and claimed files. P3.S2 (PR #74), P3.S3 (PR #75), P3.L8 (PR #76), P3.S7 (PRs #79/#80) all merged and delivered. SSDLC pack preparation in progress for Sat 11:00 internal deadline. Build-log entry to follow.
