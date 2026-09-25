@@ -83,6 +83,13 @@ def test_unknown_or_foreign_hold_is_404(bank):
     assert post(bank, RELEASE, rel("k3", a, s="sim_b")).json()["code"] == "unknown_hold"
 
 
+def test_timezone_naive_timestamp_is_refused_not_a_500(bank):
+    """A naive X-Vuka-Ts must not crash the comparison against an aware clock (Khutso, #96)."""
+    naive_ts = datetime.now().isoformat()  # no offset, no "Z"
+    response = post(bank, RISK, risk("k1"), ts=naive_ts)
+    assert response.status_code == 401
+
+
 def test_stale_timestamp_and_non_sim_subject_are_refused(bank):
     old = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat().replace("+00:00", "Z")
     assert post(bank, RISK, risk("k1"), ts=old).status_code == 401
