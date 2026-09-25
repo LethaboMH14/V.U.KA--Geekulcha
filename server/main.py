@@ -528,6 +528,42 @@ def create_app(database=None) -> FastAPI:
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
 
+    @app.post("/v1/journeys", status_code=201)
+    async def start_journey(request: Request):
+        """PROPOSED (25 Sep): server-issued journey_id; bodyless, device-only."""
+        body = await request.body()
+        try:
+            principal = verify_request(request, database=store, body=body)
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != "device":
+            return _error_response(404, "not_found", "subject was not found")
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id,
+                subject_id=principal.subject_id,
+                nonce=principal.nonce,
+                request_ts=principal.request_ts,
+                now=datetime.now(timezone.utc),
+            )
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return _error_response(404, "not_found", "subject was not found")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        journey_id = str(uuid4())
+        try:
+            store.bind_journey(journey_id, principal.subject_id)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        return {"receipt_id": str(uuid4()), "state": "accepted", "journey_id": journey_id}
+
     @app.post("/v1/journeys/{id}/heartbeat", status_code=202)
     async def journey_heartbeat(id: str, request: Request):
         """PROPOSED contact clock input: records last contact only, never location."""

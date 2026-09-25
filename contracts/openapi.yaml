@@ -308,14 +308,25 @@ paths:
     post:
       tags: [VIGIL]
       operationId: startJourney
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Start a journey by explicit user action
-      description: Device-signed request; arming requires the app in the foreground and granted microphone and notification permissions.
+      description: >-
+        Device-signed, bodyless request (§7; body_sha256 is SHA-256 of the empty byte
+        string). The server generates journey_id and binds it to the caller's subject;
+        it does not itself append a chain entry (journey_armed, if the device submits
+        one, is a separate POST /v1/events call, unchanged by this route). PROPOSED
+        (Sibusiso, 25 Sep): journey_id is a server-issued UUID, not device-generated,
+        because no chain-signed statement exists yet to derive one from at this point.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       responses:
-        '201': { $ref: '#/components/responses/AcceptedReceipt' }
+        '201':
+          description: Journey created; journey_id is server-issued.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JourneyReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /v1/journeys/{id}/heartbeat:
     post:
       tags: [VIGIL]
@@ -838,8 +849,17 @@ components:
         state: { type: string, enum: [accepted, queued, pending, confirmed, refused] }
         sim: { type: boolean, const: true, description: Present and true on simulated bank receipts. }
         hold_ref: { type: string, minLength: 1, description: Present on a simulated risk-signal receipt; names the hold that a later release must cite. }
+        journey_id: { type: string, minLength: 1, maxLength: 128, description: Present on a POST /v1/journeys receipt; server-issued (PROPOSED, 25 Sep). }
         anchor_status: { type: string, enum: [not_submitted, submitted, pending, confirmed, gap] }
         pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation', description: Present when a verified PIN-authority statement is recorded; expiry is server-derived. }
+    JourneyReceipt:
+      description: PROPOSED (25 Sep) — Receipt plus the server-issued journey_id.
+      allOf:
+        - $ref: '#/components/schemas/Receipt'
+        - type: object
+          required: [journey_id]
+          properties:
+            journey_id: { type: string, minLength: 1, maxLength: 128 }
     SimBankReceipt:
       allOf:
         - $ref: '#/components/schemas/Receipt'
