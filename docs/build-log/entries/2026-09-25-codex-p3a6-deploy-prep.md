@@ -89,3 +89,84 @@ files:
 **Decision / needs** — Keep export refused until the accepted ADR-0041 authorization and pre-incident prefix behavior are actually implemented and tested. The smoke's observed 403 is expected fail-closed behavior, not a successful export. Sibusiso owns Part B and any Azure action; no deploy is claimed. Package ZIP remains in the temporary directory only and is not committed.
 
 **Business handoff** — The SEC-6 guard and safe package workflow are ready for review. The ZIP contains the three server endpoints and their code, but API export is not operational; do not treat P3.A6/P3.A4 as complete on this evidence alone.
+
+### 2026-09-25 follow-up — smoke transport hardening and clean rerun
+
+**Finding and change** — PR CI's Semgrep run found that `urllib.request.urlopen` in the signed smoke client also accepts `file://` URLs. Replaced it with `http.client` and strict HTTP/HTTPS-origin parsing; added tests for rejected schemes/origins, generated `sim_` event signatures, and response-field redaction. This is a test-client transport correction; no server/API behavior changed. The CI finding was reproduced from the Semgrep job output; Semgrep itself was not run locally.
+
+**Clean environment and tests** — Application imports for FastAPI, cryptography and psycopg2 resolved from the fresh venv installed only from `requirements.txt` at `C:\Users\lovilocal.adm\AppData\Local\Temp\vuka-deploy-venv-c93a8bc4f72d49a69ab961ac7b1fde01\Lib\site-packages`. The global pytest installation supplied only the test runner.
+
+```text
+python -m pytest server/tests/ anchor/tests/ scripts/tests/ -q
+141 passed in 3.95s
+
+node --test "test/**/*.test.mjs"
+ℹ tests 37
+ℹ pass 37
+ℹ fail 0
+
+node scripts/check-docs.mjs
+Document contracts, required counts, local links and selected claim safeguards passed. Human fact/quality review is still required.
+
+node scripts/check-intake.mjs
+Intake gate has evidence references and approval records; reviewers must verify their authenticity.
+
+pip-audit --requirement requirements.txt --cache-dir <temporary cache> --progress-spinner off
+No known vulnerabilities found
+pip-audit --requirement server/requirements.txt --cache-dir <temporary cache> --progress-spinner off
+No known vulnerabilities found
+
+python scripts/build-deploy-package.py 50965ea23d461138b2641dcb31d0465251260f68 --output <temporary ZIP>
+commit: 50965ea23d461138b2641dcb31d0465251260f68
+package: <temporary ZIP>
+files:
+  anchor/canonical.py
+  requirements.txt
+  server/README.md
+  server/db.py
+  server/main.py
+  server/outbox.py
+  server/payload_store.py
+  server/requirements.txt
+  server/src/api/.gitkeep
+  server/src/auth/.gitkeep
+  server/src/db/.gitkeep
+  server/src/middleware/.gitkeep
+  server/src/notify/.gitkeep
+  server/src/ws/.gitkeep
+  startup.sh
+archive_exists=True
+archive_bytes=17587
+
+Start-Process "C:\Program Files\Git\bin\bash.exe" -ArgumentList '-c "exec bash startup.sh"' (clean venv first on PATH; local PostgreSQL; throwaway 32-byte VUKA_PAYLOAD_KEY_B64 set only in process environment; VUKA_SIM_ONLY=1; PORT=8017)
+smoke sim_ subject: sim_smoke_subject_1a9a7ff23c364809b20fa67f82282548
+healthz: status=200 body={"database":"reachable","status":"ok"}
+register sim_smoke_subject_1a9a7ff23c364809b20fa67f82282548: status=201 body={"chain_index":0,"event_hash":"6477e384ec1b7d9aa93d688dfd0eb1ae9834d9ca7257e7f479e5b8f9ecc3dca2","received_at":"2026-09-25T06:44:36.414353Z"}
+append sim_ event: status=201 body={"chain_index":1,"event_hash":"a24908c8a284d6232cb62b02cdced784582b058747e84cda3ef0203bfece48b7","received_at":"2026-09-25T06:44:36.653216Z"}
+read export: status=403 body={"code":"pin_authorisation_required","message":"fresh export PIN authorisation is required"}
+register subject_2f2b9c05bdd64c558d4d005b652e9d7c: status=403 body={"code":"simulation_only","message":"genesis registration target must use the sim_ prefix while simulation-only mode is enabled"}
+smoke result: FAILED
+  - export remains fail-closed pending ADR-0041 PIN-authority and prefix implementation
+smoke_exit_code=1
+
+Stop-Process -Id <initial local server PID> -Force
+Start-Process "C:\Program Files\Git\bin\bash.exe" -ArgumentList '-c "exec bash startup.sh"' (same local-only environment; same disposable PostgreSQL)
+smoke sim_ subject: sim_smoke_subject_1a9a7ff23c364809b20fa67f82282548
+healthz: status=200 body={"database":"reachable","status":"ok"}
+smoke mode: export-only restart check
+read export: status=403 body={"code":"pin_authorisation_required","message":"fresh export PIN authorisation is required"}
+smoke result: FAILED
+  - export remains fail-closed pending ADR-0041 PIN-authority and prefix implementation
+restart_export_exit_code=1
+
+python -  # PostgresDatabase.export(subject_id), first_broken_index(entries), count private_payloads
+persisted_chain_entries=2
+first_broken_index=None
+persisted_encrypted_payload_rows=2
+local_server_stopped=true
+
+git diff --check
+exit 0 (Git warned that the working copy of scripts/smoke-live.py uses LF and may be converted to CRLF.)
+```
+
+**Limit** — The smoke's nonzero exit is intentional for the current contract state: both pre- and post-restart API export calls return the documented fail-closed `403 pin_authorisation_required`. PostgreSQL continuity and chain integrity pass, but a successful signed API export cannot be claimed until the ADR-0041 PIN-authority and prefix gates are implemented. No Azure operation was attempted, and no credential value was read, logged or committed.

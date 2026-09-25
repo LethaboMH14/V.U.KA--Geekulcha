@@ -7,13 +7,13 @@ import argparse
 import base64
 from datetime import datetime, timezone
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path
 import re
 import sys
-import urllib.error
-import urllib.request
+from urllib.parse import urlsplit
 import uuid
 
 from cryptography.hazmat.primitives import hashes, serialization
@@ -157,25 +157,46 @@ def redact_body(body: bytes) -> str:
     return json.dumps(redact(parsed), sort_keys=True, separators=(",", ":"))
 
 
+def parse_origin(base_url: str) -> tuple[str, str, int | None]:
+    parsed = urlsplit(base_url)
+    scheme = parsed.scheme.lower()
+    if scheme not in {"http", "https"} or not parsed.hostname:
+        raise ValueError("base URL must use http or https and include a host")
+    if parsed.username or parsed.password or parsed.path not in {"", "/"} or parsed.query or parsed.fragment:
+        raise ValueError("base URL must be an origin without credentials, path, query or fragment")
+    host = parsed.hostname
+    if any(ord(char) < 33 or char in "/\\?#@" for char in host):
+        raise ValueError("base URL host contains an invalid character")
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise ValueError("base URL port is invalid") from exc
+    return scheme, host, port
+
+
 def call(base_url: str, label: str, method: str, path: str, private_key, key_id: str, body: bytes = b""):
     headers = signed_headers(private_key, key_id=key_id, method=method, path=path, body=body)
-    request = urllib.request.Request(
-        f"{base_url.rstrip('/')}{path}",
-        data=body if method.upper() != "GET" else None,
-        headers=headers,
-        method=method.upper(),
-    )
+    connection = None
     try:
-        with urllib.request.urlopen(request, timeout=15) as response:
-            status = response.status
-            response_body = response.read()
-    except urllib.error.HTTPError as response:
-        status = response.code
+        scheme, host, port = parse_origin(base_url)
+        connection_type = http.client.HTTPSConnection if scheme == "https" else http.client.HTTPConnection
+        connection = connection_type(host, port=port, timeout=15)
+        connection.request(
+            method.upper(),
+            path,
+            body=body if method.upper() != "GET" else None,
+            headers=headers,
+        )
+        response = connection.getresponse()
+        status = response.status
         response_body = response.read()
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+    except (http.client.HTTPException, TimeoutError, OSError, ValueError) as exc:
         safe_body = json.dumps({"transport_error": type(exc).__name__}, separators=(",", ":"))
         print(f"{label}: status=NO_RESPONSE body={safe_body}")
         return None, None
+    finally:
+        if connection is not None:
+            connection.close()
     print(f"{label}: status={status} body={redact_body(response_body)}")
     try:
         return status, json.loads(response_body)
@@ -303,6 +324,10 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--export-only requires a sim_ subject id")
     if args.subject_id and not args.export_only:
         parser.error("--subject-id is only valid with --export-only")
+    try:
+        parse_origin(args.base_url)
+    except ValueError as exc:
+        parser.error(str(exc))
     return run(args.base_url, subject_id=args.subject_id, export_only=args.export_only)
 
 
