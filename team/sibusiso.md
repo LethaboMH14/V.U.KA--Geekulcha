@@ -25,7 +25,7 @@
 - **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — P3.A3 support: contract tests and golden/rejection vectors for the proposed §4b payload schemas are implemented and verified on separate branch `feat/sibusiso-payload-vectors`, based on latest PR #51 head `bb6a446` plus PR #82 head `d69cb19`. Await PR review. Schemas remain unchanged and proposed pending ADR-0044 review; no server-side enforcement is in scope.
+**Current task** — P3.A3 support: contract tests and golden/rejection vectors for the proposed §4b payload schemas are implemented, verified and published on `feat/sibusiso-payload-vectors` (payload commit `ccd98b8`; publication evidence in `docs/build-log/entries/2026-09-25-codex-payload-vectors-published.md`). Await PR review. Schemas remain unchanged and proposed pending ADR-0044 review; no server-side enforcement is in scope.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -38,7 +38,7 @@
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
 - Claimed files / contract versions: P3.A3/P3.A4 hardening claim — `server/main.py`, `server/db.py`, `server/outbox.py`, `server/payload_store.py`, `server/tests/`, `server/requirements.txt`, root `requirements.txt`, `startup.sh`, `.gitattributes` (shell line endings), `server/README.md`, `anchor/publish.py`, `anchor/hedera-sidecar/`, `anchor/verify.py`, `anchor/tests/`, `.github/workflows/checks.yml`; ADR-0041 and live-receipt contract corrections — `contracts/openapi.yaml`, `test/openapi-contract.test.mjs`. The shared contract paths need both leads and contract/domain review before merge; this local claim is not approval.
-- Last updated: 25 September 2026 — §4b vectors/validators and cross-language tests complete on `feat/sibusiso-payload-vectors`; latest PR #51 head merged; ADR-0044 acceptance remains pending.
+- Last updated: 25 September 2026 — §4b vectors/validators and cross-language tests published on `feat/sibusiso-payload-vectors`; latest PR #51 head merged; ADR-0044 acceptance remains pending.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 
