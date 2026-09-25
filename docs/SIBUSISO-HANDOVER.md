@@ -388,3 +388,9 @@ Working from the "what's left to build" list I gave the user, built 4 of 7 direc
 - **PR #96 (stacked on #89) — the last 3 backend items, built by me, not Codex:** sim_bank service + first full S1 run over a real socket; `/ws/panel` + `/ws/member` (+ `websockets==17.1`, pip-audit clean); guardian invite/accept/decoy/24 h removal/token. **Found and fixed a production bug:** the manifest key is SPKI but `server_signing` compared it to a raw key, so every server-signed entry would have failed on a real deploy (tests patched it away).
 - **Verified from a fresh archive of `b6acdf2`:** 277 pytest, 50 node, 137 vitest, all green; 11 mutation checks. Server now implements 17 of 30 declared routes.
 - The two Codex packets are marked DONE. **Still open:** no worker process in `startup.sh`; no FCM; Azure deploy blocked; 11+ PROPOSED decisions for Lethabo; Ipeleng's Semgrep call.
+
+## 2026-09-26 (~00:30) — guardian FCM schema unified, sim_bank crash fixed
+
+- **#96: fixed Khutso's naive-timestamp finding (`ea84e79`).** Reproduced the `TypeError` he predicted by reverting the fix and running a new test first, then fixed `sim_bank/main.py::authenticate` to reject a timestamp with no UTC offset before the subtraction.
+- **#95 (Khutso's FCM adapter): made the guardian-schema fix myself, `45a21ce`.** Merged #96 into his branch; `FcmGuardianNotifier` now reads recipients/tokens from #96's `guardians` table via `alerting_guardians()`, removing the parallel `guardian_fcm_tokens` table entirely. 3 new tests drive the real invite → accept → outbox → FCM path, including decoy exclusion and idempotent replay. 285 pytest / 50 node clean on both PRs after the merge.
+- Both re-requested from Khutso. #95 still needs FCM_PROJECT_ID/FCM_ACCESS_TOKEN provisioning (his own open item, unchanged).
