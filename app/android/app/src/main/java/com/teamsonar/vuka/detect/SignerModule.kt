@@ -38,6 +38,9 @@ class SignerModule(ctx: ReactApplicationContext) : ReactContextBaseJavaModule(ct
     private val keyStore: KeyStore get() = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
     private val prefs get() = reactApplicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
+    // Synchronized so two native calls on a fresh install can never generate
+    // the key twice after identity() has already reported the first one.
+    @Synchronized
     private fun ensureKey(): Boolean {
         if (keyStore.containsAlias(ALIAS)) return prefs.getBoolean("strongbox", false)
         fun generate(strongBox: Boolean) {
@@ -128,7 +131,12 @@ class SignerModule(ctx: ReactApplicationContext) : ReactContextBaseJavaModule(ct
         promise.resolve(MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) })
     }
 
-    /** The next event counter for this key: persisted and strictly increasing (§7). */
+    /**
+     * The next event counter for this key: persisted and strictly increasing
+     * (§7). It starts again from 1 only when a new key is generated, which is
+     * safe because the key id changes too, and the server's counters are
+     * unique per key id.
+     */
     @ReactMethod
     fun nextCounter(promise: Promise) {
         synchronized(this) {

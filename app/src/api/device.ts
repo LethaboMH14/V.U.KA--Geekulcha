@@ -75,6 +75,9 @@ export type RecordEntry = {
   received_at: string;
 };
 
+/** One entry of the member's held export, as My record shows it. */
+export type RecordRow = {index: number; kind: string; ts: string; hash: string; fromThisPhone: boolean};
+
 export type Delivery = {
   queued: number;
   received: number;
@@ -353,12 +356,25 @@ export function createDevice(b: Backend) {
      * applied by the server) and check it on this phone against the receipts
      * this phone kept. Needs the authorisation to have reached the server.
      */
-    async checkMyRecord(): Promise<RecordCheck> {
+    async checkMyRecord(): Promise<{check: RecordCheck; rows: RecordRow[]}> {
       if (!profile) throw new Error('no profile');
       await flush();
       const exp = await b.request<Export>(profile.serverUrl, 'GET', `/v1/subjects/${encodeURIComponent(profile.subjectId)}/export`, '');
       const mine = (await b.received()).map(it => JSON.parse(it.json) as RecordEntry);
-      return checkRecord(exp, b.signer, mine);
+      const check = await checkRecord(exp, b.signer, mine);
+      // The view is the server's held export only (T30): entries after the
+      // pre-incident head are not shown, whichever PIN opened it. Rows carry
+      // the kind, never a payload's specifics (so never the PIN mode).
+      const kinds = new Map((exp.payloads ?? []).map(p => [p.event_id, String((p.payload as {kind?: unknown})?.kind ?? '')]));
+      const ours = new Set(mine.map(r => r.event_hash));
+      const rows: RecordRow[] = (exp.entries ?? []).map((e, index) => ({
+        index,
+        kind: kinds.get(String(e.details?.event_id)) || (e.details?.event_id && !kinds.has(String(e.details.event_id)) ? 'removed' : 'unknown'),
+        ts: String(e.ts ?? ''),
+        hash: e.event_hash,
+        fromThisPhone: ours.has(e.event_hash),
+      }));
+      return {check, rows};
     },
 
     /** The member's own copy of their record: every receipt, oldest first. */

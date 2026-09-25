@@ -490,7 +490,7 @@ function Settings({
       <Panel style={{padding: 0, overflow: 'hidden'}}>
         <Row
           label="My record"
-          detail={`${delivery.received} received · ${delivery.queued} waiting on this phone`}
+          detail={delivery.queued ? `${delivery.queued} waiting on this phone` : 'Your record, checked on this phone'}
           onPress={onRecord}
         />
         <View style={styles.rowRule} />
@@ -653,8 +653,10 @@ function JourneyCheck({
       if ((await onEnter(pin)) === 'checked') onDone();
       else setRetry(true);
     } catch {
-      // The evidence couldn't be written: behave as a normal check, never reveal it.
-      onDone();
+      // The signed answer couldn't be written: never show it as accepted.
+      // "Try again" looks the same whichever PIN it was; the check stays open,
+      // so an unanswered check still reaches guardians at its deadline.
+      setRetry(true);
     } finally {
       busy.current = false;
     }
@@ -720,7 +722,7 @@ function PinGate({
       if ((await onEnter(pin)) === 'ok') onDone();
       else setRetry(true);
     } catch {
-      onDone();
+      setRetry(true);
     } finally {
       busy.current = false;
     }
@@ -761,7 +763,8 @@ function EndJourney({
       if ((await onEnter(pin)) === 'ended') onDone();
       else setRetry(true);
     } catch {
-      onDone();
+      // The authorisation couldn't be written: the journey keeps listening.
+      setRetry(true);
     } finally {
       busy.current = false;
     }

@@ -1,10 +1,10 @@
 # End-to-end test against a running ANCHOR server
 
-Drives the app's own event client (`app/src/api/events.ts`) against the server
-from PR #51, with a WebCrypto P-256 signer standing in for Android Keystore.
+Drives the app's own event client (`app/src/api/events.ts`) against the
+slice-3 ANCHOR server (PR #89), with a WebCrypto P-256 signer standing in for Android Keystore.
 
 ```bash
-# 1. PostgreSQL and the server (from a checkout of PR #51)
+# 1. PostgreSQL and the server (from a checkout of PR #89)
 export DATABASE_URL=postgresql://vuka@127.0.0.1:55432/vuka
 export VUKA_PAYLOAD_KEY_B64=<32 random bytes, base64; local only, never committed>
 python -m uvicorn server.main:app --host 127.0.0.1 --port 8000

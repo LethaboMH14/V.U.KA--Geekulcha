@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * End to end against a running ANCHOR server (PR #51): the app's own event
+ * End to end against a running ANCHOR server (slice 3, PR #89): the app's own event
  * client (app/src/api/events.ts, compiled) with a WebCrypto P-256 signer
  * standing in for Android Keystore. It registers a sim_ subject (genesis),
  * appends subject events, retries one (idempotency), and checks a tampered
@@ -72,10 +72,12 @@ const reg = await api.buildEvent({
 const r0 = await api.postEvent(base, signer, reg).catch(e => ({error: String(e)}));
 check('genesis registration accepted, chain index 0', r0.chain_index === 0, JSON.stringify(r0));
 
-// 2. A subject event appends to the chain with a server receipt.
+// 2. A journey (server-issued id, slice 3 / PR #89), then a detection on it.
+const {journey_id: journeyId} = await api.signedRequest(base, signer, 'POST', '/v1/journeys', '');
+check('journey started with a server-issued id', /^[0-9a-f-]{36}$/.test(journeyId ?? ''), journeyId);
 const ev = await api.buildEvent({
-  signer, subjectId, actorId, action: 'device_event', targetType: 'subject', targetId: subjectId, ts: ts(),
-  payload: {kind: 'signal_detected', pv: 1, journey_id: 'sim_jny_e2e', sense: 'sound', class_label: 'Glass', class_index: 435, score_bp: 8516, threshold_bp: 3500, window_ms: 975, model_sha256: '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de', app_version: '0.0.6', corroboration: []},
+  signer, subjectId, actorId, action: 'device_event', targetType: 'journey', targetId: journeyId, ts: ts(),
+  payload: {kind: 'signal_detected', pv: 1, journey_id: journeyId, sense: 'sound', class_label: 'Glass', class_index: 435, score_bp: 8516, threshold_bp: 3500, window_ms: 975, model_sha256: '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de', app_version: '0.0.6', corroboration: []},
 });
 const r1 = await api.postEvent(base, signer, ev).catch(e => ({error: String(e)}));
 check('signal_detected appended at chain index 1', r1.chain_index === 1 && /^[0-9a-f]{64}$/.test(r1.event_hash ?? ''), JSON.stringify(r1));
@@ -84,10 +86,16 @@ check('signal_detected appended at chain index 1', r1.chain_index === 1 && /^[0-
 const r1b = await api.postEvent(base, signer, ev).catch(e => ({error: String(e)}));
 check('retry returns the same receipt', r1b.event_hash === r1.event_hash && r1b.chain_index === 1, JSON.stringify(r1b));
 
-// 4. A payload changed after signing is refused (commitment mismatch).
-const tampered = {...ev, payload: {...ev.payload, score_bp: 9999}, details: {...ev.details, event_id: (await api.buildEvent({signer, subjectId, actorId, action: 'device_event', targetType: 'subject', targetId: subjectId, ts: ts(), payload: {kind: 'x', pv: 1}})).details.event_id}};
+// 4. A payload changed after signing is refused by the commitment check: a
+// fresh, correctly signed event whose payload alone is altered (same event_id,
+// same signature), so the refusal can only come from the commitment.
+const fresh = await api.buildEvent({
+  signer, subjectId, actorId, action: 'device_event', targetType: 'journey', targetId: journeyId, ts: ts(),
+  payload: {...ev.payload},
+});
+const tampered = {...fresh, payload: {...fresh.payload, score_bp: 9999}};
 const r2 = await api.postEvent(base, signer, tampered).catch(e => ({error: String(e)}));
-check('tampered payload refused', Boolean(r2.error) && /400|401/.test(r2.error), r2.error ?? JSON.stringify(r2));
+check('tampered payload refused by the commitment check (400)', Boolean(r2.error) && /^Error: 400 /.test(r2.error), r2.error ?? JSON.stringify(r2));
 
 // 5. A request signed by an unknown key is refused.
 const stranger = await softwareSigner();

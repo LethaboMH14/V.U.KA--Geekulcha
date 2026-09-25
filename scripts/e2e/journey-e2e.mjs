@@ -145,6 +145,8 @@ async function detection(d, journey) {
   await d.flush();
   const exp = await api.signedRequest(base, phoneSigners.get(subject), 'GET', `/v1/subjects/${subject}/export`, '').catch(e => ({error: String(e)}));
   check('normal: server returns the member export after the PIN', !exp.error, exp.error ?? `${Object.keys(exp).join(',')}`);
+  const saveAt = process.argv.indexOf('--save-export');
+  if (saveAt > 0 && !exp.error) writeFileSync(process.argv[saveAt + 1], JSON.stringify(exp, null, 2));
   // The phone's check and the stranger's verifier must agree, and fail at the same entry.
   const {checkRecord} = require(join(build, 'app', 'src', 'api', 'verifyRecord.js'));
   const {verifyExport} = await import(pathToFileURL(join(root, 'shared', 'verify.js')).href);

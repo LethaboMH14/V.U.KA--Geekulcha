@@ -1,6 +1,8 @@
 import {createDevice, JourneyStartError, simBackend, type Backend} from '../device';
 import type {EventSubmission} from '../events';
 import {checkPayload} from '../payloads';
+import {createHash} from 'crypto';
+import {canonicalJson} from '../../../../shared/canonical.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const JOURNEY = '3f0c2a9e-7b1d-4e5a-9c8f-2d6b4a1e0f73';
@@ -256,4 +258,56 @@ test('ending a journey queues both events before sending either', async () => {
   await h.device.flush();
   // When pin_authorised was sent, journey_ended was already waiting behind it.
   expect(order.find(o => o.startsWith('pin_authorised'))).toBe('pin_authorised@2');
+});
+
+test('a failed evidence write is never an accepted outcome (the screen shows "Try again")', async () => {
+  const h = harness();
+  await onboarded(h);
+  const c = await h.device.openCheckin(JOURNEY, '0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70');
+  await c.shown();
+  h.b.enqueue = async () => Promise.reject(new Error('keystore unavailable'));
+  await expect(c.enter('9876')).rejects.toThrow(/keystore/);
+  await expect(c.enter('1234')).rejects.toThrow(/keystore/);
+  await expect(h.device.endJourney(JOURNEY, '1234')).rejects.toThrow(/keystore/);
+});
+
+test('My record shows only the server’s held export, however many receipts the phone holds', async () => {
+  const sha = (t: string) => createHash('sha256').update(t, 'utf8').digest('hex');
+  // A held export: two entries (registration, journey_armed); the phone holds more receipts.
+  const entries: Record<string, unknown>[] = [];
+  const payloads: {event_id: string; payload: unknown}[] = [];
+  const salts: {event_id: string; salt: string}[] = [];
+  let prev = '0'.repeat(64);
+  for (const [i, kind] of ['registration', 'journey_armed'].entries()) {
+    const id = `00000000-0000-4000-8000-00000000000${i}`;
+    const payload = {kind, pv: 1};
+    const salt = Buffer.alloc(16, 7).toString('base64');
+    const commitment = createHash('sha256').update(Buffer.concat([Buffer.from(salt, 'base64'), Buffer.from(canonicalJson(payload), 'utf8')])).digest('hex');
+    const e = {action: 'device_event', details: {event_id: id, commitment}, ts: '2026-09-25T20:00:00Z', prev_hash: prev};
+    const event_hash = sha(canonicalJson(e));
+    entries.push({...e, event_hash});
+    payloads.push({event_id: id, payload});
+    salts.push({event_id: id, salt});
+    prev = event_hash;
+  }
+  const held = {subject_id: 'sim_subj_x', entries, payloads, salts, proofs: [], receipts: []};
+  // The phone's receipts sit past the held head (as during an open incident).
+  let n = 10;
+  const h = harness({
+    post: async () => ({event_hash: 'b'.repeat(64), chain_index: n++, received_at: '2026-09-25T20:00:00Z'}),
+    request: async <T,>(_u: string, method: string, path: string) =>
+      (method === 'GET' && path.endsWith('/export') ? held : path === '/v1/journeys' ? {journey_id: JOURNEY} : {}) as T,
+  });
+  h.b.signer.sha256Hex = async t => sha(t);
+  h.b.signer.commitment = async (salt, t) =>
+    createHash('sha256').update(Buffer.concat([Buffer.from(salt, 'base64'), Buffer.from(t, 'utf8')])).digest('hex');
+  await onboarded(h);
+  const c = await h.device.openCheckin(JOURNEY, '0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70');
+  await c.enter('9876');
+  await h.device.flush();
+  expect((await h.device.myRecord()).length).toBeGreaterThan(2);
+  const {check, rows} = await h.device.checkMyRecord();
+  expect(check.ok).toBe(true);
+  expect(rows.map(r => r.kind)).toEqual(['registration', 'journey_armed']);
+  expect(JSON.stringify(rows)).not.toMatch(/duress|normal_pin/);
 });

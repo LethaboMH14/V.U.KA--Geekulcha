@@ -122,3 +122,24 @@ Evidence:
 - `node scripts/e2e/journey-e2e.mjs --fast`: 23/23;
 - on the real export, the phone check and `shared/verify.js` both pass, and a tampered payload fails both at the same entry (index 1).
 - **Emulator run:** onboarding, then a journey, then a glass clip through the phone's model. The Journey check opened. A duress PIN showed "Checked in", while the server recorded `duress_pin`, marked the incident duress, and queued a guardian alert and a bank signal. Ending the journey with the normal PIN left the incident open, as §8 requires.
+
+---
+
+## 2026-09-25 (22:20) | addendum: review responses (Khutso's changes-requested and Sibusiso's notes on #88)
+
+Changed:
+- **A failed evidence write is never an accepted outcome.** If signing or queuing fails at the Journey check, End journey or the My record PIN, the screen shows the same neutral "Try again" (identical for both PINs). The check stays open, and the journey keeps listening. Before, a failure showed "Checked in" or ended the journey.
+- **My record is now only the server's held export (T30),** fetched after the export PIN and checked on the phone before anything is shown:
+  - the phone's own receipts are used only to check that export;
+  - nothing past the held head is listed;
+  - Settings no longer shows a received count;
+  - if the export can't be fetched and checked, nothing is listed.
+- **Signer:** `ensureKey` is `@Synchronized`, and the counter's reset-with-new-key is documented.
+- **`anchor-e2e.mjs`:**
+  - it now starts a server-issued journey;
+  - its tamper check alters only the payload of a freshly signed event and expects exactly the 400 commitment error.
+
+Evidence:
+- `npx jest`: 55/55 pass. That includes both failure paths rejecting, and My record listing only the held export's two entries while the phone holds more receipts, with no PIN mode in the rows.
+- `anchor-e2e.mjs`: 7/7.
+- `journey-e2e.mjs`: 24/24 in the full run, including `no_answer` from the scheduler.
