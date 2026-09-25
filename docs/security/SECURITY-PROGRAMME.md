@@ -1,6 +1,6 @@
 # VUKA security, compliance and governance programme
 
-> **Owner:** Ipeleng Constance Modise (security and privacy). Lethabo Hoaeane is covering the security lane from 24 Sep 2026 until Ipeleng returns, and is **acting incident lead** in the same period. **Status:** `PROPOSED`, revision 9, 25 Sep 2026.
+> **Owner:** Ipeleng Constance Modise (security and privacy). Lethabo Hoaeane is covering the security lane from 24 Sep 2026 until Ipeleng returns, and is **acting incident lead** in the same period. **Status:** `PROPOSED`, revision 10, 25 Sep 2026.
 > **Serves:** S, T, B.
 > **What this is:** the umbrella over the existing security documents:
 > - `SSDLC.md`: the lifecycle and the controls `C-nn`;
@@ -11,7 +11,7 @@
 >
 > It adds a legal register built from quoted sources, a standards baseline with versions, new controls, a pentest methodology with scoring, day-to-day operations, governance, and what we can show live.
 > **Evidence base:** `docs/security/research/SA-LAW.md`, `STANDARDS.md` and `THREAT-DATA.md`, researched 24 Sep 2026. Each claim carries a literal quote and URL, or ⚑ (unverified).
-> **Review record:** revision 1 was attacked by an independent red-team review (30 findings); revisions 2 and 3 by a second, different-model adversarial review (12 and 10 findings); revision 4 by a further red-team round (6 findings); revision 5 by the second reviewer again (7 findings), revision 6 by the same reviewer (6 findings), revision 7 by a Claude red-team pass while the second reviewer's quota was exhausted (8 findings), and revision 8 by the second reviewer (2 findings). Every finding is dispositioned in §11. That review read `main`, so artefacts still in open PRs showed as missing. They are cited by PR number here, and **nothing in the showcase (§9) is used until its artefact is on `main`.**
+> **Review record:** revision 1 was attacked by an independent red-team review (30 findings); revisions 2 and 3 by a second, different-model adversarial review (12 and 10 findings); revision 4 by a further red-team round (6 findings); revision 5 by the second reviewer again (7 findings), revision 6 by the same reviewer (6 findings), revision 7 by a Claude red-team pass while the second reviewer's quota was exhausted (8 findings), revision 8 by the second reviewer (2 findings), and revision 9 by the same reviewer (1 finding). Every finding is dispositioned in §11. That review read `main`, so artefacts still in open PRs showed as missing. They are cited by PR number here, and **nothing in the showcase (§9) is used until its artefact is on `main`.**
 > **Not legal advice. This is an internal programme, not an independent assessment.** Gap G8 (no independent penetration test) stays open whatever this programme achieves.
 
 ---
@@ -89,7 +89,7 @@ Request signing, the order of checks, and replay rules (§7; T06, PT-01–PT-09)
   2. It is shown with **notification ID = alert ID**, then marked `displayed`.
 
   On restart, every `pending` alert is shown again. A repeat delivery of a `displayed` alert is ignored. Because the notification ID is stable, a re-show replaces the notification rather than adding one. **The claim is narrowed to what is tested:** at most one visible notification per alert ID, and at least one display after any single crash. **T08 tests both crash boundaries** (after persist and before display; after display and before marking).
-- **ADR-0043 (proposed; both leads, and Ipeleng's security review), ninth draft.** The direction was chosen by Lethabo on 24 Sep: **the verifiable record leaves the phone.**
+- **ADR-0043 (proposed; both leads, and Ipeleng's security review), tenth draft.** The direction was chosen by Lethabo on 24 Sep: **the verifiable record leaves the phone.**
   1. **My Record on the phone is a plain journey list**, identical whatever happened. The verifiable export is fetched **off the phone** with the recovery code (and later a counsel-reviewed s23 process). Every export is a snapshot taken at the request and released 72 h later, whatever the incident state; guardians aren't told about it.
   2. A **`stand_down` after duress only acknowledges.**
   3. **No automatic resolution or bank release.** At 72 h, **guardians** see "status unknown". Guardian removal and deletion become available again; the incident is scoped to its journey; the call stays locked. The bank's own process lifts a hold.
@@ -385,6 +385,11 @@ The acting incident lead is **Lethabo** (Ipeleng is away).
 |---|---|---|
 | 1 | Phone-plus-normal-PIN rotation lets a coercer destroy the member's recovery code | **Accepted.** No rotation by anyone until an independent recovery path exists; the residual is restated |
 | 2 | Retirement cancels a pending `no_answer` for a detection accepted just before the deadline | **Accepted.** Only retirement-caused `contact_lost` is suppressed; a check-in opened before `effective_at` keeps its window, its result and its fallback (T67) |
+
+### Revision 9 review (the second reviewer, round 7: both previous findings resolved; 1 new)
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | A check-in result accepted after `effective_at` would fail verification | **Accepted.** One exception, identical at ingestion and in the verifier: a `checkin_result` for a check-in opened before `effective_at`, received before that check-in's deadline (T69) |
 
 ## 12 · The security scorecard: measured, checkable, shown in the app
 

@@ -54,4 +54,6 @@ Two findings are partly accepted, with their residuals stated: automatic rotatio
 - the recovery code is not rotated by anyone until an independent recovery path exists;
 - at `effective_at` only retirement-caused `contact_lost` is suppressed, and a check-in opened before the deadline keeps its window and its `no_answer` fallback.
 
-Next: a confirmation round on revision 9; the amendments land in the acceptance PR.
+**Revision 10 (same day).** The confirmation round resolved both revision-8 findings and raised one more: the late check-in result had to verify as well as be accepted. The same narrow exception now applies at ingestion and in the verifier, with T69 extended to cover it.
+
+Next: a final confirmation round on revision 10; then Ipeleng's review and Sibusiso's acceptance; the amendments land in the acceptance PR.
