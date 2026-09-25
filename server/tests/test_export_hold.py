@@ -65,9 +65,9 @@ def test_normal_and_duress_export_return_the_same_prefix(sim_api):
     normal = get_export(client, subject, key, now).json()
     authorise_export(event, post, key, subject, mode="duress")
     duress = get_export(client, subject, key, now).json()
-    # The first normal authorisation is now part of the chain before the duress one,
-    # so compare shapes and heads against what a coercer can see: both end before
-    # their own authorisation and the duress one reveals nothing after the hold head.
+    # Both end before their own authorisation. The duress one opened an incident whose
+    # pre-incident head is that same entry, so it reveals nothing after it. Both
+    # authorisations share one server second, so this also pins the tie-break.
     assert set(normal) == set(duress)
     assert [e["details"]["chain_index"] for e in normal["entries"]] == [0]
     assert [e["details"]["chain_index"] for e in duress["entries"]] == [0, 1]

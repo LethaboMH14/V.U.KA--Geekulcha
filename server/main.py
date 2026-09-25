@@ -517,8 +517,12 @@ def create_app(database=None) -> FastAPI:
             return _error_response(404, "not_found", "subject was not found")
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
+        subject_export = getattr(store, "subject_export", None)
+        if subject_export is None:
+            # A store without PIN-authority records can never release a chain.
+            return _error_response(403, "pin_authorisation_required", "fresh export PIN authorisation is required")
         try:
-            return store.subject_export(subject_id, datetime.fromisoformat(_server_time().replace("Z", "+00:00")))
+            return subject_export(subject_id, datetime.fromisoformat(_server_time().replace("Z", "+00:00")))
         except EventRefused as exc:
             return _error_response(exc.status, exc.code, "fresh export PIN authorisation is required")
         except DatabaseUnavailable:

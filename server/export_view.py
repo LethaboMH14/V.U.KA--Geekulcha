@@ -15,16 +15,17 @@ HOLD_AFTER_LAST_PIN = timedelta(hours=6)
 
 
 def _authorising_index(cur, subject_id, now):
-    cur.execute("""SELECT event_id FROM pin_authorisations
-        WHERE subject_id=%s AND action='export' AND target_id=%s
-          AND expires_at > %s AND consumed_at IS NULL
-        ORDER BY expires_at DESC, event_id DESC LIMIT 1""", (subject_id, subject_id, now))
+    # The most recent fresh authorisation by chain position; expires_at ties
+    # whenever two arrive in the same server second.
+    cur.execute("""SELECT c.chain_index FROM pin_authorisations p
+        JOIN chain_entries c ON c.subject_id=p.subject_id AND c.details_json->>'event_id'=p.event_id
+        WHERE p.subject_id=%s AND p.action='export' AND p.target_id=%s
+          AND p.expires_at > %s AND p.consumed_at IS NULL
+        ORDER BY c.chain_index DESC LIMIT 1""", (subject_id, subject_id, now))
     row = cur.fetchone()
     if row is None:
         raise EventRefused("pin_authorisation_required", 403)
-    cur.execute("SELECT chain_index FROM chain_entries WHERE subject_id=%s AND details_json->>'event_id'=%s",
-                (subject_id, row[0]))
-    return cur.fetchone()[0]
+    return row[0]
 
 
 def held_head_index(cur, subject_id, now):
