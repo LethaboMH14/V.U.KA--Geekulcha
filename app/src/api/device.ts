@@ -20,12 +20,17 @@
  * Off a phone (browser preview, tests) a SIMULATED backend stands in: PINs are
  * held in memory, nothing is signed and nothing is sent.
  */
-import {NativeModules} from 'react-native';
+import {NativeModules, Platform} from 'react-native';
 import {buildEvent, postEvent, rfc3339, type EventPayload, type EventSubmission, type Receipt, type Signer} from './events';
 
 export const MODEL_SHA256 = '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de';
-/** The emulator's alias for the laptop; a test build allows plain HTTP to it only. */
-export const DEFAULT_SERVER = 'http://10.0.2.2:8000';
+/**
+ * The laptop server, as a test build reaches it: the emulator's host alias, or
+ * localhost on a USB-connected phone after `adb reverse tcp:8000 tcp:8000`.
+ * Release builds allow https only, so the member sets a real address in Settings.
+ */
+const fingerprint = String((Platform.constants as {Fingerprint?: string}).Fingerprint ?? '');
+export const DEFAULT_SERVER = /generic|emulator|sdk_gphone/i.test(fingerprint) ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
 const JOURNEY_TARGET = 'subject' as const;
 
 type Item = {seq: number; json: string};

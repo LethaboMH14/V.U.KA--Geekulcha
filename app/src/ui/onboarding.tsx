@@ -191,7 +191,7 @@ function DuressIntro({onBack, onNext}: {onBack: () => void; onNext: () => void})
       <Panel>
         <Text style={type.label}>Choose one you’ll remember under stress</Text>
         <Text style={[type.body, {marginTop: space.xs}]}>
-          It works at every PIN prompt: journey checks, ending a journey, and settings.
+          It works at every PIN prompt: journey checks and ending a journey.
         </Text>
       </Panel>
       <View style={{flexGrow: 1}} />
