@@ -25,7 +25,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 from cryptography.hazmat.primitives.serialization import load_der_public_key
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
 from starlette.responses import JSONResponse
@@ -650,6 +650,57 @@ def create_app(database=None) -> FastAPI:
         # Duress: looks exactly the same, does nothing further (§9). The
         # pin_authorised event itself (mode=duress) already raised the alarm.
         return {"receipt_id": str(uuid4()), "state": "accepted"}
+
+    stream_interval = float(os.getenv("VUKA_STREAM_POLL_SECONDS", "1"))
+
+    @app.websocket("/ws/panel")
+    async def panel_stream(websocket: WebSocket):
+        """PROPOSED public opaque panel (see server/streams.py)."""
+        import asyncio
+        from server.streams import panel_batch, start_cursor
+        await websocket.accept()
+        cursor = start_cursor(store)
+        try:
+            while True:
+                messages, cursor = panel_batch(store, cursor)
+                for message in messages:
+                    await websocket.send_json(message)
+                await asyncio.sleep(stream_interval)
+        except (WebSocketDisconnect, RuntimeError):
+            return
+
+    @app.websocket("/ws/member")
+    async def member_stream(websocket: WebSocket):
+        """PROPOSED: authenticated by the §7 signed-request headers on the handshake
+        (method GET, path /ws/member, empty body) instead of bearerAuth, because no
+        bearer issuer exists and the member client is the Android app, which can set
+        handshake headers. Device keys only. Opaque, and held per T30."""
+        import asyncio
+        from types import SimpleNamespace
+        from server.streams import member_batch, start_cursor
+        shim = SimpleNamespace(headers=websocket.headers, method="GET", url=websocket.url, app=websocket.app)
+        try:
+            principal = verify_request(shim, database=store, body=b"")
+            if principal.signer_role != "device":
+                raise RequestAuthenticationFailure("not_found", "subject was not found")
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id, subject_id=principal.subject_id,
+                nonce=principal.nonce, request_ts=principal.request_ts, now=datetime.now(timezone.utc))
+        except (RequestAuthenticationFailure, SignerKeyRevoked, RequestReplay, RequestTimestampExpired,
+                SignerKeyNotFound, SignerSubjectMismatch, DatabaseUnavailable):
+            await websocket.close(code=1008)
+            return
+        await websocket.accept()
+        cursor = start_cursor(store)
+        try:
+            while True:
+                now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+                messages, cursor = member_batch(store, principal.subject_id, cursor, now)
+                for message in messages:
+                    await websocket.send_json(message)
+                await asyncio.sleep(stream_interval)
+        except (WebSocketDisconnect, RuntimeError):
+            return
 
     @app.get("/v1/anchor/latest")
     async def get_latest_anchor():

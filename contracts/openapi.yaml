@@ -249,10 +249,15 @@ paths:
     get:
       tags: [Showcase]
       operationId: openMemberStream
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Open the member event stream
-      description: Member streams never receive operator-room events.
-      security: [{ bearerAuth: [] }]
+      description: >-
+        Member streams never receive operator-room events. PROPOSED (25 Sep): authenticated
+        by the section 7 signed-request headers on the handshake (GET, empty body), not
+        bearerAuth, because no bearer issuer exists. Messages are opaque (chain_index,
+        event_hash, received_at; no kind) and cut at the pre-incident head while the T30
+        hold applies.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       responses:
         '101': { description: WebSocket upgrade accepted }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -662,7 +667,7 @@ paths:
     get:
       tags: [ANCHOR]
       operationId: openPublicPanelStream
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Open the public opaque-hash panel stream
       description: Exposes opaque hashes, chain indices and receipts; event kinds are emitted only for sim_ subjects and are labelled simulated.
       security: []
