@@ -531,12 +531,13 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 
 ---
 
-## ADR-0043: The verifiable record leaves the phone; after duress nothing resolves automatically; recovery during an incident is an alarm
-**Status:** Proposed (2026-09-24, fifth draft after four adversarial review rounds). Proposed by Lethabo (co-lead, acting security lead). Direction chosen by Lethabo on 24 Sep: **the verifiable record is available off the phone only**. Binds when Sibusiso (second lead) accepts it, after Ipeleng's security review.
+## ADR-0043: The verifiable record leaves the phone; after duress nothing resolves automatically; recovery never silences the old phone
+**Status:** Proposed (2026-09-25, sixth draft after five adversarial review rounds). Proposed by Lethabo (co-lead, acting security lead). Direction chosen by Lethabo on 24 Sep: **the verifiable record is available off the phone only**. Binds when Sibusiso (second lead) accepts it, after Ipeleng's security review.
 **Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (server), Ipeleng Constance Modise (security review)
 **Amends, on acceptance, in the same PR that records it:**
 - spec §8: `stand_down`, the 6 h auto-close, incident scope;
-- §9: recovery, the pre-incident hold, guardian removal and deletion during an incident;
+- §9: recovery (scheduled revocation), the pre-incident hold, guardian removal and deletion during an incident;
+- §4a and ADR-0042: a `key_revoked` entry may carry a later `effective_at`; two device keys overlap only inside that window, at most 72 h; the verifier uses `effective_at`;
 - §2 A5 (export) and G4 (call unlock);
 - §12: `/sim_bank/v1/release` is not triggered by VUKA;
 - §14: recovery joins the never-cut list;
@@ -544,13 +545,14 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 - ADR-0036(5a), ADR-0037(4), ADR-0040(4), ADR-0041(1), (6) and (8);
 - `docs/PIN-AUTHORITY-RULES.md` §1, §3, §5 and §7.
 
-**Context:** Four review rounds tested successive drafts. Any automatic or low-assurance way of ending a duress incident became an attack: a guardian stand-down (a coercer can be a guardian), voice confirmation (it can be coerced), a 72 h auto-release (it rewards silencing the victim). Worse, **as long as the phone holds a verifiable record, the record's own structure can reveal duress**: duress incidents hold more events (`pin_authorised{duress}`, `bank_signal_sent`, `decoy_added`, `answered_late`), and the hashed `chain_index` values after an incident expose the count. Hiding that on the device while keeping the record verifiable there isn't possible.
+**Context:** Four review rounds tested successive drafts. Any automatic or low-assurance way of ending a duress incident became an attack: a guardian stand-down (a coercer can be a guardian), voice confirmation (it can be coerced), a 72 h auto-release (it rewards silencing the victim). Worse, **as long as the phone holds a verifiable record, the record's own structure can reveal duress**: duress incidents hold more events (`pin_authorised{duress}`, `bank_signal_sent`, `decoy_added`, `answered_late`), and the hashed `chain_index` values after an incident expose the count. Hiding that on the device while keeping the record verifiable there isn't possible. The fifth round then showed that an "alarm-only" old key fails on its own terms: the verifier can't check it under ADR-0042, the server's accept-or-reject answer differs between normal and duress, the old phone's detections and heartbeats get rejected, and a leaked key keeps alarm power with no end.
 **Decision:**
 1. **The verifiable record is not on the phone.**
    - My Record on the member's device shows **a plain journey list**: date, start and end time, "Journey completed". It is identical whatever happened during a journey.
    - The member-device API returns only that list. No chain, payloads, salts, hashes, incident state or guardian activity.
-   - **The verifiable export** (A5: the chain with payloads, salts, proofs and receipts, which the verify page checks) is obtained **off the phone**: through a web route authenticated with the **recovery code**, rate-limited, with guardians notified of each export. Later it moves to a counsel-reviewed s23 process (Q-C10).
-   - The ADR-0041 pre-incident hold becomes unnecessary for the phone and is kept only for the off-phone route: an export requested during an open incident, or within 6 h of its last PIN entry, waits until the hold ends. The wait is the same for every incident, normal or duress.
+   - **The verifiable export** (A5: the chain with payloads, salts, proofs and receipts, which the verify page checks) is obtained **off the phone**: through a web route authenticated with the **recovery code**, rate-limited. Later it moves to a counsel-reviewed s23 process (Q-C10).
+   - **Every export is released 72 h after it is requested**, whatever the incident state. The delay is the same for every member and every journey, so it reveals nothing, and it never depends on an incident closing, so a member can always get their record after duress. It replaces the ADR-0041 pre-incident hold for this route; the phone no longer needs that hold.
+   - **Guardians are not told about exports.** A guardian may be the person the member is gathering evidence about. The member sees the pending export when they sign in to the route again, and may add an email address for the release notice.
 2. **A `stand_down` after any duress signal is an acknowledgement only.** No close, no S1 cancellation, no G4 call unlock.
 3. **VUKA never resolves a duress incident or releases a bank hold automatically.**
    - After 72 h with no new duress, `no_answer` or `contact_lost` signal *on that journey*, **guardians** see "status unknown". The member's device never sees incident state.
@@ -560,31 +562,41 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
      - the G4 call stays locked;
      - **the incident is scoped to its journey**, and a new journey starts with no carried-over incident, so `contact_lost` can't re-fire from an old one.
    - A human-reviewed safe-contact procedure for closing incidents is designed, not built.
-4. **Recovery during an open incident is an alarm.** It is allowed (never blocked, and on the never-cut list), and it:
-   - notifies guardians "account recovered during an open alert";
-   - keeps the old device key **accepted for alarm events only** (duress, `no_answer`, `contact_lost`), so a coercer who forces out the recovery code can't silence the victim's phone;
-   - leaves the old phone's screens exactly as they were, so a member who recovers elsewhere doesn't tip off a coercer holding the old phone.
-
-   Outside an incident, recovery revokes the old key as §9 says.
+4. **Recovery never silences the old phone.** Recovery is allowed (never blocked, and on the never-cut list).
+   - **When revocation is scheduled.** If a journey is armed when the recovery is received, or the last journey ended less than 72 h before, the old device key's revocation is **scheduled for exactly 72 h after the recovery's receipt**. That time is fixed when the recovery is recorded and nothing extends it. Otherwise the old key is revoked at once, as §9 says. The condition depends only on journey times, which the phone already shows, never on incident state, so it reveals nothing about duress.
+   - **Until then the old key is a full device key.** Every event type is accepted: detections, `checkin_opened`, PIN results and heartbeats. The server-generated `no_answer` and `contact_lost` therefore keep working, and alarms the old phone queued offline or had in flight are accepted if they arrive before the scheduled time.
+   - **One answer for both paths.** The device ingest endpoint returns the same transport acknowledgement (status, shape and timing) to the old key and the new key, whether or not an incident is open. What an event causes is never echoed back to a device.
+   - **Recorded in the chain.** The `key_revoked` entry is written when the recovery is received and carries `revoked_key_id` and `effective_at`. The verifier accepts an entry from that key only if its `received_at` is before `effective_at`.
+   - Guardians are notified of **every** recovery; their view adds "during an open alert" when one is open. The old phone's screens stay exactly as they were, so a member who recovers elsewhere doesn't tip off a coercer holding it.
+   - There is no "revoke now" button: a coercer could use it to silence the phone.
 5. **The armed-journey silence notice is not built** (a surveillance risk).
 6. **Demo hygiene:** a labelled script (`scripts/reset-sim-demo.mjs`) recreates the `sim_` demo subject, so a judge's duress-PIN test doesn't leave the demo stuck. It works on `sim_` subjects only.
 **Rejected alternatives:**
 - An on-phone record with an opaque incident segment: event counts leak through `chain_index`, and hiding them breaks verification.
 - Guardian voice confirmation, and a 72 h auto-release (both earlier drafts).
 - Blocking recovery during incidents (it deadlocks the member).
+- An alarm-only old key (fifth draft): unverifiable under ADR-0042, a normal-versus-duress oracle at the API, a broken alarm pipeline, and no end to a leaked key's power.
+- A "revoke now" option for the member: a coercer who forces out the recovery code would use it.
+- Notifying guardians of exports: it tells an abusive guardian that evidence is being gathered.
 **Consequences:**
 - Tests (added to spec §15 on acceptance):
   - T61: a stand-down after duress means no close, no call unlock, and the bank signal stands.
   - T64: the member-device API responses and My Record are byte-identical in shape for a journey with a duress incident and one with none, before and after 72 h.
   - T66: there is no VUKA release; "status unknown" is guardian-only.
-  - T67: recovery during an incident alarms guardians; the old key's alarm events are accepted and its other events rejected; the old phone's screens are unchanged.
+  - T67 (revised): recovery during an armed journey, or within 72 h of the last journey's end, schedules revocation for exactly 72 h after receipt. Old-key events of every type are accepted until then and rejected after. The ingest response is identical in status, shape and timing for the old and new keys, with and without an open incident. Guardians are notified of every recovery, and the old phone's screens are unchanged.
+  - T68: an export is released exactly 72 h after the request, identically with and without an open duress incident, and no guardian is notified.
+  - T69: a verifier that rebuilds the registry from the chain accepts an old-key entry received before `effective_at` and rejects one received after.
   - T13 (revised): recovery isn't blocked.
 - Contract v2:
   - `GET /v1/subjects/{id}/journeys` (the member list);
   - the recovery-code-authenticated export route;
   - `incident_status` for guardians only;
-  - the alarm-only key state.
+  - `effective_at` on `key_revoked`;
+  - the 72 h export release.
 - **Residuals:**
   - A duress incident stays open ("status unknown") until the safe-contact procedure exists.
   - A coercer who forces out the recovery code can read the full record off the phone. Onboarding says to keep the code away from the phone.
   - A guardian-coercer still sees the alert.
+  - A thief holding a lost phone keeps a valid key for up to 72 h after a recovery made during or soon after a journey, and could raise false alerts in that time. Guardians are told about the recovery.
+  - Events the old phone delivers after `effective_at` are rejected; a phone offline for longer than 72 h loses what it queued.
+  - A member who needs their record sooner than 72 h waits; the s23 process (Q-C10) is the route for urgency.
