@@ -2,7 +2,7 @@
 
 **Research** — Read the refreshed `sibusiso-workflow/tasks/azure-deploy/01-task.md`, the implementation-status task already present on PR #51, current server routes, ADR-0041, OpenAPI and existing PostgreSQL integration tests. This entry covers Part A only. No Azure CLI, App Service or production credential operation was attempted; the worktree `.env` was not opened or changed.
 
-**Real data / references** — At `7bb543e2671cb91cf8418b5f6445e87ce4cda04b`, `git archive` produced the deployment ZIP listed below. The archive builder checked banned paths and private-key-shaped content and checked the resulting ZIP. A fresh virtual environment was installed from root `requirements.txt`; its imported runtime versions were FastAPI 0.141.1, cryptography 50.0.0, psycopg2 2.9.13 and Uvicorn 0.53.0. `pip-audit` reported no known vulnerabilities. The local PostgreSQL 17 test cluster was started and stopped for the verification run.
+**Real data / references** — At pushed commit `583a13fc5f5d2db9b7cfc073f3aec09e06fd921e`, `git archive` produced the deployment ZIP listed below. The archive builder checked banned paths and private-key-shaped content and checked the resulting ZIP. A fresh virtual environment was installed from root `requirements.txt`; its imported runtime versions were FastAPI 0.141.1, cryptography 50.0.0, psycopg2 2.9.13 and Uvicorn 0.53.0. `pip-audit` reported no known vulnerabilities. The local PostgreSQL 17 test cluster was started and stopped for the verification run.
 
 **Criteria / limits** — The default-on SEC-6 guard permits genesis registrations only for `sim_` targets unless `VUKA_SIM_ONLY=0`; requests are still signed and verified before the refusal. Synthetic events and identities are explicitly `sim_`. Chain payload and salt remain encrypted at rest. The local smoke completed health, registration, append and non-sim refusal. Export returned `403 pin_authorisation_required` both before and after server restart, as current code and accepted ADR-0041 require. No PIN bypass was added. A direct PostgreSQL read after restart found two chain entries, two encrypted payload rows and an intact chain. This proves local persistence, but not a successful API export; Part A acceptance remains incomplete until ADR-0041 PIN-authority and prefix-export behavior exists.
 
@@ -64,7 +64,9 @@ first_broken_index=None
 persisted_encrypted_payload_rows=2
 local_server_stopped=true
 
-python scripts/build-deploy-package.py 7bb543e2671cb91cf8418b5f6445e87ce4cda04b --output <temporary ZIP>
+python scripts/build-deploy-package.py 583a13fc5f5d2db9b7cfc073f3aec09e06fd921e --output <temporary ZIP outside the repository>
+commit: 583a13fc5f5d2db9b7cfc073f3aec09e06fd921e
+package: <temporary ZIP outside the repository>
 package_command_exit=0
 files:
   anchor/canonical.py
