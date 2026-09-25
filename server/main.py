@@ -853,6 +853,23 @@ def create_app(database=None) -> FastAPI:
 
     stream_interval = float(os.getenv("VUKA_STREAM_POLL_SECONDS", "1"))
 
+    @app.get("/v1/guardians/me/alerts")
+    async def guardian_alerts(request: Request):
+        """PROPOSED (Lethabo, 25 Sep): the alerts delivered to the calling guardian.
+        Signed with the guardian's own key; a decoy sees an empty list, same shape."""
+        from contextlib import closing
+        from server.guardian_alerts import alerts_for, guardian_for_key
+        principal, refused = await _signed_caller(request, role="guardian")
+        if refused:
+            return refused
+        try:
+            with closing(store._connection()) as connection, connection, connection.cursor() as cur:
+                guardian_id = guardian_for_key(cur, principal.signer_key_id)
+                alerts = alerts_for(cur, guardian_id) if guardian_id else []
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        return {"alerts": alerts}
+
     @app.websocket("/ws/panel")
     async def panel_stream(websocket: WebSocket):
         """PROPOSED public opaque panel (see server/streams.py)."""
