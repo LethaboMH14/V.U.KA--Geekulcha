@@ -1,6 +1,6 @@
 # Babatunde Adelusi
 
-**Active — economics v2 rebuild in progress (PR #65). Owner acknowledged 24 Sep via this session.**
+**Active — economics v2 rebuild (PR #65) and pitch deck + Slidev setup (PR open). Owner acknowledged 24 Sep via this session.**
 
 ## Agent operating spec
 
@@ -23,7 +23,7 @@
 - **Every money figure comes from `scripts/economics_vigil_anchor.py`** — I change the tagged input there, never the number on a slide.
 - **The absence of a VUKA record is never evidence against a claimant** — I say it in every insurer and bank conversation.
 
-**Current task** — Economics v2 rebuild (PR #65): revert unsupported R5,090 resolution, rebuild `scripts/economics_vigil_anchor.py` with tagged configurable inputs (no hardcoded price), generate sensitivity table, add source links to `docs/MARKET-DATA.md`, align `docs/ECONOMICS-VIGIL-ANCHOR.md` and `docs/PRICING-WORKING.md`, post price decision with script output.
+**Current task** — Economics v2 rebuild (PR #65): revert unsupported R5,090 resolution, rebuild `scripts/economics_vigil_anchor.py` with tagged configurable inputs (no hardcoded price), generate sensitivity table, add source links to `docs/MARKET-DATA.md`, align `docs/ECONOMICS-VIGIL-ANCHOR.md` and `docs/PRICING-WORKING.md`, post price decision with script output. Pitch deck + Slidev setup: `docs/PITCH-DECK.md` as the pitch's single source of truth (PR open). **Price (R50) and stipend count (5 vs 7) still to decide.**
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: every number in anything I produce traces to `docs/EVIDENCE.md` by the time it reaches a slide.
 
@@ -128,3 +128,4 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 - 2026-09-12 — Codex assistant: prepared this proposed package from the supplied roster. No human activity, tool choice, availability or approval inferred. Next: owner confirms capacity and selects first task.
 - 2026-09-23 — Claude Code assistant, acting for Lethabo (co-lead): issued the VIGIL + ANCHOR work order above after the 21–22 Sep pivot meetings and Lethabo's 23 Sep decisions (ADR-0034 to ADR-0038). The previous sequenced work is superseded and kept for history. No work by Babatunde is asserted; owner acknowledgement pending.
 - 2026-09-24 — OpenCode assistant, acting for Babatunde: acknowledged work order, rebased `docs/babatunde-economics-v2` onto `main` (107c437), reverted unsupported R5,090 "Resolved" status in `docs/PRICING-WORKING.md`, began economics v2 rebuild per P3.B1 work order.
+- 2026-09-25 — OpenCode assistant, acting for Babatunde: created `docs/PITCH-DECK.md` (Slidev) and set up the Slidev dev tooling (`npm run slides`). Applied draft corrections (85% → 75%, Santam 3.7m → "more than 1 million", accountant `FACT` → `ESTIMATE`, retired `R155,659.47` → `R160,088.64`, per-member `R5.72` → v2 variable `R0.15` plus fixed steps), fixed the flagged wording ("before the attacker knows it fired", "32-byte fingerprint", "Deployable tomorrow", "three locations"), and recorded the change in `docs/build-log/entries/2026-09-25-babatunde-pitch-deck-slidev.md`. Price and stipend decisions remain open. No review or approval inferred.
