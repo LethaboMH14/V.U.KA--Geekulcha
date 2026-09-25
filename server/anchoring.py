@@ -16,6 +16,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import http.client
+import ssl
 from urllib.parse import urlparse
 
 from anchor.merkle import build_merkle_proof, build_merkle_root
@@ -79,7 +80,7 @@ def reconcile_mirror_root(root_hex, submitted_at, *, fetch=None):
         parts = urlparse(url)
         if parts.scheme != "https" or parts.netloc != "testnet.mirrornode.hedera.com":
             raise AnchorPublicationError("invalid mirror URL")
-        conn = http.client.HTTPSConnection(parts.netloc, timeout=10)
+        conn = http.client.HTTPSConnection(parts.netloc, timeout=10, context=ssl.create_default_context())
         try:
             conn.request("GET", parts.path + ("?" + parts.query if parts.query else ""))
             response = conn.getresponse()

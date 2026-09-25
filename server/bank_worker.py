@@ -4,6 +4,7 @@ import json
 import uuid
 from contextlib import closing
 import http.client
+import ssl
 from urllib.parse import urlsplit
 
 from anchor.canonical import canonical
@@ -31,8 +32,10 @@ class SimBankHTTP:
         self.prefix = parts.path.rstrip("/")
 
     def send(self, body, headers):
-        connection_class = http.client.HTTPSConnection if self.scheme == "https" else http.client.HTTPConnection
-        conn = connection_class(self.netloc, timeout=10)
+        if self.scheme == "https":
+            conn = http.client.HTTPSConnection(self.netloc, timeout=10, context=ssl.create_default_context())
+        else:
+            conn = http.client.HTTPConnection(self.netloc, timeout=10)
         try:
             conn.request("POST", self.prefix + "/sim_bank/v1/risk-signal", body=body,
                          headers={**headers, "Content-Type": "application/json"})
