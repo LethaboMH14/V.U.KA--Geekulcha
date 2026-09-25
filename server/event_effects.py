@@ -55,17 +55,23 @@ def close_incident(cur, store, subject_id, incident_id, reason, now):
     return True
 
 
+DEVICE_KINDS = {"signal_detected", "checkin_opened", "checkin_result", "journey_ended", "pin_authorised"}
+GUARDIAN_KINDS = {"guardian_ack"}
+
+
 def apply_event(cur, store, subject_id, entry, stored, now):
     payload = entry["payload"]
     kind = payload["kind"]
-    if kind not in {"signal_detected", "checkin_opened", "checkin_result", "journey_ended", "pin_authorised"}:
+    if kind not in DEVICE_KINDS | GUARDIAN_KINDS:
         if kind in {"no_answer", "contact_lost", "answered_late", "incident_closed"}:
             raise EventRefused("invalid_signature", 401)
         return
-    if entry["details"]["signer"] != "device":
+    expected_signer = "device" if kind in DEVICE_KINDS else "guardian"
+    if entry["details"]["signer"] != expected_signer:
         raise EventRefused("invalid_signature", 401)
-    from server.contact import record_contact
-    record_contact(cur, subject_id, now)
+    if expected_signer == "device":
+        from server.contact import record_contact
+        record_contact(cur, subject_id, now)
     if kind != "signal_detected":
         if kind == "pin_authorised" and payload.get("action") not in {"export", "end_journey"}:
             raise EventRefused("action_not_supported")
@@ -109,6 +115,14 @@ def apply_event(cur, store, subject_id, entry, stored, now):
             incident_id = incidents.incident_for_signal(cur, subject_id, now, stored["prev_hash"])
             incidents.request_alarm(cur, incident_id, trigger="duress_signal", now=now)
         anchor_intent(cur, event_id, now)
+        return
+    if kind == "guardian_ack":
+        cur.execute("SELECT 1 FROM incidents WHERE incident_id=%s AND subject_id=%s", (payload["incident_id"], subject_id))
+        if cur.fetchone() is None:
+            raise EventRefused("invalid_request")
+        if payload["action"] == "stand_down":
+            incidents.stand_down(cur, payload["incident_id"], now)
+            close_incident(cur, store, subject_id, payload["incident_id"], "stand_down", now)
         return
     if kind == "pin_authorised":
         store_authorisation(cur, subject_id, entry, now)

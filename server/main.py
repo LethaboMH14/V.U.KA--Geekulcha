@@ -528,6 +528,42 @@ def create_app(database=None) -> FastAPI:
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
 
+    @app.get("/v1/anchor/latest")
+    async def get_latest_anchor():
+        from server.anchor_reads import key_manifest, latest_anchor
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        receipt = latest_anchor(cur)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if receipt is None:
+            return _error_response(404, "not_found", "no anchor has been confirmed yet")
+        return {"receipt": receipt, "key_manifest": key_manifest()}
+
+    @app.get("/v1/anchor/proof/{head_hash}")
+    async def get_anchor_proof(head_hash: str):
+        import re as _re
+        from server.anchor_reads import ProofNotFound, anchor_proof
+        if _re.fullmatch(r"[0-9a-f]{64}", head_hash) is None:
+            return _error_response(400, "invalid_request", "head must be lowercase 32-byte hex")
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        return anchor_proof(cur, head_hash)
+            finally:
+                connection.close()
+        except ProofNotFound:
+            return _error_response(404, "not_found", "no confirmed anchor contains this head")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+
     @app.post("/v1/journeys", status_code=201)
     async def start_journey(request: Request):
         """PROPOSED (25 Sep): server-issued journey_id; bodyless, device-only."""

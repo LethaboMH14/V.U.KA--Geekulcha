@@ -16,6 +16,7 @@ _SCHEMA_FILES = {
     "checkin_opened": "checkin_opened.v1.json",
     "checkin_result": "checkin_result.v1.json",
     "journey_ended": "journey_ended.v1.json",
+    "guardian_ack": "guardian_ack.v1.json",
 }
 _DIALECT = "https://json-schema.org/draft/2020-12/schema"
 _VALIDATION_KEYWORDS = {

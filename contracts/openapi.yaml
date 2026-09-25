@@ -176,7 +176,7 @@ paths:
     get:
       tags: [Operations]
       operationId: getLatestAnchor
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Read the latest public anchor receipt
       description: Public endpoint; exposes no subject data.
       security: []
@@ -589,7 +589,7 @@ paths:
     get:
       tags: [ANCHOR]
       operationId: getAnchorProof
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Read the proof and receipt for an anchored chain head
       description: Public; head-keyed and returns no chain segment.
       security: []
