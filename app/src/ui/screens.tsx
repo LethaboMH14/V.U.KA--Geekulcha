@@ -58,6 +58,10 @@ export function VigilApp() {
   const [armError, setArmError] = useState<ArmResult | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  // A ref, not state: the 30 s retry timer must see a start already under way,
+  // or it would start a second listening session while the permission
+  // dialogs are still open.
+  const startingRef = useRef(false);
   // Paused by the member (PIN). Listening stays off until they turn it on.
   const [paused, setPaused] = useState(false);
   const [level, setLevel] = useState<Level>({label: null, score: 0, threshold: 0});
@@ -100,7 +104,8 @@ export function VigilApp() {
   };
 
   const startListening = async () => {
-    if (starting || startedAt) return;
+    if (startingRef.current || journeyId.current) return;
+    startingRef.current = true;
     setArmError(null);
     setStartError(null);
     setStarting(true);
@@ -136,6 +141,7 @@ export function VigilApp() {
       journeyId.current = id;
       setStartedAt(Date.now());
     } finally {
+      startingRef.current = false;
       setStarting(false);
     }
   };

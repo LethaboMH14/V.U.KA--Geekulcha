@@ -179,3 +179,27 @@ Evidence:
 Not measured:
 - battery use of continuous listening;
 - the false-check rate on real street audio (the lab proxy is about 5.5 per hour; see ADR-0046).
+
+---
+
+## 2026-09-26 (00:50) | addendum: guardian mode, member invites, frosted glass, public demo release
+
+Changed:
+- **Guardian mode (one app):** "I'm a guardian" → the member's one-time code → a plain-words consent screen (POPIA s18) → the guardian enrols this phone's own key (#96 `POST /v1/guardians/accept`, with key id `gdn_` + SHA-256(SPKI)[:8]).
+  - The guardian home fetches its delivered alerts every 5 s while the app is open (`GET /v1/guardians/me/alerts`, PR #99, PROPOSED).
+  - The alert leads with G4, "Don't call or text them. Call 10111."
+  - It answers with signed `guardian_ack` events (called_10111, handling, stand_down).
+- **Members:** "Add a guardian" sits behind the PIN (an `add_guardian` authorisation). It shows the one-time code with its 10-minute countdown and a Share message that carries the download link. A duress PIN gets an identical-looking code for a decoy (#96).
+- **Frosted glass:** real background blur (`@react-native-community/blur` 4.4.1, MIT; `npm audit` adds nothing new). Cards get a top sheen, and keys and rows spring down when pressed. The PIN keypad stays flat (V5).
+- **Public demo:**
+  - GitHub prerelease `vigil-demo` with the APK and QR codes;
+  - `server.json` on that release tells installed apps where the demo server is (a team laptop behind a Cloudflare quick tunnel, with `sim_` subjects only);
+  - release builds follow it unless the member pinned a server.
+- **Fix:** the 30 s retry could start a second listening session while the permission dialogs were open (seen on the emulator as two `POST /v1/journeys`). It is now guarded by a ref.
+
+Evidence:
+- `npx jest`: 55/55.
+- `journey-e2e.mjs`: 29/29, including the guardian flow. The real guardian received the duress alert, the decoy saw nothing, and stand-down closed the incident.
+- **On the emulator, through the public tunnel:** sign-up was received, listening started, the invite code was issued, and a scripted second phone joined as guardian with that code.
+
+Not done: FCM push (#95); a real-phone run; battery.
