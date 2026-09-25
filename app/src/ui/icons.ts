@@ -18,3 +18,4 @@ export {default as UserPlus} from 'phosphor-react-native/lib/commonjs/icons/User
 export {default as WifiSlash} from 'phosphor-react-native/lib/commonjs/icons/WifiSlash';
 export {default as Phone} from 'phosphor-react-native/lib/commonjs/icons/Phone';
 export {default as GearSix} from 'phosphor-react-native/lib/commonjs/icons/GearSix';
+export {default as ArrowLeft} from 'phosphor-react-native/lib/commonjs/icons/ArrowLeft';

@@ -11,9 +11,9 @@
  * "Journey active" heading so the check-in can be shown.
  */
 import React, {useEffect, useState} from 'react';
-import {BackHandler, Pressable, ScrollView, StatusBar, StyleSheet, Text, View} from 'react-native';
-import {CaretLeft, CheckCircle, GearSix, Microphone, Phone, WifiSlash} from './icons';
-import {Dial, Key, Lamp, Panel, PinKeypad, QuietKey, Readout, RoundKey, Row, Rule, Surface} from './components';
+import {BackHandler, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, View} from 'react-native';
+import {CheckCircle, GearSix, Microphone, Phone, WifiSlash} from './icons';
+import {Dial, Key, Lamp, Panel, PinKeypad, QuietKey, Readout, RoundKey, Row, Rule, Surface, TopAppBar} from './components';
 import {colors, fonts, space, TOUCH, type} from './theme';
 import {version} from '../../package.json';
 
@@ -33,6 +33,9 @@ const clockOf = (ms: number) => {
   return `${pad2(Math.floor(s / 3600))}:${pad2(Math.floor((s % 3600) / 60))}:${pad2(s % 60)}`;
 };
 const hhmm = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+/** Edge to edge: the graphite surface runs under the translucent status bar. */
+const TOP_INSET = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
 
 export function VigilApp() {
   const [screen, setScreen] = useState<Screen>('ready');
@@ -112,7 +115,9 @@ export function VigilApp() {
             onMenu={() => setScreen('settings')}
           />
         )}
-        <Text style={styles.sim}>SIMULATED demo data · build {version}</Text>
+        <Text style={styles.sim}>
+          SIMULATED demo data · build <Text style={styles.simId}>{version}</Text>
+        </Text>
       </ScrollView>
     </View>
   );
@@ -150,7 +155,7 @@ function GuardianList({guardians}: {guardians: Guardian[]}) {
           style={styles.guardianRow}>
           <Lamp tone="bone" hollow={!g.accepted} />
           <Text style={[type.body, {flex: 1, color: colors.textTitle}]}>{g.name}</Text>
-          <Text style={[type.readout, {color: g.accepted ? colors.textBody : colors.textDim}]}>
+          <Text style={[type.body, {color: g.accepted ? colors.textBody : colors.textDim}]}>
             {g.accepted ? 'ready' : 'pending'}
           </Text>
         </View>
@@ -237,7 +242,7 @@ function JourneyActive({
           <Text style={type.clock} accessibilityLabel={`Journey time ${clockOf(now - startedAt)}`}>
             {clockOf(now - startedAt)}
           </Text>
-          <Text style={[type.caption, {fontFamily: fonts.mono}]}>on journey</Text>
+          <Text style={[type.caption, {color: colors.textBody}]}>on journey</Text>
         </Dial>
       </View>
 
@@ -249,8 +254,8 @@ function JourneyActive({
         />
         <Rule />
         <Readout
-          label="Server"
-          value={online ? `reached ${hhmm(new Date(now))}` : 'offline'}
+          label={online ? 'Server reached' : 'Server'}
+          value={online ? hhmm(new Date(now)) : 'Offline'}
           lamp={<Lamp tone={online ? 'green' : 'unlit'} />}
         />
         {!online ? (
@@ -292,10 +297,7 @@ function Settings({
 }) {
   return (
     <View style={styles.screen}>
-      <BackLink label="Back" onPress={onBack} />
-      <Text style={type.title} accessibilityRole="header">
-        Settings
-      </Text>
+      <TopAppBar title="Settings" onBack={onBack} />
       <Panel style={{padding: 0, overflow: 'hidden'}}>
         <View style={styles.infoRow}>
           <Text style={type.label}>Security scorecard</Text>
@@ -316,16 +318,6 @@ function Settings({
         </Panel>
       ) : null}
     </View>
-  );
-}
-
-function BackLink({label, onPress, tone = 'member'}: {label: string; onPress: () => void; tone?: 'member' | 'guardian'}) {
-  const c = tone === 'guardian' ? colors.amberInk : colors.cobaltInk;
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.back}>
-      <CaretLeft size={20} color={c} />
-      <Text style={[type.label, {color: c}]}>{label}</Text>
-    </Pressable>
   );
 }
 
@@ -398,11 +390,10 @@ function GuardianPreview({onBack}: {onBack: () => void}) {
   const [called, setCalled] = useState(false);
   return (
     <View style={{flex: 1}}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.guardianBase} />
       <Surface tone="guardian" />
       <ScrollView contentContainerStyle={styles.page}>
         <View style={styles.screen}>
-          <BackLink label="Settings" onPress={onBack} tone="guardian" />
+          <TopAppBar title="Guardian view (preview)" onBack={onBack} tone="guardian" />
           <View style={styles.segment} accessibilityRole="radiogroup" accessibilityLabel="Preview state">
             {(['standby', 'alert', 'ended'] as const).map(s => (
               <Pressable
@@ -465,7 +456,9 @@ function GuardianPreview({onBack}: {onBack: () => void}) {
                 <Text style={type.caption}>In the real app this opens your phone's dialer. The preview doesn't place calls.</Text>
               ) : null}
               {acked ? (
-                <Text style={[type.readout, {textAlign: 'center'}]}>You acknowledged at 22:01</Text>
+                <Text style={[type.body, {textAlign: 'center'}]}>
+                  You acknowledged at <Text style={type.readout}>22:01</Text>
+                </Text>
               ) : (
                 <Key label="I've reached Lerato" variant="guardianPlain" onPress={() => setAcked(true)} />
               )}
@@ -493,7 +486,9 @@ function GuardianPreview({onBack}: {onBack: () => void}) {
               </Text>
             </>
           )}
-          <Text style={styles.sim}>SIMULATED guardian preview · build {version}</Text>
+          <Text style={styles.sim}>
+            SIMULATED guardian preview · build <Text style={styles.simId}>{version}</Text>
+          </Text>
         </View>
       </ScrollView>
     </View>
@@ -501,7 +496,7 @@ function GuardianPreview({onBack}: {onBack: () => void}) {
 }
 
 const styles = StyleSheet.create({
-  page: {flexGrow: 1, padding: space.lg, paddingTop: space.md, width: '100%', maxWidth: 560, alignSelf: 'center'},
+  page: {flexGrow: 1, padding: space.lg, paddingTop: space.md + TOP_INSET, width: '100%', maxWidth: 560, alignSelf: 'center'},
   screen: {flexGrow: 1, gap: space.md},
   topBar: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: TOUCH},
   wordmark: {fontFamily: fonts.bold, fontSize: 15, letterSpacing: 3, color: colors.textTitle},
@@ -511,11 +506,11 @@ const styles = StyleSheet.create({
   keyZone: {flexGrow: 1, justifyContent: 'center', paddingVertical: space.lg},
   lampLine: {flexDirection: 'row', alignItems: 'center', gap: space.sm},
   note: {flexDirection: 'row', alignItems: 'flex-start', gap: space.sm},
-  back: {flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: TOUCH, alignSelf: 'flex-start'},
   infoRow: {paddingHorizontal: space.md, paddingVertical: space.md},
   rowRule: {height: 1, backgroundColor: colors.hairline, marginHorizontal: space.md},
-  sim: {...type.caption, fontFamily: fonts.mono, fontSize: 11, textAlign: 'center', marginTop: space.md},
-  flat: {flexGrow: 1, justifyContent: 'center', padding: space.lg, paddingVertical: space.xl},
+  sim: {...type.caption, fontSize: 12, textAlign: 'center', marginTop: space.md},
+  simId: {fontFamily: fonts.mono, fontSize: 11},
+  flat: {flexGrow: 1, justifyContent: 'center', padding: space.lg, paddingVertical: space.xl, paddingTop: space.xl + TOP_INSET},
   tick: {
     width: 72,
     height: 72,

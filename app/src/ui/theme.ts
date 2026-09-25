@@ -9,7 +9,7 @@
  * - no red anywhere on member screens.
  *
  * Contrast (computed, WCAG 2.x): textTitle 14.2:1 and textBody 8.3:1 on
- * bgBase; textDim 5.1:1 on bgBase; white on cobalt 4.7:1; controlEdge on
+ * bgBase; textDim 5.1:1 on bgBase; white on the cobalt key 4.7:1 or more; controlEdge on
  * bgBase meets 3:1 (1.4.11 non-text).
  */
 export const colors = {
@@ -20,6 +20,8 @@ export const colors = {
   keyFacePressed: '#222326',
   /** One light source from above: a hairline highlight on top edges. */
   topLight: 'rgba(255,255,255,0.07)',
+  /** The static 1 px machined highlight along a key's top edge. */
+  keyHighlight: 'rgba(255,255,255,0.12)',
   hairline: 'rgba(255,255,255,0.06)',
   shade: '#111214',
   controlEdge: '#6E7076',
@@ -31,7 +33,8 @@ export const colors = {
   unlit: '#46484D',
 
   cobalt: '#3D6FD6',
-  cobaltTop: '#4A7BE0',
+  /** Darkened so white type holds 4.7:1 across the whole gradient. */
+  cobaltTop: '#3F6FD4',
   cobaltBottom: '#3363C6',
   cobaltText: '#FFFFFF',
   /** Cobalt for text or icons on graphite (6.8:1). */

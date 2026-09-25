@@ -6,8 +6,8 @@
  */
 import React, {useEffect, useRef, useState} from 'react';
 import {AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View, type ViewStyle} from 'react-native';
-import Svg, {Defs, LinearGradient, Rect, Stop} from 'react-native-svg';
-import {Backspace, CaretRight} from './icons';
+import Svg, {Circle, Defs, Line, LinearGradient, Rect, Stop} from 'react-native-svg';
+import {ArrowLeft, Backspace, CaretRight} from './icons';
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
 
 type Tone = 'member' | 'guardian';
@@ -71,6 +71,9 @@ function KeyFace({variant, pressed, radius}: {variant: KeyVariant; pressed: bool
           <Rect width={size.w} height={size.h} rx={radius} ry={radius} fill={`url(#${id})`} />
         </Svg>
       ) : null}
+      {variant === 'plain' || variant === 'guardianPlain' ? (
+        <View style={[styles.highlight, {left: radius, right: radius}]} />
+      ) : null}
     </View>
   );
 }
@@ -116,7 +119,7 @@ export function QuietKey({label, onPress, tone = 'member'}: {label: string; onPr
       onPress={onPress}
       hitSlop={4}
       style={({pressed}) => [styles.quiet, pressed && {opacity: 0.6}]}>
-      <Text style={[type.label, {color: tone === 'guardian' ? colors.amberInk : colors.cobaltInk}]}>{label}</Text>
+      <Text style={[type.label, {color: tone === 'guardian' ? colors.amberInk : colors.textTitle}]}>{label}</Text>
     </Pressable>
   );
 }
@@ -146,8 +149,30 @@ export function RoundKey({label, onPress}: {label: string; onPress: () => void})
 
 /** A dial on the same plinth, holding a readout (the journey clock). */
 export function Dial({children}: {children: React.ReactNode}) {
+  // 60 static graduations on the plinth, every fifth one longer: an
+  // instrument's bezel. Decorative and still.
+  const ticks = Array.from({length: 60}, (_, i) => {
+    const a = (i / 60) * 2 * Math.PI;
+    const r1 = 84;
+    const r2 = i % 5 === 0 ? 76 : 80;
+    return {x1: 88 + r1 * Math.sin(a), y1: 88 - r1 * Math.cos(a), x2: 88 + r2 * Math.sin(a), y2: 88 - r2 * Math.cos(a), major: i % 5 === 0};
+  });
   return (
     <View style={styles.plinth}>
+      <Svg width={176} height={176} style={StyleSheet.absoluteFill} pointerEvents="none">
+        {ticks.map((t, i) => (
+          <Line
+            key={i}
+            x1={t.x1}
+            y1={t.y1}
+            x2={t.x2}
+            y2={t.y2}
+            stroke={t.major ? colors.textDim : colors.unlit}
+            strokeWidth={t.major ? 1.5 : 1}
+          />
+        ))}
+        <Circle cx={88} cy={88} r={87} stroke={colors.hairline} strokeWidth={1} fill="none" />
+      </Svg>
       <View style={styles.dial}>{children}</View>
     </View>
   );
@@ -215,13 +240,34 @@ export function Lamp({tone, breathing, hollow}: {tone: LampTone; breathing?: boo
 
 /** One readout line: a word on the left, a measured value on the right. */
 export function Readout({label, value, lamp}: {label: string; value: string; lamp?: React.ReactNode}) {
+  // Mono is for measurements: digits get JetBrains Mono, words stay in Hanken.
+  const measured = /\d/.test(value);
   return (
     <View style={styles.readout} accessible accessibilityLabel={`${label}: ${value}`}>
       <Text style={[type.body, {color: colors.textBody, flexShrink: 1}]}>{label}</Text>
       <View style={styles.readoutValue}>
         {lamp}
-        <Text style={[type.readout, {color: colors.textTitle}]}>{value}</Text>
+        <Text style={[measured ? type.readout : type.body, {color: colors.textTitle}]}>{value}</Text>
       </View>
+    </View>
+  );
+}
+
+/** Material top app bar: a back arrow in a 48 dp target and the screen title. */
+export function TopAppBar({title, onBack, tone = 'member'}: {title: string; onBack: () => void; tone?: Tone}) {
+  return (
+    <View style={styles.appBar}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Navigate up"
+        onPress={onBack}
+        android_ripple={{color: colors.ripple, borderless: true, radius: 24}}
+        style={styles.appBarBack}>
+        <ArrowLeft size={24} color={tone === 'guardian' ? colors.amberInk : colors.textTitle} />
+      </Pressable>
+      <Text style={styles.appBarTitle} accessibilityRole="header" numberOfLines={1}>
+        {title}
+      </Text>
     </View>
   );
 }
@@ -253,7 +299,8 @@ const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
 /**
  * PIN keypad. Deliberately knows nothing about which PIN is which: it hands
  * the digits up and resets. Every entry looks and animates the same, so the
- * screen can never reveal a duress PIN (spec V5, test T15).
+ * screen can never reveal a duress PIN (spec V5, test T15). It is still: no
+ * ripple and no scale, only an instant pressed face, on every screen it's on.
  */
 export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete: (pin: string) => void}) {
   const [pin, setPin] = useState('');
@@ -289,8 +336,7 @@ export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete
               accessibilityRole="button"
               accessibilityLabel={k === 'del' ? 'Delete' : k}
               onPress={() => press(k)}
-              android_ripple={{color: colors.ripple, foreground: true}}
-              style={({pressed}) => [styles.pinKey, pressed && styles.sunk]}>
+              style={styles.pinKey}>
               {({pressed}) => (
                 <>
                   <KeyFace variant="plain" pressed={pressed} radius={radii.key} />
@@ -383,6 +429,10 @@ const styles = StyleSheet.create({
     gap: space.xs,
   },
   lamp: {width: 8, height: 8, borderRadius: 4},
+  highlight: {position: 'absolute', top: 1, height: 1, backgroundColor: colors.keyHighlight},
+  appBar: {flexDirection: 'row', alignItems: 'center', minHeight: 64, marginHorizontal: -space.sm, gap: space.xs},
+  appBarBack: {width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center'},
+  appBarTitle: {...type.title, fontSize: 22, flex: 1},
   readout: {
     minHeight: 40,
     flexDirection: 'row',
