@@ -29,4 +29,14 @@ Needs/blockers: Ipeleng's review; Sibusiso's acceptance; a sixth review round.
 
 Business handoff: None.
 
-Next: the next review round on revision 6; the amendments land in the acceptance PR.
+**Revision 7 (same day).** A further review round resolved 4 of the 7 earlier findings, left 3 partial and raised 6 new ones. The seventh draft answers them:
+- every recovery schedules revocation 72 h out, with no journey condition;
+- recovery epochs: one current key and any number of retiring keys, whose deadlines never move;
+- a retiring key sends safety events only, and its governance and data actions have no effect;
+- member-facing receipts become an opaque `receipt_id`;
+- late outbox detections are accepted with deadlines from receipt;
+- an export is a snapshot taken at the request.
+
+Proposed tests T70–T72 are added. Dispositions are in `SECURITY-PROGRAMME.md` §11, "Revision 6 review".
+
+Next: the next review round on revision 7; the amendments land in the acceptance PR.

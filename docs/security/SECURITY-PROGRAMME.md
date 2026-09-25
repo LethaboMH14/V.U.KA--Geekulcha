@@ -1,6 +1,6 @@
 # VUKA security, compliance and governance programme
 
-> **Owner:** Ipeleng Constance Modise (security and privacy). Lethabo Hoaeane is covering the security lane from 24 Sep 2026 until Ipeleng returns, and is **acting incident lead** in the same period. **Status:** `PROPOSED`, revision 6, 25 Sep 2026.
+> **Owner:** Ipeleng Constance Modise (security and privacy). Lethabo Hoaeane is covering the security lane from 24 Sep 2026 until Ipeleng returns, and is **acting incident lead** in the same period. **Status:** `PROPOSED`, revision 7, 25 Sep 2026.
 > **Serves:** S, T, B.
 > **What this is:** the umbrella over the existing security documents:
 > - `SSDLC.md`: the lifecycle and the controls `C-nn`;
@@ -11,7 +11,7 @@
 >
 > It adds a legal register built from quoted sources, a standards baseline with versions, new controls, a pentest methodology with scoring, day-to-day operations, governance, and what we can show live.
 > **Evidence base:** `docs/security/research/SA-LAW.md`, `STANDARDS.md` and `THREAT-DATA.md`, researched 24 Sep 2026. Each claim carries a literal quote and URL, or ⚑ (unverified).
-> **Review record:** revision 1 was attacked by an independent red-team review (30 findings); revisions 2 and 3 by a second, different-model adversarial review (12 and 10 findings); revision 4 by a further red-team round (6 findings); revision 5 by the second reviewer again (7 findings). Every finding is dispositioned in §11. That review read `main`, so artefacts still in open PRs showed as missing. They are cited by PR number here, and **nothing in the showcase (§9) is used until its artefact is on `main`.**
+> **Review record:** revision 1 was attacked by an independent red-team review (30 findings); revisions 2 and 3 by a second, different-model adversarial review (12 and 10 findings); revision 4 by a further red-team round (6 findings); revision 5 by the second reviewer again (7 findings), and revision 6 by the same reviewer (6 findings). Every finding is dispositioned in §11. That review read `main`, so artefacts still in open PRs showed as missing. They are cited by PR number here, and **nothing in the showcase (§9) is used until its artefact is on `main`.**
 > **Not legal advice. This is an internal programme, not an independent assessment.** Gap G8 (no independent penetration test) stays open whatever this programme achieves.
 
 ---
@@ -89,11 +89,11 @@ Request signing, the order of checks, and replay rules (§7; T06, PT-01–PT-09)
   2. It is shown with **notification ID = alert ID**, then marked `displayed`.
 
   On restart, every `pending` alert is shown again. A repeat delivery of a `displayed` alert is ignored. Because the notification ID is stable, a re-show replaces the notification rather than adding one. **The claim is narrowed to what is tested:** at most one visible notification per alert ID, and at least one display after any single crash. **T08 tests both crash boundaries** (after persist and before display; after display and before marking).
-- **ADR-0043 (proposed; both leads, and Ipeleng's security review), sixth draft.** The direction was chosen by Lethabo on 24 Sep: **the verifiable record leaves the phone.**
-  1. **My Record on the phone is a plain journey list**, identical whatever happened. The verifiable export is fetched **off the phone** with the recovery code (and later a counsel-reviewed s23 process). Every export is released 72 h after the request, whatever the incident state, and guardians aren't told about it.
+- **ADR-0043 (proposed; both leads, and Ipeleng's security review), seventh draft.** The direction was chosen by Lethabo on 24 Sep: **the verifiable record leaves the phone.**
+  1. **My Record on the phone is a plain journey list**, identical whatever happened. The verifiable export is fetched **off the phone** with the recovery code (and later a counsel-reviewed s23 process). Every export is a snapshot taken at the request and released 72 h later, whatever the incident state; guardians aren't told about it.
   2. A **`stand_down` after duress only acknowledges.**
   3. **No automatic resolution or bank release.** At 72 h, **guardians** see "status unknown". Guardian removal and deletion become available again; the incident is scoped to its journey; the call stays locked. The bank's own process lifts a hold.
-  4. **Recovery never silences the old phone.** During an armed journey, or within 72 h of the last one ending, the old key's revocation is scheduled for exactly 72 h after the recovery; until then it is a full device key. The ingest answer is identical for both keys, `key_revoked` carries `effective_at`, and the old phone's screens are unchanged.
+  4. **Recovery never silences the old phone.** Every recovery schedules the old key's revocation for exactly 72 h later. Until then a retiring key may send safety events but can't change guardians, delete or export. Every member-facing endpoint returns an opaque acknowledgement with no chain position, `key_revoked` carries `effective_at`, and the old phone's screens are unchanged.
   5. **The silence notice is not built.**
   6. **A labelled `sim_` demo-reset script** keeps a judge's duress test from leaving the demo stuck.
 - **Public deploy:** `sim_` subjects only, rejected in code (SEC-6; PT-68).
@@ -175,7 +175,7 @@ The phases follow **PTES** and **NIST SP 800-115** (plan → discover → attack
 |---|---|
 | Duress on the phone | T15 and T31 (on the `parityTest` variant), T57, T30 (the off-phone export honours the hold identically), T64 (member-device API responses and My Record are byte-identical in shape with and without a duress incident, before and after 72 h) |
 | The alert actually fires | T07 (force-stop), T08 (crash and restart), T51 (the check-in never shown), T11 (bank-signal triggers) |
-| PIN authority and guardians | T12, T16, T36, T47, T52, T24 (never zero guardians, the two-session path), T61 (stand-down after duress: no close, no call unlock, bank signal stands), T34 (guardian-token substitution), T13 revised (recovery isn't blocked), T66 (no VUKA release; "status unknown" is guardian-only), T67 (recovery schedules revocation 72 h out; the old key stays a full key until then; one ingest answer for both keys; old screens unchanged), T68 (every export released at 72 h; no guardian notice), T69 (the verifier honours `effective_at`) |
+| PIN authority and guardians | T12, T16, T36, T47, T52, T24 (never zero guardians, the two-session path), T61 (stand-down after duress: no close, no call unlock, bank signal stands), T34 (guardian-token substitution), T13 revised (recovery isn't blocked), T66 (no VUKA release; "status unknown" is guardian-only), T67 (recovery schedules revocation 72 h out; the old key stays a full key until then; one ingest answer for both keys; old screens unchanged), T68 (every export a request-time snapshot released at 72 h; no guardian notice), T69 (the verifier honours `effective_at`), T70 (recovery epochs), T71 (opaque receipts), T72 (late detections) |
 | Authentication and authorisation | T06 (signing, replay), T49, PT-68, T40 (forged bank signal refused) |
 | Chain and anchor | T04, T21, T22, T58 |
 | Hygiene and leaks | T46, T42, T63 (app network capture), secrets C-80–C-82 (with the CI failure shown) |
@@ -355,6 +355,16 @@ The acting incident lead is **Lethabo** (Ipeleng is away).
 | 5 | Export stays blocked after duress | **Accepted.** Every export is released 72 h after the request, independent of incident state (T68) |
 | 6 | Export notices expose evidence gathering to an abusive guardian | **Accepted.** Guardians aren't notified of exports; the member may add an email address for the release notice |
 | 7 | The alarm-only key can't be verified under ADR-0042 | **Accepted.** `key_revoked` carries `effective_at`; ADR-0042 and §4a join the amendment list; T69 |
+
+### Revision 6 review (the second reviewer, round 5: of the previous 7, 4 resolved and 3 partial; 6 new)
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | Repeated recovery breaks the two-key rule | **Accepted.** Recovery epochs: one current key, any number of retiring keys with fixed deadlines; recoveries serialised (T70) |
+| 2 | A retiring key can replace trusted guardians | **Accepted.** Retiring keys send safety events only; governance and data actions need the current key and otherwise have no effect, with the same acknowledgement |
+| 3 | Recovery can overtake an unacknowledged journey arm | **Accepted.** Every recovery schedules revocation 72 h out; the journey condition is removed |
+| 4 | Late detections still fail the skew check | **Accepted.** An outbox-delivered `signal_detected` with an unseen counter is accepted and flagged; deadlines count from receipt; no head-of-line blocking (T72) |
+| 5 | Receipts still expose `chain_index` | **Accepted.** Member-facing receipts become an opaque random `receipt_id`; chain positions appear only in the export (T71) |
+| 6 | Evidence can vanish while an export waits | **Accepted.** A request-time snapshot, kept until collected or 7 days after release; deletion and retention don't reach it; the residual is stated |
 
 ## 12 · The security scorecard: measured, checkable, shown in the app
 
