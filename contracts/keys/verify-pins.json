@@ -1,0 +1,7 @@
+{
+  "network": "testnet",
+  "topic_id": "0.0.10687280",
+  "topic_epoch": 1,
+  "manifest_fingerprint_hex": "c1d90404edd180765e15321d690881933c5a4ffcdecc18f064131b6c5c70a0a2",
+  "manifest_serialization": "canonical-json v2 (docs/VUKA-2-SPEC.md §5, via shared/canonical.js)"
+}
