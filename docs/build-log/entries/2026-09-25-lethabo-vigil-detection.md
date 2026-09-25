@@ -47,12 +47,13 @@ Evidence:
   - one clip gave identical integer scores on the phone and the host.
 - **ESC-50 held out (folds 4–5):** glass 11/16; 7.3 false records per hour; 5.5 false prompts per hour. These are in `docs/EVIDENCE.md`.
 
-Decision: an ADR-0039(3) clarification is **proposed**. "One class per window: the argmax" is read as the argmax among the classes that clear their own thresholds. Otherwise a loud class below its own bar would hide a quieter class that clears its bar. Lethabo is the ADR owner, and the clarification needs Sibusiso's agreement for the payload.
+Decision: **ADR-0045** (Lethabo, 25 Sep): one class per window, chosen from the classes that clear their own thresholds; this clarifies ADR-0039(3). The payload is unchanged. It binds when Sibusiso accepts it with ADR-0039.
 
 Needs/blockers:
 - **Not measured:** gunshot and voice recall (ESC-50 has none of these clips); field false alarms (M2); battery (M4); screen-off continuity (M5, T29); a real phone.
+- **Detection is not operational end to end yet: recorded events are not signed, queued or sent** (the V7 Keystore signer and V8 queue are not built).
 - The JS engine stops if the app process dies; a headless task would fix this.
-- The signed event queue (V7 Keystore signer, V8 queue) is not built; recorded events are not yet sent.
+- The check-in notice's full-screen intent (V4) is built but not yet tested on a locked phone.
 - Thresholds stay uncalibrated.
 
 Business handoff: the evidence table in `docs/EVIDENCE.md` is the only source for detection claims.

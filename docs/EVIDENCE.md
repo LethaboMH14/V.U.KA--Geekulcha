@@ -60,7 +60,7 @@ Method: `scripts/eval/yamnet_windows.py` runs the registered YAMNet (sha256 `10c
 |---|---|---|---|
 | Glass recall (clips recorded as glass) | 21/24 (87.5 %) | **11/16 (68.8 %)** | `FACT` (n as shown) |
 | False records on negatives | 1 in 0.544 h (392 clips, 49 classes) | **4 in 0.544 h = 7.3/h** (392 clips) | `FACT` |
-| False prompts, negatives as one continuous stream | 1.8/h | **5.5/h** | `FACT` |
+| False prompts, host-harness replay of the negatives as one stream (not a phone measurement) | 1.8/h | **5.5/h** | `FACT` (host proxy) |
 | Main false triggers | crackling fire → Gunshot | pouring water → Glass (8008 bp), clock alarm → Glass, can opening → Gunshot | `FACT` |
 | Gun-like neighbour rule | false "Gunshot" records fell from 9 to 1 on the first 392-clip set | — | `FACT` |
 | On-device parity | the emulator's classification of `1-20133-A-39.wav` gave the same integer scores as the host (Breaking 3320, top class 374 at 5000) | — | `FACT` (n = 1 clip) |

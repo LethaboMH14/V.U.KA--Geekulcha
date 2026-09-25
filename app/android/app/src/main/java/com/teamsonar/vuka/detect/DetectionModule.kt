@@ -47,11 +47,60 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
 
     override fun onError(message: String) = emit("vigil.error", message)
 
+    @Volatile private var pendingArm: Promise? = null
+
+    override fun onReady(labels: List<String>, sha256: String) {
+        pendingArm?.resolve(Arguments.createMap().apply {
+            putString("sha256", sha256)
+            putArray("labels", Arguments.fromList(labels))
+        })
+        pendingArm = null
+    }
+
+    override fun onFailed(message: String) {
+        val p = pendingArm
+        pendingArm = null
+        if (p != null) p.reject("capture", message) else emit("vigil.error", message)
+    }
+
+    /**
+     * Arms only when capture is really running: the promise resolves with the
+     * model's facts once the microphone is recording, and rejects if the service
+     * can't start (including Android 14's rule that a microphone service must be
+     * started from the foreground) or the model or microphone fails.
+     */
     @ReactMethod
     fun arm(promise: Promise) {
         DetectionBus.listener = this
-        SensingService.start(ctx)
-        promise.resolve(true)
+        pendingArm = promise
+        try {
+            SensingService.start(ctx)
+        } catch (e: Exception) {
+            pendingArm = null
+            promise.reject("start", e.message ?: e.javaClass.simpleName)
+            return
+        }
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val p = pendingArm
+            if (p != null) {
+                pendingArm = null
+                SensingService.stop(ctx)
+                p.reject("timeout", "capture did not start")
+            }
+        }, 10_000)
+    }
+
+    /** Shows the journey check outside the app (V4); cleared when the check-in closes. */
+    @ReactMethod
+    fun showCheckin() = CheckinNotice.show(ctx)
+
+    @ReactMethod
+    fun clearCheckin() = CheckinNotice.clear(ctx)
+
+    /** The JS runtime is going away: stop sending to it, so output waits for the next one. */
+    override fun invalidate() {
+        if (DetectionBus.listener === this) DetectionBus.listener = null
+        super.invalidate()
     }
 
     @ReactMethod
@@ -59,21 +108,6 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
         SensingService.stop(ctx)
         DetectionBus.clear()
         promise.resolve(true)
-    }
-
-    /** The model's own facts, for the JS label check (classes.ts checkLabels). */
-    @ReactMethod
-    fun modelInfo(promise: Promise) {
-        try {
-            YamnetClassifier(ctx).use { c ->
-                promise.resolve(Arguments.createMap().apply {
-                    putString("sha256", YamnetClassifier.MODEL_SHA256)
-                    putArray("labels", Arguments.fromList(c.labels))
-                })
-            }
-        } catch (e: Exception) {
-            promise.reject("model", e.message)
-        }
     }
 
     /**
@@ -89,7 +123,8 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
             val dir = ctx.getExternalFilesDir(null) ?: throw IllegalStateException("no files dir")
             val file = File(dir, name).canonicalFile
             require(file.parentFile == dir.canonicalFile) { "file must be in the app's files folder" }
-            val pcm = readWav16kMono(file)
+            // A tester's clip is read once and deleted: nothing stays on the phone (D7).
+            val pcm = try { readWav16kMono(file) } finally { file.delete() }
             val out = Arguments.createArray()
             YamnetClassifier(ctx).use { c ->
                 var seq = 0

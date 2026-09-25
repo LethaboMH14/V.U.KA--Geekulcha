@@ -56,13 +56,18 @@ class SensingService : Service() {
             // Keep the CPU running for inference with the screen off (battery cost: M4, unmeasured).
             wake = getSystemService(android.os.PowerManager::class.java)
                 .newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "vigil:journey").apply { setReferenceCounted(false); acquire() }
-            try {
-                val c = YamnetClassifier(this)
-                classifier = c
-                audio = AudioPipeline(this, c, DetectionBus::window, DetectionBus::error).also { it.start() }
+            val c = try {
+                YamnetClassifier(this)
             } catch (e: Exception) {
-                DetectionBus.error("model: ${e.message}")
+                fail("model: ${e.message}")
+                return START_NOT_STICKY
             }
+            classifier = c
+            audio = AudioPipeline(
+                this, c, DetectionBus::window, DetectionBus::error,
+                onStarted = { DetectionBus.ready(c.labels, YamnetClassifier.MODEL_SHA256) },
+                onFailed = { fail(it) },
+            ).also { it.start() }
             motion = MotionPipeline(this, DetectionBus::motion).also {
                 if (!it.start()) DetectionBus.error("motion: no accelerometer")
             }
@@ -70,12 +75,19 @@ class SensingService : Service() {
         return START_NOT_STICKY // no silent restart after the app is killed (V10: no boot receiver either)
     }
 
+    /** Startup or capture failed: say so, and don't keep a notification and wake lock for nothing. */
+    private fun fail(message: String) {
+        DetectionBus.failed(message)
+        stopSelf()
+    }
+
     override fun onDestroy() {
-        audio?.stop()
+        audio?.stop() // blocks until capture and inference have finished
         motion?.stop()
         wake?.let { if (it.isHeld) it.release() }
         wake = null
         classifier?.close()
+        CheckinNotice.clear(this)
         audio = null
         motion = null
         classifier = null
@@ -112,7 +124,12 @@ object DetectionBus {
         fun onWindow(w: WindowResult)
         fun onMotion(f: MotionFrame)
         fun onError(message: String)
+        fun onReady(labels: List<String>, sha256: String)
+        fun onFailed(message: String)
     }
+
+    fun ready(labels: List<String>, sha256: String) = listener?.onReady(labels, sha256)
+    fun failed(message: String) = listener?.onFailed(message)
 
     @Synchronized fun window(w: WindowResult) {
         val l = listener

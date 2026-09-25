@@ -27,6 +27,8 @@ const arg = name => {
   return i > 0 ? process.argv[i + 1] : undefined;
 };
 const folds = arg('--folds')?.split(',');
+// How long a prompted check-in stays open in the stream replay (the member's window to answer).
+const checkinMs = Number(arg('--checkin-ms') ?? 60000);
 const rsFile = arg('--ruleset-json');
 const ruleset = rsFile ? {...engine.RULESET_V1, ...JSON.parse(readFileSync(rsFile, 'utf8'))} : engine.RULESET_V1;
 
@@ -68,13 +70,22 @@ for (const c of clips) {
 // --------------------------------------------------------- continuous stream ---
 // Negatives back to back: window numbers and times continue across clips.
 let state = engine.initialState();
-let seqBase = 0, msBase = 0, streamRecords = 0, streamPrompts = 0;
+let seqBase = 0, msBase = 0, streamRecords = 0, streamPrompts = 0, openUntil = -1;
 for (const c of clips.filter(x => x.label === 'negative')) {
   for (const w of c.windows) {
-    const out = engine.step(state, {type: 'audio', window: {...w, seq: w.seq + seqBase, endMs: w.endMs + msBase}}, ruleset);
+    const endMs = w.endMs + msBase;
+    if (openUntil >= 0 && endMs >= openUntil) {
+      state = engine.step(state, {type: 'checkin', open: false}, ruleset).state;
+      openUntil = -1;
+    }
+    const out = engine.step(state, {type: 'audio', window: {...w, seq: w.seq + seqBase, endMs}}, ruleset);
     state = out.state;
     if (out.decision?.record) streamRecords++;
-    if (out.decision?.prompt) streamPrompts++;
+    if (out.decision?.prompt) {
+      streamPrompts++;
+      state = engine.step(state, {type: 'checkin', open: true}, ruleset).state;
+      openUntil = endMs + checkinMs;
+    }
   }
   seqBase += c.windows.length ? c.windows[c.windows.length - 1].seq : 0;
   msBase += Math.round(c.seconds * 1000);
@@ -88,4 +99,4 @@ console.log(`positives: ${posHit}/${posN} recorded in the right family (${pct(po
 console.log(`negatives, per clip: ${negRecords} records in ${negN} clips (${hours.toFixed(3)} h) = ${perHour(negRecords)} per hour`);
 if (Object.keys(negByCategory).length) console.log(`  by category: ${JSON.stringify(negByCategory)}`);
 examples.slice(0, 12).forEach(e => console.log(`  ${e}`));
-console.log(`negatives, continuous stream: ${streamRecords} records, ${streamPrompts} prompts in ${hours.toFixed(3)} h = ${perHour(streamPrompts)} prompts per hour`);
+console.log(`negatives, host replay as one stream (check-in open ${checkinMs} ms after each prompt; clip tails and cross-clip windows not modelled): ${streamRecords} records, ${streamPrompts} prompts in ${hours.toFixed(3)} h = ${perHour(streamPrompts)} prompts per hour`);

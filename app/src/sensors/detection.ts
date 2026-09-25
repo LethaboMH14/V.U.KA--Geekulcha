@@ -22,9 +22,11 @@ import {
 type Native = {
   testFeed?: boolean;
   classifyTestClip(name: string): Promise<AudioWindow[]>;
-  arm(): Promise<boolean>;
+  /** Resolves only once the microphone is recording, with the model's facts. */
+  arm(): Promise<{sha256: string; labels: string[]}>;
   disarm(): Promise<boolean>;
-  modelInfo(): Promise<{sha256: string; labels: string[]}>;
+  showCheckin(): void;
+  clearCheckin(): void;
 };
 
 const native: Native | undefined = NativeModules.VigilDetection;
@@ -41,7 +43,7 @@ const toWindow = (w: AudioWindow): AudioWindow => ({
 
 export type ArmResult =
   | {ok: true}
-  | {ok: false; reason: 'unsupported' | 'microphone' | 'notifications' | 'model'; detail?: string};
+  | {ok: false; reason: 'unsupported' | 'microphone' | 'notifications' | 'model' | 'capture'; detail?: string};
 
 /** Spec V1: arming refuses without microphone AND notification permission, and says why. */
 async function permissions(): Promise<ArmResult> {
@@ -74,21 +76,17 @@ export async function startDetection(opts: {
   const perm = await permissions();
   if (!perm.ok) return {result: perm};
 
-  // Fail closed if the model on this phone disagrees with the engine's class table.
-  let sha256: string;
-  try {
-    const info = await native.modelInfo();
-    const problems = checkLabels(info.labels);
-    if (problems.length) return {result: {ok: false, reason: 'model', detail: problems.join('; ')}};
-    sha256 = info.sha256;
-  } catch (e) {
-    return {result: {ok: false, reason: 'model', detail: String(e)}};
-  }
-
   let state: EngineState = initialState();
+  // Nothing is judged until arming has finished and the model has been checked.
+  let armed = false;
+  let sha256 = '';
   const emitter = new NativeEventEmitter(NativeModules.VigilDetection);
+  // Arm right after the permission prompt, while the app is still in the
+  // foreground (Android 14's rule for a microphone service); the model check
+  // happens inside, and arming resolves only once capture is running.
   const subs = [
     emitter.addListener('vigil.window', (w: AudioWindow) => {
+      if (!armed) return;
       const out = step(state, {type: 'audio', window: toWindow(w)}, RULESET_V1);
       state = out.state;
       const d = out.decision;
@@ -101,24 +99,45 @@ export async function startDetection(opts: {
           appVersion: opts.appVersion,
         });
         opts.onRecord(d, payload);
-        if (d.prompt) opts.onPrompt(d);
+        if (d.prompt) {
+          native.showCheckin();
+          opts.onPrompt(d);
+        }
       }
     }),
     emitter.addListener('vigil.motion', (f: MotionFrame) => {
+      if (!armed) return;
       state = step(state, {type: 'motion', frame: f}, RULESET_V1).state;
     }),
     emitter.addListener('vigil.error', (m: string) => opts.onError?.(m)),
   ];
 
-  await native.arm();
+  const stopListening = () => subs.forEach(s => s.remove());
+  try {
+    const info = await native.arm();
+    // Fail closed if the model on this phone disagrees with the engine's class table.
+    const problems = checkLabels(info.labels);
+    if (problems.length) {
+      stopListening();
+      await native.disarm();
+      return {result: {ok: false, reason: 'model', detail: problems.join('; ')}};
+    }
+    sha256 = info.sha256;
+    armed = true;
+  } catch (e) {
+    stopListening();
+    return {result: {ok: false, reason: 'capture', detail: String(e)}};
+  }
   return {
     result: {ok: true},
     detector: {
       setCheckinOpen(open) {
         state = step(state, {type: 'checkin', open}, RULESET_V1).state;
+        if (!open) native.clearCheckin();
       },
       async stop() {
-        subs.forEach(s => s.remove());
+        stopListening();
+        native.clearCheckin();
         await native.disarm();
       },
     },

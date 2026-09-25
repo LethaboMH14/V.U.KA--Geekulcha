@@ -214,6 +214,8 @@ function armMessage(e: ArmResult): string {
       return 'VIGIL needs to show its journey notification while it listens. Allow notifications, then start again.';
     case 'model':
       return "The listening model on this phone didn't pass its check, so VIGIL can't listen. Reinstall the app.";
+    case 'capture':
+      return "VIGIL couldn't start listening. Keep the app open while you start the journey, then try again.";
     default:
       return 'Listening is not available on this device.';
   }

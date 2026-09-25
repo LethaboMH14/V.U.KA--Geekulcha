@@ -11,6 +11,7 @@ import android.media.audiofx.AutomaticGainControl
 import android.media.audiofx.NoiseSuppressor
 import android.os.SystemClock
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 
@@ -49,10 +50,15 @@ class AudioPipeline(
     private val classifier: YamnetClassifier,
     private val onWindow: (WindowResult) -> Unit,
     private val onError: (String) -> Unit,
+    /** Called once, from the capture thread, when the microphone is actually recording. */
+    private val onStarted: () -> Unit,
+    /** Called once if capture can't start or stops on a read error. */
+    private val onFailed: (String) -> Unit,
 ) {
     companion object {
         const val RATE = 16000
-        const val FRAME = 320 // 20 ms
+        /** 12.5 ms: divides both the hop (39 frames) and the window (78), so windows land on exact sample positions. */
+        const val FRAME = 200
         const val WINDOW = YamnetClassifier.SAMPLES
         const val HOP = WINDOW / 2
         const val RING = RATE * 3
@@ -71,8 +77,18 @@ class AudioPipeline(
         capture.execute { loop() }
     }
 
+    /**
+     * Stops capture and waits for it: recording stops, any in-flight inference
+     * finishes, buffers are zeroed, and both threads end. Only then may the
+     * caller close the classifier.
+     */
     fun stop() {
         running.set(false)
+        capture.shutdown()
+        capture.awaitTermination(3, TimeUnit.SECONDS)
+        inference.shutdown()
+        inference.awaitTermination(3, TimeUnit.SECONDS)
+        ring.fill(0f)
     }
 
     private fun source(): Int {
@@ -87,14 +103,14 @@ class AudioPipeline(
         val rec = try {
             AudioRecord(source(), RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT, max(min, FRAME * 16))
         } catch (e: Exception) {
-            onError("audio_init: ${e.message}")
             running.set(false)
+            onFailed("audio_init: ${e.message}")
             return
         }
         if (rec.state != AudioRecord.STATE_INITIALIZED) {
-            onError("audio_init: recorder not initialised")
             rec.release()
             running.set(false)
+            onFailed("audio_init: recorder not initialised")
             return
         }
         listOfNotNull(
@@ -104,22 +120,32 @@ class AudioPipeline(
         ).forEach { it.enabled = false }
 
         val frame = FloatArray(FRAME)
-        var seq = 0
-        var sinceHop = 0
+        // Windows end at exact sample positions: 15 600, 23 400, 31 200, … and
+        // window n is the n-th of them, so seq always means the same audio.
+        var captured = 0L
+        var nextEnd = WINDOW.toLong()
         rec.startRecording()
+        if (rec.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
+            rec.release()
+            running.set(false)
+            onFailed("audio_start: the microphone did not start")
+            return
+        }
+        onStarted()
         try {
             while (running.get()) {
                 var got = 0
                 while (got < FRAME && running.get()) {
                     val n = rec.read(frame, got, FRAME - got, AudioRecord.READ_BLOCKING)
-                    if (n < 0) { onError("audio_read: $n"); return }
+                    if (n < 0) { running.set(false); onFailed("audio_read: $n"); return }
                     got += n
                 }
+                if (got < FRAME) break
                 push(frame)
-                sinceHop += FRAME
-                if (sinceHop >= HOP && filled >= WINDOW) {
-                    sinceHop -= HOP
-                    seq++
+                captured += FRAME
+                if (captured == nextEnd) {
+                    val seq = ((nextEnd - WINDOW) / HOP + 1).toInt()
+                    nextEnd += HOP
                     if (inferring.compareAndSet(false, true)) {
                         val samples = latest(WINDOW)
                         val s = seq
