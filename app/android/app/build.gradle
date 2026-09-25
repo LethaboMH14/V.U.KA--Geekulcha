@@ -69,6 +69,12 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'org.webkit:android-jsc:+'
 
+/** The ABIs to package: the reactNativeArchitectures property, or phones only. */
+def reactNativeArchitectures() {
+    def value = project.findProperty("reactNativeArchitectures")
+    return value ? value.split(",").collect { it.trim() } : ["armeabi-v7a", "arm64-v8a"]
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -81,8 +87,10 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        // Phones only: x86 builds are for emulators and double the download.
-        ndk { abiFilters "armeabi-v7a", "arm64-v8a" }
+        // Phones only by default (gradle.properties: reactNativeArchitectures).
+        // An emulator build passes -PreactNativeArchitectures=x86_64; x86 in a
+        // phone APK doubles the download.
+        ndk { abiFilters(*reactNativeArchitectures()) }
     }
     signingConfigs {
         debug {
