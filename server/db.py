@@ -271,7 +271,7 @@ class PostgresDatabase:
             raise DatabaseUnavailable("PostgreSQL connection failed") from exc
 
     def initialize(self) -> None:
-        from server import escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker
+        from server import escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact
         self._payload_key()
         connection = self._connection()
         try:
@@ -280,7 +280,7 @@ class PostgresDatabase:
                     cursor.execute(CREATE_SCHEMA_SQL)
                     cursor.execute(CREATE_EVENT_ID_INDEX_SQL)
                     cursor.execute(OUTBOX_SCHEMA_SQL)
-                    for module in (escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker):
+                    for module in (escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact):
                         cursor.execute(module.SCHEMA_SQL)
         finally:
             connection.close()
@@ -760,6 +760,32 @@ class PostgresDatabase:
                 connection.close()
 
         raise DatabaseUnavailable("Append retry loop exhausted")
+
+    def record_heartbeat(self, subject_id: str, now: datetime) -> None:
+        """Heartbeat carries no location; only the subject's last contact time is kept."""
+        from server.contact import record_contact
+
+        connection = self._connection()
+        try:
+            with connection:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                    record_contact(cursor, subject_id, now)
+        finally:
+            connection.close()
+
+    def subject_export(self, subject_id: str, now: datetime) -> dict[str, Any]:
+        """P3.A5 member export under the subject lock (server/export_view.py)."""
+        from server.export_view import build_export
+
+        connection = self._connection()
+        try:
+            with connection:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                    return build_export(cursor, self, subject_id, now)
+        finally:
+            connection.close()
 
     def export(self, subject_id: str) -> list[dict[str, Any]]:
         from psycopg2.extras import RealDictCursor

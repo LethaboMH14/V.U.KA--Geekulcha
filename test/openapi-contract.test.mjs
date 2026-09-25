@@ -354,7 +354,8 @@ test("ADR-0041 journey end and export advertise their PIN and pre-incident gates
   assert.match(journeyEnd, /'403': \{ \$ref: '#\/components\/responses\/InsufficientApproval' \}/);
 
   const subjectExport = pathBlock("/v1/subjects/{id}/export");
-  assert.match(subjectExport, /INCOMPLETE — see ADR-0041 T30, implementation pending/);
+  assert.doesNotMatch(subjectExport, /INCOMPLETE/);
+  assert.match(subjectExport, /entry before the authorising\s+pin_authorised event \(PROPOSED/);
   assert.match(subjectExport, /fresh[\s\S]*pin_authorised record for action export/);
   assert.match(subjectExport, /pin_authorisation_required/);
   assert.match(subjectExport, /pre-incident head/);
@@ -381,6 +382,9 @@ test("proof, receipt and subject schemas carry the §6, §9 and §10 fields", ()
 
   const exportSchema = document.slice(document.indexOf("    SubjectExport:"), document.indexOf("    SubjectDeletionRequest:"));
   for (const field of ["entries", "payloads", "salts", "proofs", "receipts"]) assert.match(exportSchema, new RegExp(`^        ${field}:`, "m"));
+  // shared/verify.js reads payloads/salts as {event_id, payload|salt} items; a bare string array is refused there.
+  assert.match(exportSchema, /required: \[event_id, payload\]/);
+  assert.match(exportSchema, /required: \[event_id, salt\]/);
   const deletion = document.slice(document.indexOf("    SubjectDeletionRequest:"), document.indexOf("    BankSignal:"));
   assert.match(deletion, /pin_authorisation: \{ \$ref: '#\/components\/schemas\/PinAuthorisationStatement' \}/);
 });

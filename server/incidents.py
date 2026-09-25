@@ -75,6 +75,9 @@ def bank_after_delivery(cursor, incident_id):
     trigger, sent, stand_down = cursor.fetchone()
     if trigger not in ("no_answer", "contact_lost") or sent is not None or stand_down is not None:
         return
+    from server.contact import all_outcomes_normal
+    if trigger == "contact_lost" and all_outcomes_normal(cursor, incident_id):
+        return  # G33: contact_lost after all-normal check-ins alerts guardians, never the bank
     cursor.execute("SELECT MIN(delivered_at) FROM guardian_deliveries WHERE incident_id=%s", (incident_id,))
     delivered = cursor.fetchone()[0]
     if delivered is None:

@@ -64,6 +64,8 @@ def apply_event(cur, store, subject_id, entry, stored, now):
         return
     if entry["details"]["signer"] != "device":
         raise EventRefused("invalid_signature", 401)
+    from server.contact import record_contact
+    record_contact(cur, subject_id, now)
     if kind != "signal_detected":
         if kind == "pin_authorised" and payload.get("action") not in {"export", "end_journey"}:
             raise EventRefused("action_not_supported")

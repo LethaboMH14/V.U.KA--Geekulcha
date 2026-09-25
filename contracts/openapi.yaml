@@ -320,9 +320,12 @@ paths:
     post:
       tags: [VIGIL]
       operationId: sendJourneyHeartbeat
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Record a journey heartbeat
-      description: Device-signed; includes a speed bucket only and never location.
+      description: >-
+        Device-signed; includes a speed bucket only and never location. The server keeps
+        only the subject's last contact time, which starts the PROPOSED subject-wide
+        90 s contact_lost clock (any heartbeat or accepted device event counts as contact).
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       requestBody:
@@ -607,9 +610,11 @@ paths:
         pre-incident hold returns only genesis through the pre-incident head while
         an incident is open and for 6 hours after its last PIN entry, whichever ends
         later; normal and duress authorisations yield byte-identical visible results.
-        Otherwise the full chain is returned. The response is unpaginated. For this
-        bodyless request, body_sha256 is SHA-256 of the empty byte string.
-        INCOMPLETE — see ADR-0041 T30, implementation pending.
+        Otherwise the chain is returned up to the entry before the authorising
+        pin_authorised event (PROPOSED, so a normal and a duress authorisation return
+        the same prefix). The response is unpaginated. For this bodyless request,
+        body_sha256 is SHA-256 of the empty byte string. proofs and receipts hold at
+        most one item, for the returned head, only when it is in a confirmed anchor batch.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
       responses:
@@ -1018,8 +1023,14 @@ components:
       properties:
         subject_id: { type: string, minLength: 1 }
         entries: { type: array, items: { $ref: '#/components/schemas/EvidenceEntryV2' } }
-        payloads: { type: array, items: { type: object }, description: Private event payloads keyed by event_id. }
-        salts: { type: array, items: { type: string, contentEncoding: base64 }, description: Private salts keyed by event_id. }
+        payloads:
+          type: array
+          description: Private event payloads, one item per event_id (the shape shared/verify.js reads).
+          items: { type: object, required: [event_id, payload], additionalProperties: false, properties: { event_id: { type: string }, payload: { type: object } } }
+        salts:
+          type: array
+          description: Private 16-byte commitment salts, one item per event_id (the shape shared/verify.js reads).
+          items: { type: object, required: [event_id, salt], additionalProperties: false, properties: { event_id: { type: string }, salt: { type: string, contentEncoding: base64 } } }
         proofs: { type: array, items: { $ref: '#/components/schemas/Proof' } }
         receipts: { type: array, items: { $ref: '#/components/schemas/AnchorReceipt' } }
     SubjectDeletionRequest:

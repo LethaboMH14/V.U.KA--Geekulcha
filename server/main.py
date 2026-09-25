@@ -13,10 +13,11 @@ import binascii
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import json
 import os
 import re
 from typing import Annotated, Any, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.exceptions import UnsupportedAlgorithm
@@ -516,9 +517,60 @@ def create_app(database=None) -> FastAPI:
             return _error_response(404, "not_found", "subject was not found")
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
-        # ADR-0041 requires a fresh export PIN authorisation and an incident
-        # prefix check. Neither exists in slices 1/2, so no chain is released.
-        return _error_response(403, "pin_authorisation_required", "fresh export PIN authorisation is required")
+        try:
+            return store.subject_export(subject_id, datetime.fromisoformat(_server_time().replace("Z", "+00:00")))
+        except EventRefused as exc:
+            return _error_response(exc.status, exc.code, "fresh export PIN authorisation is required")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+
+    @app.post("/v1/journeys/{id}/heartbeat", status_code=202)
+    async def journey_heartbeat(id: str, request: Request):
+        """PROPOSED contact clock input: records last contact only, never location."""
+        body = await request.body()
+        try:
+            subject_id = store.get_journey_subject(id)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if subject_id is None:
+            return _error_response(404, "not_found", "journey was not found")
+        try:
+            principal = verify_request(request, subject_id=subject_id, database=store, body=body)
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != "device":
+            return _error_response(404, "not_found", "journey was not found")
+        try:
+            heartbeat = json.loads(body)
+            if (not isinstance(heartbeat, dict) or set(heartbeat) != {"speed_bucket", "ts"}
+                    or not isinstance(heartbeat["speed_bucket"], str) or not heartbeat["speed_bucket"]
+                    or not isinstance(heartbeat["ts"], str)):
+                raise ValueError("heartbeat shape")
+            _validate_rfc3339(heartbeat["ts"], "ts")
+        except (ValueError, TypeError):
+            return _error_response(400, "invalid_request", "heartbeat body is invalid")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id,
+                subject_id=principal.subject_id,
+                nonce=principal.nonce,
+                request_ts=principal.request_ts,
+                now=datetime.now(timezone.utc),
+            )
+            store.record_heartbeat(subject_id, now)
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return _error_response(404, "not_found", "journey was not found")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
 
     return app
 
