@@ -18,12 +18,17 @@ export type Ruleset = {
   /** Per-class threshold, by YAMNet label. */
   readonly thresholdBp: Readonly<Record<string, number>>;
   /**
-   * How a family is confirmed. Impulses (glass, gun-like) are shorter than a
-   * window, so one window above threshold confirms. Voices last longer, so they
-   * need `k` hits in the last `n` windows (with 50 % overlap, about 1 s).
+   * How a family is confirmed. `separation` 0: one window at or above threshold
+   * confirms (impulses: glass and gun-like sounds are shorter than a window).
+   * `separation` 2: the current window AND the window two before it must both
+   * hit. With 50 % overlap those two share no audio, so one brief sound can't
+   * confirm itself; a voice must last about 1.5 s (a stated trade-off: a very
+   * short scream is missed).
    */
-  readonly confirm: Readonly<Record<Family, {k: number; n: number}>>;
-  /** No second detection within this long of the last one. */
+  readonly confirm: Readonly<Record<Family, {separation: 0 | 2}>>;
+  /** A second record of the same family within this long is a duplicate. */
+  readonly recordGapMs: number;
+  /** No second check-in prompt within this long of the last one (records continue). */
   readonly cooldownMs: number;
   /** YAMNet's window length (spec §18 `window_ms`). */
   readonly windowMs: 975;
@@ -74,10 +79,11 @@ export const RULESET_V1: Ruleset = {
     Breaking: 4000,
   },
   confirm: {
-    voice: {k: 2, n: 3},
-    glass: {k: 1, n: 1},
-    gun: {k: 1, n: 1},
+    voice: {separation: 2},
+    glass: {separation: 0},
+    gun: {separation: 0},
   },
+  recordGapMs: 5000,
   cooldownMs: 30000,
   windowMs: 975,
   motionLookbackMs: 10000,

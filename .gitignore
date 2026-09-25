@@ -74,3 +74,8 @@ htmlcov/
 google-services.json
 *firebase-adminsdk*.json
 service-account*.json
+
+# Installed by app/scripts/fetch-model.mjs (verified against the model register); never committed.
+app/android/app/src/main/assets/models/
+# Compiled engine for the host harness (scripts/eval); regenerated, never committed.
+app/build-eval/

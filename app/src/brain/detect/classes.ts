@@ -30,6 +30,20 @@ export const TARGETS: readonly TargetClass[] = [
   {label: 'Breaking', index: 464, family: 'glass'},
 ] as const;
 
+/**
+ * The gun-like classes' excluded neighbours (ADR-0039(3): 420 and 424–427).
+ * A gun-like score only counts when it beats all of them in the same window:
+ * on ESC-50, every false "Gunshot" came from fireworks, thunder or a can
+ * opening, and in each the model's own top guess was one of these.
+ */
+export const GUN_NEIGHBOURS: readonly {label: string; index: number}[] = [
+  {label: 'Explosion', index: 420},
+  {label: 'Artillery fire', index: 424},
+  {label: 'Cap gun', index: 425},
+  {label: 'Fireworks', index: 426},
+  {label: 'Firecracker', index: 427},
+] as const;
+
 /** The number of classes YAMNet scores (the model's output width). */
 export const YAMNET_CLASSES = 521;
 
@@ -43,7 +57,7 @@ export function checkLabels(labels: readonly string[]): string[] {
   if (labels.length !== YAMNET_CLASSES) {
     problems.push(`expected ${YAMNET_CLASSES} labels, got ${labels.length}`);
   }
-  for (const t of TARGETS) {
+  for (const t of [...TARGETS, ...GUN_NEIGHBOURS]) {
     const found = labels.indexOf(t.label);
     if (found === -1) {
       problems.push(`label "${t.label}" not in the model`);
