@@ -285,7 +285,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: recoverDevice
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Recover a subject onto a new device
       description: Recovery-code authenticated; PIN and signature verification are performed by the implementation, not this contract.
       requestBody:

@@ -32,6 +32,8 @@ from starlette.responses import JSONResponse
 
 from anchor.canonical import canonical
 from server.pin_records import EventRefused
+from server.event_effects import append_server
+from server.server_signing import sign_key_revoked_entry
 from server.db import (
     DatabaseUnavailable,
     IdempotencyConflict,
@@ -527,6 +529,73 @@ def create_app(database=None) -> FastAPI:
             return _error_response(exc.status, exc.code, "fresh export PIN authorisation is required")
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
+
+    @app.post("/v1/devices/recover", status_code=202)
+    async def recover_device(request: Request):
+        """PROPOSED §9. No §7 request signature: the whole point is the old
+        device/key is gone. Rate limited and code-verified inside recovery.py."""
+        from server.recovery import RecoveryRefused, has_open_incident, notify_guardians, set_freeze, verify_recovery_code
+        try:
+            body = json.loads(await request.body())
+            if (not isinstance(body, dict) or set(body) != {"recovery_code", "new_device_key"}
+                    or not isinstance(body["recovery_code"], str) or not body["recovery_code"]
+                    or not isinstance(body["new_device_key"], str) or not body["new_device_key"]):
+                raise ValueError("recovery body shape")
+            new_spki = base64.b64decode(body["new_device_key"], validate=True)
+            new_public_key = load_der_public_key(new_spki)
+            if not isinstance(new_public_key, ec.EllipticCurvePublicKey) or new_public_key.curve.name != "secp256r1":
+                raise ValueError("new_device_key must be a P-256 SPKI key")
+        except (ValueError, TypeError, KeyError, binascii.Error, UnsupportedAlgorithm):
+            return _error_response(400, "invalid_request", "recovery body is invalid")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        new_key_id = "dev_" + hashlib.sha256(new_spki).digest()[:8].hex()
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        try:
+                            subject_id = verify_recovery_code(cur, body["recovery_code"], now)
+                        except RecoveryRefused:
+                            return _error_response(401, "invalid_signature", "recovery code is invalid")
+                        if has_open_incident(cur, subject_id):
+                            return _error_response(400, "recovery_blocked_incident_open", "recovery is blocked during an open incident")
+                        cur.execute("SELECT signer_key_id FROM signer_keys WHERE subject_id=%s AND signer_role='device' AND revoked_at IS NULL", (subject_id,))
+                        prior = cur.fetchone()
+                        if prior is None:
+                            return _error_response(400, "invalid_request", "subject has no active device key to recover")
+                        prior_key_id = prior[0]
+            finally:
+                connection.close()
+            cur_now = store._connection()
+            try:
+                with cur_now.cursor() as cur:
+                    cur.execute("SELECT chain_index FROM subject_heads WHERE subject_id=%s", (subject_id,))
+                    approx_counter = int(cur.fetchone()[0]) + 1
+            finally:
+                cur_now.close()
+            revocation_entry = sign_key_revoked_entry(subject_id, prior_key_id, now, approx_counter)
+            store.recover_device_key(subject_id, prior_key_id, new_key_id, body["new_device_key"], _server_time(), revocation_entry)
+        except SubjectNotFound:
+            return _error_response(404, "not_found", "subject was not found")
+        except IdempotencyConflict:
+            return _error_response(409, "idempotency_conflict", "recovery was already recorded with a different key")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        try:
+            connection = store._connection()
+            try:
+                with connection:
+                    with connection.cursor() as cur:
+                        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
+                        set_freeze(cur, subject_id, now)
+                        notify_guardians(cur, subject_id, "device_recovered", now)
+                        append_server(cur, store, subject_id, {"kind": "recovery_performed", "pv": 1}, now)
+            finally:
+                connection.close()
+        except DatabaseUnavailable:
+            pass  # the security-critical key swap above already committed; freeze/notify are best-effort here
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
 
     @app.get("/v1/anchor/latest")
     async def get_latest_anchor():

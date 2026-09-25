@@ -30,6 +30,26 @@ def sign_server_bytes(message):
     return base64.b64encode(private.sign(message)).decode("ascii")
 
 
+def sign_key_revoked_entry(subject_id, revoked_key_id, now, counter):
+    """key_revoked (§3) is its own action, revoked_key_id sits in plain details, §5/9."""
+    salt = os.urandom(16)
+    payload = {"kind": "key_revoked", "pv": 1}
+    commitment = hashlib.sha256(salt + canonical(payload)).hexdigest()
+    source_ts = now.isoformat().replace("+00:00", "Z")
+    event_id = str(uuid.uuid4())
+    statement = {"domain": "vuka.event.v2", "subject_id": subject_id,
+                 "actor_id": "anchor_server", "target_type": "subject",
+                 "target_id": subject_id, "action": "key_revoked", "source_ts": source_ts,
+                 "signer_key_id": "server_ed25519", "counter": counter,
+                 "event_id": event_id, "commitment": commitment}
+    return {"action": "key_revoked", "actor_id": "anchor_server",
+            "target_type": "subject", "target_id": subject_id, "ts": source_ts,
+            "details": {"v": 2, "signer": "server", "signer_key_id": "server_ed25519",
+                        "counter": counter, "event_id": event_id, "commitment": commitment,
+                        "sig": sign_server_bytes(canonical(statement)), "revoked_key_id": revoked_key_id},
+            "payload": payload, "salt": base64.b64encode(salt).decode("ascii")}
+
+
 def sign_server_entry(subject_id, target_type, target_id, payload, now, counter):
     """Runtime key handling only; keys and SDK exceptions are never logged."""
     salt = os.urandom(16)
