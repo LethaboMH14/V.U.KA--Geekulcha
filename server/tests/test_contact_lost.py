@@ -12,6 +12,14 @@ from server.tests.test_server_slice1 import make_signed_headers
 from server.tests.test_slice3_events import opened, sim_api, signal  # noqa: F401  (fixture)
 
 
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _enable_contact_lost(monkeypatch):
+    monkeypatch.setenv("VUKA_CONTACT_LOST_ENABLED", "1")
+
+
 def heartbeat(client, key, journey="sim_journey_a", body=None):
     raw = json.dumps(body or {"speed_bucket": "walking", "ts": "2026-09-25T00:00:00Z"}).encode()
     headers = make_signed_headers("POST", f"/v1/journeys/{journey}/heartbeat", raw, key_id=key)
@@ -95,3 +103,10 @@ def test_contact_lost_with_unanswered_checkin_sends_bank_after_delivery(sim_api)
     with connect() as conn, conn.cursor() as cur:
         cur.execute("SELECT not_before FROM outbox WHERE kind='bank_signal'")
         assert cur.fetchone()[0] == now[0] + timedelta(minutes=3)
+
+
+def test_contact_lost_is_off_by_default(sim_api, monkeypatch):
+    monkeypatch.delenv("VUKA_CONTACT_LOST_ENABLED", raising=False)
+    store, client, subject, key, event, post, now, connect = sim_api
+    assert post(signal(event)).status_code == 201
+    assert not tick(store, connect, subject, now[0] + timedelta(hours=1))

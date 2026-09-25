@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 
 from anchor.canonical import canonical
 from server.event_effects import append_server
+from server.incidents import TRIGGER_RANK
 from server.outbox import mark_done
 from server.server_signing import sign_server_bytes
 
@@ -62,8 +63,18 @@ def deliver_bank_signal(store, row, now, sender):
         cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
         cur.execute("SELECT bank_trigger FROM incidents WHERE incident_id=%s", (incident_id,))
         trigger = cur.fetchone()[0]
-        body = {"subject_id": subject_id, "triggering_outcome": trigger, "idempotency_key": row["idempotency_key"]}
-        cur.execute("INSERT INTO bank_requests VALUES(%s,%s) ON CONFLICT DO NOTHING", (incident_id, Json(body)))
+        cur.execute("SELECT body FROM bank_requests WHERE incident_id=%s", (incident_id,))
+        frozen = cur.fetchone()
+        if frozen is None:
+            body = {"subject_id": subject_id, "triggering_outcome": trigger, "idempotency_key": row["idempotency_key"]}
+            cur.execute("INSERT INTO bank_requests VALUES(%s,%s)", (incident_id, Json(body)))
+        elif TRIGGER_RANK[trigger] > TRIGGER_RANK[frozen[0]["triggering_outcome"]]:
+            # PROPOSED: an earlier, weaker send may or may not have reached the bank.
+            # A stronger trigger gets its own key so the bank hears it; the cost is
+            # a possible second hold, which we prefer to the bank never hearing duress.
+            body = {"subject_id": subject_id, "triggering_outcome": trigger,
+                    "idempotency_key": row["idempotency_key"] + ":" + trigger}
+            cur.execute("UPDATE bank_requests SET body=%s WHERE incident_id=%s", (Json(body), incident_id))
     with closing(store._connection()) as conn, conn, conn.cursor() as cur:
         cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject_id,))
         cur.execute("SELECT bank_sent_at,stand_down_at,bank_trigger FROM incidents WHERE incident_id=%s", (incident_id,))
@@ -74,19 +85,20 @@ def deliver_bank_signal(store, row, now, sender):
         if sent is not None or (stood_down is not None and current_trigger != "duress_signal"):
             return mark_done(cur, idempotency_key=row["idempotency_key"], lease_token=row["lease_token"], now=now)
         cur.execute("SELECT body FROM bank_requests WHERE incident_id=%s", (incident_id,))
-        body = canonical(cur.fetchone()[0])
+        frozen_body = cur.fetchone()[0]
+        body = canonical(frozen_body)
         ts = now.isoformat().replace("+00:00", "Z")
         nonce = str(uuid.uuid4())
         statement = {"method": "POST", "path": "/sim_bank/v1/risk-signal", "ts": ts,
                      "body_sha256": hashlib.sha256(body).hexdigest(), "nonce": nonce}
         headers = {"X-Vuka-Ts": ts, "X-Vuka-Nonce": nonce,
                    "X-Vuka-Server-Signature": sign_server_bytes(canonical(statement)),
-                   "Idempotency-Key": row["idempotency_key"]}
+                   "Idempotency-Key": frozen_body["idempotency_key"]}
         receipt = sender.send(body, headers)
         if receipt.get("sim") is not True or not isinstance(receipt.get("hold_ref"), str) or not receipt["hold_ref"]:
             raise ValueError("bank receipt is invalid")
         cur.execute("UPDATE incidents SET bank_sent_at=%s,hold_ref=%s WHERE incident_id=%s", (now, receipt["hold_ref"], incident_id))
         append_server(cur, store, subject_id, {"kind": "bank_signal_sent", "pv": 1,
             "triggering_outcome": json.loads(body)["triggering_outcome"], "hold_ref": receipt["hold_ref"],
-            "idempotency_key": row["idempotency_key"]}, now)
+            "idempotency_key": frozen_body["idempotency_key"]}, now)
         return mark_done(cur, idempotency_key=row["idempotency_key"], lease_token=row["lease_token"], now=now)

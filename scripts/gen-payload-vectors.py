@@ -222,8 +222,9 @@ def build_vectors() -> dict:
     pin = {"kind": "pin_authorised", "pv": 1, "action": "export", "target_id": "sim_subject", "mode": "normal", "nonce": "sim_nonce", "sig": "MAA=", "signer_key_id": "sim_key"}
     for mode in ("normal", "duress"):
         golden.append(make_golden("sim_pin_authorised_" + mode, "pin_authorised", {**pin, "mode": mode}))
+    golden.append(make_golden("sim_pin_authorised_delete", "pin_authorised", {**pin, "action": "delete"}))
     for name, invalid in (
-        ("action", {**pin, "action": "delete"}),
+        ("action", {**pin, "action": "add_guardian"}),
         ("mode", {**pin, "mode": "other"}),
         ("extra", {**pin, "extra": True}),
         ("missing_nonce", {k: v for k, v in pin.items() if k != "nonce"}),

@@ -683,9 +683,13 @@ class PostgresDatabase:
                             return _row_entry(existing), False
 
                         skewed = _clock_skewed(request_ts, now)
-                        skew_exempt = entry["action"].removeprefix("sim_") in {
-                            "checkin_opened", "checkin_result", "pin_authorised"
-                        }
+                        # v2 carries the kind in the committed payload; `action` is the
+                        # coarse class (device_event). Checking only `action` never matched.
+                        _exempt = {"checkin_opened", "checkin_result", "pin_authorised"}
+                        skew_exempt = (
+                            (entry.get("payload") or {}).get("kind") in _exempt
+                            or entry["action"].removeprefix("sim_") in _exempt
+                        )
                         if skewed and not skew_exempt:
                             raise RequestTimestampExpired(request_ts)
                         _consume_nonce(cursor, signer_key_id, nonce, now)

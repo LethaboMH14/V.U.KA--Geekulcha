@@ -8,6 +8,9 @@ from datetime import timedelta
 
 from server.outbox import enqueue
 
+# PROPOSED (Khutso #89): the bank must hear the strongest trigger seen.
+TRIGGER_RANK = {"contact_lost": 1, "no_answer": 2, "duress_signal": 3}
+
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS incidents (
     incident_id UUID PRIMARY KEY, subject_id TEXT NOT NULL,
@@ -66,7 +69,7 @@ def request_alarm(cursor, incident_id, *, trigger, now):
                 cursor.execute("""UPDATE outbox SET not_before=LEAST(not_before,%s),
                     state=CASE WHEN state='done' THEN 'pending' ELSE state END,
                     delivered_at=NULL WHERE idempotency_key=%s""", (now, key))
-    elif prior is None:
+    elif prior is None or TRIGGER_RANK[trigger] > TRIGGER_RANK.get(prior, 0):
         cursor.execute("UPDATE incidents SET bank_trigger=%s WHERE incident_id=%s", (trigger, incident_id))
 
 
