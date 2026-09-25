@@ -528,3 +528,16 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 - P3.A3 slice 2 is unblocked.
 - Contract v2 (#51) adds `revoked_key_id` to plain `details` on `key_revoked` entries, and drops `server` from `signer_role`.
 - `shared/verify.js` (verify-min, P3.S7) already builds keys from the chain. Revocation checking is added once `key_revoked` entries exist in an export.
+
+---
+
+## ADR-0045: Detection picks one class per window from the classes that clear their own thresholds (clarifies ADR-0039(3))
+**Status:** Proposed (2026-09-25). Decided by Lethabo (co-lead, owner of ADR-0039). Binds when Sibusiso accepts it with ADR-0039 (the payload is unchanged).
+**Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (contract), Vukosi Khoza (sensing)
+**Context:** ADR-0039(3) says "one class per window: the argmax, with ties going to the lowest index". Read literally, the argmax is taken first and only that class's threshold is checked. A loud class below its own bar then hides a quieter class that clears its own. Example: Shout at 7000 bp against a bar of 8000, and Screaming at 6500 against 6000; nothing is recorded. An adversarial review of the detection plan found this masking.
+**Decision:**
+1. **Each target class is judged against its own threshold first.** A gun-like class must also beat its excluded neighbours (420 and 424–427), measured in the same window.
+2. **Among the classes that qualify, the highest score wins**, with ties going to the lowest YAMNet index. There is still exactly one class per window, and `signal_detected` pv1 is unchanged.
+3. When no class qualifies, the reason record names the closest miss and states its threshold comparison truthfully.
+**Rejected alternative:** the literal argmax. It is simplest, but it misses a clearing class whenever a louder one fails its bar.
+**Consequences:** `app/src/brain/detect/engine.ts` and its tests (PR #86). The ESC-50 figures in `docs/EVIDENCE.md` were produced under this rule.

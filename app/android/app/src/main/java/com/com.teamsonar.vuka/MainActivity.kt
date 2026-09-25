@@ -1,5 +1,7 @@
 package com.teamsonar.vuka
 
+import android.content.Intent
+import android.os.Bundle
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -19,4 +21,22 @@ class MainActivity : ReactActivity() {
    */
   override fun createReactActivityDelegate(): ReactActivityDelegate =
       DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    showOverLockIfCheckin(intent)
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    showOverLockIfCheckin(intent)
+  }
+
+  /** Opened by the journey-check notice (spec V4): show over the lock screen and wake the display. */
+  private fun showOverLockIfCheckin(i: Intent?) {
+    if (i?.getBooleanExtra(com.teamsonar.vuka.detect.CheckinNotice.EXTRA, false) == true) {
+      setShowWhenLocked(true)
+      setTurnScreenOn(true)
+    }
+  }
 }

@@ -91,6 +91,8 @@ android {
         // An emulator build passes -PreactNativeArchitectures=x86_64; x86 in a
         // phone APK doubles the download.
         ndk { abiFilters(*reactNativeArchitectures()) }
+        // Test-only clip feed for device tests of the detector; off unless -PvigilTestFeed=true.
+        buildConfigField "boolean", "VIGIL_TEST_FEED", (project.findProperty("vigilTestFeed") ?: "false").toString()
     }
     signingConfigs {
         debug {
@@ -138,6 +140,9 @@ gradle.taskGraph.whenReady { graph ->
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    // LiteRT (ADR D3): the maintained TFLite runtime, for on-device YAMNet.
+    implementation("com.google.ai.edge.litert:litert:1.0.1")
+    implementation("androidx.core:core-ktx:1.13.1")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

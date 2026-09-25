@@ -10,12 +10,14 @@
  * only in debug builds. Pipeline builds keep a hidden long-press on the
  * "Journey active" heading so the check-in can be shown.
  */
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {BackHandler, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, View} from 'react-native';
 import {CheckCircle, GearSix, Microphone, Phone, WifiSlash} from './icons';
 import {Dial, Key, Lamp, Panel, PinKeypad, QuietKey, Readout, RoundKey, Row, Rule, Surface, TopAppBar} from './components';
 import {colors, fonts, space, TOUCH, type} from './theme';
 import {version} from '../../package.json';
+import {runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector} from '../sensors/detection';
+import type {Decision, Reason} from '../brain/detect';
 
 type Screen = 'ready' | 'active' | 'check' | 'checked' | 'end' | 'settings' | 'guardian';
 type Guardian = {name: string; accepted: boolean};
@@ -44,6 +46,42 @@ export function VigilApp() {
   const [online, setOnline] = useState(true);
   const [guardians, setGuardians] = useState<Guardian[]>(SIM_GUARDIANS);
   const home: Screen = startedAt ? 'active' : 'ready';
+  const detector = useRef<Detector | null>(null);
+  const [armError, setArmError] = useState<ArmResult | null>(null);
+
+  // A detection opens exactly the same Journey check as every other path (V4, V5).
+  const openCheck = () => {
+    detector.current?.setCheckinOpen(true);
+    setScreen('check');
+  };
+
+  const startJourney = async () => {
+    setArmError(null);
+    const {result, detector: d} = await startDetection({
+      journeyId: `sim_jny_${Date.now()}`,
+      appVersion: version,
+      // The queue that signs and sends the event lands with the native signer (V7, V8).
+      onRecord: () => undefined,
+      onPrompt: () => openCheck(),
+    });
+    // 'unsupported' is the browser preview and tests: no microphone, so the
+    // journey runs as a simulation. On a phone, a refused permission or a
+    // failed model check does not arm (V1).
+    if (!result.ok && result.reason !== 'unsupported') {
+      setArmError(result);
+      return;
+    }
+    detector.current = d ?? null;
+    setStartedAt(Date.now());
+    setScreen('active');
+  };
+
+  const endJourney = () => {
+    detector.current?.stop();
+    detector.current = null;
+    setStartedAt(null);
+    setScreen('ready');
+  };
 
   // Android back: Settings and the guardian preview step back; the end-journey
   // PIN cancels back to the journey. The check-in and "Checked in" swallow
@@ -67,15 +105,19 @@ export function VigilApp() {
     return <JourneyCheck onDone={() => setScreen('checked')} />;
   }
   if (screen === 'checked') {
-    return <CheckedIn onDone={() => setScreen('active')} />;
+    return (
+      <CheckedIn
+        onDone={() => {
+          detector.current?.setCheckinOpen(false);
+          setScreen('active');
+        }}
+      />
+    );
   }
   if (screen === 'end') {
     return (
       <EndJourney
-        onDone={() => {
-          setStartedAt(null);
-          setScreen('ready');
-        }}
+        onDone={endJourney}
         onCancel={() => setScreen('active')}
       />
     );
@@ -99,10 +141,8 @@ export function VigilApp() {
         ) : screen === 'ready' ? (
           <Home
             guardians={guardians}
-            onStart={() => {
-              setStartedAt(Date.now());
-              setScreen('active');
-            }}
+            onStart={startJourney}
+            armError={armError}
             onMenu={() => setScreen('settings')}
           />
         ) : (
@@ -111,7 +151,7 @@ export function VigilApp() {
             guardians={guardians}
             online={online}
             onEnd={() => setScreen('end')}
-            onSimCheck={() => setScreen('check')}
+            onSimCheck={openCheck}
             onMenu={() => setScreen('settings')}
           />
         )}
@@ -164,7 +204,34 @@ function GuardianList({guardians}: {guardians: Guardian[]}) {
   );
 }
 
-function Home({guardians, onStart, onMenu}: {guardians: Guardian[]; onStart: () => void; onMenu: () => void}) {
+/** Plain words for why a journey didn't start (spec V1). */
+function armMessage(e: ArmResult): string {
+  if (e.ok) return '';
+  switch (e.reason) {
+    case 'microphone':
+      return "VIGIL needs the microphone to listen during a journey. Allow it in the app's settings, then start again.";
+    case 'notifications':
+      return 'VIGIL needs to show its journey notification while it listens. Allow notifications, then start again.';
+    case 'model':
+      return "The listening model on this phone didn't pass its check, so VIGIL can't listen. Reinstall the app.";
+    case 'capture':
+      return "VIGIL couldn't start listening. Keep the app open while you start the journey, then try again.";
+    default:
+      return 'Listening is not available on this device.';
+  }
+}
+
+function Home({
+  guardians,
+  onStart,
+  onMenu,
+  armError,
+}: {
+  guardians: Guardian[];
+  onStart: () => void;
+  onMenu: () => void;
+  armError: ArmResult | null;
+}) {
   return (
     <View style={styles.screen}>
       <TopBar onMenu={onMenu} />
@@ -188,6 +255,11 @@ function Home({guardians, onStart, onMenu}: {guardians: Guardian[]; onStart: () 
 
       <View style={styles.keyZone}>
         <RoundKey label="Start journey" onPress={onStart} />
+        {armError && !armError.ok ? (
+          <Text style={[type.body, styles.armError]} accessibilityLiveRegion="polite">
+            {armMessage(armError)}
+          </Text>
+        ) : null}
       </View>
 
       <View style={styles.note}>
@@ -308,6 +380,7 @@ function Settings({
         <View style={styles.rowRule} />
         <Row label="Guardian view" detail="Preview what a guardian sees (simulated)" onPress={onGuardian} />
       </Panel>
+      {testFeedAvailable() ? <DetectorTest /> : null}
       {__DEV__ ? (
         <Panel>
           <Text style={type.label}>Demo states (debug builds only)</Text>
@@ -318,6 +391,74 @@ function Settings({
         </Panel>
       ) : null}
     </View>
+  );
+}
+
+/** One reason, in words and exact numbers. */
+function reasonText(r: Reason): string {
+  switch (r.rule) {
+    case 'top':
+      return `Model's top class over all 521: ${r.top_index} at ${r.top_bp} bp`;
+    case 'gun_neighbour':
+      return `${r.class_label} ${r.score_bp} bp vs excluded neighbours ${r.neighbour_bp} bp: ${r.pass ? 'beats them' : 'does not'}`;
+    case 'threshold':
+      return `${r.class_label}: ${r.score_bp} ${r.pass ? '≥' : '<'} ${r.threshold_bp} bp`;
+    case 'winner':
+      return `Winner: ${r.class_label} (${r.class_index}) at ${r.score_bp} bp, of ${r.qualifying} qualifying`;
+    case 'confirm':
+      return `Confirm (${r.family}): windows ${r.window_seqs.join(' and ')}: ${r.pass ? 'confirmed' : 'not yet'}`;
+    case 'duplicate':
+      return `Same ${r.family} event ${r.since_ms} ms ago (gap ${r.record_gap_ms}): ${r.pass ? 'new' : 'duplicate'}`;
+    case 'cooldown':
+      return `Prompt cooldown: ${r.since_ms} of ${r.cooldown_ms} ms: ${r.prompt ? 'prompt' : 'record only'}`;
+    case 'checkin_open':
+      return 'A check-in is already open: record only';
+    case 'motion':
+      return `Motion corroboration: ${r.items} item(s) in the last ${r.lookback_ms} ms`;
+  }
+}
+
+/**
+ * Test builds only (-PvigilTestFeed=true): runs a clip placed in the app's
+ * files folder through this phone's model and the same engine as a journey,
+ * and shows the decision with every reason. Never in a normal build.
+ */
+function DetectorTest() {
+  const [out, setOut] = useState<string[]>([]);
+  const run = async (name: string) => {
+    setOut([`Running ${name}…`]);
+    try {
+      const {windows, decisions} = await runTestClip(name);
+      const fired = decisions.find(d => d.record);
+      const show: Decision | undefined = fired ?? decisions.reduce<Decision | undefined>((best, d) => {
+        const score = (x?: Decision) => {
+          const t = x?.reasons.find(r => r.rule === 'threshold');
+          return t && t.rule === 'threshold' ? t.score_bp : -1;
+        };
+        return score(d) > score(best) ? d : best;
+      }, undefined);
+      setOut([
+        `${name}: ${windows} windows · ${fired ? `DETECTED: ${fired.candidate?.class_label}` : 'no detection'}`,
+        ...(show ? show.reasons.map(reasonText) : []),
+      ]);
+    } catch (e) {
+      setOut([`${name}: ${String(e)}`]);
+    }
+  };
+  return (
+    <Panel>
+      <Text style={type.label}>Detector test (test build only)</Text>
+      <Text style={[type.caption, {marginTop: 2}]}>Uncalibrated thresholds. Clips come from the app's files folder.</Text>
+      <View style={{gap: space.sm, marginTop: space.md}}>
+        <Key label="Run glass.wav" onPress={() => run('glass.wav')} />
+        <Key label="Run negative.wav" onPress={() => run('negative.wav')} />
+      </View>
+      {out.map((line, i) => (
+        <Text key={i} style={[i === 0 ? type.label : type.caption, {marginTop: space.sm}]}>
+          {line}
+        </Text>
+      ))}
+    </Panel>
   );
 }
 
@@ -504,6 +645,7 @@ const styles = StyleSheet.create({
   panelHead: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
   guardianRow: {flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 40},
   keyZone: {flexGrow: 1, justifyContent: 'center', paddingVertical: space.lg},
+  armError: {textAlign: 'center', color: colors.textTitle, marginTop: space.md},
   lampLine: {flexDirection: 'row', alignItems: 'center', gap: space.sm},
   note: {flexDirection: 'row', alignItems: 'flex-start', gap: space.sm},
   infoRow: {paddingHorizontal: space.md, paddingVertical: space.md},
