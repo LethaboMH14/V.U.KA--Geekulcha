@@ -16,14 +16,12 @@ CREATE TABLE IF NOT EXISTS sim_notification_receipts (
     delivered_at TIMESTAMPTZ NOT NULL, evidence_ref TEXT NOT NULL,
     PRIMARY KEY(idempotency_key,guardian_ref)
 );
-CREATE TABLE IF NOT EXISTS guardian_fcm_tokens (
-    subject_id TEXT NOT NULL,
-    guardian_ref TEXT NOT NULL,
-    fcm_token TEXT NOT NULL,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
-    PRIMARY KEY(subject_id, guardian_ref)
-);
 CREATE TABLE IF NOT EXISTS fcm_notification_receipts (
+    -- PROPOSED (25 Sep, reconciled with #96 per Khutso's #96 review): recipients
+    -- and tokens are read from server/guardians.py's `guardians` table
+    -- (guardian_id, fcm_token, decoy, status), not a parallel token table —
+    -- that split let the accept-invite path and the delivery path disagree
+    -- about who a guardian is.
     idempotency_key TEXT NOT NULL,
     guardian_ref TEXT NOT NULL,
     delivered_at TIMESTAMPTZ NOT NULL,
@@ -112,9 +110,9 @@ class FcmGuardianNotifier:
     def recipients(self, subject_id):
         if not isinstance(subject_id, str) or not subject_id:
             raise ValueError("subject id is required")
+        from server.guardians import alerting_guardians
         with closing(self.connect()) as conn, conn, conn.cursor() as cur:
-            cur.execute("SELECT guardian_ref FROM guardian_fcm_tokens WHERE subject_id=%s AND active=TRUE ORDER BY guardian_ref", (subject_id,))
-            return [r[0] for r in cur.fetchall()]
+            return alerting_guardians(cur, subject_id)  # excludes decoy and removed guardians
 
     def deliver(self, outbox_row):
         now = self.clock()
@@ -127,9 +125,11 @@ class FcmGuardianNotifier:
             existing = cur.fetchone()
             if existing:
                 return DeliveryResult(True, existing[1], existing[0])
-            cur.execute("SELECT fcm_token FROM guardian_fcm_tokens WHERE subject_id=%s AND guardian_ref=%s AND active=TRUE", (outbox_row["subject_id"], guardian))
+            cur.execute("""SELECT fcm_token FROM guardians WHERE guardian_id=%s AND subject_id=%s
+                           AND NOT decoy AND status IN ('active','removal_scheduled')""",
+                        (guardian, outbox_row["subject_id"]))
             token_row = cur.fetchone()
-            if token_row is None:
+            if token_row is None or not token_row[0]:
                 return DeliveryResult(False, None, None)
             message = build_message(token=token_row[0], idempotency_key=key)
             evidence = self.sender.send(message)
