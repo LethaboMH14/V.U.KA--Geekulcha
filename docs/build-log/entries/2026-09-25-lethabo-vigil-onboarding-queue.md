@@ -143,3 +143,39 @@ Evidence:
 - `npx jest`: 55/55 pass. That includes both failure paths rejecting, and My record listing only the held export's two entries while the phone holds more receipts, with no PIN mode in the rows.
 - `anchor-e2e.mjs`: 7/7.
 - `journey-e2e.mjs`: 24/24 in the full run, including `no_answer` from the scheduler.
+
+---
+
+## 2026-09-25 (23:30) | addendum: the prototype's Ivory glass in the real app; always-on listening (ADR-0046, PROPOSED)
+
+Changed:
+- **Design:** the design prototype's Ivory theme is ported to React Native, following `vuka-ui-proto/src/index.css` and its components:
+  - IBM Plex (the fonts are restored from this branch's history, OFL);
+  - an ivory field with three still colour orbs;
+  - warm-white glass cards, with the hero card in its tray;
+  - deep-ink pill buttons with the arrow orb;
+  - the drifting listening line;
+  - a flat, plain Check-in keypad.
+
+  On Android the cards are opaque warm white (the prototype's solid fallback), because a translucent card shows its elevation shadow through it. The orbs are still to save battery on an always-on app, so the listening line is the only motion.
+- **Always on (ADR-0046, PROPOSED; decided by Lethabo):**
+  - VIGIL starts listening by itself once set-up finishes, and retries every 30 s while the server can't be reached;
+  - "Pause listening" behind the PIN replaces "End journey";
+  - the contract is unchanged: one listening session is one server journey.
+- **Live meter:** each audio window reports the target sound closest to its own threshold. It shows the model score (0–100) against that threshold, labelled "not a probability". No percentage is shown anywhere.
+- **Guardian preview (G4, G5):**
+  - the alert leads with "Don't call or text Lerato. Call 10111.";
+  - the acknowledgements are signed;
+  - calling Lerato unlocks only after stand-down;
+  - a persistent SIMULATED label sits at the top.
+
+  This fixes the Call-Lerato conflict Khutso and Ipeleng raised on #77.
+- **Neutral notifications (V2):** "VUKA active" and "Check-in".
+
+Evidence:
+- `npx jest`: 55/55 pass; `tsc`: clean.
+- **Emulator run (x86_64 test build against #89):** after sign-up, listening started with no button, with the microphone indicator on and a server heartbeat at 23:20. The glass clip, through the phone's model, opened the Check-in. The normal PIN showed "Checked in", and the server recorded `normal_pin`.
+
+Not measured:
+- battery use of continuous listening;
+- the false-check rate on real street audio (the lab proxy is about 5.5 per hour; see ADR-0046).

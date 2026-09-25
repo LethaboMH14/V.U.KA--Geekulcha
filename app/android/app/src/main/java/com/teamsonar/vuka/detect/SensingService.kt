@@ -42,9 +42,9 @@ class SensingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL, "Journey", NotificationManager.IMPORTANCE_LOW))
+        nm.createNotificationChannel(NotificationChannel(CHANNEL, "VUKA", NotificationManager.IMPORTANCE_LOW))
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL)
-            .setContentTitle("VUKA journey active")
+            .setContentTitle("VUKA active")
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setOngoing(true)
             .setSilent(true)

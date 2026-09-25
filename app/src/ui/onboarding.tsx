@@ -8,7 +8,8 @@
  */
 import React, {useEffect, useState} from 'react';
 import {Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
-import {Key, Lamp, Panel, PinKeypad, QuietKey, Readout, Rule, Surface, TopAppBar} from './components';
+import {Eyebrow, GlassIcon, Key, Lamp, Panel, PinKeypad, QuietKey, Readout, Rule, Surface, TopAppBar} from './components';
+import {Microphone, ShieldChevron} from './icons';
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
 import {version} from '../../package.json';
 import {device, type Delivery} from '../api/device';
@@ -26,7 +27,7 @@ export function Onboarding({onDone}: {onDone: () => void}) {
 
   if (step === 'pin' || step === 'pinAgain' || step === 'duress' || step === 'duressAgain') {
     const copy = {
-      pin: ['Choose your PIN', 'Four digits. You answer journey checks and end journeys with it.'],
+      pin: ['Choose your PIN', 'Four digits. You answer check-ins and pause listening with it.'],
       pinAgain: ['Enter your PIN again', 'So a typo can’t lock you out.'],
       duress: ['Choose your second PIN', 'Four digits, different from your everyday PIN.'],
       duressAgain: ['Enter your second PIN again', 'So a typo can’t lock you out.'],
@@ -111,34 +112,44 @@ export function Onboarding({onDone}: {onDone: () => void}) {
 }
 
 function Welcome({onNext}: {onNext: () => void}) {
-  const steps = ['Your first name', 'Your PIN', 'A second PIN, for when you’re forced', 'Your record'];
+  const lines = [
+    'It listens on this phone all the time, for trouble like breaking glass or a scream.',
+    'A distress sound shows a quiet check-in, not an alarm.',
+    'Your guardians only hear from VIGIL if you don’t answer, or if you use your second PIN.',
+  ];
   return (
     <View style={styles.screen}>
-      <Text style={styles.wordmark}>VIGIL</Text>
-      <View style={{gap: space.md, marginTop: space.xl}}>
-        <Text style={type.display} accessibilityRole="header">
-          You don’t have to ask.
+      <View style={{paddingTop: 12, alignItems: 'center', gap: 6}}>
+        <Eyebrow>VUKA</Eyebrow>
+        <Text style={[type.body, {textAlign: 'center'}]}>You are not alone. You don’t have to ask.</Text>
+      </View>
+      <Panel hero>
+        <View style={styles.rowHeader}>
+          <GlassIcon>
+            <ShieldChevron size={20} color={colors.textTitle} />
+          </GlassIcon>
+          <Eyebrow>VIGIL</Eyebrow>
+        </View>
+        <Text style={[type.display, {marginTop: space.md}]} accessibilityRole="header">
+          What VIGIL does
         </Text>
-        <Text style={type.body}>
-          On a journey, VIGIL listens on this phone for trouble, like breaking glass or a scream. If it hears it, it asks
-          for your PIN. If you can’t answer, your guardians are told.
+        <View style={{gap: 10, marginTop: 14}}>
+          {lines.map(l => (
+            <Text key={l} style={type.body}>
+              {l}
+            </Text>
+          ))}
+        </View>
+      </Panel>
+      <View style={styles.noteRow}>
+        <Microphone size={16} color={colors.textDim} style={{marginTop: 2}} />
+        <Text style={[type.caption, {flex: 1}]}>
+          Discreet, not invisible: Android shows a microphone dot while VIGIL is listening. Sound is judged on this phone
+          and discarded within three seconds.
         </Text>
       </View>
-      <Panel>
-        <Text style={type.label}>Setting up takes about two minutes</Text>
-        <Rule />
-        {steps.map((s, i) => (
-          <View key={s} style={styles.stepRow}>
-            <Text style={styles.stepIndex}>{String(i + 1).padStart(2, '0')}</Text>
-            <Text style={[type.body, {flex: 1, color: colors.textTitle}]}>{s}</Text>
-          </View>
-        ))}
-      </Panel>
       <View style={{flexGrow: 1}} />
-      <Key label="Set up VIGIL" variant="signal" onPress={onNext} />
-      <Text style={[type.caption, {textAlign: 'center'}]}>
-        Sound is judged on this phone and discarded within three seconds. Nothing you say is recorded.
-      </Text>
+      <Key label="Get started" variant="signal" arrow onPress={onNext} />
     </View>
   );
 }
@@ -191,7 +202,7 @@ function DuressIntro({onBack, onNext}: {onBack: () => void; onNext: () => void})
       <Panel>
         <Text style={type.label}>Choose one you’ll remember under stress</Text>
         <Text style={[type.body, {marginTop: space.xs}]}>
-          It works at every PIN prompt: journey checks and ending a journey.
+          It works at every PIN prompt: check-ins, pausing listening and opening your record.
         </Text>
       </Panel>
       <View style={{flexGrow: 1}} />
@@ -235,7 +246,7 @@ function CreateRecord({name, pin, duress, onDone}: {name: string; pin: string; d
         Start your record
       </Text>
       <Text style={type.body}>
-        Your record is a chain of entries: each journey, each check, each alert. Each entry is signed by a key that never
+        Your record is a chain of entries: each sound heard, each check, each alert. Each entry is signed by a key that never
         leaves this phone, and anyone can check that nothing in the chain was changed.
       </Text>
 
@@ -278,6 +289,8 @@ const styles = StyleSheet.create({
   screen: {flexGrow: 1, gap: space.md},
   flat: {flexGrow: 1, justifyContent: 'center', padding: space.lg, paddingVertical: space.xl, paddingTop: space.xl + TOP_INSET},
   wordmark: {fontFamily: fonts.bold, fontSize: 15, letterSpacing: 3, color: colors.textTitle, minHeight: TOUCH, textAlignVertical: 'center', paddingTop: 14},
+  rowHeader: {flexDirection: 'row', alignItems: 'center', gap: 10},
+  noteRow: {flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, paddingHorizontal: 4},
   stepRow: {flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 36},
   stepIndex: {fontFamily: fonts.mono, fontSize: 13, color: colors.cobaltInk, width: 22},
   stepMark: {fontFamily: fonts.mono, fontSize: 13, color: colors.textDim, textAlign: 'center', marginBottom: space.md},

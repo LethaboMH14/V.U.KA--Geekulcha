@@ -574,3 +574,26 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 3. When no class qualifies, the reason record names the closest miss and states its threshold comparison truthfully.
 **Rejected alternative:** the literal argmax. It is simplest, but it misses a clearing class whenever a louder one fails its bar.
 **Consequences:** `app/src/brain/detect/engine.ts` and its tests (PR #86). The ESC-50 figures in `docs/EVIDENCE.md` were produced under this rule.
+
+## ADR-0046: VIGIL is always on: it listens from set-up until the member pauses it with a PIN (supersedes V1's member-started journey)
+**Status:** Proposed (2026-09-25). Decided by Lethabo (co-lead). It binds when Sibusiso (contract) and Ipeleng (privacy) accept it, recorded in `docs/ADR-ACCEPTANCE-RECORD.md`. Until then V1 as written stays the accepted rule.
+**Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (contract), Ipeleng Modise (privacy), Vukosi Khoza (sensing)
+**Context:** V1 has the member start a journey before VIGIL listens. The product position is "you don't have to ask". A member who is attacked on the way home did not necessarily start a journey first, and the start button is itself an ask.
+**Decision:**
+1. **Listening starts by itself once set-up finishes,** and again whenever the app is opened while not paused. It needs the microphone and notification permissions (V1's refusal-and-explain rule still applies). It retries every 30 s while the server can't be reached. It never starts without a server-issued session id, because a check-in that can't reach a guardian would be a false promise.
+2. **The contract is unchanged.** One listening session is one journey on the server: `POST /v1/journeys` issues the id, heartbeats go every 30 s (V9), and every event targets it.
+3. **Pausing listening is the PIN-gated journey end** (G35, ADR-0041): `pin_authorised` for `end_journey`, then `journey_ended`. A duress PIN looks exactly like a normal pause on the phone and raises the full alarm on the server. Only a pause stops listening.
+4. **The persistent notification stays neutral (V2):** "VUKA active" replaces "VUKA journey active". The check-in notification reads "Check-in".
+5. **The live meter** shows, per audio window, the target sound closest to its own threshold. It shows the model score (0–100) against that threshold, labelled "not a probability". No percentage confidence is shown anywhere (D14, ADR-0039).
+**Costs, stated before anyone asks:**
+- **False checks.** On the held-out ESC-50 folds (a lab proxy, not street audio), the engine gave about 5.5 prompts and 7.3 false records per hour of replayed clips (`docs/EVIDENCE.md`). Always on for a 16-hour day would be on the order of 90 PIN checks a day, until the thresholds are tuned on real-world audio. That is **not measured in the field**.
+- **Battery.** Continuous YAMNet inference plus the microphone service is **not measured**. Android also shows the microphone indicator whenever VIGIL listens.
+- **Privacy.** Nothing changes on storage: audio stays in a 3 s ring buffer on the phone and is never stored or sent (D7). The member hears nothing different; the exposure is duration.
+- **A long session.** A session can last days. Heartbeats every 30 s keep the `contact_lost` clock (§8) meaningful for that long.
+**Rejected alternatives:**
+- keep the member-started journey (V1), which is the ask we set out to remove;
+- always on, but only asking for the PIN above a stricter threshold. That was offered, and the co-lead chose full alerts.
+**Consequences:**
+- the app's home becomes "Listening" and "Pause listening";
+- the spec's V1 and the "journey" wording in member-facing copy need a follow-up edit once this is accepted;
+- the false-check rate becomes the top measurement priority (M1–M3, Vukosi's P3.V6 instrument).

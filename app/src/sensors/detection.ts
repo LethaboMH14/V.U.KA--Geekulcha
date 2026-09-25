@@ -8,6 +8,7 @@
 import {NativeEventEmitter, NativeModules, PermissionsAndroid, Platform} from 'react-native';
 import {
   RULESET_V1,
+  TARGETS,
   activityBefore,
   buildSignalDetected,
   checkLabels,
@@ -87,6 +88,11 @@ export async function startDetection(opts: {
    */
   onPrompt: (decision: Decision, signalEventId: string) => void;
   onError?: (message: string) => void;
+  /**
+   * Each window: the target sound closest to its own threshold, for the live
+   * meter. A model score in basis points, not a probability.
+   */
+  onLevel?: (level: Level) => void;
 }): Promise<{result: ArmResult; detector?: Detector}> {
   if (!native) return {result: {ok: false, reason: 'unsupported'}};
   const perm = await permissions();
@@ -103,6 +109,7 @@ export async function startDetection(opts: {
   let lastEndMs = 0;
   let lastSeq = 0;
   const judge = (w: AudioWindow) => {
+    if (opts.onLevel) opts.onLevel(levelOf(w));
     lastEndMs = Math.max(lastEndMs, w.endMs);
     lastSeq = Math.max(lastSeq, w.seq);
     const out = step(state, {type: 'audio', window: toWindow(w)}, RULESET_V1);
@@ -192,6 +199,26 @@ export async function startDetection(opts: {
       },
     },
   };
+}
+
+export type Level = {label: string | null; score: number; threshold: number};
+
+/** The target closest to its threshold in one window; quiet below 3 points. */
+export function levelOf(w: AudioWindow): Level {
+  let best = -1;
+  let ratio = -1;
+  TARGETS.forEach((t, i) => {
+    const thr = RULESET_V1.thresholdBp[t.label];
+    const r = thr > 0 ? w.targetBp[i] / thr : 0;
+    if (r > ratio) {
+      ratio = r;
+      best = i;
+    }
+  });
+  if (best < 0) return {label: null, score: 0, threshold: 0};
+  const score = w.targetBp[best];
+  const threshold = RULESET_V1.thresholdBp[TARGETS[best].label];
+  return {label: score >= 300 ? TARGETS[best].label : null, score, threshold};
 }
 
 /** True only in builds made with -PvigilTestFeed=true. */
