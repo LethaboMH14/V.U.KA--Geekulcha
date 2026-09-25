@@ -45,9 +45,9 @@
 | P3.U4 | Panel + verify page layout | Mutarisi | U, I | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.K1 | Personal re-check of every 23 Sep evidence row | Khutso | all | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.K2 | SAPS FY2024/25 and FY2025/26 totals read by eye | Khutso | B | Sep 24 | ☐ | Added 23 Sep, Lethabo |
-| P3.K3 | `docs/REQUIREMENTS-TRACE.md` (requirement → owner → test) | Khutso | T | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo · PR #63 merged 24 Sep as `ea6d7b5`, checks passed; Sibusiso approved earlier head `f209422`, Lethabo approved merged head `2b3657f`. Final-head first-review disposition and A5 wording follow-up (#70, still open) remain before acceptance/tick. |
+| P3.K3 | `docs/REQUIREMENTS-TRACE.md` (requirement → owner → test) | Khutso | T | Sep 24 20:00 | ☐ | Added 23 Sep, Lethabo · PR #63 merged 24 Sep as `ea6d7b5`, checks passed; Sibusiso approved earlier head `f209422`, Lethabo approved merged head `2b3657f`. PR #70's A5 wording correction is merged; final-head first-review disposition, seventeen complete-behaviour test gaps and acceptance evidence remain before the row can be ticked. |
 | P3.K4 | Guardian delivery: FCM visible notifications + SA SMS gateway | Khutso | T, U | Sep 25 20:00 | ☐ | Added 23 Sep, Lethabo |
-| P3.K5 | `sim_bank` service with signature check, labelled SIMULATED | Khutso | S, B | Sep 25 20:00 | ☐ | Added 23 Sep, Lethabo |
+| P3.K5 | `sim_bank` service with signature check, labelled SIMULATED | Khutso | S, B | Sep 25 20:00 | ☐ | Added 23 Sep, Lethabo · PR #51's latest schema patch records subject_id, a pinned server-signature scheme, the triggering-outcome enum and sim: true receipt; service hold/release/idempotency behaviour and acceptance tests remain open. |
 | P3.K6 | Daily OpenTimestamps stamp (first on the cut line) | Khutso | I | Sep 26 | ☐ | Added 23 Sep, Lethabo |
 | P3.S1 | Own `docs/STAGED-DURESS-DEFENCE.md`; primary reads replace ⚑ | Ipeleng | S | Sep 24 | ☐ | Added 23 Sep, Lethabo |
 | P3.S2 | `shared/` canonical, DER→raw and Merkle with vitest (T01, T02) | Ipeleng | T, S | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |

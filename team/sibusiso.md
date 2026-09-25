@@ -25,7 +25,7 @@
 - **No consequence for a person comes from a model.** The bank signal never comes from detection alone; escalation deadlines are server-owned and durable (ADR-0034, ADR-0037). The parked UMOJA gate, now in `archive/2026-09-four-layer/server/src/auth/`, keeps its `watch_candidate` ceiling; its tests are not run in CI (CI runs no Python).
 - Never `--no-verify`.
 
-**Current task** — P3.A6/P3.A4 deployment preparation, Part A only, on PR #51 (`feat/sibusiso-contract-v2`): SEC-6 guard, commit-archive package builder, and signed smoke client are implemented and pushed. Clean dependency, PostgreSQL, Python/Node, docs, intake, package-safety, and SCA checks pass. Local append and DB persistence pass; export remains deliberately fail-closed with `pin_authorisation_required` until ADR-0041 PIN authority and prefix behavior are implemented, so Part A's successful export/restart acceptance is still blocked. Part B/Azure operations and the production encryption key remain with Sibusiso and are out of scope. See `docs/build-log/entries/2026-09-25-codex-p3a6-deploy-prep.md` for evidence.
+**Current task** — P3.A3 support: contract tests and golden/rejection vectors for the proposed §4b payload schemas are implemented and verified on separate branch `feat/sibusiso-payload-vectors`, based on latest PR #51 head `bb6a446` plus PR #82 head `d69cb19`. Await PR review. Schemas remain unchanged and proposed pending ADR-0044 review; no server-side enforcement is in scope.
 
 **Done means** the five in `docs/SESSION-PROMPT.md` — plus, for me: a contract test exists for every frozen shape before I call it frozen.
 
@@ -38,7 +38,7 @@
 - AI tool / model: Codex / GPT-6 for the 13 September review session; update this line if a different tool is used later.
 - Availability / timezone: unconfirmed / Africa/Johannesburg.
 - Claimed files / contract versions: P3.A3/P3.A4 hardening claim — `server/main.py`, `server/db.py`, `server/outbox.py`, `server/payload_store.py`, `server/tests/`, `server/requirements.txt`, root `requirements.txt`, `startup.sh`, `.gitattributes` (shell line endings), `server/README.md`, `anchor/publish.py`, `anchor/hedera-sidecar/`, `anchor/verify.py`, `anchor/tests/`, `.github/workflows/checks.yml`; ADR-0041 and live-receipt contract corrections — `contracts/openapi.yaml`, `test/openapi-contract.test.mjs`. The shared contract paths need both leads and contract/domain review before merge; this local claim is not approval.
-- Last updated: 24 September 2026 — Codex assistant's hardening and packaging work tested locally against PostgreSQL; no push or deployment.
+- Last updated: 25 September 2026 — §4b vectors/validators and cross-language tests complete on `feat/sibusiso-payload-vectors`; latest PR #51 head merged; ADR-0044 acceptance remains pending.
 
 ## Work order — VIGIL + ANCHOR build (issued 23 Sep 2026)
 
@@ -94,6 +94,7 @@ See your work order's **Depends on → hands off to** line. Shared files are cla
 
 ## Needs and blockers
 
+- **Payload vector/validator claim (25 Sep, Codex acting at Sibusiso's request):** `contracts/vectors/payloads.json`, `scripts/gen-payload-vectors.py`, `anchor/payloads.py`, `shared/payloads.js`, and their Python/Vitest/root Node tests, on `feat/sibusiso-payload-vectors` based on PR #51's initial head `af8629d` and latest merged head `bb6a446`, plus PR #82 head `d69cb19`. This adds validation evidence only: no schema edits, no server enforcement, no ADR acceptance. Report any cross-language disagreement and leave ADR-0044 `PROPOSED` pending its reviewers.
 - Add new blockers here with the person's name and the evidence needed.
 - **P3.S14/S17 shared-path claim (24 Sep, Codex acting at Sibusiso's request):** editing `.github/workflows/checks.yml`, the root `package-lock.json`, and `docs/security/SCA-WAIVERS.md`; Ipeleng is a co-owner for CI/security settings per `docs/OVERLAPS.md`. Ipeleng: please review the gate behavior and waiver policy before merge. No contract or app behavior change.
 - **P3.A1 C5–C8 + SEC-1/SEC-2 claim (24 Sep, Codex acting at Sibusiso's request):** `contracts/openapi.yaml`, `anchor/pin_authority.py`, `anchor/tests/test_pin_authority.py`, `test/openapi-contract.test.mjs`, and one build-log entry. Contract work follows Lethabo's proposed resolutions accepted by Sibusiso in PR #51 comment `5814777869`; it does not claim runtime enforcement. Lethabo and the relevant security/contract reviewers must review the resulting diff before the contract is treated as frozen. No changes to server routes or server auth implementation in this task.

@@ -561,3 +561,30 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 - P3.A3 slice 2 is unblocked.
 - Contract v2 (#51) adds `revoked_key_id` to plain `details` on `key_revoked` entries, and drops `server` from `signer_role`.
 - `shared/verify.js` (verify-min, P3.S7) already builds keys from the chain. Revocation checking is added once `key_revoked` entries exist in an export.
+
+---
+
+## ADR-0044: Per-kind payloads for the escalation path (spec §4b): `checkin_opened`, `checkin_result` and `journey_ended`
+**Status:** Proposed (2026-09-25). Proposed by Sibusiso (#82). Three open points decided by Lethabo (co-lead) on 24 Sep and recorded on #82. **Not accepted:** acceptance needs Ipeleng's security review and Khutso's review, then Lethabo's. The number ADR-0044 is taken because ADR-0043 is claimed by #78; renumber on merge if another ADR lands first.
+**Owner:** Sibusiso Khumalo (schemas), Lethabo Hoaeane (decisions and acceptance)
+**Context:** §4 says every payload holds `kind` and its specifics, and §18 says per-kind schemas live in `contracts/payloads/<kind>.v<pv>.json`, but that directory existed on no branch and only `signal_detected` had a field table. P3.A3 slice 3 (event-to-escalation wiring) cannot be built without the fields of the three kinds that drive it. Two things the spec left implicit had to be settled: how an `opened` finds the `signal_detected` whose fallback deadline (G34) it cancels, and how a duress `journey_ended` stays identical in shape to a normal one (T52).
+**Decision:** §4b is adopted as written, with these decisions:
+1. **`checkin_opened` carries `signal_event_id`** (required): the `details.event_id` of the triggering `signal_detected`. It is the only reliable link, because matching on `journey_id` alone is ambiguous when two detections arrive close together.
+2. **`journey_ended` carries no `mode` and no authorisation reference.** Its authority is the separate `pin_authorised` event for `end_journey`, matched by §9's exact-action-and-target rule, so a duress end and a normal end have the same shape.
+3. **`attempt` stays device-asserted** and is recorded as an explicit §17 residual. The server must not treat it as independently verified.
+4. **An `end_journey` authorisation is single-use**, consumed atomically with the first accepted `journey_ended`.
+5. **One shared maximum identifier length, 128 characters, across all payload kinds** (Lethabo's recommended cap), applied to `journey_id` in `checkin_opened`, `journey_ended` and `signal_detected`.
+6. **`window_s`, not `window_ms`,** so the 20 s or 60 s check-in window cannot be confused with `signal_detected`'s 975 ms audio window. It is an enum, and any other value is a 400.
+
+**Rejected alternatives:**
+- Matching an `opened` to its signal by `journey_id`. Ambiguous under two close detections.
+- Putting `mode` or an authorisation reference in `journey_ended`. It would make a duress end differ in shape from a normal end, which T52 and the T15 harness forbid.
+- Verifying `attempt` on the server. The PIN never leaves the phone, so there is nothing to check the count against.
+- A per-kind identifier cap. One shared cap is easier to reason about and to test.
+
+**Consequences:**
+- P3.A3 slice 3's event-to-escalation wiring is unblocked once this is accepted.
+- Contract tests and golden vectors for the three schemas are due at acceptance (a Codex task, tracked in `docs/SIBUSISO-HANDOVER.md`). Both Python and JavaScript consume the same vector file so the two agree byte for byte.
+- `contracts/payloads/signal_detected.v1.json` still does not exist. §18 now carries the 128-character cap so it is built with it.
+- The server does not yet validate payloads against these schemas. That arrives with the wiring.
+- The `attempt` residual is added to §17.

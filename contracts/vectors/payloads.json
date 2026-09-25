@@ -1,0 +1,244 @@
+{
+  "description": "Simulated §4b payload golden and raw-JSON rejection vectors; schemas remain PROPOSED under ADR-0044.",
+  "golden": [
+    {
+      "name": "sim_checkin_opened_window_20",
+      "kind": "checkin_opened",
+      "payload": {
+        "kind": "checkin_opened",
+        "pv": 1,
+        "checkin_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+        "journey_id": "sim_journey_1",
+        "signal_event_id": "0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70",
+        "window_s": 20
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b22636865636b696e5f6964223a2237633164336630652d356232612d346338652d396136312d326634643865306231633333222c226a6f75726e65795f6964223a2273696d5f6a6f75726e65795f31222c226b696e64223a22636865636b696e5f6f70656e6564222c227076223a312c227369676e616c5f6576656e745f6964223a2230663861326236632d393164342d346537612d623363352d366431653966326134623730222c2277696e646f775f73223a32307d",
+      "sha256_hex": "10642b2113140b866d9c307cdf1f597c947395165e2696946feff73956145526",
+      "commitment_hex": "06ebc3833af4925a6da8943bddc166ea9b046d61c45e23d76c0287793fc63aeb"
+    },
+    {
+      "name": "sim_checkin_opened_window_60",
+      "kind": "checkin_opened",
+      "payload": {
+        "kind": "checkin_opened",
+        "pv": 1,
+        "checkin_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+        "journey_id": "sim_journey_1",
+        "signal_event_id": "0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70",
+        "window_s": 60
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b22636865636b696e5f6964223a2237633164336630652d356232612d346338652d396136312d326634643865306231633333222c226a6f75726e65795f6964223a2273696d5f6a6f75726e65795f31222c226b696e64223a22636865636b696e5f6f70656e6564222c227076223a312c227369676e616c5f6576656e745f6964223a2230663861326236632d393164342d346537612d623363352d366431653966326134623730222c2277696e646f775f73223a36307d",
+      "sha256_hex": "c73aa6c00b876118232e82eefde2a5c6d8952d5569cb72595a549f443616d689",
+      "commitment_hex": "bd2111a1e5627c230ea376c87f0f214f1e1dc0dca7a432d20684871d96a69968"
+    },
+    {
+      "name": "sim_checkin_opened_journey_128_ascii",
+      "kind": "checkin_opened",
+      "payload": {
+        "kind": "checkin_opened",
+        "pv": 1,
+        "checkin_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+        "journey_id": "sim_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "signal_event_id": "0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70",
+        "window_s": 20
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b22636865636b696e5f6964223a2237633164336630652d356232612d346338652d396136312d326634643865306231633333222c226a6f75726e65795f6964223a2273696d5f61616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161222c226b696e64223a22636865636b696e5f6f70656e6564222c227076223a312c227369676e616c5f6576656e745f6964223a2230663861326236632d393164342d346537612d623363352d366431653966326134623730222c2277696e646f775f73223a32307d",
+      "sha256_hex": "f4756a3e0cd0b3b02128cef1356c70f0143a5735acb628b9db8aada6bfb6a9c3",
+      "commitment_hex": "ebdcee5299f4ba6e50ace732b97760530a874e94fb9b815a3b0d6965054b7cf8"
+    },
+    {
+      "name": "sim_checkin_opened_journey_non_ascii",
+      "kind": "checkin_opened",
+      "payload": {
+        "kind": "checkin_opened",
+        "pv": 1,
+        "checkin_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+        "journey_id": "sim_journey_é",
+        "signal_event_id": "0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70",
+        "window_s": 20
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b22636865636b696e5f6964223a2237633164336630652d356232612d346338652d396136312d326634643865306231633333222c226a6f75726e65795f6964223a2273696d5f6a6f75726e65795f5c7530306539222c226b696e64223a22636865636b696e5f6f70656e6564222c227076223a312c227369676e616c5f6576656e745f6964223a2230663861326236632d393164342d346537612d623363352d366431653966326134623730222c2277696e646f775f73223a32307d",
+      "sha256_hex": "88623f35930e7604bd81ad781c2ca30582d8a46146cd999c6a39446e9d7057b6",
+      "commitment_hex": "89ac15a034cb54962c3d4f1ab7034c563b993e6504ebcb1d4c787e231aec4800"
+    },
+    {
+      "name": "sim_checkin_result_normal_attempt_1",
+      "kind": "checkin_result",
+      "payload": {
+        "kind": "checkin_result",
+        "pv": 1,
+        "checkin_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+        "result": "normal_pin",
+        "attempt": 1
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b22617474656d7074223a312c22636865636b696e5f6964223a2237633164336630652d356232612d346338652d396136312d326634643865306231633333222c226b696e64223a22636865636b696e5f726573756c74222c227076223a312c22726573756c74223a226e6f726d616c5f70696e227d",
+      "sha256_hex": "ca601c0b3f75c8a99d798f88d0ea0c0fc7845ffe279fbaee2f2ec3da125d314f",
+      "commitment_hex": "c2300a2c51e9db5152230694871bb577025686147413e12991aa676d8b0495ce"
+    },
+    {
+      "name": "sim_checkin_result_normal_attempt_4",
+      "kind": "checkin_result",
+      "payload": {
+        "kind": "checkin_result",
+        "pv": 1,
+        "checkin_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+        "result": "normal_pin",
+        "attempt": 4
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b22617474656d7074223a342c22636865636b696e5f6964223a2237633164336630652d356232612d346338652d396136312d326634643865306231633333222c226b696e64223a22636865636b696e5f726573756c74222c227076223a312c22726573756c74223a226e6f726d616c5f70696e227d",
+      "sha256_hex": "0a34ab5c23a043114a2c3a5e56cac10c2b986d662b185f2fd033b5007c799eeb",
+      "commitment_hex": "42f2b2325fe3746eac7c11d2822e1aa5c4d8f1f3f608de607afa13807f959f61"
+    },
+    {
+      "name": "sim_checkin_result_duress_pin",
+      "kind": "checkin_result",
+      "payload": {
+        "kind": "checkin_result",
+        "pv": 1,
+        "checkin_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+        "result": "duress_pin",
+        "attempt": 2
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b22617474656d7074223a322c22636865636b696e5f6964223a2237633164336630652d356232612d346338652d396136312d326634643865306231633333222c226b696e64223a22636865636b696e5f726573756c74222c227076223a312c22726573756c74223a226475726573735f70696e227d",
+      "sha256_hex": "030dc1f50a3a48f5beaabae5926c89ae2031642055078ff6738ecaf4bf57d4b9",
+      "commitment_hex": "3192bbf49fe14391596c8edc191db02863c07cd046bf87cce9fcebf51785027f"
+    },
+    {
+      "name": "sim_journey_ended_basic",
+      "kind": "journey_ended",
+      "payload": {
+        "kind": "journey_ended",
+        "pv": 1,
+        "journey_id": "sim_journey_1"
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b226a6f75726e65795f6964223a2273696d5f6a6f75726e65795f31222c226b696e64223a226a6f75726e65795f656e646564222c227076223a317d",
+      "sha256_hex": "4e8eaad409414e616218c3e638e95c99d255bf726c7e3cebb899b1ace7256f34",
+      "commitment_hex": "796f887ca3632cbfd52d7bfc140525a0f215bace5c99ca8f34b8266b0c211851"
+    },
+    {
+      "name": "sim_journey_ended_journey_128_non_bmp",
+      "kind": "journey_ended",
+      "payload": {
+        "kind": "journey_ended",
+        "pv": 1,
+        "journey_id": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b226a6f75726e65795f6964223a225c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c75646530305c75643833645c7564653030222c226b696e64223a226a6f75726e65795f656e646564222c227076223a317d",
+      "sha256_hex": "177ef1dfd92fddf62543a224f4886328e4c19b4e87c1c33bed624423ba0773fb",
+      "commitment_hex": "e4240a4a7ca39c4c485d3e95e01d1eb66cd53676c8e3edc32b77fcc7a5be89e6"
+    }
+  ],
+  "rejections": [
+    {
+      "name": "sim_checkin_opened_window_30",
+      "kind": "checkin_opened",
+      "json": "{\"kind\":\"checkin_opened\",\"pv\":1,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"journey_id\":\"sim_journey_1\",\"signal_event_id\":\"0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70\",\"window_s\":30}",
+      "reason": "window_s must be 20 or 60"
+    },
+    {
+      "name": "sim_checkin_opened_window_string",
+      "kind": "checkin_opened",
+      "json": "{\"kind\":\"checkin_opened\",\"pv\":1,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"journey_id\":\"sim_journey_1\",\"signal_event_id\":\"0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70\",\"window_s\":\"20\"}",
+      "reason": "window_s must be an integer, not a string"
+    },
+    {
+      "name": "sim_checkin_opened_window_float",
+      "kind": "checkin_opened",
+      "json": "{\"kind\":\"checkin_opened\",\"pv\":1,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"journey_id\":\"sim_journey_1\",\"signal_event_id\":\"0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70\",\"window_s\":20.0}",
+      "reason": "canonical payload text rejects floating-point numbers"
+    },
+    {
+      "name": "sim_checkin_opened_uppercase_uuid",
+      "kind": "checkin_opened",
+      "json": "{\"kind\":\"checkin_opened\",\"pv\":1,\"checkin_id\":\"7C1D3F0E-5B2A-4C8E-9A61-2F4D8E0B1C33\",\"journey_id\":\"sim_journey_1\",\"signal_event_id\":\"0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70\",\"window_s\":20}",
+      "reason": "checkin_id must be a lowercase UUID"
+    },
+    {
+      "name": "sim_checkin_opened_missing_signal_event_id",
+      "kind": "checkin_opened",
+      "json": "{\"kind\":\"checkin_opened\",\"pv\":1,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"journey_id\":\"sim_journey_1\",\"window_s\":20}",
+      "reason": "signal_event_id is required"
+    },
+    {
+      "name": "sim_checkin_opened_unknown_field",
+      "kind": "checkin_opened",
+      "json": "{\"kind\":\"checkin_opened\",\"pv\":1,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"journey_id\":\"sim_journey_1\",\"signal_event_id\":\"0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70\",\"window_s\":20,\"sim_unexpected\":true}",
+      "reason": "additional properties are forbidden"
+    },
+    {
+      "name": "sim_checkin_opened_wrong_pv",
+      "kind": "checkin_opened",
+      "json": "{\"kind\":\"checkin_opened\",\"pv\":2,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"journey_id\":\"sim_journey_1\",\"signal_event_id\":\"0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70\",\"window_s\":20}",
+      "reason": "pv must equal 1"
+    },
+    {
+      "name": "sim_checkin_result_device_no_answer",
+      "kind": "checkin_result",
+      "json": "{\"kind\":\"checkin_result\",\"pv\":1,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"result\":\"no_answer\",\"attempt\":1}",
+      "reason": "no_answer is server-authored, not a device result"
+    },
+    {
+      "name": "sim_checkin_result_wrong_duress_value",
+      "kind": "checkin_result",
+      "json": "{\"kind\":\"checkin_result\",\"pv\":1,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"result\":\"duress_signal\",\"attempt\":1}",
+      "reason": "result must be normal_pin or duress_pin"
+    },
+    {
+      "name": "sim_checkin_result_attempt_zero",
+      "kind": "checkin_result",
+      "json": "{\"kind\":\"checkin_result\",\"pv\":1,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"result\":\"normal_pin\",\"attempt\":0}",
+      "reason": "attempt must be at least 1"
+    },
+    {
+      "name": "sim_checkin_result_attempt_float",
+      "kind": "checkin_result",
+      "json": "{\"kind\":\"checkin_result\",\"pv\":1,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"result\":\"normal_pin\",\"attempt\":1.5}",
+      "reason": "attempt must be an integer"
+    },
+    {
+      "name": "sim_checkin_result_attempt_boolean",
+      "kind": "checkin_result",
+      "json": "{\"kind\":\"checkin_result\",\"pv\":1,\"checkin_id\":\"7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33\",\"result\":\"normal_pin\",\"attempt\":true}",
+      "reason": "attempt must be an integer, not a boolean"
+    },
+    {
+      "name": "sim_journey_ended_mode_forbidden",
+      "kind": "journey_ended",
+      "json": "{\"kind\":\"journey_ended\",\"pv\":1,\"journey_id\":\"sim_journey_1\",\"mode\":\"duress\"}",
+      "reason": "journey_ended has no mode field (T52 shape parity)"
+    },
+    {
+      "name": "sim_journey_ended_empty_id",
+      "kind": "journey_ended",
+      "json": "{\"kind\":\"journey_ended\",\"pv\":1,\"journey_id\":\"\"}",
+      "reason": "journey_id must not be empty"
+    },
+    {
+      "name": "sim_journey_ended_id_129_ascii",
+      "kind": "journey_ended",
+      "json": "{\"kind\":\"journey_ended\",\"pv\":1,\"journey_id\":\"sim_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+      "reason": "journey_id exceeds 128 Unicode code points"
+    },
+    {
+      "name": "sim_journey_ended_id_129_non_bmp",
+      "kind": "journey_ended",
+      "json": "{\"kind\":\"journey_ended\",\"pv\":1,\"journey_id\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\"}",
+      "reason": "journey_id exceeds 128 Unicode code points"
+    },
+    {
+      "name": "sim_journey_ended_duplicate_kind_key",
+      "kind": "journey_ended",
+      "json": "{\"kind\":\"journey_ended\",\"kind\":\"journey_ended\",\"pv\":1,\"journey_id\":\"sim_journey_1\"}",
+      "reason": "duplicate JSON object keys are refused before parsing"
+    }
+  ]
+}

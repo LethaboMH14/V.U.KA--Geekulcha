@@ -47,3 +47,9 @@ None of B1–S4 blocks the PR #43 merge that already happened (`8c621dfc`, 19:24
 | ADR | Proposed by | Accepted by | When | Record | Conditions |
 |---|---|---|---|---|---|
 | ADR-0042 — device and guardian key registry (spec §4a) | Sibusiso (#64) | Lethabo (co-lead; security review while covering for Ipeleng) | 24 Sep 2026 | [Security review on #51](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/51#issuecomment-5813873973); the PR from branch `docs/lethabo-4a-security-acceptance` | Three amendments folded into §4a: the chain-derived registry, no server keys, one key per device or guardian. Sibusiso confirms them on that PR. Contract v2 adds `revoked_key_id` |
+
+**§4b per-kind payloads: 25 Sep 2026.**
+
+| ADR | Proposed by | Accepted by | When | Record | Conditions |
+|---|---|---|---|---|---|
+| ADR-0044 — per-kind payloads for `checkin_opened`, `checkin_result` and `journey_ended` (spec §4b) | Sibusiso (#82) | **Pending** — Lethabo (co-lead) | — | [PR #82](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/82); decisions recorded on that PR by Lethabo, 24 Sep 2026 | Three open points **decided by Lethabo, 24 Sep**: `attempt` stays device-asserted and becomes a §17 residual; an `end_journey` authorisation is single-use, consumed atomically with the first accepted `journey_ended`; one shared 128-character identifier cap across all payload kinds. **Not yet accepted:** Ipeleng's security review and Khutso's review are outstanding, and contract tests plus golden vectors are due at acceptance. §4b stays `PROPOSED` until this row is closed |
