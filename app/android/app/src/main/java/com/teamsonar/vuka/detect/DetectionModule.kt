@@ -176,6 +176,6 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
 }
 
 class DetectionPackage : ReactPackage {
-    override fun createNativeModules(ctx: ReactApplicationContext): List<NativeModule> = listOf(DetectionModule(ctx))
+    override fun createNativeModules(ctx: ReactApplicationContext): List<NativeModule> = listOf(DetectionModule(ctx), SignerModule(ctx))
     override fun createViewManagers(ctx: ReactApplicationContext): List<ViewManager<*, *>> = emptyList()
 }
