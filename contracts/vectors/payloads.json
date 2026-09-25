@@ -297,7 +297,7 @@
     {
       "name": "sim_pin_authorised_action",
       "kind": "pin_authorised",
-      "json": "{\"kind\":\"pin_authorised\",\"pv\":1,\"action\":\"add_guardian\",\"target_id\":\"sim_subject\",\"mode\":\"normal\",\"nonce\":\"sim_nonce\",\"sig\":\"MAA=\",\"signer_key_id\":\"sim_key\"}",
+      "json": "{\"kind\":\"pin_authorised\",\"pv\":1,\"action\":\"not_an_action\",\"target_id\":\"sim_subject\",\"mode\":\"normal\",\"nonce\":\"sim_nonce\",\"sig\":\"MAA=\",\"signer_key_id\":\"sim_key\"}",
       "reason": "invalid proposed PIN payload"
     },
     {

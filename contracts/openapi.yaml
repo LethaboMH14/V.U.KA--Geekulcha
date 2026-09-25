@@ -249,10 +249,15 @@ paths:
     get:
       tags: [Showcase]
       operationId: openMemberStream
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Open the member event stream
-      description: Member streams never receive operator-room events.
-      security: [{ bearerAuth: [] }]
+      description: >-
+        Member streams never receive operator-room events. PROPOSED (25 Sep): authenticated
+        by the section 7 signed-request headers on the handshake (GET, empty body), not
+        bearerAuth, because no bearer issuer exists. Messages are opaque (chain_index,
+        event_hash, received_at; no kind) and cut at the pre-incident head while the T30
+        hold applies.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       responses:
         '101': { description: WebSocket upgrade accepted }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -478,15 +483,14 @@ paths:
     post:
       tags: [VIGIL]
       operationId: createGuardianInvite
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Create a PIN-authorised guardian invite
-      description: Device-signed with fresh PIN authorisation per §§7 and 9.
+      description: >-
+        PROPOSED (25 Sep): bodyless. Consumes a fresh add_guardian pin_authorised submitted
+        through POST /v1/events (target_id = the subject id). Returns guardian_id and a
+        one-time invite_code (10 minutes, 5 attempts). A duress authorisation returns an
+        identical-looking decoy invite whose guardian never receives alerts (section 9).
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/PinAuthorisationStatement' }
       responses:
         '201': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -495,7 +499,7 @@ paths:
     post:
       tags: [VIGIL]
       operationId: acceptGuardianInvite
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Accept a one-time guardian invite
       description: Guardian-signed request; the guardian acknowledges the POPIA s18 notice.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -520,16 +524,16 @@ paths:
     delete:
       tags: [VIGIL]
       operationId: removeGuardian
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Request delayed removal of a guardian
-      description: Device-signed with fresh PIN authorisation; normal removal has a 24-hour delay and duress is a no-op.
+      description: >-
+        PROPOSED (25 Sep): bodyless. Consumes a fresh remove_guardian pin_authorised
+        (target_id = this guardian id) submitted through POST /v1/events. Normal removal is
+        scheduled 24 hours out, silent to the removed guardian, deferred while an incident
+        is open, and refused (409 last_guardian) for the last non-decoy guardian. Duress
+        looks identical and does nothing.
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/PinAuthorisationStatement' }
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -539,7 +543,7 @@ paths:
     put:
       tags: [VIGIL]
       operationId: updateGuardianToken
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Update a guardian notification token
       description: >-
         Guardian-signed only. The X-Vuka-Key-Id must resolve to this guardian's active guardian key;
@@ -662,7 +666,7 @@ paths:
     get:
       tags: [ANCHOR]
       operationId: openPublicPanelStream
-      x-vuka-implemented: false
+      x-vuka-implemented: true
       summary: Open the public opaque-hash panel stream
       description: Exposes opaque hashes, chain indices and receipts; event kinds are emitted only for sim_ subjects and are labelled simulated.
       security: []
@@ -851,6 +855,8 @@ components:
         sim: { type: boolean, const: true, description: Present and true on simulated bank receipts. }
         hold_ref: { type: string, minLength: 1, description: Present on a simulated risk-signal receipt; names the hold that a later release must cite. }
         journey_id: { type: string, minLength: 1, maxLength: 128, description: Present on a POST /v1/journeys receipt; server-issued (PROPOSED, 25 Sep). }
+        guardian_id: { type: string, minLength: 1, description: Present on guardian invite and accept receipts (PROPOSED, 25 Sep). }
+        invite_code: { type: string, minLength: 1, writeOnly: true, description: Shown once on the invite receipt; '<8-hex id>-<6 digits>', carried whole by the QR (PROPOSED, 25 Sep). }
         anchor_status: { type: string, enum: [not_submitted, submitted, pending, confirmed, gap] }
         pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation', description: Present when a verified PIN-authority statement is recorded; expiry is server-derived. }
     JourneyReceipt:

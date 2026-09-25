@@ -83,7 +83,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t tests < <(find anchor/tests server/tests -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print 2>/dev/null | sort)
+          mapfile -t tests < <(find anchor/tests server/tests sim_bank/tests -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print 2>/dev/null | sort)
           if ((${#tests[@]} == 0)); then
             echo "No anchor/tests or server/tests Python tests are present; skipped."
           else
@@ -92,7 +92,7 @@ jobs:
             for manifest in "${manifests[@]}"; do
               python -m pip install --disable-pip-version-check -r "${manifest}"
             done
-            python -m pytest anchor/tests server/tests
+            python -m pytest anchor/tests server/tests sim_bank/tests
           fi
   npm-audit:
     runs-on: ubuntu-24.04

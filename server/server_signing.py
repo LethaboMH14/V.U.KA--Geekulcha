@@ -13,8 +13,16 @@ from anchor.canonical import canonical
 
 
 def _pinned_public_key():
+    """Raw 32-byte Ed25519 key. The manifest stores base64 SPKI DER (as shared/keys.js
+    and shared/verify.js require); comparing SPKI to a raw key never matched, so every
+    server-signed entry failed outside tests that patched this function."""
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    from cryptography.hazmat.primitives.serialization import load_der_public_key
     manifest = json.loads((Path(__file__).resolve().parents[1] / "contracts/keys/manifest.json").read_text(encoding="utf8"))
-    return base64.b64decode(manifest["server_ed25519_public_key"], validate=True)
+    key = load_der_public_key(base64.b64decode(manifest["server_ed25519_public_key"], validate=True))
+    if not isinstance(key, Ed25519PublicKey):
+        raise ValueError("manifest server key is not Ed25519")
+    return key.public_bytes(Encoding.Raw, PublicFormat.Raw)
 
 
 def sign_server_bytes(message):
