@@ -230,6 +230,7 @@ export function Key({
       style={[
         styles.pill,
         ink && styles.pillInk,
+        variant === 'guardian' && {backgroundColor: colors.amberBottom, shadowColor: colors.amberStrong},
         variant === 'plain' && styles.pillGlass,
         variant === 'ghost' && styles.pillGhost,
         variant === 'guardianPlain' && styles.pillGuardianPlain,
