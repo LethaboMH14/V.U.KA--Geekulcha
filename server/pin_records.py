@@ -30,7 +30,7 @@ class EventRefused(Exception):
 
 def store_authorisation(cursor, subject_id, entry, now):
     payload = entry["payload"]
-    if payload.get("action") not in {"end_journey", "export", "delete"}:
+    if payload.get("action") not in {"end_journey", "export", "delete", "add_guardian", "remove_guardian"}:
         raise EventRefused("action_not_supported")
     validate_payload("pin_authorised", payload)
     key_id = entry["details"]["signer_key_id"]
@@ -48,8 +48,12 @@ def store_authorisation(cursor, subject_id, entry, now):
         key.verify(base64.b64decode(payload["sig"], validate=True), canonical_pin_authorised(statement), ec.ECDSA(hashes.SHA256()))
     except (InvalidSignature, ValueError, TypeError) as exc:
         raise EventRefused("invalid_signature", 401) from exc
-    if payload["action"] in ("export", "delete"):
+    if payload["action"] in ("export", "delete", "add_guardian"):
         own_target = payload["target_id"] == subject_id
+    elif payload["action"] == "remove_guardian":
+        cursor.execute("SELECT subject_id FROM guardians WHERE guardian_id=%s", (payload["target_id"],))
+        target = cursor.fetchone()
+        own_target = target is not None and target[0] == subject_id
     else:
         cursor.execute("SELECT subject_id FROM journey_subjects WHERE journey_id=%s", (payload["target_id"],))
         target = cursor.fetchone()
