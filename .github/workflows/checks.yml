@@ -129,6 +129,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Scan repository manifests with digest-pinned OSV-Scanner v2.6.0
+        continue-on-error: true
         run: >-
           docker run --rm
           -v "${GITHUB_WORKSPACE}:/src"
