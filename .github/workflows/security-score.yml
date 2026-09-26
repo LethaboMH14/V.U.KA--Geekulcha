@@ -143,30 +143,8 @@ jobs:
         run: |
           test "$NODE_OUTCOME" = success && test "$VITEST_OUTCOME" = success && test "$PYTEST_OUTCOME" = success
 
-  deploy-pages:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: security-score
-    runs-on: ubuntu-24.04
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Download score and page sources
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: security-score
-          path: payload
-      - name: Assemble static site
-        run: |
-          mkdir site
-          cp payload/dashboard/security.html payload/dashboard/security.js payload/security-score.json site/
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
-        with:
-          path: site
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
+  # Pages is deployed by ledger-pages.yml alone. It re-runs after every
+  # security-score run on main and carries security.html, security.js and
+  # security-score.json from this workflow's artifact. A second deploy here
+  # replaced the whole site with only the score page (a repo has one Pages
+  # site), so the ledger 404'd until ledger-pages redeployed.
