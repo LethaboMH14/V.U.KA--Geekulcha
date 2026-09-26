@@ -203,3 +203,27 @@ Evidence:
 - **On the emulator, through the public tunnel:** sign-up was received, listening started, the invite code was issued, and a scripted second phone joined as guardian with that code.
 
 Not done: FCM push (#95); a real-phone run; battery.
+
+### Addendum, 26 Sep 04:55: VIGIL records why it acted (CEM-1 step a, PROPOSED, ADR-0047 to follow)
+
+Changed:
+- **CEM-1 on the phone** (`app/src/brain/cem/`, pure). This is the team's CEM-0 coercion evidence model (docs/COERCION-SCENARIOS.md), ported for the reasons the phone can observe: sounds and motion. It uses integer decibans, the same exact integer decay (120 s half-life), bands and K.
+  - A golden oracle (`scripts/eval/cem_golden.py` → `__tests__/golden.json`) exports the 32 phone-observable catalogue scenarios. The TS engine reproduces every pos, neg, total, K and band exactly.
+- **Engine confirmations feed the tally.** This includes confirmations the engine drops as duplicates, so 3 scream windows in 10 s count as `scream_sustained`. Each 10 s episode is one reason.
+- **`evidence_observed` pv1** is signed and queued just before every `signal_detected`. It carries the band, integer reasons, K and `ruleset_digest` (the SHA-256 of the canonical ruleset; CI fails if it is stale).
+  - The prompt rule is still `v4`: **no behaviour change**, and every detection that prompted still prompts.
+- **Server (PR #99 branch, 407ad67):**
+  - the schema is `contracts/payloads/evidence_observed.v1.json`;
+  - the server accepts the event with no incident, deadline or outbox row;
+  - it links the event to the next detection by id only;
+  - the guardian alert gains `why` = the band plus up to 3 reason names, read from the encrypted payload, so deletion removes it.
+- **Guardian screen:** "VIGIL noticed breaking glass and the phone hit hard: some signs." Words only. The consent text now says so, and says that no recording is kept.
+
+Evidence:
+- `npx jest`: 106/106 (CEM golden 32/32, tracker on the real `step()` stream, payload refusals, the why line).
+- **Server:**
+  - pytest: 267 passed. `test_outbox_postgres` needs an empty database; it fails on the live demo DB with or without this change.
+  - `node --test` contract files: all pass.
+- `journey-e2e.mjs`: 32/32 against the live server + workers. The guardian's alert carried `why` = {some, [glass_or_breaking, impact]}.
+
+Not done: step b (the graded prompt rule, the countdown, context classes, snatch/PIN reasons), the transition list, location and map, and the experiments. The tally is uncalibrated: a sum of reasons, never a probability.

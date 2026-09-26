@@ -36,7 +36,7 @@ the outcome back from PostgreSQL. The scenarios:
 
 ```bash
 # the slice-3 API and its scheduler (python -m server.scheduler), same DATABASE_URL
-cd app && npx tsc src/api/device.ts --outDir build-e2e --rootDir .. --allowJs   --module commonjs --target es2020 --moduleResolution node --skipLibCheck --lib es2020,dom --esModuleInterop && cd ..
+cd app && npx tsc src/api/device.ts src/brain/cem/ruleset.ts --outDir build-e2e --rootDir .. --allowJs   --module commonjs --target es2020 --moduleResolution node --skipLibCheck --lib es2020,dom --esModuleInterop && cd ..
 DATABASE_URL=postgresql://vuka@127.0.0.1:55432/vuka3 node scripts/e2e/journey-e2e.mjs http://127.0.0.1:8000
 ```
 

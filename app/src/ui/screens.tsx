@@ -125,8 +125,12 @@ export function VigilApp() {
       const {result, detector: d} = await startDetection({
         journeyId: id,
         appVersion: version,
-        // Evidence first: every confirmed detection is signed and queued (V7, V8).
-        onRecord: (_decision, payload) => device.signal(id, payload),
+        // Evidence first: every confirmed detection is signed and queued (V7, V8),
+        // its reasons just before it, so the record says why as well as what.
+        onRecord: async (_decision, payload, evidence) => {
+          await device.signal(id, evidence);
+          return device.signal(id, payload);
+        },
         onPrompt: (_decision, signalEventId) => openCheck(signalEventId),
         onLevel: setLevel,
       });

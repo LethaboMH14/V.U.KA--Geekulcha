@@ -29,6 +29,7 @@ mkdirSync(join(build, 'node_modules', 'react-native'), {recursive: true});
 writeFileSync(join(build, 'node_modules', 'react-native', 'index.js'), 'module.exports = {NativeModules: {}, Platform: {constants: {}}};\n');
 const api = require(join(build, 'app', 'src', 'api', 'events.js'));
 const {createDevice} = require(join(build, 'app', 'src', 'api', 'device.js'));
+const {RULESET_DIGEST} = require(join(build, 'app', 'src', 'brain', 'cem', 'ruleset.js'));
 
 const base = process.argv[2] ?? 'http://127.0.0.1:8000';
 const fast = process.argv.includes('--fast');
@@ -136,6 +137,12 @@ const check = (name, ok, detail = '') => {
 const q = s => s.replace(/'/g, "''");
 
 async function detection(d, journey) {
+  // As the phone does: the reasons first (evidence_observed, ADR-0047), then the detection.
+  await d.signal(journey, {
+    kind: 'evidence_observed', pv: 1, journey_id: journey, cem_version: 'CEM-1', ruleset_digest: RULESET_DIGEST,
+    decision: 'prompt', tally_db: 9, band: 'some', k_pct: 0,
+    reasons: [{name: 'glass_or_breaking', db: 5}, {name: 'impact', db: 4}],
+  });
   const signalId = await d.signal(journey, {
     kind: 'signal_detected', pv: 1, journey_id: journey, sense: 'sound', class_label: 'Glass', class_index: 435,
     score_bp: 8516, threshold_bp: 3500, window_ms: 975, model_sha256: '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de',
@@ -253,6 +260,8 @@ if (!fast) {
     alerts = await g.guardianAlerts();
   }
   check('guardian: the duress alert reached the real guardian', alerts.length === 1 && alerts[0].trigger === 'duress_signal', JSON.stringify(alerts[0] ?? null));
+  check('guardian: the alert says why, in words only', JSON.stringify(alerts[0]?.why) === JSON.stringify({band: 'some', reasons: ['glass_or_breaking', 'impact']}), JSON.stringify(alerts[0]?.why ?? null));
+  check('evidence: recorded with no incident of its own', sql(`SELECT count(*) FROM evidence_links WHERE subject_id='${q(member.subject)}' AND signal_event_id IS NOT NULL`) === '1');
   check('guardian: the decoy sees nothing, same shape', (await decoy.guardianAlerts()).length === 0);
   await g.acknowledge(alerts[0].incident_id, 'called_10111');
   await g.acknowledge(alerts[0].incident_id, 'stand_down');

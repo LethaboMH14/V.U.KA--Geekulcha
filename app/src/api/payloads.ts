@@ -14,8 +14,27 @@ const str = (min: number, max: number): Rule => v => typeof v === 'string' && v.
 const oneOf = (...xs: unknown[]): Rule => v => xs.includes(v);
 const match = (re: RegExp): Rule => v => typeof v === 'string' && re.test(v);
 const intMin = (n: number): Rule => v => typeof v === 'number' && Number.isSafeInteger(v) && v >= n;
+const intIn = (lo: number, hi: number): Rule => v => typeof v === 'number' && Number.isSafeInteger(v) && v >= lo && v <= hi;
+const HEX64 = /^[0-9a-f]{64}$/;
+const REASON = /^[a-z][a-z0-9_]{0,39}$/;
+const reasons: Rule = v =>
+  Array.isArray(v) &&
+  v.length <= 8 &&
+  v.every(r => r && typeof r === 'object' && Object.keys(r).sort().join() === 'db,name' && match(REASON)(r.name) && intIn(-100, 100)(r.db));
 
 const SCHEMAS: Record<string, Record<string, Rule>> = {
+  evidence_observed: {
+    kind: oneOf('evidence_observed'),
+    pv: oneOf(1),
+    journey_id: str(1, 128),
+    cem_version: oneOf('CEM-1'),
+    ruleset_digest: match(HEX64),
+    decision: oneOf('record', 'prompt'),
+    tally_db: intIn(-1000, 1000),
+    band: oneOf('faint', 'some', 'strong', 'very strong', 'overwhelming'),
+    k_pct: intIn(0, 100),
+    reasons,
+  },
   checkin_opened: {
     kind: oneOf('checkin_opened'),
     pv: oneOf(1),

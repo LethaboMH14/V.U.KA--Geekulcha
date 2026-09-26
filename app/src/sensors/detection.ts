@@ -20,6 +20,8 @@ import {
   type MotionFrame,
   type SignalDetectedV1,
 } from '../brain/detect';
+import {buildEvidenceObserved, createTracker, type EvidenceObservedV1} from '../brain/cem/tracker';
+import {RULESET_DIGEST} from '../brain/cem/ruleset';
 
 type Native = {
   testFeed?: boolean;
@@ -77,10 +79,11 @@ export async function startDetection(opts: {
   journeyId: string;
   appVersion: string;
   /**
-   * A confirmed detection: sign and queue the event. Evidence, always.
-   * Resolves with the event's id once it is in the queue.
+   * A confirmed detection: sign and queue the evidence (`evidence_observed`,
+   * the reasons and their weight), then the event itself. Evidence, always.
+   * Resolves with the `signal_detected` event's id once it is in the queue.
    */
-  onRecord: (decision: Decision, payload: SignalDetectedV1) => Promise<string | undefined>;
+  onRecord: (decision: Decision, payload: SignalDetectedV1, evidence: EvidenceObservedV1) => Promise<string | undefined>;
   /**
    * Open the journey check (only after a record, never over an open
    * check-in). Called only once the detection is queued, with its event id,
@@ -99,6 +102,8 @@ export async function startDetection(opts: {
   if (!perm.ok) return {result: perm};
 
   let state: EngineState = initialState();
+  // CEM-1: the reasons behind each record (prompt rule 'v4': it changes nothing yet).
+  const tracker = createTracker();
   // Nothing is judged until arming has finished and the model has been checked.
   let armed = false;
   let sha256 = '';
@@ -115,6 +120,7 @@ export async function startDetection(opts: {
     const out = step(state, {type: 'audio', window: toWindow(w)}, RULESET_V1);
     state = out.state;
     const d = out.decision;
+    if (d) tracker.observe(d, w.endMs);
     if (d?.record && d.candidate) {
       const payload = buildSignalDetected({
         journeyId: opts.journeyId,
@@ -123,8 +129,14 @@ export async function startDetection(opts: {
         modelSha256: sha256,
         appVersion: opts.appVersion,
       });
+      const evidence = buildEvidenceObserved({
+        journeyId: opts.journeyId,
+        rulesetDigest: RULESET_DIGEST,
+        decision: d.prompt ? 'prompt' : 'record',
+        assessment: tracker.assess(w.endMs),
+      });
       chain = chain.then(async () => {
-        const eventId = await opts.onRecord(d, payload);
+        const eventId = await opts.onRecord(d, payload, evidence);
         // Once the journey has ended, a late detection is evidence but never a prompt.
         if (d.prompt && eventId && armed) {
           native.showCheckin();

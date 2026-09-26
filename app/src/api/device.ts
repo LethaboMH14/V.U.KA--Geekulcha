@@ -90,6 +90,11 @@ export type GuardianAlert = {
   opened_at: string;
   closed_at: string | null;
   close_reason: string | null;
+  /**
+   * PROPOSED (ADR-0047): for an alert that began with a detection, the
+   * phone's evidence band and up to three reason names. Words, never a number.
+   */
+  why?: {band: string; reasons: string[]} | null;
 };
 
 /** What the phone keeps about each received event. Never the PIN mode. */

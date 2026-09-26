@@ -18,6 +18,7 @@ import {Chip, Eyebrow, GlassIcon, Key, Lamp, Panel, QuietKey, Readout, Rule, Sur
 import {CheckCircle, Phone, ShieldChevron, UsersThree} from './icons';
 import {colors, fonts, radii, space, type} from './theme';
 import {device, type GuardianAlert} from '../api/device';
+import {whyLine} from './whyLine';
 import {version} from '../../package.json';
 
 const TOP = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
@@ -129,8 +130,8 @@ export function GuardianSetup({onDone, onBack}: {onDone: () => void; onBack: () 
                 <Eyebrow>POPIA · what being a guardian means</Eyebrow>
                 <View style={{gap: space.md, marginTop: space.md}}>
                   {[
-                    ['You are told', `when VIGIL thinks ${who} may need help: a check-in not answered, their second PIN used, or their phone going quiet during an alert.`],
-                    ['You are not told', `where ${who} is, what was heard, or anything about ordinary days.`],
+                    ['You are told', `when VIGIL thinks ${who} may need help: a check-in not answered, their second PIN used, or their phone going quiet during an alert. With an alert, you see what VIGIL noticed in words (for example "a scream") and how strong the signs were.`],
+                    ['You are not told', `where ${who} is, any recording (VIGIL never keeps one), or anything about ordinary days.`],
                     ['What is kept', 'a key made on this phone, and your answers (called 10111, handling it, stand down). Each answer is signed and joins their record.'],
                     ['You can stop', `any time: ${who} can remove you, and uninstalling ends it.`],
                   ].map(([h, b]) => (
@@ -287,6 +288,7 @@ function OpenAlert({
           {who} may need help
         </Text>
         <Text style={[type.body, {marginTop: space.sm}]}>{WHY[alert.trigger](who)}</Text>
+        {whyLine(alert.why) ? <Text style={[type.body, {marginTop: space.xs}]}>{whyLine(alert.why)}</Text> : null}
         <View style={styles.g4}>
           <Text style={styles.g4Text}>Don't call or text {who}. Call 10111.</Text>
           <Text style={[type.caption, {color: colors.amberText, marginTop: 4}]}>If someone is with {who}, a ringing phone could put them at risk.</Text>
