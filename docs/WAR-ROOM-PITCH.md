@@ -38,7 +38,7 @@ A journey begins — then a scream. VUKA quietly asks: are you okay? A normal PI
 
 ### Beat 5 — Why It Wins
 
-Our direct competitors are detection tools: FNB GuardMe needs a panic press; Discovery's duress code needs a PIN typed in their app. They detect — only if you can touch the screen. Under threat, you can't — so the victim has no proof. Evidence tools prove something existed, but can't detect duress. VUKA does both: it detects on its own, and hands back proof anyone can check. That is why we win.
+Our direct competitors are detection tools: FNB GuardMe needs a panic press; Discovery's duress code needs a PIN. They only work if you can touch the screen. Under threat, you can't — so you have no proof. Evidence tools show something existed, but to dispute, you need proof you were coerced. VUKA does both: it detects on its own, and hands back proof anyone can check. That is why we win.
 
 ### Beat 6 — The Ask
 
