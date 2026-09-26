@@ -171,6 +171,26 @@ object ServerSync {
         }
     }
 
+    /**
+     * ADR-0048 (PROPOSED): one location fix for the open journey. The server
+     * keeps it only while a guardian alert is open and always answers 202.
+     */
+    fun sendLocation(latE7: Long, lonE7: Long, accM: Long, fixAgeMs: Long) {
+        if (!::app.isInitialized) return
+        worker.execute {
+            val id = journeyId ?: return@execute
+            try {
+                val body = Canonical.json(mapOf(
+                    "lat_e7" to latE7, "lon_e7" to lonE7, "acc_m" to accM, "fix_age_ms" to fixAgeMs,
+                    "ts" to EventClient.rfc3339(),
+                ))
+                EventClient.request(serverUrl, signer, "POST", "/v1/journeys/$id/location", body)
+            } catch (e: Exception) {
+                Log.w(TAG, "location not sent: ${e.message}")
+            }
+        }
+    }
+
     /** A confirmed sound detection (V4). [onQueued] gets (journey id, signal event id) once it is signed. */
     fun signal(label: String, classIndex: Int, scoreBp: Int, thresholdBp: Int, onQueued: (String, String) -> Unit = { _, _ -> }) {
         if (!::app.isInitialized) return

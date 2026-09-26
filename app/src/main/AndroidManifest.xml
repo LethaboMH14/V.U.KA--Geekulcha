@@ -14,6 +14,11 @@
     <!-- VIGIL listening while active: a microphone foreground service (spec V2) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <!-- Location window after a Journey check (ADR-0048), while the journey's service runs -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Guardian standby with the app closed (GuardianWatchService) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Journey check over the lock screen (spec V4) -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
@@ -63,7 +68,25 @@
         <service
             android:name=".detect.SensingService"
             android:exported="false"
-            android:foregroundServiceType="microphone" />
+            android:foregroundServiceType="microphone|location" />
+
+        <!-- Guardian standby: fetches alerts with the app closed (no push token yet) -->
+        <service
+            android:name=".ui.guardian.GuardianWatchService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Guardian standby: fetches safety alerts about a person who asked this user to be their guardian" />
+        </service>
+
+        <receiver
+            android:name=".ui.guardian.GuardianBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Quick Settings tile: raise an alert from the lock screen -->
         <service
