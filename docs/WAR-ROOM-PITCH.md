@@ -1,6 +1,6 @@
 # VUKA — War Room Pitch
 
-> **Spoken target:** 3 minutes (competition round 1). **Actual: 326 words (~2:20 at 140 wpm).** Six beats, hard caps. Under 3:00.
+> **Spoken target:** 3 minutes (competition round 1). **Actual: 320 words (~2:17 at 140 wpm).** Six beats, hard caps. Under 3:00.
 > **Companion files:** `context.md` · `pitch-deck-outline.md` · `docs/reviews/ANCHOR-ACCESS-MODEL-ADR-PROPOSAL.md`.
 > **Read `docs/MASTER-CONTEXT.md` §2 for the judging criteria** (I 15 · T 15 · U 10 · S 10 · B 15 · Q 5).
 
@@ -10,11 +10,11 @@
 |---|---|---|---:|
 | 1 · Hook | Make them feel the problem | 55 | 51 |
 | 2 · Problem | Why nothing fixes it | 65 | 48 |
-| 3 · Solution | What VUKA is (3-sec test) | 45 | 37 |
+| 3 · Solution | What VUKA is (3-sec test) | 45 | 31 |
 | 4 · How It Works (user view, demo) | What the user experiences | 80 | 79 |
 | 5 · Why It Wins | The single differentiator | 70 | 70 |
 | 6 · The Ask | Who pays + what we want | 45 | 41 |
-| | | **Total** | **326** |
+| | | **Total** | **320** |
 
 ---
 
@@ -30,7 +30,7 @@ Nobody can tell a forced transfer from a willing one. In 2025, South Africans lo
 
 ### Beat 3 — The Solution
 
-VUKA changes that. It notices duress without a button, and records when it happened. This is now proof that a bank, an insurer or a court can check. Now, for the first time, the victim is believed.
+VUKA fixes that. It notices duress without a button, and records exactly when it happened. That record is proof a bank, insurer or court can check. Now the victim is believed.
 
 ### Beat 4 — How It Works for the User (the demo)
 
