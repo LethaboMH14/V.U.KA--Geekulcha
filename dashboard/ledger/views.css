@@ -416,3 +416,14 @@
   color: var(--cds-text-helper);
 }
 .st-status:empty { display: none; }
+
+/* First paint, before app.js has routed: an inline <head> script names the view from the hash
+   (html[data-boot-view]), so only that view shows and a deep link never paints Overview first.
+   app.js removes the attribute once it has set `hidden` on every view. */
+html[data-boot-view] section.view { display: none !important; }
+html[data-boot-view="overview"] section.view[data-view="overview"],
+html[data-boot-view="verify"] section.view[data-view="verify"],
+html[data-boot-view="anchors"] section.view[data-view="anchors"],
+html[data-boot-view="activity"] section.view[data-view="activity"],
+html[data-boot-view="method"] section.view[data-view="method"],
+html[data-boot-view="settings"] section.view[data-view="settings"] { display: grid !important; }

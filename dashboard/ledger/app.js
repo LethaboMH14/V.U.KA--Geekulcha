@@ -52,6 +52,10 @@ export function resolveRoute(hash) {
   if (Object.hasOwn(ROUTE_ALIASES, key)) return ROUTE_ALIASES[key];
   return "overview";
 }
+/** The document title for a view, as dashboard/IA.md writes it ("Verify: VUKA Ledger"). */
+export function pageTitle(view) {
+  return `${VIEWS[resolveRoute(view)]}: VUKA Ledger`;
+}
 
 const HEX64 = /^[0-9a-f]{64}$/;
 const TOPIC_RE = /^\d+\.\d+\.\d+$/;
@@ -1135,7 +1139,9 @@ function showRoute() {
   for (const a of document.querySelectorAll("[data-nav]")) {
     if (a.dataset.nav === view) { a.setAttribute("aria-current", "page"); revealTab(a); } else a.removeAttribute("aria-current");
   }
-  document.title = `${VIEWS[view]} — VUKA Ledger`;
+  document.title = pageTitle(view);
+  // The <head> script's first-paint view (views.css) has done its job; `hidden` rules from here on.
+  delete document.documentElement.dataset.bootView;
   if (view === "activity") drawRate(); // the chart is measured at its visible width
   if (!changed) return;
   window.scrollTo({ top: 0, left: 0, behavior: reducedMotion || first ? "auto" : "smooth" });

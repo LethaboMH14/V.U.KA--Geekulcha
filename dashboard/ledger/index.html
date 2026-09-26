@@ -5,7 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>VUKA Ledger</title>
   <meta name="description" content="Check a VUKA record's fingerprint against the public Hedera testnet topic, in your own browser." />
-  <link rel="preload" href="fonts/IBMPlexSans-Regular.woff2" as="font" type="font/woff2" crossorigin />
+  <script id="boot-route">
+    /* First paint: name the view from the hash before app.js loads, so a deep link (#verify)
+       never shows Overview first (views.css, html[data-boot-view]). Mirrors resolveRoute() in
+       app.js; test/router.test.js checks that they agree. app.js removes the attribute once it routes. */
+    (function () {
+      var views = ["overview", "verify", "anchors", "activity", "method", "settings"];
+      var aliases = { ledger: "overview", how: "method" };
+      var key = String(location.hash || "").replace(/^#/, "").trim().toLowerCase();
+      var view = views.indexOf(key) >= 0 ? key : Object.prototype.hasOwnProperty.call(aliases, key) ? aliases[key] : "overview";
+      document.documentElement.setAttribute("data-boot-view", view);
+    })();
+  </script>
+  <!-- hashscan.css sets the page font to Inter; IBM Plex (carbon.css) is only the fallback. -->
+  <link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="carbon.css" />
   <link rel="stylesheet" href="./ledger.css" />
   <link rel="stylesheet" href="views.css" />

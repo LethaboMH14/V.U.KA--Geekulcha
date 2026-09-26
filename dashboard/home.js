@@ -1,13 +1,12 @@
 // dashboard/home.js: the home page's mobile menu and its live proof strip.
 // The strip reads the public Hedera mirror in this browser (ledger/lib/sources.js)
-// and hashes the pinned key manifest with the same canonical JSON the app uses
-// (shared/canonical.js, shared/keys.js). Network data is written with textContent only.
+// and hashes the pinned key manifest exactly as the app does
+// (shared/keys.js: sha256(canonicalManifestBytes(manifest))). Network data is written with textContent only.
 // Every item shows real data or says plainly why it is unavailable.
 
 const here = (p) => new URL(p, import.meta.url).href;
 const PATHS = {
   sources: here("./ledger/lib/sources.js"),
-  canonical: here("../shared/canonical.js"),
   keys: here("../shared/keys.js"),
   pins: here("../contracts/keys/verify-pins.json"),
   manifest: here("../contracts/keys/manifest.json"),
@@ -17,6 +16,7 @@ const TOPIC_RE = /^\d+\.\d+\.\d+$/;
 const TS_RE = /^\d+\.\d{1,9}$/;
 const HASHSCAN = "https://hashscan.io/testnet";
 const REFRESH_MS = 60_000;
+const SCORE_RUNS = "https://github.com/LethaboMH14/V.U.KA--Geekulcha/actions/workflows/security-score.yml";
 
 const $ = (id) => document.getElementById(id);
 
@@ -154,12 +154,11 @@ async function loadPins() {
   }
   state.pinnedFingerprint = pins.manifest_fingerprint_hex;
   try {
-    const [manifest, { canonicalize }, { sha256, bytesToHex }] = await Promise.all([
+    const [manifest, { sha256, bytesToHex, canonicalManifestBytes }] = await Promise.all([
       getJson(PATHS.manifest, "The key manifest"),
-      import(PATHS.canonical),
       import(PATHS.keys),
     ]);
-    state.manifestFingerprint = bytesToHex(await sha256(canonicalize(manifest)));
+    state.manifestFingerprint = bytesToHex(await sha256(canonicalManifestBytes(manifest)));
   } catch (error) {
     state.manifestError = reason(error);
   }
@@ -257,7 +256,27 @@ async function initProof() {
   setInterval(renderRoot, 15_000);
 }
 
+/* ---------------------------------------------------------------- security scorecard link */
+// ledger-pages.yml carries security.html to the site root only when a security-score run on main
+// has one to download (best effort), and a local checkout has none. When this copy of the site
+// does not have it, link to the CI runs that compute it rather than to a 404.
+async function checkScorecard() {
+  const link = $("score-link");
+  const note = $("score-note");
+  if (!link) return;
+  let present = false;
+  try {
+    present = (await fetch(link.href, { method: "HEAD", cache: "no-store" })).ok;
+  } catch { /* offline or blocked: treat as absent */ }
+  if (present) return;
+  link.href = SCORE_RUNS;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  if (note) note.textContent = "This copy of the site does not carry the scorecard, so the link opens the CI runs on GitHub that compute it.";
+}
+
 initMenu();
+checkScorecard();
 initProof().catch((error) => {
   const when = $("proof-when");
   if (when) when.textContent = `Unavailable: ${reason(error)}`;
