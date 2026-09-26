@@ -11,8 +11,8 @@
 | 1 · Hook | Make them feel the problem | I, B | 97 |
 | 2 · Problem | Why nothing today fixes it | I, B | 93 |
 | 3 · Solution | What VUKA is | I | 32 |
-| 4A · How it works | The mechanism | T, U | 66 |
-| 4B · The record | Where it lives; who can verify | T, S | 77 |
+| 4A · How it works | The mechanism — automatic | T, U | 54 |
+| 4B · The record | Where it lives; automatic fingerprint | T, S | 89 |
 | 5 · Why it works | The sale | I, T | 77 |
 | 6 · Business | There is a business | B | 51 |
 | 7 · Compliance | Neutralise the four objections | S | 40 |
@@ -37,11 +37,11 @@ VUKA notices duress without a button, and proves when it happened — so a bank 
 
 ### Beat 4A — How it works
 
-They start a journey. VIGIL listens — a scream, a shout, breaking glass. No button. No free hand. When it hears something, it quietly asks a Journey check: are you okay? They answer with their normal PIN, or a duress PIN — and the two look identical. Same screen, same timing. Nobody watching can tell. But the phone flags three things: the location, the event, and the duress signal itself.
+Nothing to press. Nothing to enter. They just go about their day. VIGIL listens on the phone — a scream, a shout, breaking glass. When it hears duress, it doesn't wait to be asked. Most products wait for a button. VUKA doesn't. And it flags three things: the location, the event, and the duress signal itself.
 
 ### Beat 4B — The record
 
-That record goes to their phone, and to their guardians' phone — so it survives if their phone is stolen. It is signed, chained, and fingerprinted to a public ledger — anyone can verify it without trusting us. We know exactly what counts as a duress signal: it is defined by law and confirmed with duress experts. Nothing personal goes on the ledger; it is POPIA-compliant. And the record stays private — they hold the key.
+That record is made automatically. It goes to their phone, and to their guardians' phone — so it survives if the phone is stolen. It is hashed into a fingerprint, signed, chained, and written to a public ledger — automatically. The victim does nothing, and the proof exists anyway. That is what sets VUKA apart. Anyone can verify it without trusting us. And we know exactly what counts as a duress signal: it is defined by law and confirmed with duress experts. Nothing personal goes on the ledger; it is POPIA-compliant.
 
 ### Beat 5 — Why it works
 
