@@ -31,6 +31,28 @@ const MAX_EXPORT_BYTES = 5 * 1024 * 1024;
 const LS_SERVER = "vuka-ledger-server";
 const LS_THEME = "vuka-ledger-theme";
 
+// ---------------------------------------------------------------------------
+// routes: one view at a time, named by the URL hash (dashboard/IA.md, "App")
+// ---------------------------------------------------------------------------
+/** Route id → page title. Settings is reached from the gear button, not the menu. */
+export const VIEWS = Object.freeze({
+  overview: "Overview",
+  verify: "Verify",
+  anchors: "Anchors",
+  activity: "Activity",
+  method: "Method",
+  settings: "Settings",
+});
+/** Hashes kept from the one-page layout. VIGIL's share dialog links to …/ledger/#verify. */
+const ROUTE_ALIASES = Object.freeze({ ledger: "overview", how: "method" });
+/** "#verify" → "verify", "#how" → "method", "#ledger" → "overview"; empty or unknown → "overview". */
+export function resolveRoute(hash) {
+  const key = String(hash ?? "").replace(/^#/, "").trim().toLowerCase();
+  if (Object.hasOwn(VIEWS, key)) return key;
+  if (Object.hasOwn(ROUTE_ALIASES, key)) return ROUTE_ALIASES[key];
+  return "overview";
+}
+
 const HEX64 = /^[0-9a-f]{64}$/;
 const TOPIC_RE = /^\d+\.\d+\.\d+$/;
 const TS_RE = /^\d{1,12}\.\d{1,9}$/;
@@ -464,16 +486,23 @@ function markManifestOnLedger(messages, error) {
 // ---------------------------------------------------------------------------
 // the chain of anchored roots (Hedera mirror)
 // ---------------------------------------------------------------------------
-/** One quiet full-width row in the topic-messages table: loading, empty or error. */
-function chainQuietRow(message) {
+/** One quiet full-width row in a topic-messages table: loading, empty or error. */
+function quietRow(tbodyId, message) {
+  const body = $(tbodyId);
+  if (!body) return;
   const tr = el("tr", "is-empty");
   const td = el("td", "empty", message);
   td.colSpan = 5;
   tr.append(td);
-  $("chain").replaceChildren(tr);
+  body.replaceChildren(tr);
 }
-function renderChainError(message) {
-  chainQuietRow(message);
+/** Both lists read the same fetch: Anchors (#chain) and Overview's "Recent anchors" (#chain-recent). */
+function chainQuietRow(message, recentMessage = message) {
+  quietRow("chain", message);
+  quietRow("chain-recent", recentMessage);
+}
+function renderChainError(message, recentMessage = message) {
+  chainQuietRow(message, recentMessage);
   $("chain-note").textContent = "";
 }
 
@@ -489,7 +518,11 @@ async function loadChain() {
   } catch (error) {
     if (s !== state.sources) return;
     setSource("src-mirror", "failed", failLabel(error.message), `${mirrorHost}: ${error.message}`);
-    renderChainError(`Hedera mirror: ${failLabel(error.message)}. Nothing is shown in its place. The raw error is under Details in the status line.`);
+    // Anchors does not repeat Overview's summary notice; it says only what this table is missing.
+    renderChainError(
+      `Hedera mirror: ${failLabel(error.message)}, so the topic could not be read. Nothing is shown in its place. The raw error is under Overview → Details.`,
+      `Hedera mirror: ${failLabel(error.message)}. Nothing is shown in its place.`,
+    );
     markManifestOnLedger([], error);
     return;
   }
@@ -514,7 +547,10 @@ async function loadChain() {
   const note = $("chain-note");
   if (messages.length === 0) {
     note.textContent = "";
-    chainQuietRow(`Topic ${state.topic} has no messages on the mirror yet. Roots appear here once ANCHOR publishes its first batch.`);
+    chainQuietRow(
+      `No record fingerprints anchored on this topic yet. Topic ${state.topic} has no messages on the mirror; roots appear here once ANCHOR publishes its first batch.`,
+      "No record fingerprints anchored on this topic yet.",
+    );
     return;
   }
   const parts = [`${roots.length} root${roots.length === 1 ? "" : "s"} (0x01)`, `${manifests.length} key manifest${manifests.length === 1 ? "" : "s"} (0x02)`];
@@ -523,9 +559,10 @@ async function loadChain() {
     ? `No record fingerprints anchored on this topic yet. The mirror returned ${count} on topic ${state.topic}: ${parts.join(", ")}.`
     : `The mirror returned ${count} on topic ${state.topic}: ${parts.join(", ")}.`;
 
-  const list = $("chain");
-  list.replaceChildren();
-  for (const m of messages.slice(0, 30)) list.append(renderMessageRow(m));
+  // One fetch, two renderings with the same row builder: every message read on Anchors
+  // (at most 100), the newest 5 on Overview.
+  $("chain").replaceChildren(...messages.map(renderMessageRow));
+  $("chain-recent")?.replaceChildren(...messages.slice(0, 5).map(renderMessageRow));
 }
 
 /** Seq · Type · Payload (short, copyable) · Consensus time (UTC) · Links. */
@@ -569,14 +606,14 @@ function openFeed() {
       opened = true;
       setSource("src-feed", "ok", "connected", `${host} · /ws/panel open`);
       setPill($("feed-pill"), "ok", "Live");
-      if (state.feedRows.length === 0) $("feed-empty").textContent = "Connected. No events have arrived yet; each accepted event appears here as it happens.";
+      if (state.feedRows.length === 0) $("feed-empty").textContent = "No live events yet. The feed is connected; each accepted event appears here as it happens.";
     } else {
       const why = opened
         ? "The connection closed."
         : "The WebSocket could not be opened (the browser reports no detail for WebSocket failures).";
       setSource("src-feed", st === "error" ? "failed" : "unavailable", opened ? "closed" : "can't connect", `${host} · /ws/panel: ${why}`);
       setPill($("feed-pill"), "unavailable", opened ? "Closed" : "Unreachable");
-      if (state.feedRows.length === 0) $("feed-empty").textContent = `No live feed. ${why} Use Reconnect to try again.`;
+      if (state.feedRows.length === 0) $("feed-empty").textContent = `No live events: the feed is not connected. ${why} Use Reconnect to try again.`;
     }
   });
 }
@@ -1034,7 +1071,7 @@ function wireVerify() {
 }
 
 // ---------------------------------------------------------------------------
-// nav highlight
+// header paste field
 // ---------------------------------------------------------------------------
 /** Header field: Enter moves to Verify with the pasted record (or fingerprint) in the paste box. Nothing runs by itself. */
 function wireQuick() {
@@ -1054,27 +1091,69 @@ function wireQuick() {
         : "Record copied from the header field. Press Verify to check it.";
     }
     input.value = "";
-    if (location.hash === "#verify") $("verify")?.scrollIntoView();
-    else location.hash = "#verify";
-    box.focus({ preventScroll: true });
+    if (resolveRoute(location.hash) === "verify") {
+      box.focus();
+    } else {
+      router.focusNext = box; // the paste box, not the heading, takes focus once Verify shows
+      location.hash = "#verify";
+    }
   });
 }
 
+// ---------------------------------------------------------------------------
+// hash router: exactly one <section class="view" data-view> shows; the rest are hidden.
+// Live connections (sources, /ws/panel, mirror reads) are opened once in boot(), not per view.
+// ---------------------------------------------------------------------------
+const router = { current: null, focusNext: null };
+
+/** Keep the active menu item in view when the menu is a sideways strip (phones). */
+function revealTab(link) {
+  const nav = link?.closest(".tabs");
+  if (!nav || nav.scrollWidth <= nav.clientWidth) return;
+  const left = link.offsetLeft - nav.offsetLeft;
+  const right = left + link.offsetWidth;
+  if (left < nav.scrollLeft) nav.scrollLeft = left;
+  else if (right > nav.scrollLeft + nav.clientWidth) nav.scrollLeft = right - nav.clientWidth;
+}
+
+function showRoute() {
+  const view = resolveRoute(location.hash);
+  // An alias (#ledger, #how) or an unknown hash is rewritten to the canonical one without a
+  // new history entry, so Back still leaves the page the way it came in.
+  if (location.hash && location.hash !== `#${view}`) {
+    try { history.replaceState(history.state, "", `#${view}`); } catch { /* sandboxed */ }
+  }
+  const first = router.current === null;
+  const changed = router.current !== view;
+  router.current = view;
+  let section = null;
+  for (const s of document.querySelectorAll("section.view[data-view]")) {
+    const on = s.dataset.view === view;
+    s.hidden = !on;
+    if (on) section = s;
+  }
+  for (const a of document.querySelectorAll("[data-nav]")) {
+    if (a.dataset.nav === view) { a.setAttribute("aria-current", "page"); revealTab(a); } else a.removeAttribute("aria-current");
+  }
+  document.title = `${VIEWS[view]} — VUKA Ledger`;
+  if (view === "activity") drawRate(); // the chart is measured at its visible width
+  if (!changed) return;
+  window.scrollTo({ top: 0, left: 0, behavior: reducedMotion || first ? "auto" : "smooth" });
+  // Focus moves to the new view's heading (or a field asked for) on navigation, not on first load.
+  const target = router.focusNext ?? section?.querySelector("h1");
+  router.focusNext = null;
+  if (!first) target?.focus({ preventScroll: true });
+}
+
 function wireNav() {
-  const links = [...document.querySelectorAll("[data-nav]")];
-  const mark = (id) => links.forEach((a) => a.setAttribute("aria-current", String(a.dataset.nav === id)));
-  mark((location.hash || "#ledger").slice(1));
-  // "Method" is the tab label for #how; #method is accepted as an alias
-  const alias = () => { if (location.hash === "#method") { $("how")?.scrollIntoView(); mark("how"); } };
-  alias();
-  window.addEventListener("hashchange", alias);
+  // The skip link targets <main>; handled here so it does not become a route.
+  document.querySelector(".skip")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.querySelector("section.view:not([hidden]) h1")?.focus();
+  });
+  window.addEventListener("hashchange", showRoute);
+  showRoute();
   wireQuick();
-  if (!("IntersectionObserver" in window)) return;
-  const io = new IntersectionObserver((entries) => {
-    const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-    if (visible) mark(visible.target.id);
-  }, { rootMargin: "-120px 0px -55% 0px", threshold: [0, 0.25, 0.5] });
-  for (const id of ["ledger", "verify", "how", "settings"]) { const s = $(id); if (s) io.observe(s); }
 }
 
 // ---------------------------------------------------------------------------
@@ -1139,7 +1218,7 @@ async function boot() {
     notice(`The pinned key files could not be loaded (${error.message}). Records cannot be verified until they load.`);
   }
   if (state.pins?.topic_id && TOPIC_RE.test(state.pins.topic_id)) state.topic = state.pins.topic_id;
-  $("intro-topic").textContent = state.topic;
+  for (const node of document.querySelectorAll("[data-topic-text]")) node.textContent = state.topic;
   const topicLink = $("topic-link");
   topicLink.textContent = state.topic;
   topicLink.href = hashscanTopic(state.topic);
@@ -1171,4 +1250,5 @@ async function boot() {
   setInterval(drawRate, 30000);
 }
 
-boot().catch((error) => notice(`The page could not start: ${error.message}`));
+// Imported by node tests (resolveRoute) without a DOM: boot only in a browser.
+if (typeof document !== "undefined") boot().catch((error) => notice(`The page could not start: ${error.message}`));
