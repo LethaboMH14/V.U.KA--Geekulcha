@@ -1,6 +1,6 @@
 # VUKA — War Room Pitch
 
-> **Spoken target:** 3 minutes (competition round 1). **Actual: 329 words (~2:21 at 140 wpm).** Six beats, hard caps. Under 3:00.
+> **Spoken target:** 3 minutes (competition round 1). **Actual: 313 words (~2:14 at 140 wpm).** Six beats, hard caps. Under 3:00.
 > **Companion files:** `context.md` · `pitch-deck-outline.md` · `docs/reviews/ANCHOR-ACCESS-MODEL-ADR-PROPOSAL.md`.
 > **Read `docs/MASTER-CONTEXT.md` §2 for the judging criteria** (I 15 · T 15 · U 10 · S 10 · B 15 · Q 5).
 
@@ -8,13 +8,13 @@
 
 | Beat | Job | Cap | Words |
 |---|---|---|---:|
-| 1 · Hook | Make them feel the problem | 55 | 54 |
+| 1 · Hook | Make them feel the problem | 55 | 38 |
 | 2 · Problem | Why nothing fixes it | 65 | 48 |
 | 3 · Solution | What VUKA is (3-sec test) | 45 | 37 |
 | 4 · How It Works (user view, demo) | What the user experiences | 80 | 79 |
 | 5 · Why It Wins | The single differentiator | 70 | 70 |
 | 6 · The Ask | Who pays + what we want | 45 | 41 |
-| | | **Total** | **329** |
+| | | **Total** | **313** |
 
 ---
 
@@ -22,7 +22,7 @@
 
 ### Beat 1 — The Hook
 
-Imagine someone you love, forced to hand over their phone. A stranger makes them open their banking app and transfer their money. Their face. Their fingerprint. Then he is gone — no proof they were forced. Just a payment saying they did it. It happens every day: seventeen thousand kidnappings in South Africa last year.
+Imagine someone you love, forced to transfer their money from their banking app. Their face. Their fingerprint. To the bank, it looks voluntary. No proof they were forced. It happens seventeen thousand times a year in South Africa.
 
 ### Beat 2 — The Problem
 
