@@ -100,7 +100,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:lineSpacingExtra="3dp"
-                android:text="No entries yet. Start a journey from Home, and its start and end appear here."
+                android:text="No entries yet. Activate VIGIL from Home, and each activate and deactivate appears here."
                 android:textColor="@color/vuka_text_secondary"
                 android:textSize="14sp" />
 

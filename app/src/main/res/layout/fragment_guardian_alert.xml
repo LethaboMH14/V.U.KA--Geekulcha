@@ -191,7 +191,7 @@
             android:layout_weight="1"
             android:minHeight="16dp" />
 
-        <!-- ── Actions: new → called → handling → stood down ── -->
+        <!-- ── Actions: new → (called 10111) → stood down ── -->
 
         <!-- The prototype colours this line green and says "signed". Nothing is
              signed yet and green is reserved for real verification. -->
@@ -241,10 +241,22 @@
             app:iconSize="18dp"
             app:iconTint="@color/vuka_text_inverse" />
 
+        <TextView
+            android:id="@+id/tvPreviewNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="Preview: this doesn't open the phone's dialer."
+            android:textColor="@color/vuka_text_dim"
+            android:textSize="12sp" />
+
+        <!-- Shown before and after calling: the notification alone may be enough -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStandDown"
             android:layout_width="match_parent"
             android:layout_height="54dp"
+            android:layout_marginTop="10dp"
             android:backgroundTint="@color/vuka_card_solid"
             android:text="Stand down"
             android:textAllCaps="false"
@@ -256,15 +268,6 @@
             app:strokeColor="?attr/vukaBorder"
             app:strokeWidth="1dp" />
 
-        <TextView
-            android:id="@+id/tvPreviewNote"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:gravity="center"
-            android:text="Preview: this doesn't open the phone's dialer."
-            android:textColor="@color/vuka_text_dim"
-            android:textSize="12sp" />
 
         <!-- Locked during an open incident (spec G4); unlocks after stand-down -->
         <com.google.android.material.button.MaterialButton

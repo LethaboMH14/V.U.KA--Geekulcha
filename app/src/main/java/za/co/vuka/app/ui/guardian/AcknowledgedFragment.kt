@@ -32,7 +32,7 @@ class AcknowledgedFragment : Fragment(R.layout.fragment_guardian_acknowledged) {
     private val exampleSteps = listOf(
         Step(R.drawable.ic_arrow_right, R.color.vuka_action, "Alert received"),
         Step(R.drawable.ic_ear, R.color.vuka_text_secondary, "You opened the alert"),
-        Step(R.drawable.ic_check_circle, R.color.vuka_text_secondary, "I called 10111", "self-reported"),
+        Step(R.drawable.ic_check_circle, R.color.vuka_text_secondary, "Called 10111", "recorded when Call was pressed"),
         Step(R.drawable.ic_circle, R.color.vuka_text_secondary, "Waiting on stand-down or closure"),
     )
 

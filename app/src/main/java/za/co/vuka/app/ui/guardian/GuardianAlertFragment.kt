@@ -21,27 +21,32 @@ import com.google.android.material.button.MaterialButton
  * has stood down.
  * "Call 10111" deliberately does not open the dialer from a preview. A real
  * alert should use Intent.ACTION_DIAL with tel:10111, which pre-fills the
- * number and never places the call itself. Responses aren't signed yet, so
- * nothing here claims they are.
+ * number and never places the call itself. Pressing Call records the call
+ * straight away; there is no separate "I called 10111" confirmation.
+ * Stand down is offered from the start too: sometimes the notification is
+ * all that's needed (they answer, or the guardian can see they're fine),
+ * so the guardian can close it without calling 10111.
+ * Responses aren't signed yet, so nothing here claims they are.
  */
 class GuardianAlertFragment : Fragment(R.layout.fragment_guardian_alert) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // One tap: pressing Call is what gets recorded.
         view.findViewById<View>(R.id.btnPrimary).setOnClickListener {
-            when (GuardianAlerts.ack.value) {
-                Ack.NEW -> setAck(Ack.CALLED)
-                Ack.CALLED -> setAck(Ack.HANDLING)
-                else -> Unit
-            }
+            if (GuardianAlerts.ack.value == Ack.NEW) setAck(Ack.HANDLING)
         }
 
         // "Are they safe?" Yes stands down; No leaves everything as it was.
         view.findViewById<View>(R.id.btnStandDown).setOnClickListener {
+            val beforeCalling = GuardianAlerts.ack.value == Ack.NEW
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Are they safe?")
-                .setMessage("Only stand down if you know they're safe.")
+                .setMessage(
+                    if (beforeCalling) "Only stand down if you know they're safe. 10111 won't be called from this alert."
+                    else "Only stand down if you know they're safe."
+                )
                 .setPositiveButton("Yes, stand down") { _, _ -> setAck(Ack.STOOD_DOWN) }
                 .setNegativeButton("No", null)
                 .show()
@@ -73,9 +78,9 @@ class GuardianAlertFragment : Fragment(R.layout.fragment_guardian_alert) {
         val ack = GuardianAlerts.ack.value
 
         view.findViewById<MaterialButton>(R.id.btnPrimary).apply {
-            visibility = if (ack == Ack.NEW || ack == Ack.CALLED) View.VISIBLE else View.GONE
-            text = if (ack == Ack.NEW) "Call 10111" else "I called 10111"
-            setIconResource(if (ack == Ack.NEW) R.drawable.ic_phone else R.drawable.ic_seal_check)
+            visibility = if (ack == Ack.NEW) View.VISIBLE else View.GONE
+            text = "Call 10111"
+            setIconResource(R.drawable.ic_phone)
         }
         view.findViewById<View>(R.id.tvPreviewNote).visibility =
             if (ack == Ack.NEW) View.VISIBLE else View.GONE
@@ -83,15 +88,20 @@ class GuardianAlertFragment : Fragment(R.layout.fragment_guardian_alert) {
         view.findViewById<View>(R.id.statusLine).visibility =
             if (ack == Ack.HANDLING || ack == Ack.STOOD_DOWN) View.VISIBLE else View.GONE
         view.findViewById<TextView>(R.id.tvStatus).text = when (ack) {
-            Ack.HANDLING -> "Response recorded. Not signed: device signing isn't built yet."
-            Ack.STOOD_DOWN -> "Stood down. You confirmed they're safe."
+            Ack.HANDLING -> "Call to 10111 recorded. Not signed: device signing isn't built yet."
+            Ack.STOOD_DOWN -> if (GuardianAlerts.called) {
+                "Stood down. You confirmed they're safe."
+            } else {
+                "Stood down without calling 10111. You confirmed they're safe."
+            }
             else -> null
         }
 
         view.findViewById<View>(R.id.btnStandDown).visibility =
-            if (ack == Ack.HANDLING) View.VISIBLE else View.GONE
+            if (ack == Ack.NEW || ack == Ack.HANDLING) View.VISIBLE else View.GONE
+        // The example timeline includes "Called 10111", so it only fits when they called.
         view.findViewById<View>(R.id.linkTimeline).visibility =
-            if (ack == Ack.HANDLING || ack == Ack.STOOD_DOWN) View.VISIBLE else View.GONE
+            if (GuardianAlerts.called && (ack == Ack.HANDLING || ack == Ack.STOOD_DOWN)) View.VISIBLE else View.GONE
 
         val stoodDown = ack == Ack.STOOD_DOWN
         view.findViewById<MaterialButton>(R.id.btnCallThem).apply {

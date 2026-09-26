@@ -72,9 +72,9 @@ class RecordFragment : Fragment(R.layout.fragment_record) {
             val row = layoutInflater.inflate(R.layout.item_timeline, timeline, false)
             val (icon, tint, label) = when (entry.kind) {
                 RecordEntry.Kind.JOURNEY_STARTED ->
-                    Triple(R.drawable.ic_arrow_right, R.color.vuka_action, "Journey started · simulated")
+                    Triple(R.drawable.ic_arrow_right, R.color.vuka_action, "Activated · simulated")
                 RecordEntry.Kind.JOURNEY_ENDED ->
-                    Triple(R.drawable.ic_circle, R.color.vuka_text_secondary, "Journey ended")
+                    Triple(R.drawable.ic_circle, R.color.vuka_text_secondary, "Deactivated")
                 RecordEntry.Kind.PANIC ->
                     Triple(R.drawable.ic_warning_circle, R.color.vuka_text_title, "Alert raised · not sent")
             }

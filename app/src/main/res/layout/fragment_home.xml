@@ -120,7 +120,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:lineSpacingExtra="3dp"
-                    android:text="VIGIL isn't listening yet. Start a journey and it will listen on this phone until you end it."
+                    android:text="VIGIL isn't listening yet. Activate it and it will listen on this phone until you deactivate it."
                     android:textColor="@color/vuka_text_secondary"
                     android:textSize="15sp" />
 
@@ -131,7 +131,7 @@
                     android:layout_marginTop="20dp"
                     android:background="@drawable/bg_button_primary"
                     app:backgroundTint="@null"
-                    android:text="Start journey"
+                    android:text="Activate"
                     android:textAllCaps="false"
                     android:textColor="@color/vuka_text_inverse"
                     android:textSize="16sp"
@@ -256,7 +256,7 @@
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
                     android:lineSpacingExtra="3dp"
-                    android:text="Discreet, not invisible: Android shows a microphone dot while a journey is active."
+                    android:text="Discreet, not invisible: Android shows a microphone dot while VIGIL is active."
                     android:textColor="@color/vuka_text_dim"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -316,7 +316,7 @@
                     android:layout_marginTop="12dp"
                     android:accessibilityHeading="true"
                     android:letterSpacing="-0.01"
-                    android:text="Journey active"
+                    android:text="Active"
                     android:textColor="@color/vuka_text_title"
                     android:textSize="32sp"
                     android:textStyle="bold" />
@@ -438,7 +438,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
                 android:layout_marginTop="14dp"
-                android:text="End journey"
+                android:text="Deactivate"
                 android:textAllCaps="false"
                 android:textColor="@color/vuka_text_secondary"
                 android:textSize="16sp"

@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
  */
 object GuardianAlerts {
 
-    enum class Ack { NEW, CALLED, HANDLING, STOOD_DOWN }
+    enum class Ack { NEW, HANDLING, STOOD_DOWN }
 
     private val _active = MutableStateFlow(false)
     val active: StateFlow<Boolean> = _active
@@ -35,16 +35,22 @@ object GuardianAlerts {
     private val _ack = MutableStateFlow(Ack.NEW)
     val ack: StateFlow<Ack> = _ack
 
+    /** True once this guardian pressed Call 10111; stand-down can happen without it. */
+    var called = false
+        private set
+
     /** True while an alert is open and this guardian hasn't stood down. The banner shows then. */
     fun needsAttention(active: Boolean, ack: Ack) = active && ack != Ack.STOOD_DOWN
 
     fun simulateIncoming(context: Context) {
         _ack.value = Ack.NEW
+        called = false
         _active.value = true
         postNotification(context)
     }
 
     fun setAck(ack: Ack) {
+        if (ack == Ack.HANDLING) called = true
         _ack.value = ack
     }
 
@@ -52,6 +58,7 @@ object GuardianAlerts {
     fun clear(context: Context) {
         _active.value = false
         _ack.value = Ack.NEW
+        called = false
         NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
     }
 
