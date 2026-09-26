@@ -689,3 +689,11 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 - **The server does not validate `signal_detected` payloads** (the §18 sound fields are the phone's). Tightening that is a separate contract change.
 
 **Verified:** in journey-e2e, a duress PIN at a hold-for-help check-in marks the incident duress on the real server.
+
+**Amendment, 2026-09-26 (Proposed; decided by Lethabo, adopting Mutarisi's `feature/ui` 35e2e9c):** decision 1 changes from a 2 s hold to one tap. The Home button is now "Emergency · call 10111":
+- While VIGIL is active, one tap raises the same `signal_detected` (`sense: "manual"`, payload unchanged) and opens the dialer with 10111. It uses `tel:`, never a direct call, so the member still presses call.
+- Taps within 3 s count once.
+- When VIGIL is not active, the tap only opens the dialer.
+- Decisions 2 to 4 are unchanged, and the Quick Settings tile is unchanged.
+
+**New cost:** a stray tap (a pocket press) can now open a check-in, which escalates to guardians if it goes unanswered. The 2 s hold existed to prevent exactly that. The normal PIN closes it. Ipeleng's review should cover this trade-off.
