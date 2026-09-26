@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-import { exportFromShare, verifyTrace } from "../lib/pipeline.js";
+import { confirmReceipt, exportFromShare, verifyTrace } from "../lib/pipeline.js";
 import { createSources } from "../lib/sources.js";
 import { buildSimSubjectExport } from "../../../shared/test/fixtures.js";
 import { auditPath, bytesToHex, hexToBytes, merkleRoot } from "../../../shared/merkle.js";
@@ -221,3 +221,41 @@ test("pins without the manifest (or without a fingerprint) fail instead of skipp
   assert.equal(noFp.result.state, "failed");
   assert.match(noFp.result.reason, /incomplete/);
 });
+
+// ---- latest-anchor tile: confirmReceipt never reads "On ledger" without the mirror's own record
+{
+  const pins = { topic_id: "0.0.10687280", topic_epoch: 1 };
+  const receipt = { topic_id: "0.0.10687280", topic_epoch: 1, sequence_number: 42, consensus_timestamp: "1790294400.000000001", running_hash: "cnVu" };
+  const msg = { kind: "root", topic_id: "0.0.10687280", sequence_number: 42, consensus_timestamp: "1790294400.000000001", running_hash: "cnVu" };
+
+  test("confirmReceipt: a matching 0x01 root on the pinned topic is ok", () => {
+    assert.equal(confirmReceipt(receipt, pins, msg).state, "ok");
+  });
+
+  test("confirmReceipt: mirror 404 is unavailable, never ok or failed", () => {
+    assert.equal(confirmReceipt(receipt, pins, null).state, "unavailable");
+  });
+
+  test("confirmReceipt: mismatches and wrong kinds fail", () => {
+    for (const bad of [
+      { ...msg, kind: "manifest" },
+      { ...msg, sequence_number: 43 },
+      { ...msg, topic_id: "0.0.1" },
+      { ...msg, consensus_timestamp: "1790294400.000000002" },
+      { ...msg, running_hash: "b3RoZXI=" },
+    ]) assert.equal(confirmReceipt(receipt, pins, bad).state, "failed", JSON.stringify(bad));
+  });
+
+  test("confirmReceipt: missing receipt fields never match missing message fields", () => {
+    const bare = { topic_id: receipt.topic_id, topic_epoch: 1, sequence_number: 42 };
+    const bareMsg = { kind: "root", topic_id: null, sequence_number: 42 };
+    assert.equal(confirmReceipt(bare, pins, bareMsg).state, "failed");
+  });
+
+  test("confirmReceipt: wrong topic or epoch fails; pins without an epoch are unchecked", () => {
+    assert.equal(confirmReceipt({ ...receipt, topic_epoch: 2 }, pins, msg).state, "failed");
+    assert.equal(confirmReceipt({ ...receipt, topic_id: "0.0.1" }, pins, msg).state, "failed");
+    assert.equal(confirmReceipt({ ...receipt, topic_epoch: undefined }, { topic_id: pins.topic_id }, msg).state, "unavailable");
+    assert.equal(confirmReceipt(receipt, null, msg).state, "unavailable");
+  });
+}

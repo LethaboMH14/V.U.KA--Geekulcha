@@ -94,7 +94,7 @@
         <p class="block-sub">Messages on the topic, newest first. <span class="mono">0x01</span> carries a Merkle root; <span class="mono">0x02</span> pins the server's key manifest.</p>
       </div>
       <p class="chain-note" id="chain-note">Reading the topic from the Hedera mirror…</p>
-      <div class="chain-scroll" tabindex="0" aria-labelledby="chain-title">
+      <div class="chain-scroll" tabindex="0" role="region" aria-labelledby="chain-title">
         <ol class="chain" id="chain"></ol>
       </div>
 
@@ -119,7 +119,7 @@
             <span class="feed-count" id="feed-count">0 events</span>
             <button type="button" class="btn btn-quiet" id="feed-reconnect">Reconnect</button>
           </div>
-          <div class="feed-scroll" tabindex="0" aria-labelledby="feed-title">
+          <div class="feed-scroll" tabindex="0" role="region" aria-labelledby="feed-title">
             <table class="feed">
               <thead>
                 <tr><th scope="col">Subject (opaque)</th><th scope="col">Index</th><th scope="col">Event hash</th><th scope="col">Received</th><th scope="col">Kind</th></tr>
@@ -198,7 +198,7 @@
       </div>
 
       <figure class="diagram">
-        <div class="diagram-scroll" tabindex="0" aria-label="System diagram, scrolls sideways on small screens">
+        <div class="diagram-scroll" tabindex="0" role="region" aria-label="System diagram, scrolls sideways on small screens">
           <svg viewBox="0 0 960 470" role="img" aria-labelledby="dg-title dg-desc">
             <title id="dg-title">How a VUKA record reaches the public ledger and a bank's files</title>
             <desc id="dg-desc">The member's phone and the guardians' phones send signed entries to the ANCHOR server, which keeps one hash chain per member in PostgreSQL. The server publishes one Merkle root per window of up to a minute to a Hedera testnet topic as a 33-byte message. The member exports their record and gives it to a bank or insurer, who runs it on this verify page, which matches the recomputed root against the Hedera message. Separately, the server sends a bank signal to the bank through the partner API.</desc>

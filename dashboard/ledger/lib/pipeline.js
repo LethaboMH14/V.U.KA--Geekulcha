@@ -510,3 +510,42 @@ export async function* verifyTrace(exportObj, {
   };
   return out;
 }
+
+/**
+ * The "latest anchor" tile: is the server's receipt backed by the mirror's own
+ * record on the pinned topic? `message` is sources.message(pins.topic_id, seq):
+ * a Msg, or null when the mirror has no message at that sequence (404).
+ * Only a 0x01 root at that exact sequence, on the pinned topic, with the same
+ * non-empty consensus time and running hash, reads as "ok"; anything missing
+ * is "unavailable" and anything contradicting the pins or the mirror "failed".
+ * @returns {{state:'ok'|'unavailable'|'failed', label:string, reason:string}}
+ */
+export function confirmReceipt(receipt, pins, message) {
+  const r = receipt !== null && typeof receipt === "object" ? receipt : {};
+  if (!pins?.topic_id || pins.topic_epoch === undefined) {
+    return { state: "unavailable", label: "Unchecked", reason: "The pins did not load, so the server's receipt was not checked." };
+  }
+  if (r.topic_id !== pins.topic_id || r.topic_epoch !== pins.topic_epoch) {
+    return {
+      state: "failed",
+      label: "Not pinned topic",
+      reason: `The server names topic ${String(r.topic_id ?? "(none)")}, epoch ${String(r.topic_epoch ?? "(none)")}; the pinned topic is ${pins.topic_id}, epoch ${pins.topic_epoch}.`,
+    };
+  }
+  const seq = Number(r.sequence_number);
+  const str = (v) => typeof v === "string" && v.length > 0;
+  if (!Number.isSafeInteger(seq) || seq < 1 || !str(r.consensus_timestamp) || !str(r.running_hash)) {
+    return { state: "failed", label: "Bad receipt", reason: "The server's receipt lacks a valid sequence number, consensus time or running hash." };
+  }
+  if (!message) {
+    return { state: "unavailable", label: "Not on mirror yet", reason: `The mirror has no message #${seq} on the pinned topic yet, so the server's receipt is not confirmed.` };
+  }
+  const ok = message.kind === "root" &&
+    Number(message.sequence_number) === seq &&
+    (message.topic_id === null || message.topic_id === undefined || message.topic_id === pins.topic_id) &&
+    message.consensus_timestamp === r.consensus_timestamp &&
+    message.running_hash === r.running_hash;
+  return ok
+    ? { state: "ok", label: "On ledger", reason: `The mirror holds a 0x01 root at #${seq} with the same consensus time and running hash.` }
+    : { state: "failed", label: "Not on ledger", reason: `The mirror's message #${seq} does not match the server's receipt.` };
+}
