@@ -22,3 +22,13 @@ Needs/blockers: a deployment needs sim_bank running as a second process and `Sim
 Business handoff: Not applicable.
 
 Next: WebSocket streams, then guardian lifecycle.
+
+## 2026-09-25 (later) | Fix | sim_bank naive-timestamp crash (Khutso, #96 review)
+
+**Finding** — Khutso: a signed but timezone-naive `X-Vuka-Ts` parses successfully in `sim_bank/main.py::authenticate`, then `sent - now()` raises `TypeError` (naive minus aware), producing an unhandled 500 instead of a controlled 401.
+
+**Verified**: reproduced by removing the fix and running the new test — confirmed `TypeError`, not a graceful refusal.
+
+**Fix**: reject a parsed timestamp with no UTC offset before the subtraction, same shape as `server/db.py::_clock_skewed`'s own timezone checks.
+
+**Evidence**: `sim_bank/tests/test_sim_bank.py::test_timezone_naive_timestamp_is_refused_not_a_500` (new), 11/11 in `sim_bank/tests`.

@@ -67,6 +67,8 @@ def create_app(public_key: Ed25519PublicKey | None = None, clock=None) -> FastAP
         try:
             key.verify(base64.b64decode(sig, validate=True), canonical(statement))
             sent = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            if sent.utcoffset() is None:
+                raise ValueError("X-Vuka-Ts must include a timezone offset")
         except (InvalidSignature, ValueError, binascii.Error):
             return _error(401, "unauthorized", "server signature is invalid")
         if abs((sent - now()).total_seconds()) > MAX_SKEW_SECONDS:
