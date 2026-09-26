@@ -7,22 +7,60 @@
  * contact detail is kept on this phone only, is never sent to the server and
  * never enters the record; the code step is SIMULATED, exactly as in his
  * build. The member's identity stays the key made on this phone.
+ *
+ * As in his 2026-09-26 build: the Terms and Privacy notice must be accepted
+ * before any option works, the number is optional on the Google and email
+ * routes, and the code can go by text or by email.
  */
 import React, {useEffect, useState} from 'react';
-import {AppState, Linking, PermissionsAndroid, Platform, StyleSheet, Text, TextInput, View} from 'react-native';
+import {AppState, Linking, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Eyebrow, Key, Lamp, Panel, QuietKey, TopAppBar} from './components';
 import {colors, fonts, radii, space, type} from './theme';
 import {canFullScreen, openFullScreenSettings} from '../sensors/detection';
 import {askLocation} from '../sensors/location';
 
-export type Account = {kind: 'google' | 'email' | 'phone'; contact: string; verified: false};
+/**
+ * Sign-up details, kept on this phone only. `contact` is the route's own
+ * detail: the email on Google and email, the +27 number on the phone route.
+ * `phone` is the optional number on Google and email; `email` is an address
+ * added at the code step on the phone route.
+ */
+export type Account = {kind: 'google' | 'email' | 'phone'; contact: string; phone?: string; email?: string; verified: false};
+export type Channel = 'sms' | 'email';
 
 export const TOTAL_STEPS = 8;
 export const StepMark = ({n}: {n: number}) => <Text style={styles.stepMark}>{`STEP ${n} OF ${TOTAL_STEPS}`}</Text>;
 const Simulated = ({children}: {children: string}) => <Text style={styles.simTag}>{children}</Text>;
 
-/** Step 2: how to sign up. */
-export function AccountStep({onChoose, onBack}: {onChoose: (k: Account['kind']) => void; onBack: () => void}) {
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+/** South African mobile numbers: 9 digits after +27, not starting with 0. */
+const SA_MOBILE = /^[1-9][0-9]{8}$/;
+const BAD_EMAIL = 'Enter a valid email address.';
+const BAD_MOBILE = 'Enter a valid South African mobile number — 9 digits, not starting with 0.';
+
+/**
+ * No terms exist yet, and the privacy notice (docs/PRIVACY-POLICY.md) is a
+ * PROPOSED draft not shipped in the app. Say so plainly; don't invent either.
+ */
+const DOCS = {
+  terms: ['Terms', 'Draft terms — not yet written; team and legal review pending.'],
+  privacy: ['Privacy notice', 'Draft privacy notice — proposed, not yet in the app; team and legal review pending.'],
+} as const;
+
+/** Step 2: how to sign up. Nothing works until the Terms and Privacy notice are accepted. */
+export function AccountStep({
+  agreed,
+  onAgree,
+  onChoose,
+  onBack,
+}: {
+  agreed: boolean;
+  onAgree: (agreed: boolean) => void;
+  onChoose: (k: Account['kind']) => void;
+  onBack: () => void;
+}) {
+  const [doc, setDoc] = useState<keyof typeof DOCS | null>(null);
+  const label = 'I agree to the Terms and the Privacy notice';
   return (
     <View style={styles.screen}>
       <TopAppBar title="" onBack={onBack} />
@@ -31,22 +69,69 @@ export function AccountStep({onChoose, onBack}: {onChoose: (k: Account['kind']) 
         Create your account
       </Text>
       <Text style={type.body}>Choose how you'd like to sign up. With Google or email, your mobile number is optional.</Text>
-      <View style={{gap: 10, marginTop: space.sm}}>
-        <Key label="Continue with Google" variant="plain" arrow onPress={() => onChoose('google')} />
-        <Key label="Sign up with email" variant="plain" arrow onPress={() => onChoose('email')} />
-        <Key label="Use your phone number" variant="signal" arrow onPress={() => onChoose('phone')} />
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{checked: agreed}}
+        accessibilityLabel={label}
+        onPress={() => onAgree(!agreed)}
+        hitSlop={4}
+        style={styles.consentRow}>
+        <View style={[styles.box, agreed && styles.boxOn]}>{agreed ? <Text style={styles.tick}>✓</Text> : null}</View>
+        <Text style={[type.body, {flex: 1, color: colors.textTitle}]}>{label}</Text>
+      </Pressable>
+      <View style={styles.docLinks}>
+        <QuietKey label="Terms" onPress={() => setDoc(doc === 'terms' ? null : 'terms')} />
+        <QuietKey label="Privacy notice" onPress={() => setDoc(doc === 'privacy' ? null : 'privacy')} />
       </View>
+      {doc ? (
+        <Panel>
+          <Eyebrow>{DOCS[doc][0]}</Eyebrow>
+          <Text style={[type.body, {marginTop: space.sm}]}>{DOCS[doc][1]}</Text>
+          <View style={{marginTop: space.sm}}>
+            <QuietKey label="Close" onPress={() => setDoc(null)} />
+          </View>
+        </Panel>
+      ) : null}
+      <View style={{gap: 10, marginTop: space.sm}}>
+        <Key label="Continue with Google" variant="plain" arrow disabled={!agreed} onPress={() => onChoose('google')} />
+        <Key label="Sign up with email" variant="plain" arrow disabled={!agreed} onPress={() => onChoose('email')} />
+        <Key label="Use your phone number" variant="signal" arrow disabled={!agreed} onPress={() => onChoose('phone')} />
+      </View>
+      {!agreed ? <Text style={type.caption}>Tick the box above to choose.</Text> : null}
       <Text style={type.caption}>VIGIL never asks for your Google password. Whichever you choose, your identity in VIGIL is a key made on this phone.</Text>
       <Simulated>GOOGLE AND EMAIL SIGN-IN GO LIVE WITH FIREBASE · FOR NOW KEPT ON THIS PHONE ONLY</Simulated>
     </View>
   );
 }
 
-/** Step 3 (phone): a South African mobile number, as Mutarisi validates it. */
-export function PhoneStep({onNext, onSkip, onBack}: {onNext: (msisdn: string) => void; onSkip: () => void; onBack: () => void}) {
-  const [digits, setDigits] = useState('');
+/**
+ * Step 3: a South African mobile number, as Mutarisi validates it. Required on
+ * the phone route; optional after Google or email (`optional` names the
+ * route), where Skip leaves it out and the code goes by email instead.
+ */
+export function PhoneStep({
+  optional,
+  signedUpAs,
+  initial = '',
+  onNext,
+  onSkip,
+  onBack,
+}: {
+  optional?: 'google' | 'email';
+  signedUpAs?: string;
+  initial?: string;
+  onNext: (msisdn: string) => void;
+  onSkip: () => void;
+  onBack: () => void;
+}) {
+  const [digits, setDigits] = useState(initial.replace(/^\+27/, ''));
   const [tried, setTried] = useState(false);
-  const valid = /^[1-9][0-9]{8}$/.test(digits);
+  const valid = SA_MOBILE.test(digits);
+  const intro = !optional
+    ? "We'll text a code to check it's really you."
+    : optional === 'email'
+      ? "Optional. Add your mobile number and we'll text the code there, or skip and we'll email it."
+      : "Optional. Add your mobile number and we'll text a code to check it, or skip for now.";
   return (
     <View style={styles.screen}>
       <TopAppBar title="" onBack={onBack} />
@@ -54,7 +139,10 @@ export function PhoneStep({onNext, onSkip, onBack}: {onNext: (msisdn: string) =>
       <Text style={type.display} accessibilityRole="header">
         Phone number
       </Text>
-      <Text style={type.body}>We'll text a code to check it's really you.</Text>
+      <Text style={type.body}>{intro}</Text>
+      {optional && signedUpAs ? (
+        <Text style={type.caption}>{optional === 'google' ? `Google · ${signedUpAs} · simulated` : `Email · ${signedUpAs}`}</Text>
+      ) : null}
       <Text style={type.label}>Mobile number</Text>
       <View style={styles.phoneRow}>
         <Text style={styles.prefix}>+27</Text>
@@ -69,23 +157,19 @@ export function PhoneStep({onNext, onSkip, onBack}: {onNext: (msisdn: string) =>
           accessibilityLabel="Mobile number"
         />
       </View>
-      <Text style={type.caption}>
-        {tried && !valid
-          ? 'Enter a valid South African mobile number — 9 digits, not starting with 0.'
-          : 'Kept on this phone only. Nothing is sent until live sign-in.'}
-      </Text>
+      <Text style={type.caption}>{tried && !valid ? BAD_MOBILE : 'Kept on this phone only. Nothing is sent until live sign-in.'}</Text>
       <View style={{flexGrow: 1}} />
       <Key label="Send code" variant={valid ? 'signal' : 'plain'} onPress={() => (valid ? onNext(`+27${digits}`) : setTried(true))} />
-      <QuietKey label="Skip for now" onPress={onSkip} />
+      {optional ? <QuietKey label="Skip for now" onPress={onSkip} /> : null}
     </View>
   );
 }
 
 /** Step 3 (Google or email): the address, kept on this phone. */
-export function EmailStep({google, onNext, onBack}: {google: boolean; onNext: (email: string) => void; onBack: () => void}) {
-  const [email, setEmail] = useState('');
+export function EmailStep({google, initial = '', onNext, onBack}: {google: boolean; initial?: string; onNext: (email: string) => void; onBack: () => void}) {
+  const [email, setEmail] = useState(initial);
   const [tried, setTried] = useState(false);
-  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+  const valid = EMAIL.test(email.trim());
   return (
     <View style={styles.screen}>
       <TopAppBar title="" onBack={onBack} />
@@ -105,7 +189,7 @@ export function EmailStep({google, onNext, onBack}: {google: boolean; onNext: (e
         style={styles.field}
         accessibilityLabel="Email address"
       />
-      <Text style={type.caption}>{tried && !valid ? 'Enter a valid email address.' : 'Kept on this phone. Nothing is sent until live sign-in.'}</Text>
+      <Text style={type.caption}>{tried && !valid ? BAD_EMAIL : 'Kept on this phone. Nothing is sent until live sign-in.'}</Text>
       <Simulated>{google ? 'SIMULATED · GOOGLE SIGN-IN GOES LIVE WITH FIREBASE' : 'SIMULATED · NO EMAIL IS SENT YET'}</Simulated>
       <View style={{flexGrow: 1}} />
       <Key label="Continue" variant={valid ? 'signal' : 'plain'} onPress={() => (valid ? onNext(email.trim()) : setTried(true))} />
@@ -113,10 +197,59 @@ export function EmailStep({google, onNext, onBack}: {google: boolean; onNext: (e
   );
 }
 
-/** Step 4: verify the code (SIMULATED, as in Mutarisi's build). */
-export function CodeStep({via, onNext, onBack}: {via: 'sms' | 'email'; onNext: () => void; onBack: () => void}) {
+/**
+ * Step 4: verify the code (SIMULATED, as in Mutarisi's build). With `choose`,
+ * the member picks text or email; a skipped number starts on email. Picking a
+ * channel with nothing on file asks for it here (validated), hands it to
+ * `onAdd`, and "sends" there. Nothing is sent.
+ */
+export function CodeStep({
+  phone,
+  email,
+  choose,
+  onAdd,
+  onNext,
+  onBack,
+}: {
+  phone?: string;
+  email?: string;
+  choose: boolean;
+  onAdd: (channel: Channel, value: string) => void;
+  onNext: () => void;
+  onBack: () => void;
+}) {
   const [code, setCode] = useState('');
+  const [via, setVia] = useState<Channel>(phone ? 'sms' : 'email');
+  const [asking, setAsking] = useState<Channel | null>(null);
+  const [entry, setEntry] = useState('');
+  const [tried, setTried] = useState(false);
   const valid = /^\d{6}$/.test(code);
+  const entryValid = asking === 'email' ? EMAIL.test(entry.trim()) : SA_MOBILE.test(entry);
+
+  const pick = (c: Channel) => {
+    if (c === via && !asking) return;
+    setEntry('');
+    setTried(false);
+    if (!(c === 'sms' ? phone : email)) {
+      setAsking(c);
+      return;
+    }
+    setAsking(null);
+    setVia(c);
+    setCode(''); // a new code "goes" to the newly chosen place
+  };
+  const send = () => {
+    if (!asking) return;
+    if (!entryValid) {
+      setTried(true);
+      return;
+    }
+    onAdd(asking, asking === 'email' ? entry.trim() : `+27${entry}`);
+    setVia(asking);
+    setAsking(null);
+    setCode('');
+  };
+
   return (
     <View style={styles.screen}>
       <TopAppBar title="" onBack={onBack} />
@@ -124,22 +257,78 @@ export function CodeStep({via, onNext, onBack}: {via: 'sms' | 'email'; onNext: (
       <Text style={type.display} accessibilityRole="header">
         Verify code
       </Text>
-      <Text style={type.body}>{via === 'sms' ? 'Enter the 6-digit code we sent by SMS.' : 'Enter the 6-digit code we sent by email.'}</Text>
-      <Simulated>SIMULATED · NO CODE IS SENT · ANY 6 DIGITS CONTINUE</Simulated>
-      <TextInput
-        value={code}
-        onChangeText={t => setCode(t.replace(/\D/g, '').slice(0, 6))}
-        keyboardType="number-pad"
-        autoComplete="sms-otp"
-        textContentType="oneTimeCode"
-        placeholder="••••••"
-        placeholderTextColor={colors.textDim}
-        style={[styles.field, styles.code]}
-        accessibilityLabel="Six-digit code"
-      />
-      <View style={{flexGrow: 1}} />
-      <Key label="Continue" variant={valid ? 'signal' : 'plain'} onPress={() => valid && onNext()} />
-      <QuietKey label="Resend code" onPress={() => setCode('')} />
+      {choose ? (
+        <View style={styles.channels} accessibilityRole="radiogroup">
+          {(['sms', 'email'] as const).map(c => {
+            const on = (asking ?? via) === c;
+            return (
+              <Pressable
+                key={c}
+                accessibilityRole="radio"
+                accessibilityState={{selected: on}}
+                onPress={() => pick(c)}
+                style={[styles.channel, on && styles.channelOn]}>
+                <Text style={[type.label, {color: on ? colors.textTitle : colors.textSecondary}]}>{c === 'sms' ? 'Text message' : 'Email'}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+      {asking ? (
+        <Panel>
+          <Text style={type.label}>{asking === 'email' ? 'Add your email' : 'Add your mobile number'}</Text>
+          <Text style={[type.body, {marginTop: space.xs}]}>
+            {asking === 'email' ? "We'll send the code to this address." : "We'll text the code to this number: +27, then 9 digits not starting with 0."}
+          </Text>
+          <View style={[styles.phoneRow, {marginTop: space.sm}]}>
+            {asking === 'sms' ? <Text style={styles.prefix}>+27</Text> : null}
+            <TextInput
+              value={entry}
+              onChangeText={t => setEntry(asking === 'sms' ? t.replace(/\D/g, '').slice(0, 9) : t)}
+              placeholder={asking === 'email' ? 'you@example.com' : '82 555 0101'}
+              placeholderTextColor={colors.textDim}
+              keyboardType={asking === 'email' ? 'email-address' : 'phone-pad'}
+              autoCapitalize="none"
+              autoComplete={asking === 'email' ? 'email' : 'tel'}
+              autoFocus
+              style={[styles.field, {flex: 1}]}
+              accessibilityLabel={asking === 'email' ? 'Email address' : 'Mobile number'}
+            />
+          </View>
+          <Text style={[type.caption, {marginTop: space.xs}]} accessibilityLiveRegion="polite">
+            {tried && !entryValid ? (asking === 'email' ? BAD_EMAIL : BAD_MOBILE) : 'Kept on this phone only.'}
+          </Text>
+          <View style={{gap: 10, marginTop: space.sm}}>
+            <Key label="Send code" variant={entryValid ? 'signal' : 'plain'} onPress={send} />
+            <QuietKey
+              label="Cancel"
+              onPress={() => {
+                setAsking(null);
+                setTried(false);
+              }}
+            />
+          </View>
+        </Panel>
+      ) : (
+        <>
+          <Text style={type.body}>{via === 'sms' ? `Enter the 6-digit code we sent by text to ${phone ?? 'your phone'}.` : `Enter the 6-digit code we sent to ${email ?? 'your email'}.`}</Text>
+          <Simulated>SIMULATED · NO CODE IS SENT · ANY 6 DIGITS CONTINUE</Simulated>
+          <TextInput
+            value={code}
+            onChangeText={t => setCode(t.replace(/\D/g, '').slice(0, 6))}
+            keyboardType="number-pad"
+            autoComplete="sms-otp"
+            textContentType="oneTimeCode"
+            placeholder="••••••"
+            placeholderTextColor={colors.textDim}
+            style={[styles.field, styles.code]}
+            accessibilityLabel="Six-digit code"
+          />
+          <View style={{flexGrow: 1}} />
+          <Key label="Continue" variant={valid ? 'signal' : 'plain'} onPress={() => valid && onNext()} />
+          <QuietKey label="Resend code" onPress={() => setCode('')} />
+        </>
+      )}
     </View>
   );
 }
@@ -271,4 +460,12 @@ const styles = StyleSheet.create({
   },
   code: {fontFamily: fonts.mono, fontSize: 24, letterSpacing: 8, textAlign: 'center'},
   permRow: {flexDirection: 'row', alignItems: 'center', gap: space.md},
+  consentRow: {flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 48},
+  box: {width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: colors.controlEdge, alignItems: 'center', justifyContent: 'center'},
+  boxOn: {backgroundColor: colors.action, borderColor: colors.action},
+  tick: {fontFamily: fonts.bold, fontSize: 15, lineHeight: 18, color: colors.textInverse},
+  docLinks: {flexDirection: 'row', gap: space.lg, marginTop: -space.sm},
+  channels: {flexDirection: 'row', gap: space.sm},
+  channel: {flex: 1, minHeight: 48, borderRadius: radii.key, borderWidth: 1, borderColor: colors.borderEmphasis, alignItems: 'center', justifyContent: 'center'},
+  channelOn: {borderColor: colors.action, borderWidth: 2, backgroundColor: colors.keyFace},
 });

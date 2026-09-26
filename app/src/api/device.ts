@@ -84,7 +84,7 @@ export type Profile = {
    * Sign-up details (Mutarisi's flow). Not live yet: kept on this phone only,
    * never sent to the server and never in the record. Identity is the key.
    */
-  account?: {kind: 'google' | 'email' | 'phone'; contact: string; verified: false};
+  account?: {kind: 'google' | 'email' | 'phone'; contact: string; phone?: string; email?: string; verified: false};
   surname?: string;
   /**
    * Contact details as last edited in Settings (Mutarisi's Edit profile). Once
@@ -123,7 +123,8 @@ export function profileContacts(p: Profile | null | undefined): {phone?: string;
   if (p.contacts) return {...p.contacts};
   const a = p.account;
   if (!a?.contact) return {};
-  return a.kind === 'phone' ? {phone: a.contact} : {email: a.contact};
+  // Sign-up may add the other channel: a number on the Google/email routes, an email on the phone route.
+  return a.kind === 'phone' ? {phone: a.contact, email: a.email} : {email: a.contact, phone: a.phone};
 }
 
 const PIN_BASELINE = 20;

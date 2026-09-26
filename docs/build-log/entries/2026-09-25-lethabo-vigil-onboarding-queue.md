@@ -367,3 +367,39 @@ Not done (blocked):
 - **No APK was built here.** This cloud session has no Android SDK (`dl.google.com` is denied by the environment's network policy), and only the team key can produce an update installable over 0.0.13.
 - **Azure's `/healthz` wasn't checked.** The host is denied by the same policy.
 - **Not run on a device:** the sign-up flow on the emulator or a phone.
+
+### Addendum, 26 Sep afternoon: Mutarisi's newest `feature/ui` commits ported (35e2e9c, 7ae1dd0, f14196f). Claude Code assistant, three parallel sub-agents, each reviewed before commit
+
+**Research:**
+- Read his build-log entries on `feature/ui` (`2026-09-26-assistant-*`) and the Kotlin fragments they name.
+- Searched every branch for Codex work on the QR or download link. There is none. Codex's last pushed commits are from 24 Sep (server, docs). The release QR codes came from `b3f3d23`.
+
+**Real data / references:** not applicable (UI flow and copy; no figures).
+
+**Business reasoning:** one coherent app for the demo instead of two diverging ones. The member and the guardian see the design the team agreed.
+
+Ported:
+- **Guardian alert** (`3b6de6d`):
+  - Call 10111 is recorded once per alert; a second press only reopens the dialer.
+  - Stand down is confirmed ("Are they safe?"), and before calling it adds "10111 won't be called from this alert".
+  - The status line never claims a call happened.
+  - A failed write shows a neutral retry.
+  - Calling the member stays locked until stand-down (G4).
+  - Signed answers and payloads are unchanged.
+- **Settings profile** (`3696dbd`):
+  - An initials circle and Edit profile for name, surname, number and email, kept on this phone.
+  - **Differs from his build: no PIN gate.** The only contract action a `pin_authorised` could carry is `export`, which would put a false export in the member's record. His notes list the gate as an assistant choice awaiting a human.
+- **Sign-up** (this commit):
+  - A terms-and-privacy checkbox gates the three routes. Both documents show as plainly labelled drafts; no terms exist in the repo.
+  - The phone number is optional on the Google and email routes.
+  - The code step offers text message or email, and asks inline for a missing contact (SIMULATED).
+  - Every Back target shares one map with Android Back.
+
+Not ported, needs a team decision:
+- the one-tap Emergency button replacing hold-for-help (his own notes flag the stray-tap risk);
+- Activate/Deactivate, which conflicts with always-on listening (ADR-0046);
+- returning-member sign-in, forgot password and the recovery contact (no accounts server; identity is the phone's key);
+- the session-grouped on-phone record (My record shows only the server's held export, T30);
+- a `TERMS_ACCEPTED` record entry.
+
+Evidence: `npx tsc --noEmit` is clean; `npx jest` gives 220/220. The sign-up transitions were walked with a throwaway renderer test (3 routes, forward and back). Not run on a device or emulator.

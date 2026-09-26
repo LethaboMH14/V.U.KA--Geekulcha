@@ -38,7 +38,10 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [account, setAccount] = useState<Account | null>(null);
-  const [google, setGoogle] = useState(false);
+  /** How they chose to sign up; kept apart from `account` so the phone step knows the route before a detail is typed. */
+  const [route, setRoute] = useState<Account['kind'] | null>(null);
+  /** Terms and Privacy notice ticked on "Create your account": held here so Back doesn't lose it. */
+  const [agreed, setAgreed] = useState(false);
   const [pin, setPin] = useState('');
   const [duress, setDuress] = useState('');
   const [note, setNote] = useState('');
@@ -48,10 +51,12 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
     ({
       welcome: null,
       account: 'welcome',
-      phone: 'account',
       email: 'account',
-      code: account?.kind === 'phone' ? 'phone' : 'email',
-      name: account ? (account.kind === 'google' ? 'email' : 'code') : 'account',
+      // Phone route: account → phone → code. Google and email: account → email → phone (optional) → code.
+      phone: route === 'phone' ? 'account' : 'email',
+      code: 'phone',
+      // Google with the number skipped goes straight from phone to name (no email code on Google).
+      name: !account ? 'account' : account.kind === 'google' && !account.phone ? 'phone' : 'code',
       permissions: 'name',
       pin: 'permissions',
       pinAgain: 'pin',
@@ -148,43 +153,63 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
           <Welcome onNext={() => setStep('account')} onGuardian={onGuardian} />
         ) : step === 'account' ? (
           <AccountStep
-            onBack={() => setStep('welcome')}
+            agreed={agreed}
+            onAgree={setAgreed}
+            onBack={back}
             onChoose={k => {
+              // A new route starts clean: no email or number from an earlier choice.
               setAccount(null);
-              setGoogle(k === 'google');
+              setRoute(k);
               setStep(k === 'phone' ? 'phone' : 'email');
             }}
           />
         ) : step === 'phone' ? (
           <PhoneStep
-            onBack={() => setStep('account')}
+            optional={route === 'google' || route === 'email' ? route : undefined}
+            signedUpAs={route !== 'phone' ? account?.contact : undefined}
+            initial={(route === 'phone' ? account?.contact : account?.phone) ?? ''}
+            onBack={back}
             onSkip={() => {
-              setAccount(null);
-              setStep('name');
+              // Drop any number given earlier; Google then goes on to name, email to a code by email.
+              setAccount(a => (a ? {kind: a.kind, contact: a.contact, verified: false} : a));
+              setStep(route === 'google' ? 'name' : 'code');
             }}
             onNext={msisdn => {
-              setAccount({kind: 'phone', contact: msisdn, verified: false});
+              setAccount(a =>
+                route === 'phone' || !a ? {kind: 'phone', contact: msisdn, verified: false} : {kind: a.kind, contact: a.contact, phone: msisdn, verified: false},
+              );
               setStep('code');
             }}
           />
         ) : step === 'email' ? (
           <EmailStep
-            google={google}
-            onBack={() => setStep('account')}
+            google={route === 'google'}
+            initial={account && account.kind !== 'phone' ? account.contact : ''}
+            onBack={back}
             onNext={email => {
-              setAccount({kind: google ? 'google' : 'email', contact: email, verified: false});
-              setStep(google ? 'name' : 'code');
+              const kind = route === 'google' ? 'google' : 'email';
+              // Same route again: keep a number already given (the phone step shows it and can skip it).
+              setAccount(a => ({kind, contact: email, phone: a?.kind === kind ? a.phone : undefined, verified: false}));
+              setStep('phone');
             }}
           />
         ) : step === 'code' ? (
-          <CodeStep via={account?.kind === 'phone' ? 'sms' : 'email'} onBack={() => setStep(account?.kind === 'phone' ? 'phone' : 'email')} onNext={() => setStep('name')} />
+          <CodeStep
+            phone={account?.kind === 'phone' ? account.contact : account?.phone}
+            email={account?.kind === 'phone' ? account.email : account?.contact}
+            // Google verifies only the number here, as in Mutarisi's build: no email code.
+            choose={route !== 'google'}
+            onAdd={(channel, value) => setAccount(a => (a ? (channel === 'sms' ? {...a, phone: value} : {...a, email: value}) : a))}
+            onBack={back}
+            onNext={() => setStep('name')}
+          />
         ) : step === 'name' ? (
           <NameStep
             name={name}
             setName={setName}
             surname={surname}
             setSurname={setSurname}
-            onBack={() => setStep(account ? (account.kind === 'google' ? 'email' : 'code') : 'account')}
+            onBack={back}
             onNext={() => setStep('permissions')}
           />
         ) : step === 'permissions' ? (
