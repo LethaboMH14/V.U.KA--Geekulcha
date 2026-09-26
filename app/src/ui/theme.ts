@@ -53,32 +53,130 @@ const ivory = {
   rippleOnAction: 'rgba(255,255,255,0.18)',
 } as const;
 
+/** Glass washes and edges on a light field (Ivory, Silver). */
+const lightGlass = {
+  dark: false,
+  wash: 'rgba(255,255,255,0.5)',
+  washHero: 'rgba(255,255,255,0.62)',
+  edgeLight: 'rgba(255,255,255,0.9)',
+  sheen: '#FFFFFF',
+  pillFill: '#FBFAF7',
+  fieldFill: 'rgba(255,255,255,0.9)',
+  blurType: 'light' as 'light' | 'dark',
+};
+
+type Palette = {[K in keyof typeof ivory]: string} & {[K in keyof typeof lightGlass]: (typeof lightGlass)[K]};
+
+/** Silver (prototype): cool blue-grey field, graphite action. */
+const silver: Palette = {
+  ...ivory,
+  ...lightGlass,
+  bgBase: '#EEF0F3',
+  bgElevated: '#E6E9EE',
+  orb1: '#DDE3EA',
+  orb2: '#E2E6EE',
+  orb3: '#E8E4EA',
+  action: '#2B2F36',
+  actionTop: '#3A3F48',
+  actionBottom: '#22252B',
+  actionDim: 'rgba(43,47,54,0.10)',
+  actionLine: 'rgba(43,47,54,0.40)',
+  border: '#E3E6EC',
+  borderSubtle: '#EBEDF1',
+  borderEmphasis: '#D7DBE2',
+};
+
+/** Midnight (prototype night mode): deep navy field, light text, softer blue action. */
+const midnight: Palette = {
+  ...ivory,
+  ...lightGlass,
+  dark: true,
+  wash: 'rgba(30,38,56,0.55)',
+  washHero: 'rgba(26,33,48,0.70)',
+  edgeLight: 'rgba(255,255,255,0.14)',
+  sheen: '#FFFFFF',
+  pillFill: '#1C2432',
+  fieldFill: 'rgba(20,27,40,0.9)',
+  blurType: 'dark',
+  bgBase: '#0E1420',
+  bgSurface: '#141B28',
+  bgElevated: '#1C2432',
+  orb1: '#2F3F6E',
+  orb2: '#24476B',
+  orb3: '#3A3560',
+  card: 'rgba(30,38,56,0.74)',
+  cardEdge: 'rgba(255,255,255,0.14)',
+  textTitle: '#F5F6F8',
+  textLabel: '#D7DBE2',
+  textSecondary: '#A8AFBA',
+  textDim: '#9AA1AD',
+  textMono: '#C5CCD6',
+  textInverse: '#FFFFFF',
+  action: '#4166A0',
+  actionTop: '#4F77B5',
+  actionBottom: '#34588F',
+  actionDim: 'rgba(65,102,160,0.16)',
+  actionLine: 'rgba(157,184,232,0.5)',
+  greenFill: '#0D5C3A',
+  greenText: '#86EFAC',
+  greenBorder: '#22C55E',
+  border: 'rgba(255,255,255,0.10)',
+  borderSubtle: 'rgba(255,255,255,0.05)',
+  borderEmphasis: 'rgba(255,255,255,0.16)',
+  inputBorder: '#7D8595',
+  controlEdge: '#7D8595',
+  shadow: '#000000',
+  ripple: 'rgba(255,255,255,0.08)',
+};
+
+export type ThemeName = 'ivory' | 'silver' | 'midnight';
+export const THEMES: ThemeName[] = ['ivory', 'silver', 'midnight'];
+
 /**
- * Older names from the previous theme, mapped onto Ivory so every screen keeps
- * compiling while it is ported. New code uses the names above.
+ * The theme is read once at start-up (styles are built from these tokens
+ * when the app loads), from a value the native side keeps; a change applies
+ * the next time VIGIL opens.
+ */
+function chosenTheme(): ThemeName {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const {NativeModules} = require('react-native');
+    const m = NativeModules?.VigilLocation;
+    const t = (typeof m?.getConstants === 'function' ? m.getConstants()?.theme : undefined) ?? m?.theme;
+    return THEMES.includes(t) ? t : 'ivory';
+  } catch {
+    return 'ivory';
+  }
+}
+export const THEME: ThemeName = chosenTheme();
+const base: Palette = THEME === 'silver' ? silver : THEME === 'midnight' ? midnight : {...ivory, ...lightGlass};
+
+/**
+ * Older names from the previous theme, mapped onto the tokens so every screen
+ * keeps compiling while it is ported. New code uses the names above.
  */
 export const colors = {
-  ...ivory,
-  bgRaised: ivory.bgElevated,
-  keyFace: ivory.bgElevated,
-  keyFaceTop: ivory.bgSurface,
-  keyFacePressed: ivory.borderSubtle,
-  topLight: 'rgba(255,255,255,0.6)',
-  keyHighlight: 'rgba(255,255,255,0.8)',
-  hairline: ivory.border,
-  shade: ivory.borderEmphasis,
-  textBody: ivory.textSecondary,
-  unlit: ivory.borderEmphasis,
-  cobalt: ivory.action,
-  cobaltTop: ivory.actionTop,
-  cobaltBottom: ivory.actionBottom,
-  cobaltText: ivory.textInverse,
-  cobaltInk: ivory.action,
-  green: ivory.greenText,
-  greenInk: ivory.greenText,
-  greenWash: ivory.greenFill,
-  bone: ivory.textLabel,
-  guardianBase: '#F7F1E6',
+  ...base,
+  bgRaised: base.bgElevated,
+  keyFace: base.bgElevated,
+  keyFaceTop: base.bgSurface,
+  keyFacePressed: base.borderSubtle,
+  topLight: base.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.6)',
+  keyHighlight: base.dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.8)',
+  hairline: base.border,
+  shade: base.borderEmphasis,
+  textBody: base.textSecondary,
+  unlit: base.borderEmphasis,
+  cobalt: base.action,
+  cobaltTop: base.actionTop,
+  cobaltBottom: base.actionBottom,
+  cobaltText: base.textInverse,
+  cobaltInk: base.action,
+  green: base.greenText,
+  greenInk: base.greenText,
+  greenWash: base.greenFill,
+  bone: base.textLabel,
+  guardianBase: base.dark ? '#1A1712' : '#F7F1E6',
   guardianRaised: ivory.amberFill,
   guardianKeyTop: ivory.amberFill,
   amber: ivory.amberStrong,

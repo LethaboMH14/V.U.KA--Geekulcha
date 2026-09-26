@@ -31,6 +31,18 @@ import kotlin.math.roundToLong
 class LocationModule(private val ctx: ReactApplicationContext) : ReactContextBaseJavaModule(ctx) {
     override fun getName() = "VigilLocation"
 
+    private val prefs get() = ctx.getSharedPreferences("vigil_ui", Context.MODE_PRIVATE)
+
+    /** Read synchronously at start-up: the app's styles are built from the chosen theme. */
+    override fun getConstants(): MutableMap<String, Any> =
+        mutableMapOf("theme" to (prefs.getString("theme", "ivory") ?: "ivory"))
+
+    /** Ivory, Silver or Midnight; applies the next time VIGIL opens. */
+    @ReactMethod
+    fun setTheme(name: String) {
+        if (name in setOf("ivory", "silver", "midnight")) prefs.edit().putString("theme", name).apply()
+    }
+
     private fun granted() =
         ctx.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
             ctx.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED

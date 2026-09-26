@@ -14,7 +14,7 @@ function App(): React.JSX.Element {
   return (
     <View style={{flex: 1, backgroundColor: colors.bgBase}}>
       {/* Edge to edge: screens draw under the bar and pad by its height. */}
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle={colors.dark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <VigilApp />
     </View>
   );

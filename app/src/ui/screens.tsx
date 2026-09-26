@@ -10,10 +10,10 @@
  * on which PIN it was, and none of those frames moves.
  */
 import React, {useEffect, useRef, useState} from 'react';
-import {AppState, BackHandler, Platform, Pressable, ScrollView, Share, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
+import {AppState, BackHandler, NativeModules, Platform, Pressable, ScrollView, Share, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import {CheckCircle, GearSix, Microphone, Phone, ShareNetwork, ShieldChevron, UserPlus, Users, Waveform, WifiSlash} from './icons';
 import {Chip, Eyebrow, GlassIcon, Key, Lamp, LevelMeter, ListeningLine, Panel, PinKeypad, QuietKey, Readout, Row, Rule, Surface, TopAppBar} from './components';
-import {colors, fonts, radii, space, TOUCH, type} from './theme';
+import {colors, fonts, radii, space, THEME, THEMES, TOUCH, type, type ThemeName} from './theme';
 import {Onboarding} from './onboarding';
 import {GuardianHome, GuardianSetup, useGuardianWatch} from './guardian';
 import {MyRecord} from './record';
@@ -644,6 +644,39 @@ function Listening({
 }
 
 /**
+ * Ivory, Silver or Midnight (Mutarisi's design, from the prototype). The
+ * choice is kept on the phone and applies the next time VIGIL opens.
+ */
+function AppearanceSetting() {
+  const [picked, setPicked] = useState<ThemeName>(THEME);
+  const names: Record<ThemeName, string> = {ivory: 'Ivory', silver: 'Silver', midnight: 'Midnight'};
+  const choose = (t: ThemeName) => {
+    setPicked(t);
+    (NativeModules.VigilLocation as {setTheme?: (n: string) => void} | undefined)?.setTheme?.(t);
+  };
+  return (
+    <Panel>
+      <Eyebrow>Appearance</Eyebrow>
+      <View style={[styles.segment, {marginTop: space.sm}]}>
+        {THEMES.map(t => (
+          <Pressable
+            key={t}
+            accessibilityRole="button"
+            accessibilityState={{selected: picked === t}}
+            onPress={() => choose(t)}
+            style={[styles.segmentItem, picked === t && {backgroundColor: colors.actionDim}]}>
+            <Text style={[type.label, {color: colors.textTitle}]}>{names[t]}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={[type.caption, {marginTop: space.sm}]}>
+        {picked === THEME ? 'Midnight is easier on the eyes at night.' : 'Applies the next time you open VIGIL.'}
+      </Text>
+    </Panel>
+  );
+}
+
+/**
  * Android 14+ can stop a check-in from opening over other apps. Until the
  * member allows it, a check-in while VIGIL is in the background is only a
  * notification that slides away, so say so, once, plainly. Rechecked when
@@ -723,6 +756,7 @@ function Settings({
         <View style={styles.rowRule} />
         <Row label="Guardian view" detail="Preview what a guardian sees (simulated)" onPress={onGuardian} />
       </Panel>
+      <AppearanceSetting />
       {!device.simulated ? <ServerSetting /> : null}
       {testFeedAvailable() ? <DetectorTest detector={detector} /> : null}
 
@@ -1219,12 +1253,12 @@ const styles = StyleSheet.create({
   g4Text: {fontFamily: fonts.semibold, fontSize: 17, lineHeight: 22, color: colors.amberText},
   segment: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: colors.dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.6)',
     borderRadius: radii.round,
     padding: 4,
     gap: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
+    borderColor: colors.edgeLight,
   },
   segmentItem: {flex: 1, minHeight: 40, borderRadius: radii.round, alignItems: 'center', justifyContent: 'center'},
   segmentOn: {backgroundColor: colors.amberFill, borderWidth: 1, borderColor: '#F2D48A'},

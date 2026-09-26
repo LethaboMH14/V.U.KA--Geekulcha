@@ -82,8 +82,8 @@ function Sheen({radius}: {radius: number}) {
         <Svg width={w} height={90}>
           <Defs>
             <LinearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.55} />
-              <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+              <Stop offset="0" stopColor={colors.sheen} stopOpacity={colors.dark ? 0.1 : 0.55} />
+              <Stop offset="1" stopColor={colors.sheen} stopOpacity={0} />
             </LinearGradient>
           </Defs>
           <Rect width={w} height={90} fill="url(#sheen)" />
@@ -116,12 +116,12 @@ export function Panel({
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.glassClip]}>
         <BlurView
           style={StyleSheet.absoluteFill}
-          blurType="light"
+          blurType={colors.blurType}
           blurAmount={18}
           overlayColor="transparent"
-          reducedTransparencyFallbackColor="#FBFAF7"
+          reducedTransparencyFallbackColor={colors.pillFill}
         />
-        <View style={[StyleSheet.absoluteFill, {backgroundColor: hero ? 'rgba(255,255,255,0.62)' : 'rgba(255,255,255,0.5)'}]} />
+        <View style={[StyleSheet.absoluteFill, {backgroundColor: hero ? colors.washHero : colors.wash}]} />
       </View>
       <Sheen radius={radii.panel} />
       {children}
@@ -416,10 +416,10 @@ export function ListeningLine() {
       <Svg width="100%" height={24} style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="lineFade" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#FCFBF9" stopOpacity={1} />
-            <Stop offset="0.12" stopColor="#FCFBF9" stopOpacity={0} />
-            <Stop offset="0.88" stopColor="#FCFBF9" stopOpacity={0} />
-            <Stop offset="1" stopColor="#FCFBF9" stopOpacity={1} />
+            <Stop offset="0" stopColor={colors.bgBase} stopOpacity={1} />
+            <Stop offset="0.12" stopColor={colors.bgBase} stopOpacity={0} />
+            <Stop offset="0.88" stopColor={colors.bgBase} stopOpacity={0} />
+            <Stop offset="1" stopColor={colors.bgBase} stopOpacity={1} />
           </LinearGradient>
         </Defs>
         <Rect width="100%" height={24} fill="url(#lineFade)" />
@@ -551,11 +551,11 @@ const styles = StyleSheet.create({
   },
   cardHero: {shadowOpacity: 0.22, shadowRadius: 26, elevation: 6},
   glassClip: {borderRadius: radii.panel, overflow: 'hidden'},
-  cardGuardian: {borderColor: 'rgba(255,255,255,0.8)'},
+  cardGuardian: {borderColor: colors.edgeLight},
   bezel: {
     padding: 6,
     borderRadius: radii.bezel,
-    backgroundColor: 'rgba(255,255,255,0.32)',
+    backgroundColor: colors.dark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.32)',
     borderWidth: 1,
     borderColor: 'rgba(30,44,70,0.06)',
   },
@@ -563,9 +563,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FDFCFA',
+    backgroundColor: colors.pillFill,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
+    borderColor: colors.edgeLight,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: colors.shadow,
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 8},
     elevation: 5,
   },
-  pillGlass: {backgroundColor: '#FBFAF7', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', ...shadow, elevation: 2},
+  pillGlass: {backgroundColor: colors.pillFill, borderWidth: 1, borderColor: colors.edgeLight, ...shadow, elevation: 2},
   pillGhost: {backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.controlEdge},
   pillGuardianPlain: {backgroundColor: colors.amberFill, borderWidth: 1, borderColor: '#F2D48A'},
   pressed: {transform: [{scale: 0.97}]},
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
     paddingLeft: 9,
     paddingRight: 11,
     borderRadius: radii.round,
-    backgroundColor: '#FDFCFA',
+    backgroundColor: colors.pillFill,
     borderWidth: 1,
     borderColor: colors.border,
     alignSelf: 'flex-start',
