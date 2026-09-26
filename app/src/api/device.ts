@@ -913,6 +913,32 @@ export function createDevice(b: Backend) {
       return 'sent';
     },
 
+    /**
+     * Guardians: "Stop being a guardian" (Mutarisi's LeaveGuardianSheet), on
+     * THIS PHONE ONLY. VIGIL's server has no guardian-side removal: DELETE
+     * /v1/guardians/{id} is signed by the member (PIN-authorised
+     * remove_guardian). So nothing is sent; this phone forgets its guardian
+     * slot and stops asking for alerts. A member who also guards someone keeps
+     * their own account ('member'); a guardian-only phone has nothing left
+     * and goes back to the start ('none'). Being their guardian again needs a
+     * new invite.
+     */
+    async leaveGuardian(): Promise<'member' | 'none'> {
+      if (!profile) return 'none';
+      // As becomeGuardian: any profile that isn't guardian-only is a member's.
+      if (profile.role !== 'guardian') {
+        if (profile.guardian) {
+          const rest: Profile = {...profile};
+          delete rest.guardian;
+          await saveProfile(rest);
+        }
+        return 'member';
+      }
+      profile = null;
+      await b.setProfile('');
+      return 'none';
+    },
+
     /** Guardians: the alerts delivered to this guardian, newest first. */
     async guardianAlerts(): Promise<GuardianAlert[]> {
       if (!profile?.guardian) return [];

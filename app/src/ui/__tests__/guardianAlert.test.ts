@@ -1,4 +1,4 @@
-import {answerStatus, answerTimeline, claimAnswer, needsAttention, notRecorded, standDownQuestion} from '../guardian';
+import {alertsDelivery, answerStatus, answerTimeline, claimAnswer, consumeGuardianOpen, leaveBody, needsAttention, notificationsOff, notRecorded, standDownQuestion} from '../guardian';
 
 describe('guardian alert answers', () => {
   it('sends Call 10111 once per alert, however often it is pressed', () => {
@@ -58,5 +58,40 @@ describe('guardian alert banner', () => {
     expect(needsAttention([alert('inc_1', '2026-09-26T10:05:00Z')], new Set())).toBeNull();
     expect(needsAttention([alert('inc_1', null)], new Set())?.incident_id).toBe('inc_1');
     expect(needsAttention([alert('inc_1', null)], new Set(['inc_1']))).toBeNull();
+  });
+});
+
+describe('guardian notification and standby wiring', () => {
+  it('opens the alert once after its notice was tapped, and never without the native module', async () => {
+    let pending = true;
+    const native = {consumeAlertOpen: async () => {
+      const v = pending;
+      pending = false;
+      return v;
+    }};
+    expect(await consumeGuardianOpen(native)).toBe(true);
+    expect(await consumeGuardianOpen(native)).toBe(false);
+    expect(await consumeGuardianOpen(undefined)).toBe(false);
+    expect(await consumeGuardianOpen({consumeAlertOpen: async () => Promise.reject(new Error('gone'))})).toBe(false);
+  });
+
+  it('sees notifications turned off on any Android version through the native check', async () => {
+    expect(await notificationsOff({notificationsEnabled: async () => false})).toBe(true);
+    expect(await notificationsOff({notificationsEnabled: async () => true})).toBe(false);
+  });
+
+  it('says push only when the server has this phone\'s token for this server', () => {
+    expect(alertsDelivery({push: {server: 'https://a'}}, 'https://a')).toBe('Push, and checked every 5 s');
+    expect(alertsDelivery({push: {server: 'https://a'}}, 'https://b')).toBe('Checked every 5 s while VIGIL runs');
+    expect(alertsDelivery({}, 'https://a')).toBe('Checked every 5 s while VIGIL runs');
+  });
+
+  it('stopping says the server is not told, and what happens to a member\'s own account', () => {
+    expect(leaveBody('Thabo', true)).toMatch(/Your own VIGIL account and guardians aren't affected\./);
+    expect(leaveBody('Thabo', false)).toMatch(/goes back to the start screen/);
+    for (const m of [true, false]) {
+      expect(leaveBody('Thabo', m)).toMatch(/VIGIL's server isn't told, so ask Thabo to remove you/);
+      expect(leaveBody('Thabo', m)).toMatch(/new invite\.$/);
+    }
   });
 });
