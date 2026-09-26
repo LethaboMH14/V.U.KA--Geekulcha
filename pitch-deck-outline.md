@@ -12,11 +12,11 @@
 
 ## The Access Model (say it in the compliance beat)
 - **Public:** the **hash** — anyone can verify it; no identity, no content.
-- **Victim:** full access — she holds the key.
-- **Guardian:** blind backup only (holds an encrypted copy; **cannot read it**); the victim recovers by entering her credentials on the guardian's device.
-- **Bank / insurer:** per-case, purpose-limited evidence, on her consent (or legal process).
-- **Court / SAPS:** production on legal process.
-- Every access is itself anchored.
+- **Victim:** full access to her own record through the app. **The payload key is server-held today**; encryption to a victim-held key is `PROPOSED`, not built.
+- **Guardian (alert recipient, not a reader):** receives the **alert** only; guardians hold **no copy** of the record today. A guardian-held encrypted backup is `PROPOSED` with an undefined lifecycle, not built.
+- **Bank / insurer:** `PROPOSED` — designed per-case, purpose-limited on her consent (or legal process); no endpoint exists.
+- **Court / SAPS:** `PROPOSED` — production on legal process; no endpoint exists.
+- **Every access is itself anchored:** `PROPOSED` — only the member's own export is anchored today; access events would be linkable per subject.
 
 ## The 5 Pillars of Duress (SA Common Law)
 *(draft — confirm the exact formulation, and any case citation, with counsel before use)*

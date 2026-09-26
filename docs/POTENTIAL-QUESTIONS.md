@@ -92,7 +92,7 @@ The **ECTA** is the **Electronic Communications and Transactions Act 25 of 2002*
 
 ## 5 · Privacy & the access model
 - **POPIA s26:** biometric information (incl. voice/video) is special personal information. **Nothing personal or biometric on-chain** — a keyed hash of a pseudonym. Correction/deletion ss 24–25; erasure = delete the off-chain payload. **No audio stored** (YAMNet emits a label and a score; raw audio discarded).
-- **Access:** the **hash** is public (anyone verifies); the **evidence** is encrypted to a **victim-held key**. **Bank/insurer** pull it per case on her consent; **court/SAPS** on legal process; **guardians** are a **blind backup**. **The record the victim holds and the one the bank/insurer/court audits are the same chain — so they always match.**
+- **Access:** the **hash** is public (anyone verifies). The evidence is encrypted with a **server-held** payload key today — the escalation engine must read the duress outcome — so **victim-held-key encryption is `PROPOSED`, not built**. **Bank/insurer** per-case access on her consent and **court/SAPS** on legal process are `PROPOSED` (no endpoint exists); **guardians hold no copy** of the record today. Only the member's own export is anchored, so **access events are not yet anchored** and would be linkable per subject. **The record the victim holds and the one the bank/insurer/court audits are the same chain — so they always match.**
 
 ---
 

@@ -79,12 +79,12 @@ Every claim must map to these criteria.
 
 ## Access model (who sees what, on what legal basis)
 - **Public (anyone):** the **hash** — no identity, no content. This is what makes the record verifiable by a stranger.
-- **Victim:** full access — **she holds the key**.
-- **Guardian (blind backup, not a reader):** receives the **alert** and holds an **encrypted backup copy** of her record so it survives device theft. To recover, **the victim enters her own credentials on the guardian's device** and decrypts. The guardian **cannot read the record**.
-- **Bank / insurer:** **per-case, purpose-limited** access to the **evidence**, on the victim's explicit consent (or legal process).
-- **Court / SAPS:** production of the record on **legal process** (subpoena / s205 CPA / warrant).
-- **Regulator:** as statutorily mandated.
-- **Every access is itself recorded as an anchored event** (who pulled what, when, under which authority).
+- **Victim:** full access to her own record through the app. **The payload key is server-held today** (`VUKA_PAYLOAD_KEY_B64`), because the escalation engine must read the duress outcome; encryption to a victim-held key is a **`PROPOSED` open question**, not built (ADR proposal, item 2).
+- **Guardian (alert recipient, not a reader):** receives the **alert** only — incident id, trigger, times. Guardians hold **no copy** of the record; a guardian-held encrypted backup is a **`PROPOSED` open question** with an undefined key/copy lifecycle, not built (ADR proposal, item 3).
+- **Bank / insurer:** **`PROPOSED`** — designed as per-case, purpose-limited access on the victim's explicit consent (or legal process). **No endpoint exists**; the only record reader today is the member's own device, with a fresh PIN and the T30 hold.
+- **Court / SAPS:** **`PROPOSED`** — production of the record on **legal process** (subpoena / s205 CPA / warrant); no endpoint exists.
+- **Regulator:** **`PROPOSED`** — as statutorily mandated; no endpoint exists.
+- **Every access is itself recorded as an anchored event:** **`PROPOSED`** — only the member's own export is anchored today; because the chain is **per subject**, anchored access events would be **linkable to that subject** by design.
 
 ## Open Questions (To Be Answered Before the Pitch)
 - How is the duress signal initially triggered? (The repo's answer: a discreet "Journey check" answered with a normal or a duress PIN, plus on-device detection — not a panic button.)
