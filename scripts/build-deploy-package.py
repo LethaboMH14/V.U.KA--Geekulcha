@@ -55,7 +55,11 @@ def forbidden_path_reason(name: str) -> str | None:
             return "Git metadata path"
         if lowered == "node_modules":
             return "node_modules path"
-        if lowered.startswith(".env"):
+        if lowered.startswith(".env") and lowered != ".env.example":
+            # .env.example (repo root) is a secret-free template, the same
+            # carve-out .gitignore already makes with `!.env.example`. It is
+            # never read by the server at runtime either way; should_package
+            # decides separately whether to actually include it.
             return "environment-file path"
         if lowered.endswith(".pem"):
             return "PEM-key path"

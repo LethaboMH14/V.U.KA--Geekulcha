@@ -108,6 +108,15 @@ def test_archive_path_guard_rejects_forbidden_names():
         assert package_builder.forbidden_path_reason(name), name
 
 
+def test_env_example_is_not_treated_as_a_forbidden_environment_file():
+    """Regression: forbidden_path_reason's blanket `.env*` check refused the
+    repo's own secret-free .env.example template (added 26 Sep) and failed
+    every deploy build outright, not just excluded that one file."""
+    assert package_builder.forbidden_path_reason(".env.example") is None
+    files = complete_deploy_files() | {".env.example": b"# template, no secrets\n"}
+    package_builder.read_safe_package_members(make_archive(files))  # must not raise
+
+
 def test_archive_scan_refuses_forbidden_paths_before_packaging():
     files = complete_deploy_files() | {"server/.env.local": b"must not be read or included"}
     try:
