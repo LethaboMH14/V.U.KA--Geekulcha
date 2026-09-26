@@ -13,14 +13,32 @@ import {Microphone, ShieldChevron} from './icons';
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
 import {version} from '../../package.json';
 import {device, type Delivery} from '../api/device';
+import {AccountStep, CodeStep, EmailStep, InviteStep, PermissionsStep, PhoneStep, StepMark, type Account} from './signup';
 
-type Step = 'welcome' | 'name' | 'pin' | 'pinAgain' | 'duressIntro' | 'duress' | 'duressAgain' | 'record';
+type Step =
+  | 'welcome'
+  | 'account'
+  | 'phone'
+  | 'email'
+  | 'code'
+  | 'name'
+  | 'permissions'
+  | 'pin'
+  | 'pinAgain'
+  | 'duressIntro'
+  | 'duress'
+  | 'duressAgain'
+  | 'record'
+  | 'invite';
 
 const TOP_INSET = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
 
-export function Onboarding({onDone, onGuardian}: {onDone: () => void; onGuardian: () => void}) {
+export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; onGuardian: () => void; onInvite?: () => void}) {
   const [step, setStep] = useState<Step>('welcome');
   const [name, setName] = useState('');
+  const [surname, setSurname] = useState('');
+  const [account, setAccount] = useState<Account | null>(null);
+  const [google, setGoogle] = useState(false);
   const [pin, setPin] = useState('');
   const [duress, setDuress] = useState('');
   const [note, setNote] = useState('');
@@ -65,7 +83,9 @@ export function Onboarding({onDone, onGuardian}: {onDone: () => void; onGuardian
     };
     return (
       <ScrollView style={{backgroundColor: colors.bgBase}} contentContainerStyle={styles.flat}>
-        <Text style={styles.stepMark}>{step.startsWith('pin') ? '02' : '03'} / 04</Text>
+        <View style={{alignItems: 'center', marginBottom: space.md}}>
+          <StepMark n={7} />
+        </View>
         <Text style={[type.title, {textAlign: 'center'}]} accessibilityRole="header">
           {copy[0]}
         </Text>
@@ -80,7 +100,7 @@ export function Onboarding({onDone, onGuardian}: {onDone: () => void; onGuardian
             label="Back"
             onPress={() => {
               setNote('');
-              setStep(step === 'pin' ? 'name' : step === 'pinAgain' ? 'pin' : step === 'duress' ? 'duressIntro' : 'duress');
+              setStep(step === 'pin' ? 'permissions' : step === 'pinAgain' ? 'pin' : step === 'duress' ? 'duressIntro' : 'duress');
             }}
           />
         </View>
@@ -93,13 +113,60 @@ export function Onboarding({onDone, onGuardian}: {onDone: () => void; onGuardian
       <Surface />
       <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
         {step === 'welcome' ? (
-          <Welcome onNext={() => setStep('name')} onGuardian={onGuardian} />
+          <Welcome onNext={() => setStep('account')} onGuardian={onGuardian} />
+        ) : step === 'account' ? (
+          <AccountStep
+            onBack={() => setStep('welcome')}
+            onChoose={k => {
+              setGoogle(k === 'google');
+              setStep(k === 'phone' ? 'phone' : 'email');
+            }}
+          />
+        ) : step === 'phone' ? (
+          <PhoneStep
+            onBack={() => setStep('account')}
+            onSkip={() => setStep('name')}
+            onNext={msisdn => {
+              setAccount({kind: 'phone', contact: msisdn, verified: false});
+              setStep('code');
+            }}
+          />
+        ) : step === 'email' ? (
+          <EmailStep
+            google={google}
+            onBack={() => setStep('account')}
+            onNext={email => {
+              setAccount({kind: google ? 'google' : 'email', contact: email, verified: false});
+              setStep(google ? 'name' : 'code');
+            }}
+          />
+        ) : step === 'code' ? (
+          <CodeStep via={account?.kind === 'phone' ? 'sms' : 'email'} onBack={() => setStep(account?.kind === 'phone' ? 'phone' : 'email')} onNext={() => setStep('name')} />
         ) : step === 'name' ? (
-          <NameStep name={name} setName={setName} onBack={() => setStep('welcome')} onNext={() => setStep('pin')} />
+          <NameStep
+            name={name}
+            setName={setName}
+            surname={surname}
+            setSurname={setSurname}
+            onBack={() => setStep(account ? (account.kind === 'google' ? 'email' : 'code') : 'account')}
+            onNext={() => setStep('permissions')}
+          />
+        ) : step === 'permissions' ? (
+          <PermissionsStep onBack={() => setStep('name')} onNext={() => setStep('pin')} />
         ) : step === 'duressIntro' ? (
           <DuressIntro onBack={() => setStep('pin')} onNext={() => setStep('duress')} />
+        ) : step === 'invite' ? (
+          <InviteStep onInvite={onInvite ?? onDone} onFinish={onDone} />
         ) : (
-          <CreateRecord name={name} pin={pin} duress={duress} onDone={onDone} />
+          <CreateRecord
+            name={name}
+            pin={pin}
+            duress={duress}
+            onDone={() => {
+              void device.setAccount(account ?? undefined, surname);
+              setStep('invite');
+            }}
+          />
         )}
         {device.simulated ? (
           <Text style={styles.sim}>
@@ -157,16 +224,32 @@ function Welcome({onNext, onGuardian}: {onNext: () => void; onGuardian: () => vo
   );
 }
 
-function NameStep({name, setName, onBack, onNext}: {name: string; setName: (s: string) => void; onBack: () => void; onNext: () => void}) {
+function NameStep({
+  name,
+  setName,
+  surname,
+  setSurname,
+  onBack,
+  onNext,
+}: {
+  name: string;
+  setName: (s: string) => void;
+  surname: string;
+  setSurname: (s: string) => void;
+  onBack: () => void;
+  onNext: () => void;
+}) {
   const clean = name.trim();
-  const valid = clean.length >= 1 && clean.length <= 30;
+  const valid = clean.length >= 1 && clean.length <= 30 && surname.trim().length >= 1;
   const [tried, setTried] = useState(false);
   return (
     <View style={styles.screen}>
-      <TopAppBar title="01 / 04" onBack={onBack} />
-      <Text style={type.title} accessibilityRole="header">
-        What should your guardians call you?
+      <TopAppBar title="" onBack={onBack} />
+      <StepMark n={5} />
+      <Text style={type.display} accessibilityRole="header">
+        Your name
       </Text>
+      <Text style={type.body}>Guardians see this name on an alert.</Text>
       <TextInput
         value={name}
         onChangeText={setName}
@@ -178,12 +261,24 @@ function NameStep({name, setName, onBack, onNext}: {name: string; setName: (s: s
         textContentType="givenName"
         maxLength={30}
         returnKeyType="next"
-        onSubmitEditing={() => (valid ? onNext() : setTried(true))}
         style={styles.field}
         accessibilityLabel="First name"
       />
+      <TextInput
+        value={surname}
+        onChangeText={setSurname}
+        placeholder="Surname"
+        placeholderTextColor={colors.textDim}
+        autoCapitalize="words"
+        autoComplete="name-family"
+        textContentType="familyName"
+        maxLength={40}
+        onSubmitEditing={() => (valid ? onNext() : setTried(true))}
+        style={styles.field}
+        accessibilityLabel="Surname"
+      />
       <Text style={type.caption}>
-        {tried && !valid ? 'Enter a first name to continue.' : 'Guardians see it in alerts. It stays on this phone and isn’t written to your record.'}
+        {tried && !valid ? 'Enter both your first name and surname.' : 'It stays on this phone and isn’t written to your record.'}
       </Text>
       <View style={{flexGrow: 1}} />
       <Key label="Continue" variant={valid ? 'signal' : 'plain'} onPress={() => (valid ? onNext() : setTried(true))} />
@@ -194,7 +289,8 @@ function NameStep({name, setName, onBack, onNext}: {name: string; setName: (s: s
 function DuressIntro({onBack, onNext}: {onBack: () => void; onNext: () => void}) {
   return (
     <View style={styles.screen}>
-      <TopAppBar title="03 / 04" onBack={onBack} />
+      <TopAppBar title="" onBack={onBack} />
+      <StepMark n={7} />
       <Text style={type.title} accessibilityRole="header">
         Now a second PIN
       </Text>
@@ -244,7 +340,7 @@ function CreateRecord({name, pin, duress, onDone}: {name: string; pin: string; d
   const sent = d.received > 0;
   return (
     <View style={styles.screen}>
-      <Text style={styles.stepMarkLeft}>04 / 04</Text>
+      <StepMark n={7} />
       <Text style={type.title} accessibilityRole="header">
         Start your record
       </Text>

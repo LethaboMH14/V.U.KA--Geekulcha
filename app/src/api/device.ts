@@ -80,6 +80,12 @@ export type Profile = {
   serverUrl: string;
   /** Set when the member typed a server in Settings: discovery then leaves it alone. */
   serverPinned?: boolean;
+  /**
+   * Sign-up details (Mutarisi's flow). Not live yet: kept on this phone only,
+   * never sent to the server and never in the record. Identity is the key.
+   */
+  account?: {kind: 'google' | 'email' | 'phone'; contact: string; verified: false};
+  surname?: string;
   /** The server this member's chain is registered on (a new one means registering again). */
   registeredOn?: string;
   /** Receipts from this queue number on belong to the current server's chain. */
@@ -437,6 +443,13 @@ export function createDevice(b: Backend) {
         {action: 'registration', genesis: true},
       );
       return profile;
+    },
+
+    /** Keeps the sign-up details on this phone (never sent; not live sign-in yet). */
+    async setAccount(account: Profile['account'], surname?: string) {
+      if (!profile) return;
+      profile = {...profile, account, surname: surname?.trim() || undefined};
+      await b.setProfile(JSON.stringify(profile));
     },
 
     async setServer(url: string) {

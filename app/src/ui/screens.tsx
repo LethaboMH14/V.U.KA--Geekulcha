@@ -251,7 +251,7 @@ export function VigilApp() {
     return <View style={{flex: 1, backgroundColor: colors.bgBase}} />;
   }
   if (screen === 'onboarding') {
-    return <Onboarding onDone={() => setScreen('home')} onGuardian={() => setScreen('guardianSetup')} />;
+    return <Onboarding onDone={() => setScreen('home')} onGuardian={() => setScreen('guardianSetup')} onInvite={() => setScreen('invitePin')} />;
   }
   if (screen === 'guardianSetup') {
     const member = device.profile?.role === 'member';
