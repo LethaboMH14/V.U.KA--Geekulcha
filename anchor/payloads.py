@@ -17,7 +17,7 @@ _SCHEMA_FILES = {
     "checkin_result": "checkin_result.v1.json",
     "journey_ended": "journey_ended.v1.json",
     "guardian_ack": "guardian_ack.v1.json",
-    "evidence_observed": "evidence_observed.v1.json",
+    "evidence_observed": {1: "evidence_observed.v1.json", 2: "evidence_observed.v2.json"},
 }
 _DIALECT = "https://json-schema.org/draft/2020-12/schema"
 _VALIDATION_KEYWORDS = {
@@ -109,11 +109,12 @@ def _assert_supported_schema(schema: Any, path: str = "$schema") -> None:
             raise PayloadError(f"invalid pattern at {path}") from exc
     if "enum" in schema and not isinstance(schema["enum"], list):
         raise PayloadError(f"enum at {path} must be an array")
-    if "type" in schema and (
-        not isinstance(schema["type"], str)
-        or schema["type"] not in {"object", "string", "integer", "array"}
-    ):
-        raise PayloadError(f"unsupported type keyword value at {path}")
+    if "type" in schema:
+        types = schema["type"] if isinstance(schema["type"], list) else [schema["type"]]
+        if not types or any(
+            not isinstance(t, str) or t not in {"object", "string", "integer", "array", "null"} for t in types
+        ):
+            raise PayloadError(f"unsupported type keyword value at {path}")
 
 
 def _fail(reason: str, path: str) -> None:
@@ -123,15 +124,18 @@ def _fail(reason: str, path: str) -> None:
 def _validate_schema(payload: Any, schema: dict, path: str = "$payload") -> None:
     _assert_supported_schema(schema)
 
-    expected_type = schema.get("type")
-    if expected_type == "object" and not isinstance(payload, dict):
-        _fail("must be an object", path)
-    if expected_type == "string" and not isinstance(payload, str):
-        _fail("must be a string", path)
-    if expected_type == "integer" and type(payload) is not int:
-        _fail("must be an integer", path)
-    if expected_type == "array" and not isinstance(payload, list):
-        _fail("must be an array", path)
+    expected = schema.get("type")
+    if expected is not None:
+        types = expected if isinstance(expected, list) else [expected]
+        checks = {
+            "object": lambda v: isinstance(v, dict),
+            "string": lambda v: isinstance(v, str),
+            "integer": lambda v: type(v) is int,
+            "array": lambda v: isinstance(v, list),
+            "null": lambda v: v is None,
+        }
+        if not any(checks[t](payload) for t in types):
+            _fail("must be " + " or ".join(types), path)
 
     if "const" in schema and not _same_json_value(payload, schema["const"]):
         _fail(f"must equal {schema['const']!r}", path)
@@ -186,8 +190,12 @@ def _validate_schema(payload: Any, schema: dict, path: str = "$payload") -> None
         _fail("additionalProperties false requires properties", path)
 
 
-def _load_schema(kind: str) -> dict:
+def _load_schema(kind: str, pv: Any = 1) -> dict:
     filename = _SCHEMA_FILES.get(kind)
+    if isinstance(filename, dict):
+        filename = filename.get(pv) if type(pv) is int else None
+        if filename is None:
+            raise PayloadError(f"unsupported pv {pv!r} for payload kind {kind!r}")
     if filename is None:
         raise PayloadError(f"unsupported payload kind {kind!r}")
     try:
@@ -205,7 +213,7 @@ def validate_payload(kind: str, payload: Any) -> Any:
     validation keyword or unsupported schema value raises instead of being
     silently ignored.
     """
-    schema = _load_schema(kind)
+    schema = _load_schema(kind, payload.get("pv") if isinstance(payload, dict) else None)
     return validate_schema(payload, schema)
 
 
