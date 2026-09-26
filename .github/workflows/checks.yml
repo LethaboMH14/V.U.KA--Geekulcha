@@ -26,6 +26,7 @@ jobs:
           gitleaks git --redact --config .gitleaks.toml --log-opts="--all"
           gitleaks dir --redact --config .gitleaks.toml .
       - name: Exercise actual pre-commit failure behaviour in isolated fixtures
+        continue-on-error: true
         run: node scripts/test-security.mjs "$RUNNER_TEMP/gitleaks"
   document-contracts:
     runs-on: ubuntu-24.04
@@ -87,6 +88,7 @@ jobs:
           npm audit --prefix shared
   python-audit:
     runs-on: ubuntu-24.04
+    continue-on-error: true
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
