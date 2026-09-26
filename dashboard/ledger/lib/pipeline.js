@@ -173,22 +173,30 @@ export async function* verifyTrace(exportObj, {
 
   // Pinned key manifest (§10): its fingerprint must equal the pinned one, and
   // the server key used below comes only from it (T05), never from the export.
+  // When either pinned file is supplied, both must be complete: a missing or
+  // key-less manifest, or pins without a fingerprint, must never quietly skip
+  // the server-signature check and still reach live-verified.
   let verifyPins = null;
-  if (pins && manifest && typeof manifest.server_ed25519_public_key === "string") {
-    const fingerprint = bytesToHex(await sha256(canonicalize(manifest)));
-    if (typeof pins.manifest_fingerprint_hex === "string") {
-      const ok = fingerprint === pins.manifest_fingerprint_hex;
-      yield {
-        phase: "parse",
-        label: `Check key-manifest fingerprint${sample ? " (SAMPLE manifest)" : ""}`,
-        detail: ok
-          ? "SHA-256 of the canonical manifest equals the pinned fingerprint."
-          : `Pinned ${short(pins.manifest_fingerprint_hex)}, manifest hashes to ${short(fingerprint)}.`,
-        value: fingerprint,
-        ok,
-      };
-      if (!ok) return yield* fail("parse", "manifest", "The key manifest does not match the pinned fingerprint.");
+  if (pins || manifest) {
+    const complete = pins && typeof pins === "object" && manifest && typeof manifest === "object" &&
+      typeof manifest.server_ed25519_public_key === "string" && typeof pins.manifest_fingerprint_hex === "string";
+    if (!complete) {
+      const why = "The pinned key files are incomplete (manifest key or pinned fingerprint missing), so server signatures cannot be checked.";
+      yield { phase: "parse", label: "Check key-manifest fingerprint", detail: why, ok: false };
+      return yield* fail("parse", "manifest", why);
     }
+    const fingerprint = bytesToHex(await sha256(canonicalize(manifest)));
+    const ok = fingerprint === pins.manifest_fingerprint_hex;
+    yield {
+      phase: "parse",
+      label: `Check key-manifest fingerprint${sample ? " (SAMPLE manifest)" : ""}`,
+      detail: ok
+        ? "SHA-256 of the canonical manifest equals the pinned fingerprint."
+        : `Pinned ${short(pins.manifest_fingerprint_hex)}, manifest hashes to ${short(fingerprint)}.`,
+      value: fingerprint,
+      ok,
+    };
+    if (!ok) return yield* fail("parse", "manifest", "The key manifest does not match the pinned fingerprint.");
     verifyPins = {
       server_ed25519_public_key: manifest.server_ed25519_public_key,
       network: pins.network,
@@ -449,36 +457,42 @@ export async function* verifyTrace(exportObj, {
   if (!rootOk) return yield* fail("ledger", "ledger", "The recomputed root does not match the ledger message.");
 
   // Pinned network/topic/epoch (§6 step 5) and the receipt ↔ message binding (§6 step 4).
-  const receipt = proof.receipt ?? null;
-  const topics = [receipt?.topic_id, ledgerMessage.topic_id].filter((t) => typeof t === "string");
-  const topicOk = Boolean(pins?.topic_id) && topics.length > 0 && topics.every((t) => t === pins.topic_id) &&
-    (receipt?.topic_epoch === undefined || pins.topic_epoch === undefined || receipt.topic_epoch === pins.topic_epoch);
+  // The receipt is required (§6 step 4): without it the consensus timestamp and
+  // running hash cannot be bound to the message, so it can never be live.
+  const receipt = proof.receipt !== null && typeof proof.receipt === "object" ? proof.receipt : null;
+  if (!receipt) {
+    yield { phase: "ledger", label: "Check receipt against message", detail: "The proof carries no receipt.", ok: false };
+    return yield* fail("ledger", "ledger", "The proof carries no anchor receipt, so the ledger message cannot be bound to it.");
+  }
+  const topics = [receipt.topic_id, ledgerMessage.topic_id].filter((t) => typeof t === "string");
+  const topicOk = Boolean(pins?.topic_id) && typeof receipt.topic_id === "string" &&
+    topics.every((t) => t === pins.topic_id) &&
+    pins.topic_epoch !== undefined && receipt.topic_epoch === pins.topic_epoch;
   yield {
     phase: "ledger",
     label: "Check pinned topic",
     detail: topicOk
       ? `Topic ${pins.topic_id} on ${pins.network ?? "?"}, epoch ${pins.topic_epoch ?? "?"}, matches the pins.`
-      : `Pinned topic ${pins?.topic_id ?? "(none)"}; the receipt or message names ${topics.join(", ") || "(none)"}.`,
+      : `Pinned topic ${pins?.topic_id ?? "(none)"}, epoch ${pins?.topic_epoch ?? "(none)"}; the receipt names ` +
+        `${String(receipt.topic_id ?? "(none)")}, epoch ${String(receipt.topic_epoch ?? "(none)")}; the message names ${String(ledgerMessage.topic_id ?? "(none)")}.`,
     value: topics[0] ?? "",
     ok: topicOk,
   };
-  if (!topicOk) return yield* fail("ledger", "ledger", "The message is not on the pinned topic.");
+  if (!topicOk) return yield* fail("ledger", "ledger", "The receipt or message is not on the pinned topic and epoch.");
 
-  if (receipt) {
-    const fields = ["sequence_number", "consensus_timestamp", "running_hash"];
-    const mismatched = fields.filter((f) => ledgerMessage[f] !== undefined && receipt[f] !== ledgerMessage[f]);
-    const bindOk = mismatched.length === 0;
-    yield {
-      phase: "ledger",
-      label: "Check receipt against message",
-      detail: bindOk
-        ? `Sequence ${receipt.sequence_number}, consensus time ${receipt.consensus_timestamp} and running hash agree.`
-        : `The receipt and the message disagree on ${mismatched.join(", ")}.`,
-      value: String(ledgerMessage.consensus_timestamp ?? ""),
-      ok: bindOk,
-    };
-    if (!bindOk) return yield* fail("ledger", "ledger", `The receipt does not match the message (${mismatched.join(", ")}).`);
-  }
+  const fields = ["sequence_number", "consensus_timestamp", "running_hash"];
+  const mismatched = fields.filter((f) => ledgerMessage[f] === undefined || ledgerMessage[f] === null || receipt[f] !== ledgerMessage[f]);
+  const bindOk = mismatched.length === 0;
+  yield {
+    phase: "ledger",
+    label: "Check receipt against message",
+    detail: bindOk
+      ? `Sequence ${receipt.sequence_number}, consensus time ${receipt.consensus_timestamp} and running hash agree.`
+      : `The receipt and the message disagree on ${mismatched.join(", ")}.`,
+    value: String(ledgerMessage.consensus_timestamp ?? ""),
+    ok: bindOk,
+  };
+  if (!bindOk) return yield* fail("ledger", "ledger", `The receipt does not match the message (${mismatched.join(", ")}).`);
 
   // A SAMPLE or stored copy is never live: it can only be 'archived'.
   const stored = archived || sample;

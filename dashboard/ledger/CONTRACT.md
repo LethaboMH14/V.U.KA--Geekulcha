@@ -63,6 +63,7 @@ Rules:
 - The chain verdict is `shared/verify.js` `verifyExport` with the pinned manifest key, so server signatures are checked. Before it, the pipeline checks SHA-256(canonical(manifest)) against `pins.manifest_fingerprint_hex` (§6 step 5).
 - `proof` may also be the raw server body `{proof, receipt}`.
 - The ledger checks are: 33 bytes with type `0x01`; the 32 bytes equal the recomputed root; the receipt topic (and `Msg.topic_id` when present) equals `pins.topic_id`, and `topic_epoch` equals `pins.topic_epoch`; the receipt's `sequence_number`, `consensus_timestamp` and `running_hash` equal the message's (§6 step 4).
+- The receipt is required for `live-verified` (a proof without one fails), every receipt field is compared strictly, and pins or a manifest supplied without the other (or without `manifest_fingerprint_hex` / the server key) fail rather than skip server signatures.
 - Anything flagged `"sample": true` (pins, manifest, message, receipt or export) can only reach `archived`, never `live-verified`.
 
 ## `sample/` (TEST FIXTURE ONLY)

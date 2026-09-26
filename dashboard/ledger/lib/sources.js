@@ -146,11 +146,15 @@ export function createSources({ server = DEFAULT_SERVER, network = "testnet" } =
         onState("error");
         return () => {};
       }
+      // After close() nothing from this socket reaches the page: its late
+      // close/error events must not overwrite the state of a newer connection.
       let closedByUs = false;
-      socket.onopen = () => onState("open");
-      socket.onerror = () => onState("error");
-      socket.onclose = () => onState("closed");
+      let failed = false;
+      socket.onopen = () => { if (!closedByUs) onState("open"); };
+      socket.onerror = () => { if (!closedByUs) { failed = true; onState("error"); } };
+      socket.onclose = () => { if (!closedByUs && !failed) onState("closed"); };
       socket.onmessage = (event) => {
+        if (closedByUs) return;
         let row;
         try {
           row = JSON.parse(event.data);

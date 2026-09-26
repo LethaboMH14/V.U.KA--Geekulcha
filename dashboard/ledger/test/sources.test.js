@@ -88,3 +88,42 @@ test("message() 404 → null; HTTP 500 and network failure reject with sentences
   await assert.rejects(createSources().latest(), /Could not reach the anchor server\./);
   await assert.rejects(createSources().message("not-a-topic", 1), /topic id/);
 });
+
+test("panel(): after close(), late events from the old socket are ignored", () => {
+  const sockets = [];
+  const originalWS = globalThis.WebSocket;
+  globalThis.WebSocket = class { constructor(url) { this.url = url; sockets.push(this); } close() {} };
+  try {
+    const states = [];
+    const rows = [];
+    const close = createSources().panel((r) => rows.push(r), (s) => states.push(s));
+    assert.equal(sockets[0].url, "wss://vuka-anchor-server.azurewebsites.net/ws/panel");
+    sockets[0].onopen();
+    sockets[0].onmessage({ data: JSON.stringify({ subject: "a", chain_index: 1 }) });
+    sockets[0].onmessage({ data: "not json" });
+    sockets[0].onmessage({ data: "[1,2]" });
+    close();
+    sockets[0].onmessage({ data: JSON.stringify({ subject: "late" }) });
+    sockets[0].onclose();
+    sockets[0].onerror();
+    assert.deepEqual(states, ["open"]);
+    assert.deepEqual(rows, [{ subject: "a", chain_index: 1 }]);
+  } finally {
+    globalThis.WebSocket = originalWS;
+  }
+});
+
+test("panel(): an error is not overwritten by the close that follows it", () => {
+  const sockets = [];
+  const originalWS = globalThis.WebSocket;
+  globalThis.WebSocket = class { constructor() { sockets.push(this); } close() {} };
+  try {
+    const states = [];
+    createSources().panel(() => {}, (s) => states.push(s));
+    sockets[0].onerror();
+    sockets[0].onclose();
+    assert.deepEqual(states, ["error"]);
+  } finally {
+    globalThis.WebSocket = originalWS;
+  }
+});

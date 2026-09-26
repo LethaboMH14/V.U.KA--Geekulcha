@@ -162,3 +162,62 @@ test("exportFromShare accepts the three share shapes and rejects anything else",
   assert.throws(() => exportFromShare({ format: "vuka-export-v1", export: e }), /only vuka-export-v2/);
   assert.throws(() => exportFromShare({ hello: 1 }), /subject_id/);
 });
+
+// ---- review fixes (26 Sep): live-verified needs the receipt binding and complete pins ----
+async function liveFixture() {
+  const pins = load("../../../contracts/keys/verify-pins.json");
+  const manifest = load("../../../contracts/keys/manifest.json");
+  const { subjectExport } = await buildSimSubjectExport();
+  subjectExport.entries = subjectExport.entries.slice(0, 4);
+  const head = subjectExport.entries[3].event_hash;
+  const heads = [head, "00".repeat(32), "ff".repeat(32)].sort();
+  const raw = heads.map(hexToBytes);
+  const root = bytesToHex(await merkleRoot(raw));
+  const path = await auditPath(raw, heads.indexOf(head));
+  const receipt = { topic_id: pins.topic_id, sequence_number: 42, consensus_timestamp: "1790294400.000000001", running_hash: "cnVubmluZw==", topic_epoch: pins.topic_epoch };
+  const ledgerMessage = {
+    topic_id: pins.topic_id, sequence_number: 42, consensus_timestamp: receipt.consensus_timestamp,
+    running_hash: receipt.running_hash, bytes: new Uint8Array([0x01, ...hexToBytes(root)]),
+  };
+  return { pins, manifest, subjectExport, proof: { path, receipt }, ledgerMessage };
+}
+
+test("control: the live fixture is live-verified", async () => {
+  const f = await liveFixture();
+  const { result } = await run(f.subjectExport, f);
+  assert.equal(result.state, "live-verified");
+});
+
+test("a proof without a receipt can never be live-verified", async () => {
+  const f = await liveFixture();
+  const { result } = await run(f.subjectExport, { ...f, proof: { path: f.proof.path } });
+  assert.equal(result.state, "failed");
+  assert.match(result.reason, /no anchor receipt/);
+});
+
+test("a receipt without topic_epoch, or with another epoch, fails", async () => {
+  for (const topic_epoch of [undefined, 2]) {
+    const f = await liveFixture();
+    const receipt = { ...f.proof.receipt, topic_epoch };
+    if (topic_epoch === undefined) delete receipt.topic_epoch;
+    const { result } = await run(f.subjectExport, { ...f, proof: { path: f.proof.path, receipt } });
+    assert.equal(result.state, "failed", `topic_epoch ${topic_epoch}`);
+  }
+});
+
+test("a message missing its running hash does not bind to the receipt", async () => {
+  const f = await liveFixture();
+  const { result } = await run(f.subjectExport, { ...f, ledgerMessage: { ...f.ledgerMessage, running_hash: undefined } });
+  assert.equal(result.state, "failed");
+  assert.match(result.reason, /running_hash/);
+});
+
+test("pins without the manifest (or without a fingerprint) fail instead of skipping server signatures", async () => {
+  const f = await liveFixture();
+  const noManifest = await run(f.subjectExport, { ...f, manifest: null });
+  assert.equal(noManifest.result.state, "failed");
+  const { manifest_fingerprint_hex: _drop, ...pinsNoFp } = f.pins;
+  const noFp = await run(f.subjectExport, { ...f, pins: pinsNoFp });
+  assert.equal(noFp.result.state, "failed");
+  assert.match(noFp.result.reason, /incomplete/);
+});

@@ -237,22 +237,47 @@ async function loadLatest() {
     const r = latest.receipt ?? {};
     const seq = safeSeq(r.sequence_number);
     const when = consensusToDate(r.consensus_timestamp);
-    setPill(tile.querySelector(".tile-pill"), "ok", "Confirmed");
+    setPill(tile.querySelector(".tile-pill"), "wait", "Checking ledger");
     const v = $("latest-value");
     v.replaceChildren();
     v.append(el("span", "mono", seq ? `#${seq}` : "#?"), document.createTextNode(` · ${fmtUtc(when)}`));
     const note = $("latest-note");
     note.replaceChildren();
-    const topic = TOPIC_RE.test(String(r.topic_id)) ? r.topic_id : state.topic;
-    note.append(document.createTextNode(`Topic ${topic}, epoch ${r.topic_epoch ?? "?"}. `));
+    const topic = TOPIC_RE.test(String(r.topic_id)) ? r.topic_id : "(invalid)";
+    note.append(document.createTextNode(`Topic ${topic}, epoch ${String(r.topic_epoch ?? "?")}. `));
     const tx = hashscanTx(r.consensus_timestamp);
     if (tx) note.append(extLink(tx, "Open on HashScan"));
+    // The server's word alone is not "confirmed": check the receipt against the
+    // pinned topic and the mirror's own record at that sequence.
+    const [pillState, pillLabel, why] = await confirmOnMirror(s, r, seq);
+    if (s !== state.sources) return; // the server changed while the mirror was read
+    setPill(tile.querySelector(".tile-pill"), pillState, pillLabel);
+    note.append(document.createTextNode(` ${why}`));
   } catch (error) {
     setSource("src-api", "failed", "Unreachable", `${hostOf(s.server)}: ${error.message}`);
     setPill(tile.querySelector(".tile-pill"), "unavailable", "Unknown");
     $("latest-value").textContent = "Unknown";
     $("latest-note").textContent = "The server could not be reached, so the latest anchor is unknown. The mirror below is independent of it.";
   }
+}
+
+/** Cross-check a server receipt against the pins and the mirror → [pillState, label, sentence]. */
+async function confirmOnMirror(s, r, seq) {
+  const pins = state.pins;
+  if (!pins?.topic_id) return ["unavailable", "Unchecked", "The pins did not load, so the server's receipt was not checked."];
+  if (r.topic_id !== pins.topic_id || r.topic_epoch !== pins.topic_epoch || !seq) {
+    return ["failed", "Not pinned topic", `The server names a topic, epoch or sequence other than the pinned ${pins.topic_id} (epoch ${pins.topic_epoch}).`];
+  }
+  let m;
+  try {
+    m = await s.message(pins.topic_id, seq);
+  } catch (error) {
+    return ["unavailable", "Server only", `Not confirmed on the mirror: ${error.message}`];
+  }
+  const ok = m && m.kind === "root" && m.consensus_timestamp === r.consensus_timestamp && m.running_hash === r.running_hash;
+  return ok
+    ? ["ok", "On ledger", `The mirror holds a 0x01 root at #${seq} with the same consensus time and running hash.`]
+    : ["failed", "Not on ledger", `The mirror's message #${seq} does not match the server's receipt.`];
 }
 
 // ---------------------------------------------------------------------------
@@ -333,7 +358,16 @@ async function loadChain() {
     return;
   }
   setSource("src-mirror", "ok", "Reachable", `${mirrorHost} · ${messages.length} message${messages.length === 1 ? "" : "s"} read`);
-  markManifestOnLedger(messages, null);
+  let manifestPool = messages;
+  if (messages.length >= 100 && !messages.some((m) => m.kind === "manifest")) {
+    // The 0x02 message is published before the first root, so on a busy topic it
+    // is older than the newest 100: read the oldest ones too.
+    try {
+      manifestPool = messages.concat(await s.topicMessages(state.topic, { limit: 100, order: "asc" }));
+    } catch { /* keep the newest page; the note says "among the topic messages read" */ }
+  }
+  if (s !== state.sources) return;
+  markManifestOnLedger(manifestPool, null);
 
   const roots = messages.filter((m) => m.kind === "root");
   const manifests = messages.filter((m) => m.kind === "manifest");
@@ -411,7 +445,7 @@ function onFeedRow(row) {
   const kind = simulated ? row.kind.slice(0, 40) : null;
 
   state.feedTotal += 1;
-  state.arrivals.push(when.getTime());
+  state.arrivals.push(Date.now()); // "received" per minute: arrival time here, not a server-supplied time
   const cutoff = Date.now() - (RATE_MINUTES + 1) * 60000;
   state.arrivals = state.arrivals.filter((t) => t >= cutoff);
 
@@ -553,7 +587,7 @@ async function runVerify(text, name = "record.json") {
   const { pipeline, verify } = state.mods;
   const term = state.term;
   if (!pipeline || !term) {
-    showResult({ state: "unavailable", reason: "The verification module did not load, so nothing was checked." }, null);
+    showResult({ state: "unavailable", reason: "The verification module did not load, so nothing was checked.", notChecked: true }, null);
     return;
   }
   setBusy(true);
@@ -561,6 +595,12 @@ async function runVerify(text, name = "record.json") {
   term.clear();
   try {
     let exportObj;
+    if (typeof text === "string" && text.length > MAX_EXPORT_BYTES) {
+      const reason = `That text is ${(text.length / 1048576).toFixed(1)} MB; exports are far smaller. Paste the JSON VIGIL shared.`;
+      term.line(reason, "fail");
+      showResult({ state: "failed", reason, firstBroken: null }, null);
+      return;
+    }
     try {
       exportObj = pipeline.exportFromShare ? pipeline.exportFromShare(text) : JSON.parse(text);
     } catch (error) {
@@ -595,7 +635,9 @@ async function runVerify(text, name = "record.json") {
       }
       const seq = safeSeq(proof?.receipt?.sequence_number);
       if (seq) {
-        const topic = TOPIC_RE.test(String(proof.receipt.topic_id)) ? proof.receipt.topic_id : state.topic;
+        // Always the pinned topic: the server only names a sequence; the root
+        // itself comes from the mirror on the topic in contracts/keys/.
+        const topic = state.pins.topic_id;
         term.line(`Reading message #${seq} of topic ${topic} from ${hostOf(state.mirror)}`, "dim");
         try {
           ledgerMessage = await s.message(topic, seq);
@@ -669,15 +711,18 @@ function showResult(result, ctx) {
     const why = ctx?.proofError ? `The proof could not be fetched: ${ctx.proofError}` :
       ctx?.messageError ? `The ledger message could not be read: ${ctx.messageError}` :
         result.reason ?? "No confirmed anchor contains this record's latest entry yet.";
-    text = `Every hash, link and signature in the record checks out. ${why} Anchoring runs within a minute for PIN-gated events and hourly for the rest; try again later.`;
+    text = result.notChecked
+      ? why
+      : `Every hash, link and signature in the record checks out. ${why} Anchoring runs within a minute for PIN-gated events and hourly for the rest; try again later.`;
   } else {
     const at = Number.isInteger(result.firstBroken) ? `First broken entry: #${result.firstBroken}. ` : "";
-    text = `${at}${result.reason ?? "A check failed."} Do not rely on this record.`;
+    const reason = String(result.reason ?? "A check failed.");
+    text = `${at}${reason}${/[.!?]$/.test(reason) ? "" : "."} Do not rely on this record.`;
   }
   $("result-text").textContent = text;
 
   const rows = [];
-  if (st !== "failed" || result.head) {
+  if (!result.notChecked && (st !== "failed" || result.head)) {
     rows.push(["Status", copy.pill]);
     rows.push(["Merkle root", result.root ?? "not computed"]);
     rows.push(["Chain head", result.head ?? "unknown"]);
@@ -688,7 +733,7 @@ function showResult(result, ctx) {
     rows.push(["Running hash", msg?.running_hash ?? receipt?.running_hash ?? "—"]);
     rows.push(["Network", `Hedera ${state.pins?.network ?? "testnet"}, epoch ${receipt?.topic_epoch ?? state.pins?.topic_epoch ?? "?"}`]);
     rows.push(["Key manifest", state.pins?.manifest_fingerprint_hex ?? "—"]);
-    rows.push(["Verified at", `${fmtUtc(new Date())} by VUKA Ledger in the browser`]);
+    rows.push(["Checked at", `${fmtUtc(new Date())} by VUKA Ledger in the browser`]);
   }
   const list = $("keep-list");
   list.replaceChildren();
@@ -872,6 +917,12 @@ async function boot() {
 
   const defaultServer = sources?.DEFAULT_SERVER ?? FALLBACK_SERVER;
   state.server = chooseServer(defaultServer);
+  if (state.server !== defaultServer) {
+    // A shared link can carry ?server=; say so plainly. The server only supplies
+    // proofs and the feed: every root is still read from the Hedera mirror on the
+    // pinned topic, so a different server cannot make a record verify.
+    notice(`This page is using the ANCHOR server ${hostOf(state.server)}, not the default ${hostOf(defaultServer)}. Its feed and "latest anchor" are its own claims; record roots are still read from the Hedera mirror on the pinned topic. Settings → Use the default server switches back.`);
+  }
   wireSettings(defaultServer);
   wireVerify();
 
