@@ -14,10 +14,10 @@
 | 4A · How it works | The mechanism — automatic | T, U | 54 |
 | 4B · The record | Where it lives; one matched record | T, S, B | 98 |
 | 5 · Why it works | The sale — two halves, nobody does both | I, T | 111 |
-| 6 · Business | There is a business; why they pay | B | 80 |
+| 6 · Business | There is a business; why they pay | B | 89 |
 | 7 · Compliance | Neutralise the objections; deployability | S, B | 52 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **672** |
+| | | **Total** | **681** |
 
 ---
 
@@ -49,7 +49,7 @@ Here's why it wins. This problem has two halves: noticing the duress, and provin
 
 ### Beat 6 — Business
 
-Two people pay. The insurer pays per member, per month — about fifty rand — because it stops paying fake claims and settles real ones faster. The bank pays per case — fifteen rand — when it pulls a verified record, because that is far cheaper than a disputed escalation. The victim pays nothing. Neither payer has to recover the stolen money for that to pay off. Break-even is three thousand seven hundred and seventy-four members. The model carries the infrastructure cost from the first rand.
+Two people pay. The insurer pays per member, per month — about fifty rand — because a claim now carries a record made at the time: real claims settle faster, and fakes get harder to pass off. The bank pays per case — fifteen rand — when it pulls a verified record, because that is far cheaper than a disputed escalation. The victim pays nothing. Neither payer has to recover the stolen money for that to pay off. Break-even is three thousand seven hundred and seventy-four members. The model carries the infrastructure cost from the first rand.
 
 ### Beat 7 — Compliance
 
@@ -84,11 +84,18 @@ Here's what we want from this room. One insurer, five thousand members, twelve m
 | Blockchain is legal here; not a financial service; no crypto; no tokens | ADR-0034/0035; `context.md` |
 | Built for the ECT Act | ECTA 25 of 2002 s15(3)(a)–(c) |
 
+### How fake claims work — and what VUKA actually changes
+- **Today, a coerced-transfer claim is just a story.** Someone says they were forced. There is no record of the coercion — the insurer has only their word, a police case (which can be fabricated), and a bank transaction that shows the transfer was **authorised**. So the insurer **pays blind, or fights blind.**
+- **VUKA does not prove the duress was real** — the anchor proves *when*, not *what*. It is **not a lie detector.** What it does is give the claim **a record made at the time** — signed by the device, and anchored so it **cannot be backdated or edited**.
+- **For a real victim:** the insurer can verify the timeline and settle faster and cheaper.
+- **For a faker:** to match, they must have produced that same signed, anchored record at the moment it happened — the app armed, a real detection triggered, a device key signing it. And because the anchor locks the story early, their account has to survive **every other record** — CCTV, cell towers, the bank's own device fingerprint. Faking becomes harder and riskier; some fakes are deterred or caught.
+- **The line we never cross:** the **absence** of a VUKA record is **never** evidence against a claimant. A genuine victim whose phone was off must not be penalised. **VUKA is a verification input, not a verdict.**
+- **So the insurer's saving** = fewer fakes paid (deterred or caught) **plus** genuine claims settled faster and cheaper. Both are **pilot measurements, not promises.**
+
 ### How each stakeholder makes or saves money (the honest mechanism)
 - **The money is gone.** Once a coerced transfer settles and the criminal withdraws it, VUKA **does not recover it** — and we never claim to. The value is *before* and *around* the payout, not the stolen cash.
 - **Both payers still profit, without recovering a cent.** The insurer saves the value of the **fake claims it would otherwise pay** (plus handling time). The bank saves the **cost of the disputes it no longer escalates** (plus customer churn). **Neither saving depends on clawing the money back.**
-- **"Staged claim" — plain English.** A fabricated claim: someone invents a hijacking or a coercion and claims for a loss that never really happened. Insurers have always struggled to tell those from real ones. VUKA gives them a record to test.
-- **The insurer saves** by **not paying fake claims** it can now evidence against, and by **settling genuine claims faster and cheaper**. Genuine claims are ones it owed anyway; the saving is the **fabricated share plus handling time**. The pilot measures it — the actuary test is that the insurer saves more than twelve times the price per member, per year.
+- **The insurer saves** by **not paying fakes** it can now evidence against, and by **settling genuine claims faster and cheaper**. Genuine claims are ones it owed anyway; the saving is the **fabricated share plus handling time**. The pilot measures it — the actuary test is that the insurer saves more than twelve times the price per member, per year.
 - **The bank saves** because a verified record **resolves a dispute without escalation**: an Ombud case costs the system **~R4,962** and **~61 days**, and **disbelieved customers leave**. The bank is **not liable for the loss today** (no mandatory reimbursement in SA), so its cost is dispute handling and churn — not the stolen money.
 - **Where money can still be saved:** the **PROPOSED bank protective signal** (ADR-0037) lets the bank place its own hold on new-beneficiary or large transfers on a duress signal — so where the transfer has **not yet cleared or been withdrawn, funds can be frozen**. That is the only path to recovering the money itself; it is partner-dependent and **not yet live**.
 - **The victim** gets the proof — and, where covered, faster reimbursement: the thing they never had.
