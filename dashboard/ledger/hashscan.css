@@ -1,0 +1,544 @@
+/* VUKA Ledger: HashScan skin.
+   The product owner chose HashScan (Hedera's explorer, https://hashscan.io) as the visual
+   reference. This one file restyles the Carbon build; it is linked LAST in index.html, so
+   deleting its <link> restores the Carbon look exactly. It changes no markup or behaviour.
+
+   Source read (Apache-2.0, hashgraph/hedera-mirror-node-explorer, _frontend/):
+     public/style-config.css          light/dark palette (values copied below)
+     src/styles/explorer.css          base type, .h-has-pill chips, .h-is-label, .h-code-box,
+                                      .h-sub-section, page margins 16px / 32px from 1080px
+     src/styles/oruga-customization.css  tables: th 12px/500 secondary, 1px rules
+     src/components/DashboardCardV2.vue  cards: 1px table-border, 16px radius, 16px padding
+                                      (32px from 1080px), 20px/500 title from 1080px
+     src/components/Property.vue      key/value rows: 12px/500 uppercase secondary label, 14px value
+     src/components/page/header/*.vue top bar: logo left, tab links (secondary, current primary)
+     src/elements/ButtonView.vue, TextFieldView.vue, components/NotificationBanner.vue
+   Not used: 'Styrene A Web' (commercial; Inter 500/600 stands in for it) and HashScan's
+   purple/pink network brand colours (#7A1B80, #A7449D, #E0007B ...) or its logo. This is
+   VUKA's product; only the neutral palette, the blue accent and the shapes are borrowed.
+
+   Deliberate deviations from HashScan's palette (accessibility, WCAG 2.2 AA):
+     1. Secondary text, light: HashScan #888888 on #FFFFFF is 3.54:1, below 4.5:1 for small
+        text. Used here: #6F6F6F (5.02:1 on #FFFFFF, 4.65:1 on #F6F6F6). Dark keeps HashScan's
+        #A2A2A2 (7.02:1 on #171717).
+     2. Link/accent TEXT, dark: #255CF4 on #171717 is 3.34:1. Text links use #6E95FF in dark
+        (6.32:1 on #171717, 4.93:1 on #2C2C2C). Buttons keep the #255CF4 fill with white text
+        (5.36:1) in both themes.
+     3. Chips: HashScan's dark palette keeps the darker status fills (#00722D, #C40E3A) for
+        chips, since white on #29BC63 would be 2.4:1; the lighter #29BC63 / #EA1548 are used
+        only for icons and text on dark surfaces. Dark #EA1548 on #171717 is 4.01:1, so it
+        is used for icons and accents (3:1 rule), not for body text.
+     4. Warning: HashScan has no warning colour; Carbon's #F1C21B is kept for the SIMULATED /
+        warning shapes, which always carry the triangle icon and a text label.
+     5. Input borders use HashScan's TextFieldView border (text-secondary #888888 light,
+        3.54:1 on white, passes the 3:1 non-text rule) instead of the #D7D7D7 divider (1.44:1).
+   Status is never colour alone: every chip keeps its shape icon (check, x, triangle, ring)
+   and its text label. */
+
+/* ---------------------------------------------------------------- fonts (self-hosted, SIL OFL 1.1) */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Geist Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/geist-mono-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Geist Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/geist-mono-latin-500-normal.woff2") format("woff2"); }
+
+/* ---------------------------------------------------------------- light (HashScan light mode) */
+:root {
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "DejaVu Sans Mono", monospace;
+
+  --cds-background: #F6F6F6;          /* background-primary */
+  --cds-layer-01: #FFFFFF;            /* background-tertiary (cards) */
+  --cds-layer-02: #EFEFEF;            /* background-secondary */
+  --cds-layer-hover-01: #EFEFEF;
+  --cds-layer-accent-01: #EFEFEF;
+  --cds-layer-selected-01: #EFEFEF;
+  --cds-field-01: #FFFFFF;            /* search-bar-default */
+  --cds-border-subtle-00: #EFEFEF;    /* border-primary */
+  --cds-border-subtle-01: #EFEFEF;    /* table-border */
+  --cds-border-strong-01: #D7D7D7;    /* border-secondary */
+  --cds-text-primary: #050505;
+  --cds-text-secondary: #6F6F6F;      /* deviation 1 (HashScan #888888) */
+  --cds-text-helper: #6F6F6F;
+  --cds-text-placeholder: #6F6F6F;
+  --cds-text-on-color: #FFFFFF;
+  --cds-link-primary: #255CF4;        /* text-accent2 */
+  --cds-link-primary-hover: #1A45C0;
+  --cds-interactive: #255CF4;
+  --cds-focus: #255CF4;
+  --cds-support-success: #00722D;
+  --cds-support-warning: #F1C21B;     /* deviation 4 */
+  --cds-support-error: #C40E3A;       /* status-error-color */
+  --cds-support-info: #255CF4;
+  --cds-button-primary: #255CF4;
+  --cds-button-primary-hover: #1D4FD8;
+  --cds-button-primary-active: #1841B5;
+  --cds-button-secondary: #EFEFEF;    /* button-background-secondary */
+  --cds-button-secondary-hover: #E2E2E2;
+  --cds-button-tertiary: #050505;
+  --cds-button-tertiary-hover: #EFEFEF;
+  --cds-button-disabled: #EFEFEF;
+  /* Always-dark surfaces (fallback trace, warning glyph) take HashScan's dark values;
+     the top bar no longer uses these (it follows the theme, see --hs-bar). */
+  --shell-bg: #131313;
+  --shell-text: #FFFFFF;
+  --shell-muted: #A2A2A2;
+  --shell-hover: #2C2C2C;
+  --shell-border: #2C2C2C;
+
+  /* HashScan names with no Carbon equivalent */
+  --hs-bar: #FFFFFF;                  /* header, background-tertiary */
+  --hs-tab-bg: rgba(5, 5, 5, 0.05);   /* tab-background (.h-sub-section) */
+  --hs-code-bg: #EFEFEF;              /* .h-code-box background-secondary */
+  --hs-field-border: #888888;         /* TextFieldView border (deviation 5) */
+  --hs-chip-default: #EFEFEF;         /* chip-secondary-default */
+  --hs-chip-success: #00722D;         /* status-success-color */
+  --hs-chip-error: #C40E3A;           /* status-error-color */
+  --hs-copy-bg: #2C2C2C;              /* copy-button-background */
+  --hs-copy-fg: #FFFFFF;
+  --hs-btn-secondary-fg: #050505;
+
+  /* page names (ledger.css, views.css) */
+  --bg: var(--cds-background);
+  --surface: var(--cds-layer-01);
+  --sunken: var(--cds-layer-accent-01);
+  --rule: var(--cds-border-subtle-01);
+  --rule-strong: var(--cds-border-strong-01);
+  --text: var(--cds-text-primary);
+  --muted: var(--cds-text-secondary);
+  --faint: var(--cds-text-helper);
+  --accent: var(--cds-interactive);
+  --accent-ink: var(--cds-link-primary-hover);
+  --on-accent: var(--cds-text-on-color);
+  --ok: var(--cds-support-success);
+  --warn: var(--cds-support-warning);
+  --fail: var(--cds-support-error);
+  --idle: var(--cds-border-strong-01);
+
+  /* layout (HashScan: 16px page margins, 32px from 1080px) */
+  --gutter: 16px;
+  --head-h: 64px;
+  --hs-card-pad: 16px;
+}
+@media (min-width: 1080px) {
+  :root { --gutter: 32px; --hs-card-pad: 32px; }
+}
+
+/* ---------------------------------------------------------------- dark (HashScan dark mode) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --cds-background: #131313;
+    --cds-layer-01: #171717;
+    --cds-layer-02: #2C2C2C;
+    --cds-layer-hover-01: #1F1F1F;
+    --cds-layer-accent-01: #2C2C2C;
+    --cds-layer-selected-01: #2C2C2C;
+    --cds-field-01: #171717;
+    --cds-border-subtle-00: #1F1F1F;
+    --cds-border-subtle-01: #1F1F1F;
+    --cds-border-strong-01: #2C2C2C;
+    --cds-text-primary: #FFFFFF;
+    --cds-text-secondary: #A2A2A2;
+    --cds-text-helper: #A2A2A2;
+    --cds-text-placeholder: #A2A2A2;
+    --cds-link-primary: #6E95FF;      /* deviation 2 */
+    --cds-link-primary-hover: #9BB6FF;
+    --cds-interactive: #255CF4;
+    --cds-focus: #6E95FF;
+    --cds-support-success: #29BC63;
+    --cds-support-warning: #F1C21B;
+    --cds-support-error: #EA1548;
+    --cds-support-info: #6E95FF;
+    --cds-button-primary: #255CF4;
+    --cds-button-primary-hover: #3B6DF6;
+    --cds-button-primary-active: #1D4FD8;
+    --cds-button-secondary: #2C2C2C;
+    --cds-button-secondary-hover: #3A3A3A;
+    --cds-button-tertiary: #FFFFFF;
+    --cds-button-tertiary-hover: #2C2C2C;
+    --cds-button-disabled: #2C2C2C;
+    --accent-ink: var(--cds-link-primary);
+    --hs-bar: #171717;
+    --hs-tab-bg: rgba(255, 255, 255, 0.05);
+    --hs-code-bg: #050505;
+    --hs-field-border: #A2A2A2;
+    --hs-chip-default: #545454;
+    --hs-chip-success: #00722D;
+    --hs-chip-error: #C40E3A;
+    --hs-copy-bg: #EFEFEF;
+    --hs-copy-fg: #050505;
+    --hs-btn-secondary-fg: #FFFFFF;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --cds-background: #131313;
+  --cds-layer-01: #171717;
+  --cds-layer-02: #2C2C2C;
+  --cds-layer-hover-01: #1F1F1F;
+  --cds-layer-accent-01: #2C2C2C;
+  --cds-layer-selected-01: #2C2C2C;
+  --cds-field-01: #171717;
+  --cds-border-subtle-00: #1F1F1F;
+  --cds-border-subtle-01: #1F1F1F;
+  --cds-border-strong-01: #2C2C2C;
+  --cds-text-primary: #FFFFFF;
+  --cds-text-secondary: #A2A2A2;
+  --cds-text-helper: #A2A2A2;
+  --cds-text-placeholder: #A2A2A2;
+  --cds-link-primary: #6E95FF;
+  --cds-link-primary-hover: #9BB6FF;
+  --cds-interactive: #255CF4;
+  --cds-focus: #6E95FF;
+  --cds-support-success: #29BC63;
+  --cds-support-warning: #F1C21B;
+  --cds-support-error: #EA1548;
+  --cds-support-info: #6E95FF;
+  --cds-button-primary: #255CF4;
+  --cds-button-primary-hover: #3B6DF6;
+  --cds-button-primary-active: #1D4FD8;
+  --cds-button-secondary: #2C2C2C;
+  --cds-button-secondary-hover: #3A3A3A;
+  --cds-button-tertiary: #FFFFFF;
+  --cds-button-tertiary-hover: #2C2C2C;
+  --cds-button-disabled: #2C2C2C;
+  --accent-ink: var(--cds-link-primary);
+  --hs-bar: #171717;
+  --hs-tab-bg: rgba(255, 255, 255, 0.05);
+  --hs-code-bg: #050505;
+  --hs-field-border: #A2A2A2;
+  --hs-chip-default: #545454;
+  --hs-chip-success: #00722D;
+  --hs-chip-error: #C40E3A;
+  --hs-copy-bg: #EFEFEF;
+  --hs-copy-fg: #050505;
+  --hs-btn-secondary-fg: #FFFFFF;
+}
+
+/* ---------------------------------------------------------------- base type (explorer.css) */
+body { letter-spacing: 0; font: 400 14px/1.42857 var(--font-sans); }
+h1, .vw-title { font: 500 1.25rem/1.75rem var(--font-sans); letter-spacing: 0; }
+h2, .cds-heading-03 { font: 500 1.25rem/1.75rem var(--font-sans); letter-spacing: 0; }
+h3, .cds-heading-02, .h-sub { font: 500 1rem/1.5rem var(--font-sans); letter-spacing: 0; }
+@media (min-width: 1080px) {
+  h1, .vw-title { font-size: 1.625rem; line-height: 2.25rem; } /* PageHeader title 26px */
+}
+.mono, code, .cds-code { font-family: var(--font-mono); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.label, .cds-label-01, .cds-helper, .hint, .copy-status { letter-spacing: 0; }
+.view-sub, .vw-sub, .block-sub, .mt-lede, .vf-helper { letter-spacing: 0; color: var(--cds-text-secondary); }
+.skip { border-radius: 8px; }
+
+/* ---------------------------------------------------------------- top bar (PageHeader.vue) */
+.top {
+  background: var(--hs-bar); color: var(--cds-text-primary);
+  border-bottom: 1px solid var(--cds-border-subtle-01);
+}
+.top-inner {
+  height: var(--head-h);
+  max-width: none;
+  padding: 0 var(--gutter);
+  column-gap: 24px;
+  align-items: center;
+}
+.brand {
+  padding: 0; gap: 8px;
+  color: var(--cds-text-primary);
+  font: 500 1rem/1.5rem var(--font-sans); letter-spacing: 0;
+}
+.brand:hover { background: none; color: var(--cds-text-primary); }
+.brand:focus-visible { outline: 2px solid var(--cds-focus); outline-offset: 2px; border-radius: 4px; }
+.brand-mark { width: 20px; height: 20px; color: var(--cds-text-primary); }
+.brand-name strong { font-weight: 700; }
+.tabs { border-left: 0; padding-left: 0; gap: 4px; align-items: center; }
+.tabs a {
+  height: 32px; padding: 0 12px; border-radius: 8px;
+  border-bottom: 0;
+  color: var(--cds-text-secondary);
+  font: 400 14px/1.35 var(--font-sans); letter-spacing: 0;
+}
+.tabs a:hover { background: var(--hs-tab-bg); color: var(--cds-text-primary); text-decoration: none; }
+.tabs a:focus-visible { outline: 2px solid var(--cds-focus); outline-offset: -2px; }
+/* current tab: primary text on a tab-background pill (shape + weight, not colour alone) */
+.tabs a[aria-current="true"] { color: var(--cds-text-primary); background: var(--hs-tab-bg); font-weight: 500; }
+.quick { align-self: center; }
+.quick-icon { left: 12px; fill: var(--cds-text-secondary); }
+.quick input {
+  height: 40px; min-height: 40px;
+  padding: 0 12px 0 36px;
+  background: var(--cds-field-01); color: var(--cds-text-primary);
+  border: 1px solid var(--hs-field-border); border-radius: 8px;
+  font: 400 14px/1.3 var(--font-sans); letter-spacing: 0;
+}
+.quick input::placeholder { color: var(--cds-text-placeholder); }
+.quick input:focus-visible { outline: 2px solid var(--cds-focus); outline-offset: -1px; border-color: var(--cds-focus); }
+.net { border-left: 0; align-self: center; }
+
+@media (max-width: 1055px) {
+  html { scroll-padding-top: 116px; }
+  .top-inner { height: auto; grid-template-rows: 56px 44px; column-gap: 16px; }
+  .tabs { border-top: 0; padding-bottom: 8px; }
+}
+@media (max-width: 671px) {
+  .brand { padding-right: 0; }
+}
+
+/* ---------------------------------------------------------------- page frame (.h-page-content) */
+.wrap { padding: 0 var(--gutter) 64px; }
+.wrap-inner { padding: 24px var(--gutter) 48px; }
+.view { padding-top: 24px; gap: 16px; }
+.view + .view { border-top: 0; margin-top: 32px; padding-top: 16px; }
+.view-head, .vw-head { gap: 4px; }
+.notices { padding-top: 16px; }
+
+/* ---------------------------------------------------------------- dashboard cards (DashboardCardV2.vue) */
+.block,
+.fact.cds-tile,
+.vf-tile,
+.vf-keep,
+.mt-figure,
+.mt-block,
+.mt-proves-col,
+.st-form,
+.src-list {
+  background: var(--cds-layer-01);
+  border: 1px solid var(--cds-border-subtle-01);
+  border-radius: 16px;
+  padding: var(--hs-card-pad);
+  min-width: 0;
+}
+.block { gap: 16px; }
+.block-head { padding-bottom: 0; min-height: 26px; gap: 8px 16px; }
+.block-sub { padding-bottom: 0; }
+/* card titles: 14px/500, 20px/500 from 1080px */
+.block-head h2,
+.vf-tile-title,
+.vf-keep-head .vw-h3,
+.mt-block > .vw-h3,
+.mt-slist-head {
+  font: 500 14px/1.4 var(--font-sans); letter-spacing: 0; color: var(--cds-text-primary);
+}
+@media (min-width: 1080px) {
+  .block-head h2,
+  .vf-tile-title,
+  .vf-keep-head .vw-h3,
+  .mt-block > .vw-h3,
+  .mt-slist-head { font-size: 20px; line-height: 28px; }
+}
+
+/* key facts: one card each, 16px apart */
+.facts { gap: 16px; background: none; border: 0; }
+.fact { gap: 8px; }
+.fact dt { font: 500 12px/16px var(--font-sans); letter-spacing: 0; text-transform: uppercase; color: var(--cds-text-secondary); }
+.fact-value { font: 500 1.25rem/1.75rem var(--font-sans); }
+.fact-value.mono, .fact-value .mono { font: 400 1rem/1.5rem var(--font-mono); letter-spacing: 0; }
+.fact dd.fact-state { justify-self: start; }
+.fact-note { letter-spacing: 0; color: var(--cds-text-secondary); }
+
+/* ---------------------------------------------------------------- chips (.h-has-pill) */
+.cds-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 20px; padding: 0 8px 0 4px;
+  border-radius: 32px;
+  background: var(--hs-chip-default); color: var(--cds-text-primary);
+  font: 500 12px/16px var(--font-sans); letter-spacing: 0;
+  vertical-align: middle;
+}
+.cds-status .cds-status__label,
+.cds-status .src-name,
+.cds-status .src-state,
+.cds-status .src-sep,
+.sim-tag .cds-status__label { color: inherit; font: inherit; letter-spacing: 0; }
+.cds-status .src-icon { display: inline-flex; }
+.cds-status .cds-status__icon { width: 12px; height: 12px; }
+/* default chip: shapes in text colour (ring for idle, triangle for warning) */
+.cds-status .cds-status__icon[data-kind="idle"] .cds-status__shape,
+.net .cds-status__icon[data-kind="idle"] .cds-status__shape { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.cds-status .cds-status__icon[data-kind="warning"] .cds-status__shape { fill: var(--cds-support-warning); }
+.cds-status .cds-status__icon[data-kind="warning"] .cds-status__glyph { fill: #050505; }
+/* success / error chips: HashScan's status fills with white text; the icon is white with its
+   check or cross cut out, so the shape still reads without the colour */
+.cds-status:has(.cds-status__icon[data-kind="success"]) { background: var(--hs-chip-success); color: #FFFFFF; }
+.cds-status:has(.cds-status__icon[data-kind="error"]) { background: var(--hs-chip-error); color: #FFFFFF; }
+.cds-status .cds-status__icon[data-kind="success"] .cds-status__shape,
+.cds-status .cds-status__icon[data-kind="error"] .cds-status__shape { fill: #FFFFFF; }
+.statusrow, .src-items { gap: 8px; }
+.src-details summary { letter-spacing: 0; }
+.src-list { margin-top: 8px; grid-template-columns: max-content minmax(0, 1fr); column-gap: 16px; padding: 16px; }
+.src-list dt, .src-list dd { padding: 6px 0; border-bottom: 0; }
+.src-list dt { font: 500 12px/16px var(--font-sans); text-transform: uppercase; color: var(--cds-text-secondary); }
+.src-list dd { font-size: 12px; line-height: 16px; }
+.kind { gap: 8px; }
+
+/* ---------------------------------------------------------------- notifications (NotificationBanner.vue shape) */
+.cds-notif {
+  gap: 12px;
+  padding: 16px;
+  background: var(--cds-layer-01);
+  border: 1px solid var(--cds-border-subtle-01);
+  border-radius: 16px;
+  box-shadow: inset 4px 0 0 var(--notif-accent);
+}
+.cds-notif__title, .cds-notif__subtitle { letter-spacing: 0; }
+.cds-notif__title { font-weight: 600; }
+
+/* ---------------------------------------------------------------- buttons (ButtonView.vue; 8px radius) */
+.cds-btn, .btn {
+  justify-content: center;
+  padding: 0 24px;
+  border-radius: 8px;
+  font: 500 14px/1.3 var(--font-sans); letter-spacing: 0;
+}
+.cds-btn:focus-visible, .btn:focus-visible {
+  border-color: transparent;
+  box-shadow: none;
+  outline: 2px solid var(--cds-focus); outline-offset: 2px;
+}
+.btn, .btn:hover { color: var(--hs-btn-secondary-fg); }
+.cds-btn--secondary, .cds-btn--secondary:hover { color: var(--hs-btn-secondary-fg); }
+.cds-btn--tertiary { color: var(--cds-text-primary); border-color: var(--hs-field-border); }
+.cds-btn--tertiary:hover { background: var(--cds-button-tertiary-hover); color: var(--cds-text-primary); border-color: var(--hs-field-border); }
+.cds-btn--tertiary:focus-visible { background: transparent; color: var(--cds-text-primary); }
+.cds-btn--ghost, .btn-quiet { padding: 0 16px; justify-content: center; }
+.cds-btn--ghost:hover, .btn-quiet:hover { background: var(--cds-layer-02); text-decoration: none; }
+.cds-btn--sm, .btn-sm { padding: 0 14px; font-size: 12px; }
+.cds-btn--icon { padding: 0; }
+.cds-btn[disabled], .cds-btn:disabled, .btn[disabled] { opacity: 0.4; background: var(--cds-button-disabled); color: var(--cds-text-primary); }
+.cds-btn--icon[data-feedback]::after, .tooltip, .cds-snippet__feedback { border-radius: 8px; letter-spacing: 0; padding: 4px 8px; }
+.actions, .vf-actions, .st-actions { gap: 8px; }
+
+/* ---------------------------------------------------------------- fields (8px radius, 1px border) */
+.cds-field,
+input[type="text"], input[type="search"], input[type="url"], select, textarea,
+#verify .vf-text,
+#settings .st-input {
+  background: var(--cds-field-01);
+  border: 1px solid var(--hs-field-border);
+  border-radius: 8px;
+  letter-spacing: 0;
+}
+.cds-tile .cds-field, .cds-tile input[type="text"], .cds-tile input[type="url"], .cds-tile select, .cds-tile textarea { background: var(--cds-field-01); }
+.cds-field:focus, .cds-field:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible,
+#verify .vf-text:focus, #settings .st-input:focus { outline: 2px solid var(--cds-focus); outline-offset: -1px; border-color: var(--cds-focus); }
+.cds-label, .field-label, .field > label, .field legend,
+.vf-label, .st-field > label, .st-field > legend {
+  font: 500 12px/16px var(--font-sans); letter-spacing: 0; color: var(--cds-text-secondary);
+}
+.vf-note, .st-hint, .st-status, .vf-copy-status, .vf-flow-n, .mt-figure figcaption { letter-spacing: 0; }
+.vf-drop { border: 1px dashed var(--hs-field-border); border-radius: 8px; }
+.vf-drop.is-over { border: 2px solid var(--cds-focus); }
+.vf-drop:focus-within { outline-offset: 2px; }
+.vf-drop-text, .vf-flow-t, .vf-tile-title, .vf-helper { letter-spacing: 0; }
+.st-radio { letter-spacing: 0; }
+.st-radio input:checked { border-color: var(--cds-interactive); }
+.st-radio input:checked::before { background: var(--cds-interactive); }
+
+/* ---------------------------------------------------------------- tables (o-table) */
+.cds-table { background: transparent; font: 400 14px/1.3 var(--font-sans); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.cds-table th {
+  height: auto; padding: 12px;
+  background: var(--cds-layer-01); color: var(--cds-text-secondary);
+  font: 500 12px/16px var(--font-sans); letter-spacing: 0; text-transform: uppercase;
+  border-bottom: 1px solid var(--cds-border-strong-01);
+}
+.cds-table td,
+.cds-table--compact td {
+  height: auto; padding: 8px 12px;
+  background: transparent; color: var(--cds-text-primary);
+  border-top: 0; border-bottom: 1px solid var(--cds-border-subtle-01);
+}
+@media (min-width: 1080px) {
+  .cds-table td, .cds-table--compact td { padding-top: 16px; padding-bottom: 16px; }
+}
+.cds-table th:first-child, .cds-table td:first-child { padding-left: 0; }
+.cds-table th:last-child, .cds-table td:last-child { padding-right: 0; }
+.cds-table tbody tr:hover td { background: var(--cds-background); color: var(--cds-text-primary); }
+.cds-table td.empty, .cds-table tbody tr.is-empty:hover td { background: transparent; color: var(--cds-text-secondary); }
+.cds-table .mono, .cds-table .cds-code { font-size: 13px; }
+@keyframes arrive { from { background: var(--cds-layer-02); } to { background: transparent; } }
+
+/* formulas table (Method) */
+@media (min-width: 672px) {
+  #how .mt-table { background: transparent; }
+  #how .mt-table th, #how .mt-table td { padding: 16px 12px; letter-spacing: 0; color: var(--cds-text-primary); border-bottom: 1px solid var(--cds-border-subtle-01); }
+  #how .mt-table th:first-child, #how .mt-table td:first-child { padding-left: 0; }
+  #how .mt-table th:last-child, #how .mt-table td:last-child { padding-right: 0; }
+  #how .mt-table thead th {
+    padding-top: 12px; padding-bottom: 12px;
+    background: transparent; color: var(--cds-text-secondary);
+    font: 500 12px/16px var(--font-sans); text-transform: uppercase;
+    border-bottom: 1px solid var(--cds-border-strong-01);
+  }
+  #how .mt-table tbody th { background: transparent; font-weight: 500; }
+  #how .mt-table tbody tr:hover > * { background: var(--cds-background); }
+}
+@media (max-width: 671px) {
+  #how .mt-table { background: transparent; }
+  #how .mt-table tr { padding: 12px 0; border-bottom-color: var(--cds-border-subtle-01); }
+  #how .mt-table td { color: var(--cds-text-primary); letter-spacing: 0; }
+  #how .mt-table tbody th { background: none; font-weight: 500; }
+}
+#how .mt-table .mt-def { letter-spacing: 0; }
+
+/* ---------------------------------------------------------------- key/value rows (Property.vue) */
+.cds-slist dt, .cds-slist dd { padding: 8px 16px 8px 0; border-bottom: 0; }
+.cds-slist dt { font: 500 12px/18px var(--font-sans); letter-spacing: 0; text-transform: uppercase; color: var(--cds-text-secondary); }
+.cds-slist dd { font-size: 14px; line-height: 18px; }
+.cds-slist dd.cds-code, .cds-slist dd.mono, .cds-slist dd .cds-code { font-family: var(--font-mono); font-size: 13px; line-height: 18px; letter-spacing: 0; }
+@media (max-width: 671px) {
+  .cds-slist dt { padding-bottom: 2px; }
+  .cds-slist dd { padding-top: 0; padding-bottom: 12px; }
+}
+/* the two "proves" lists are plain rows inside cards */
+.mt-proves { gap: 16px; }
+.mt-proves-col { gap: 8px; }
+.mt-slist-head { padding: 0 0 8px; border-bottom: 0; }
+#how .mt-slist .cds-slist__row { padding: 12px 0; letter-spacing: 0; border-bottom: 1px solid var(--cds-border-subtle-01); }
+#how .mt-slist .cds-slist__row:last-child { border-bottom: 0; padding-bottom: 0; }
+
+/* ---------------------------------------------------------------- code / hash box (.h-code-box) */
+.cds-snippet { background: var(--hs-code-bg); border-radius: 8px; }
+.cds-snippet__code {
+  padding: 16px 56px 16px 16px;
+  font: 400 13px/20px var(--font-mono); letter-spacing: 0; font-variant-numeric: tabular-nums;
+}
+.cds-snippet .cds-snippet__copy {
+  top: 8px; right: 8px; width: 32px; height: 32px;
+  background: var(--hs-copy-bg); color: var(--hs-copy-fg);
+  border-radius: 8px;
+}
+.cds-snippet .cds-snippet__copy:hover { background: var(--hs-copy-bg); color: var(--hs-copy-fg); opacity: 0.85; }
+.cds-snippet__feedback { top: 44px; right: 8px; }
+
+/* ---------------------------------------------------------------- chart (inside the Live events card) */
+.chart { padding: 0; background: transparent; margin: 0; }
+.chart figcaption, .c-axis, .c-label, .c-empty { letter-spacing: 0; }
+
+/* ---------------------------------------------------------------- verify view */
+.vf-grid { gap: 16px; }
+.vf-tile { gap: 24px; }
+.vf-flow li { border-top-color: var(--cds-interactive); }
+.vf-run .terminal-host { border-radius: 16px; }
+.vf-result { gap: 16px; }
+.vf-keep { gap: 16px; }
+
+/* ---------------------------------------------------------------- method view */
+.mt-figure { gap: 16px; }
+.mt-scroll { background: transparent; border-radius: 8px; }
+.mt-figure .dg-node rect, .mt-figure .dg-chain rect { rx: 8px; }
+.mt-block { gap: 16px; }
+
+/* ---------------------------------------------------------------- settings view */
+.st-form { gap: 24px; }
+
+/* ---------------------------------------------------------------- terminal: own dark surface, rounded like the cards */
+.vt-terminal { --vt-font: var(--font-mono); border-radius: 16px; letter-spacing: 0; }
+.vt-skip { font-family: var(--font-sans); letter-spacing: 0; }
+.fallback-term { border-radius: 16px; }
+.fallback-term .t-ok { color: #29BC63; }  /* 7.49:1 on #131313 */
+.fallback-term .t-fail { color: #FF6685; } /* 6.63:1 on #131313 */
+
+/* ---------------------------------------------------------------- footer */
+.foot { letter-spacing: 0; }
