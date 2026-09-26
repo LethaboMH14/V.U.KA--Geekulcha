@@ -13,7 +13,7 @@
  * No push yet: alerts arrive while the app is open (FCM is PR #95's path).
  */
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Linking, NativeModules, PermissionsAndroid, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
+import {Alert, Linking, NativeModules, PermissionsAndroid, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Chip, Eyebrow, GlassIcon, Key, Lamp, Panel, QuietKey, Readout, Rule, Surface, TopAppBar} from './components';
 import {CheckCircle, Phone, ShieldChevron, UsersThree} from './icons';
 import {colors, fonts, radii, space, type} from './theme';
@@ -176,7 +176,42 @@ export function GuardianSetup({onDone, onBack}: {onDone: () => void; onBack: () 
 
 /* ── Home ────────────────────────────────────────────────────── */
 
-type Acked = Record<string, ('called_10111' | 'handling' | 'stand_down')[]>;
+type Answer = 'called_10111' | 'handling' | 'stand_down';
+type Acked = Record<string, Answer[]>;
+
+/**
+ * Claim one answer for one alert before sending it. False when it is already
+ * on its way or recorded, so a second press (or a double tap) sends nothing.
+ * The caller releases the claim if the write fails, so it can be retried.
+ */
+export function claimAnswer(claimed: Set<string>, incidentId: string, action: Answer): boolean {
+  const key = `${incidentId}:${action}`;
+  if (claimed.has(key)) return false;
+  claimed.add(key);
+  return true;
+}
+
+/** The recorded state in words. Never claims a call happened: only that Call 10111 was pressed. */
+export function answerStatus(acks: readonly Answer[]): string | null {
+  if (acks.includes('stand_down')) {
+    return acks.includes('called_10111') ? "Stood down. You confirmed they're safe." : "Stood down without calling 10111. You confirmed they're safe.";
+  }
+  if (acks.includes('called_10111')) return 'You pressed Call 10111, recorded.';
+  return null;
+}
+
+/** The "Are they safe?" confirmation; before Call 10111 it says 10111 won't be called from this alert. */
+export function standDownQuestion(acks: readonly Answer[]): string {
+  return acks.includes('called_10111')
+    ? "Only stand down if you know they're safe."
+    : "Only stand down if you know they're safe. 10111 won't be called from this alert.";
+}
+
+/** A failed write, said plainly: nothing is claimed as recorded. */
+export function notRecorded(action: Answer): string {
+  const what = action === 'called_10111' ? 'Your Call 10111 press' : action === 'handling' ? "\"I'm handling it\"" : 'Your stand down';
+  return `${what} wasn't recorded yet. Check your data and try again.`;
+}
 
 /**
  * For a member who is also someone's guardian: watch for alerts app-wide,
@@ -212,7 +247,9 @@ export function GuardianHome({onBack}: {onBack?: () => void} = {}) {
   const [reached, setReached] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
   const [acked, setAcked] = useState<Acked>({});
-  const [note, setNote] = useState<string | null>(null);
+  const [failed, setFailed] = useState<{id: string; action: Answer} | null>(null);
+  const [stoodDown, setStoodDown] = useState<string | null>(null);
+  const claimed = useRef(new Set<string>());
   const live = useRef(true);
   const told = useRef(new Set<string>());
 
@@ -251,14 +288,21 @@ export function GuardianHome({onBack}: {onBack?: () => void} = {}) {
 
   const open = alerts?.find(a => !a.closed_at) ?? null;
   const past = (alerts ?? []).filter(a => a !== open);
-  const answer = async (a: GuardianAlert, action: 'called_10111' | 'handling' | 'stand_down') => {
-    setNote(null);
+  const done = stoodDown && !open ? alerts?.find(a => a.incident_id === stoodDown) ?? null : null;
+  const answer = async (a: GuardianAlert, action: Answer) => {
+    // Each answer is sent once per alert; pressing again only reopens the dialer.
+    if (!claimAnswer(claimed.current, a.incident_id, action)) return;
+    setFailed(null);
     try {
       await device.acknowledge(a.incident_id, action);
       setAcked(x => ({...x, [a.incident_id]: [...(x[a.incident_id] ?? []), action]}));
-      if (action === 'stand_down') void poll();
-    } catch (e) {
-      setNote(`Your answer wasn't sent: ${e instanceof Error ? e.message : String(e)}`);
+      if (action === 'stand_down') {
+        setStoodDown(a.incident_id);
+        void poll();
+      }
+    } catch {
+      claimed.current.delete(`${a.incident_id}:${action}`);
+      if (live.current) setFailed({id: a.incident_id, action});
     }
   };
 
@@ -277,7 +321,30 @@ export function GuardianHome({onBack}: {onBack?: () => void} = {}) {
           </View>
 
           {open ? (
-            <OpenAlert who={who} alert={open} acks={acked[open.incident_id] ?? []} onAnswer={a => answer(open, a)} note={note} />
+            <OpenAlert
+              who={who}
+              alert={open}
+              acks={acked[open.incident_id] ?? []}
+              onAnswer={a => answer(open, a)}
+              failed={failed?.id === open.incident_id ? failed.action : null}
+            />
+          ) : done ? (
+            <Panel hero tone="guardian">
+              <Eyebrow>Stood down · {hhmm(done.opened_at)}</Eyebrow>
+              <Text style={[type.body, {marginTop: space.sm}]} accessibilityLiveRegion="polite">
+                {answerStatus(acked[done.incident_id] ?? [])}
+              </Text>
+              <View style={{marginTop: space.md}}>
+                <Key
+                  label={`Call ${who}`}
+                  variant="guardianPlain"
+                  icon={<Phone size={20} weight="bold" color={colors.amberText} />}
+                  onPress={() => void Linking.openURL('tel:')}
+                />
+              </View>
+              <Text style={[type.caption, {marginTop: space.sm}]}>You stood down, so you can call {who} now. Your phone's dialer opens; VIGIL doesn't keep their number.</Text>
+              <QuietKey label="Back to standby" tone="guardian" onPress={() => setStoodDown(null)} />
+            </Panel>
           ) : (
             <Panel hero tone="guardian">
               <View style={styles.rowHeader}>
@@ -321,15 +388,22 @@ function OpenAlert({
   alert,
   acks,
   onAnswer,
-  note,
+  failed,
 }: {
   who: string;
   alert: GuardianAlert;
-  acks: string[];
-  onAnswer: (a: 'called_10111' | 'handling' | 'stand_down') => void;
-  note: string | null;
+  acks: Answer[];
+  onAnswer: (a: Answer) => void;
+  failed: Answer | null;
 }) {
   const stood = acks.includes('stand_down');
+  const status = answerStatus(acks);
+  // Confirmed, because standing down closes the alert (H6) and unlocks calling them (G4).
+  const confirmStandDown = () =>
+    Alert.alert('Are they safe?', standDownQuestion(acks), [
+      {text: 'No', style: 'cancel'},
+      {text: 'Yes, stand down', onPress: () => onAnswer('stand_down')},
+    ]);
   return (
     <>
       <Panel hero tone="guardian">
@@ -344,8 +418,14 @@ function OpenAlert({
           <Text style={styles.g4Text}>Don't call or text {who}. Call 10111.</Text>
           <Text style={[type.caption, {color: colors.amberText, marginTop: 4}]}>If someone is with {who}, a ringing phone could put them at risk.</Text>
         </View>
+        {status ? (
+          <Text style={[type.label, {marginBottom: space.sm}]} accessibilityLiveRegion="polite">
+            {status}
+          </Text>
+        ) : null}
+        {/* Stays after the first press so the dialer can be reopened; only the first press is sent. */}
         <Key
-          label={acks.includes('called_10111') ? 'Call 10111 again' : 'Call 10111'}
+          label="Call 10111"
           variant="guardian"
           icon={<Phone size={20} weight="bold" color={colors.textInverse} />}
           onPress={() => {
@@ -353,15 +433,25 @@ function OpenAlert({
             void Linking.openURL('tel:10111');
           }}
         />
+        <Text style={[type.caption, {marginTop: space.sm}]}>Opens your phone's dialer with 10111 ready. Press call there.</Text>
       </Panel>
       <View style={{gap: space.sm}}>
         <Key label={acks.includes('handling') ? "You're handling it" : "I'm handling it"} variant="guardianPlain" onPress={() => onAnswer('handling')} />
-        <Key label={stood ? 'Stood down' : `Stand down: ${who} is safe`} variant="ghost" onPress={() => onAnswer('stand_down')} />
+        <Key label={stood ? 'Stood down' : `Stand down: ${who} is safe`} variant="ghost" onPress={stood ? () => undefined : confirmStandDown} />
       </View>
-      {note ? <Text style={[type.caption, {color: colors.amberText}]}>{note}</Text> : null}
+      {failed ? (
+        <View style={{gap: space.sm}}>
+          <Text style={[type.caption, {color: colors.amberText}]} accessibilityLiveRegion="polite">
+            {notRecorded(failed)}
+          </Text>
+          <Key label="Try again" variant="guardianPlain" onPress={() => onAnswer(failed)} />
+        </View>
+      ) : null}
+      <Key label={`Call ${who}`} variant="plain" icon={<Phone size={20} weight="bold" color={colors.textDim} />} disabled={!stood} onPress={() => void Linking.openURL('tel:')} />
       <Text style={type.caption}>
-        Each answer is signed with this phone's key and joins {who}'s record. VIGIL doesn't dispatch anyone. Calling {who} unlocks after the alert closes.
+        Their phone ringing could put them in more danger, so calling {who} unlocks after you stand down or the alert closes. You can still use your phone for anything else, like reaching family.
       </Text>
+      <Text style={type.caption}>Each answer is signed with this phone's key and joins {who}'s record. VIGIL doesn't dispatch anyone.</Text>
     </>
   );
 }
