@@ -8,7 +8,7 @@
 
 | Beat | Job | Criterion | Words |
 |---|---|---|---:|
-| 1 · Hook | Make them feel the problem | I, B | 105 |
+| 1 · Hook | Make them feel the problem | I, B | 97 |
 | 2 · Problem | Why nothing today fixes it | I, B | 93 |
 | 3 · Solution | What VUKA is | I | 32 |
 | 4 · How it works | The mechanism | T, U | 100 |
@@ -16,7 +16,7 @@
 | 6 · Business | There is a business | B | 50 |
 | 7 · Compliance | Neutralise the four objections | S | 39 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **551** |
+| | | **Total** | **543** |
 
 ---
 
@@ -24,7 +24,7 @@
 
 ### Beat 1 — Hook
 
-This isn't one crime in one car. It's a category. Every day, across South Africa, people are forced to move their own money under threat — in driveways and at ATMs, in homes and in taxis. The attacker doesn't need a weapon. He needs her thumb and her phone. She makes the transfer. Her face. Her fingerprint. Her phone. And when she tries to prove she was forced — there is nothing. No record of the threat. Just a payment that says she did it. Coerced transfer can happen to anyone whose phone is their bank. And it leaves the same hole every time.
+People are forced to move their own money under threat. It happens in many scenarios — in cars, in homes, at ATMs, on the street, in taxis. The attacker doesn't need a weapon. He needs her thumb and her phone. She makes the transfer. Her face. Her fingerprint. Her phone. And when she tries to prove she was forced — there is nothing. No record of the threat. Just a payment that says she did it. This is coerced transfer. It can happen to anyone whose phone is their bank. And it leaves the same hole every time.
 
 ### Beat 2 — Problem
 
