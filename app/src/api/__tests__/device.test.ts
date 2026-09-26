@@ -444,3 +444,82 @@ test('a moved demo server is followed without restarting the app', async () => {
   expect(h.device.delivery().queued).toBe(0);
   expect(h.device.profile?.serverUrl).toBe('https://new.example');
 });
+
+describe('following the demo server to a different server', () => {
+  const TUNNEL_A = 'https://aaa-bbb.trycloudflare.com';
+  const TUNNEL_B = 'https://ccc-ddd.trycloudflare.com';
+  const AZURE = 'https://vuka-anchor-server.azurewebsites.net';
+
+  async function setup(where: {v: string}, fail: (url: string) => boolean) {
+    const posts: {url: string; kind: string}[] = [];
+    const h = harness({
+      post: async (url, entry) => {
+        posts.push({url, kind: String(entry.payload.kind)});
+        if (fail(url)) throw new Error('Network request failed');
+        return {event_hash: 'a'.repeat(64), chain_index: 0, received_at: '2026-09-26T12:00:00Z'};
+      },
+    });
+    h.b.discover = async () => where.v;
+    await h.device.setPins('1234', '9876');
+    await h.device.register('Lerato', '0.0.12');
+    await h.device.flush();
+    return {h, posts};
+  }
+
+  const later = async (f: () => Promise<void>) => {
+    const realNow = Date.now;
+    Date.now = () => realNow() + 61_000;
+    try {
+      await f();
+    } finally {
+      Date.now = realNow;
+    }
+  };
+
+  test('a restarted tunnel is the same server: no new registration', async () => {
+    const where = {v: TUNNEL_A};
+    let down = '';
+    const {h, posts} = await setup(where, u => u === down);
+    expect(h.device.profile?.registeredOn).toBe(TUNNEL_A);
+    down = TUNNEL_A;
+    where.v = TUNNEL_B;
+    await h.device.signal(JOURNEY, {kind: 'journey_armed', pv: 1, journey_id: JOURNEY, app_version: '0.0.12'});
+    await later(() => h.device.flush());
+    await h.device.flush();
+    expect(posts.filter(p => p.kind === 'registration')).toHaveLength(1);
+    expect(h.device.profile?.registeredOn).toBe(TUNNEL_B);
+    expect(posts.at(-1)).toEqual({url: TUNNEL_B, kind: 'journey_armed'});
+  });
+
+  test('moving to Azure: stranded events parked, registered again there, record view restarts', async () => {
+    const where = {v: TUNNEL_A};
+    let down = '';
+    const {h, posts} = await setup(where, u => u === down);
+    down = TUNNEL_A;
+    await h.device.signal(JOURNEY, {kind: 'journey_armed', pv: 1, journey_id: JOURNEY, app_version: '0.0.12'});
+    await h.device.flush();
+    expect(h.device.delivery().queued).toBe(1);
+    where.v = AZURE;
+    await later(() => h.device.flush());
+    await h.device.flush();
+    const regs = posts.filter(p => p.kind === 'registration');
+    expect(regs.map(r => r.url)).toEqual([TUNNEL_A, AZURE]);
+    // The old journey's event never went to Azure: parked on the phone, not sent, not lost.
+    expect(posts.filter(p => p.url === AZURE && p.kind === 'journey_armed')).toHaveLength(0);
+    expect(h.device.delivery().queued).toBe(0);
+    expect(h.device.profile).toMatchObject({serverUrl: AZURE, registeredOn: AZURE});
+    expect(h.device.profile?.chainFromSeq).toBeGreaterThan(1);
+    const mine = await h.device.myRecord();
+    expect(mine.map(r => r.kind)).toEqual(['registration']);
+  });
+
+  test('a profile from before this was tracked is adopted, not re-registered', async () => {
+    const h = harness();
+    await h.b.setProfile(JSON.stringify({v: 1, role: 'member', firstName: 'Lerato', subjectId: 'sim_subj_x', actorId: 'sim_member_x', serverUrl: AZURE}));
+    await h.b.setPins('1234', '9876');
+    h.b.discover = async () => AZURE;
+    await h.device.load();
+    expect(h.device.profile?.registeredOn).toBe(AZURE);
+    expect(h.sent).toHaveLength(0);
+  });
+});

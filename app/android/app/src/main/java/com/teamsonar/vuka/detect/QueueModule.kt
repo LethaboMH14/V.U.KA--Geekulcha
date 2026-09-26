@@ -118,6 +118,24 @@ class QueueModule(ctx: ReactApplicationContext) : ReactContextBaseJavaModule(ctx
         }
     }
 
+    /**
+     * Moves a queued event the current server can never accept (it belongs
+     * to a previous server's chain) out of the send queue, into `stranded/`.
+     * It stays on the phone, sealed as before: never deleted, never sent.
+     */
+    @ReactMethod
+    fun park(seq: Double, promise: Promise) {
+        try {
+            val name = "%016d".format(seq.toLong())
+            val stranded = File(dir.parentFile, "stranded").apply { mkdirs() }
+            val from = File(dir, "$name.evt")
+            val ok = !from.exists() || from.renameTo(File(stranded, "$name.evt"))
+            promise.resolve(ok)
+        } catch (e: Exception) {
+            promise.reject("park", e.message)
+        }
+    }
+
     /** Every stored receipt, oldest first: [{seq, json}]. This is the member's own copy of their record. */
     @ReactMethod
     fun received(promise: Promise) {

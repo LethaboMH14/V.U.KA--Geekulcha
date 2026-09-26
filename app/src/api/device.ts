@@ -56,6 +56,8 @@ export type Backend = {
   enqueue(json: string): Promise<number>;
   pending(): Promise<Item[]>;
   markReceived(seq: number, receiptJson: string): Promise<boolean>;
+  /** Moves a queued event out of the send queue, kept on the phone (never deleted). */
+  park?(seq: number): Promise<boolean>;
   received(): Promise<Item[]>;
   setProfile(json: string): Promise<boolean>;
   getProfile(): Promise<string | null>;
@@ -78,6 +80,10 @@ export type Profile = {
   serverUrl: string;
   /** Set when the member typed a server in Settings: discovery then leaves it alone. */
   serverPinned?: boolean;
+  /** The server this member's chain is registered on (a new one means registering again). */
+  registeredOn?: string;
+  /** Receipts from this queue number on belong to the current server's chain. */
+  chainFromSeq?: number;
   /** Members: the guardian invites they created (id and time), newest last. */
   invites?: {guardianId: string; at: string}[];
   /** Guardians: who they guard and the guardian key id (G5). */
@@ -270,8 +276,55 @@ export function createDevice(b: Backend) {
     if (found && profile && found !== profile.serverUrl) {
       profile = {...profile, serverUrl: found};
       await b.setProfile(JSON.stringify(profile)).catch(() => undefined);
+      await followServer().catch(() => undefined);
       again = true;
     }
+  }
+
+  /**
+   * The demo moved to a different server (a new tunnel address is the same
+   * server; Azure is a different one). A member registers again there: the
+   * same key and subject, a new genesis. Events queued for the old server's
+   * chain can never be accepted by the new one, so they are parked on the
+   * phone (kept, not sent), and the phone's own record view starts from the
+   * new registration. A guardian must be invited again by their member.
+   */
+  let registeredOnFor: string | null = null;
+  async function followServer(appVersion = 'unknown') {
+    if (!profile || profile.role === 'guardian') return;
+    if (!profile.registeredOn) {
+      // Registered before this was tracked: on the server it uses now.
+      profile = {...profile, registeredOn: profile.serverUrl};
+      await b.setProfile(JSON.stringify(profile));
+      return;
+    }
+    if (profile.registeredOn === profile.serverUrl || registeredOnFor === profile.serverUrl) return;
+    registeredOnFor = profile.serverUrl;
+    if (!(await sameServer(profile.registeredOn, profile.serverUrl))) {
+      for (const it of await b.pending()) await b.park?.(it.seq);
+      const last = Math.max(0, ...(await b.received()).map(r => r.seq));
+      profile = {...profile, chainFromSeq: last + 1};
+      await b.setProfile(JSON.stringify(profile));
+      await record(
+        {kind: 'registration', pv: 1, app_version: appVersion, model_sha256: MODEL_SHA256, android_api: 34, device_model: 'android'},
+        subject(),
+        {action: 'registration', genesis: true, send: false},
+      );
+    }
+    profile = {...profile, registeredOn: profile.serverUrl};
+    await b.setProfile(JSON.stringify(profile));
+    await refreshCounts().catch(() => undefined);
+  }
+
+  /**
+   * Whether two addresses reach the same server: a restarted quick tunnel
+   * gets a new trycloudflare address for the same laptop and database, so
+   * tunnel-to-tunnel is the same server. Anything else (Azure, a typed
+   * address) is treated as a different server with its own database.
+   */
+  async function sameServer(oldUrl: string, newUrl: string): Promise<boolean> {
+    const tunnel = (u: string) => /\.trycloudflare\.com$/.test(u.replace(/\/$/, ''));
+    return tunnel(oldUrl) && tunnel(newUrl);
   }
   /**
    * Sends queued events oldest first, and keeps going until nothing new was
@@ -350,6 +403,7 @@ export function createDevice(b: Backend) {
             await b.setProfile(JSON.stringify(profile));
           }
         }
+        await followServer().catch(() => undefined);
       }
       return {profile, pinsSet};
     },
@@ -369,7 +423,8 @@ export function createDevice(b: Backend) {
       const short = keyId.replace(/^dev_/, '').slice(0, 8);
       // sim_ prefixes: the server accepts only simulation subjects (VUKA_SIM_ONLY).
       const found = await b.discover().catch(() => null);
-      profile = {v: 1, role: 'member', firstName, subjectId: `sim_subj_${short}`, actorId: `sim_member_${short}`, serverUrl: found ?? DEFAULT_SERVER};
+      const serverUrl = found ?? DEFAULT_SERVER;
+      profile = {v: 1, role: 'member', firstName, subjectId: `sim_subj_${short}`, actorId: `sim_member_${short}`, serverUrl, registeredOn: serverUrl};
       await b.setProfile(JSON.stringify(profile));
       // §18 registration: never IMEI, serial, Android ID or phone number.
       await record(
@@ -384,6 +439,7 @@ export function createDevice(b: Backend) {
       if (!profile) return;
       profile = {...profile, serverUrl: url.trim().replace(/\/$/, ''), serverPinned: true};
       await b.setProfile(JSON.stringify(profile));
+      await followServer().catch(() => undefined);
       void flush();
     },
 
@@ -635,7 +691,8 @@ export function createDevice(b: Backend) {
       if (!profile) throw new Error('no profile');
       await flush();
       const exp = await b.request<Export>(profile.serverUrl, 'GET', `/v1/subjects/${encodeURIComponent(profile.subjectId)}/export`, '');
-      const mine = (await b.received()).map(it => JSON.parse(it.json) as RecordEntry);
+      const from = profile.chainFromSeq ?? 0;
+      const mine = (await b.received()).filter(it => it.seq >= from).map(it => JSON.parse(it.json) as RecordEntry);
       const check = await checkRecord(exp, b.signer, mine);
       // The view is the server's held export only (T30): entries after the
       // pre-incident head are not shown, whichever PIN opened it. Rows carry
@@ -654,7 +711,8 @@ export function createDevice(b: Backend) {
 
     /** The member's own copy of their record: every receipt, oldest first. */
     async myRecord(): Promise<RecordEntry[]> {
-      const items = await b.received();
+      const from = profile?.chainFromSeq ?? 0;
+      const items = (await b.received()).filter(it => it.seq >= from);
       return items.map(it => {
         const r = JSON.parse(it.json) as Omit<RecordEntry, 'seq'>;
         return {seq: it.seq, ...r};
@@ -667,7 +725,7 @@ export type Device = ReturnType<typeof createDevice>;
 
 // ---- backends ---------------------------------------------------------------
 
-type NativeQueue = Pick<Backend, 'enqueue' | 'pending' | 'markReceived' | 'received' | 'setProfile' | 'getProfile'>;
+type NativeQueue = Pick<Backend, 'enqueue' | 'pending' | 'markReceived' | 'received' | 'setProfile' | 'getProfile'> & {park(seq: number): Promise<boolean>};
 type NativePin = {isSet(): Promise<boolean>; setPins(n: string, d: string): Promise<boolean>; verify(p: string): Promise<'normal' | 'duress' | 'wrong'>};
 
 function nativeBackend(): Backend | null {
@@ -681,6 +739,7 @@ function nativeBackend(): Backend | null {
     enqueue: j => queue.enqueue(j),
     pending: () => queue.pending(),
     markReceived: (s, r) => queue.markReceived(s, r),
+    park: s => queue.park(s),
     received: () => queue.received(),
     setProfile: j => queue.setProfile(j),
     getProfile: () => queue.getProfile(),
@@ -709,6 +768,7 @@ function nativeBackend(): Backend | null {
 /** SIMULATED: the browser preview. PINs in memory, nothing signed, nothing sent. */
 export function simBackend(): Backend {
   let n = 0;
+  let lastSeq = 0;
   let q: Item[] = [];
   let prof: string | null = null;
   let pins: {normal: string; duress: string} | null = null;
@@ -733,11 +793,17 @@ export function simBackend(): Backend {
       nextCounter: async () => ++n,
     },
     enqueue: async j => {
-      q.push({seq: q.length + 1, json: j});
-      return q.length;
+      // Numbers never restart, as in the native queue.
+      const seq = ++lastSeq;
+      q.push({seq, json: j});
+      return seq;
     },
     pending: async () => q,
     markReceived: async s => {
+      q = q.filter(i => i.seq !== s);
+      return true;
+    },
+    park: async s => {
       q = q.filter(i => i.seq !== s);
       return true;
     },
