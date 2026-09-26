@@ -49,14 +49,15 @@ Then fill in email (and optionally SMS) in `.env.backup`, see step 3.
 
 1. **Neon** (neon.tech): create a project, database `vuka`. Copy the connection string (it ends in `?sslmode=require`).
 2. **Render** (render.com): *New → Blueprint*, pick this GitHub repo and branch `feature/integrate`; Render reads `render.yaml`.
-3. In the service's *Environment*, paste: `DATABASE_URL` (Neon), and from `make-backup-keys.py --print`: `VUKA_PAYLOAD_KEY_B64`, `VUKA_SERVER_ED25519_KEY_B64`, `VUKA_BACKUP_MANIFEST_JSON`; plus the email settings.
+3. In the service's *Environment*, paste: `DATABASE_URL` (Neon), and from `make-backup-keys.py --print`: `VUKA_PAYLOAD_KEY_B64`, `VUKA_SERVER_ED25519_KEY_B64`, `VUKA_BACKUP_MANIFEST_JSON`; plus `VUKA_BREVO_API_KEY` and `VUKA_EMAIL_FROM` (step 3). Render's free tier blocks outgoing SMTP, so email must go through Brevo's HTTPS API there.
 4. Deploy. Check `https://<service>.onrender.com/healthz`.
 
 ## 3. Email and SMS codes
 
 Without a provider the server answers `503 delivery_unavailable` and the app says so. (`VUKA_DEV_OTP_LOG=1` prints codes in the server log: only for a private test server.)
 
-- **Email, free:** a Gmail account with 2-step verification → *App passwords* → create one. Settings: `VUKA_SMTP_HOST=smtp.gmail.com`, `VUKA_SMTP_PORT=587`, `VUKA_SMTP_USER=<the gmail address>`, `VUKA_SMTP_PASSWORD=<app password>`, `VUKA_SMTP_FROM=VUKA <the gmail address>`. Brevo's free SMTP (300/day) also works.
+- **Email via Brevo (works on every host, required on Render free):** sign up at brevo.com (free, ~300 emails/day `ASSUMPTION`: check current terms). *Senders, Domains & Dedicated IPs → Senders → Add a sender* with an address you own (e.g. your Gmail) and click the link Brevo emails you. Then *SMTP & API → API Keys → Generate a new API key*. Settings: `VUKA_BREVO_API_KEY=<the key>`, `VUKA_EMAIL_FROM=VUKA <the verified sender address>`. Brevo is tried first when its key is set.
+- **Email via SMTP (the VM, where SMTP isn't blocked):** a Gmail account with 2-step verification → *App passwords* → create one. Settings: `VUKA_SMTP_HOST=smtp.gmail.com`, `VUKA_SMTP_PORT=587`, `VUKA_SMTP_USER=<the gmail address>`, `VUKA_SMTP_PASSWORD=<app password>`, `VUKA_SMTP_FROM=VUKA <the gmail address>`.
 - **SMS (optional):** a Twilio trial account sends to numbers you verify in Twilio. `VUKA_TWILIO_ACCOUNT_SID`, `VUKA_TWILIO_AUTH_TOKEN`, `VUKA_TWILIO_FROM`. Real use costs per message.
 
 Restart after changing settings (`docker compose … up -d`, or Render redeploys).

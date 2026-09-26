@@ -1,11 +1,14 @@
-"""Delivers one-time codes by email (SMTP) or text message (Twilio).
+"""Delivers one-time codes by email (Brevo API or SMTP) or text message (Twilio).
 
 PROPOSED (26 Sep, assistant for Mutarisi): the account backend's delivery side.
 Configured only by environment settings, never by code:
 
-  email   VUKA_SMTP_HOST, VUKA_SMTP_PORT (587), VUKA_SMTP_USER,
+  email   VUKA_BREVO_API_KEY + VUKA_EMAIL_FROM  (Brevo's HTTPS API, port 443;
+          use this on hosts that block SMTP, e.g. Render's free tier), or
+          VUKA_SMTP_HOST, VUKA_SMTP_PORT (587), VUKA_SMTP_USER,
           VUKA_SMTP_PASSWORD, VUKA_SMTP_FROM
           (any SMTP account works, e.g. Gmail with an app password)
+          VUKA_EMAIL_FROM / VUKA_SMTP_FROM: "Name <address>" or just an address.
   sms     VUKA_TWILIO_ACCOUNT_SID, VUKA_TWILIO_AUTH_TOKEN, VUKA_TWILIO_FROM
 
 With neither set, a LOCAL development server may set VUKA_DEV_OTP_LOG=1 to
@@ -35,8 +38,16 @@ def _message(code: str, purpose: str) -> str:
     return f"Your VUKA code is {code}. Use it to {what}. It expires in 10 minutes. VUKA will never ask you for this code."
 
 
-def email_configured() -> bool:
+def brevo_configured() -> bool:
+    return all(os.environ.get(k) for k in ("VUKA_BREVO_API_KEY", "VUKA_EMAIL_FROM"))
+
+
+def smtp_configured() -> bool:
     return all(os.environ.get(k) for k in ("VUKA_SMTP_HOST", "VUKA_SMTP_USER", "VUKA_SMTP_PASSWORD", "VUKA_SMTP_FROM"))
+
+
+def email_configured() -> bool:
+    return brevo_configured() or smtp_configured()
 
 
 def sms_configured() -> bool:
@@ -45,7 +56,10 @@ def sms_configured() -> bool:
 
 def send_code(channel: str, to: str, code: str, purpose: str) -> str:
     """Sends the code. Returns how it went out: "email", "sms" or "dev_log"."""
-    if channel == "email" and email_configured():
+    if channel == "email" and brevo_configured():
+        _send_brevo(to, code, purpose)
+        return "email"
+    if channel == "email" and smtp_configured():
         _send_email(to, code, purpose)
         return "email"
     if channel == "sms" and sms_configured():
@@ -78,6 +92,44 @@ def _send_email(to: str, code: str, purpose: str) -> None:
                 smtp.send_message(msg)
     except (OSError, smtplib.SMTPException) as exc:
         raise DeliveryFailed("email could not be sent") from exc
+
+
+def _sender(value: str) -> dict:
+    """ "VUKA <a@b.co>" -> {"name": "VUKA", "email": "a@b.co"}; "a@b.co" -> {"email": "a@b.co"}."""
+    value = value.strip()
+    if "<" in value and value.endswith(">"):
+        name, email = value[:-1].split("<", 1)
+        return {"name": name.strip().strip('"'), "email": email.strip()} if name.strip() else {"email": email.strip()}
+    return {"email": value}
+
+
+def _send_brevo(to: str, code: str, purpose: str) -> None:
+    """Brevo transactional email over HTTPS (POST /v3/smtp/email)."""
+    body = json.dumps({
+        "sender": _sender(os.environ["VUKA_EMAIL_FROM"]),
+        "to": [{"email": to}],
+        "subject": "Your VUKA code",
+        "textContent": _message(code, purpose),
+    })
+    conn = http.client.HTTPSConnection("api.brevo.com", timeout=20, context=ssl.create_default_context())
+    try:
+        conn.request("POST", "/v3/smtp/email", body=body, headers={
+            "api-key": os.environ["VUKA_BREVO_API_KEY"],
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        })
+        resp = conn.getresponse()
+        text = resp.read()
+        if resp.status >= 300:
+            try:
+                detail = json.loads(text).get("message", "")
+            except ValueError:
+                detail = ""
+            raise DeliveryFailed(f"email provider refused ({resp.status}) {detail}".strip())
+    except OSError as exc:
+        raise DeliveryFailed("email provider could not be reached") from exc
+    finally:
+        conn.close()
 
 
 def _send_sms(to: str, code: str, purpose: str) -> None:

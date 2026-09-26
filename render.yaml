@@ -20,15 +20,10 @@ services:
         sync: false
       - key: VUKA_BACKUP_MANIFEST_JSON
         sync: false
-      - key: VUKA_SMTP_HOST
+      # Email codes via Brevo's HTTPS API (Render's free tier blocks SMTP ports).
+      - key: VUKA_BREVO_API_KEY
         sync: false
-      - key: VUKA_SMTP_PORT
-        value: "587"
-      - key: VUKA_SMTP_USER
-        sync: false
-      - key: VUKA_SMTP_PASSWORD
-        sync: false
-      - key: VUKA_SMTP_FROM
+      - key: VUKA_EMAIL_FROM          # e.g. VUKA <your-verified-sender@gmail.com>
         sync: false
       - key: VUKA_TWILIO_ACCOUNT_SID
         sync: false
