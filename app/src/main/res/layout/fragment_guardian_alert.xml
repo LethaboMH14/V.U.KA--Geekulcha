@@ -46,6 +46,7 @@
 
             <TextView
                 style="@style/Widget.Vuka.StatusChip.Simulated"
+                android:id="@+id/chipSimulated"
                 android:text="Simulated" />
         </LinearLayout>
 
@@ -103,6 +104,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
+                android:id="@+id/tvWho"
                 android:text="Example member"
                 android:textColor="@color/vuka_text_title"
                 android:textSize="20sp"
@@ -129,6 +131,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:lineSpacingExtra="3dp"
+                android:id="@+id/tvWhy"
                 android:text="Scream-like sound, then no answer in 60 s"
                 android:textColor="@color/vuka_text_label"
                 android:textSize="16sp" />
@@ -170,7 +173,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Location unavailable"
+                    android:id="@+id/tvLocTitle"
+                android:text="Location unavailable"
                     android:textColor="@color/vuka_text_label"
                     android:textSize="15sp" />
 
@@ -179,7 +183,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:lineSpacingExtra="3dp"
-                    android:text="No location fix was shared for this detection."
+                    android:id="@+id/tvLocBody"
+                android:text="No location fix was shared for this detection."
                     android:textColor="@color/vuka_text_secondary"
                     android:textSize="13sp" />
             </LinearLayout>

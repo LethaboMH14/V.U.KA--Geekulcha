@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
+import za.co.vuka.app.api.ServerSync
 import za.co.vuka.app.auth.InterimPinStore
 
 /**
@@ -107,6 +108,8 @@ class SetPinsFragment : Fragment(R.layout.fragment_set_pins) {
             } else {
                 // TODO(P3.V3): InterimPinStore stands in for the Keystore-backed Argon2id store.
                 InterimPinStore(requireContext()).setPins(vm.normalPin, vm.duressPin)
+                // The server identity is needed from here (inviting a guardian is next).
+                ServerSync.register(requireContext())
                 vm.clearPins()
                 findNavController().navigate(R.id.action_setPins_to_inviteGuardians)
                 return

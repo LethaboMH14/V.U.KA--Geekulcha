@@ -31,6 +31,16 @@ class MainActivity : AppCompatActivity() {
         Tab(R.id.tabSettings, R.id.settingsFragment, R.drawable.ic_gear, "Settings"),
     )
 
+    override fun onStart() {
+        super.onStart()
+        GuardianAlerts.startPolling(this) // only does anything for a linked guardian
+    }
+
+    override fun onStop() {
+        GuardianAlerts.stopPolling()
+        super.onStop()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Before super.onCreate, so the first frame already uses the saved theme.
         ThemePrefs.applySaved(this)

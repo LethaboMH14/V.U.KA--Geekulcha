@@ -57,52 +57,58 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:lineSpacingExtra="3dp"
-        android:text="Share this code, or have them scan the QR block. Valid for 10 minutes, single use, 5 attempts."
+        android:text="Share this code with your guardian. They enter it in VUKA under I'm a guardian. Valid for 10 minutes, single use, 5 attempts."
         android:textColor="@color/vuka_text_secondary"
         android:textSize="14sp" />
 
-    <!-- Filled CodeBoxes: every box holds a digit, so every box has the ink border -->
-    <LinearLayout
-        android:id="@+id/inviteCode"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="16dp"
-        android:contentDescription="Invite code 4 8 2 9 1 5"
-        android:focusable="true"
-        android:orientation="horizontal">
-
-        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="4" />
-        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="8" />
-        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="2" />
-        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="9" />
-        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="1" />
-        <TextView style="@style/Widget.Vuka.CodeBox" android:background="@drawable/bg_input_field_error" android:text="5" />
-    </LinearLayout>
-
-    <za.co.vuka.app.ui.onboarding.SimulatedQrView
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="16dp" />
-
+    <!-- The one-time code the server issued (8 hex, a dash, 6 digits) -->
     <TextView
+        android:id="@+id/tvCode"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="64dp"
         android:layout_marginTop="16dp"
+        android:background="@drawable/bg_input_field_error"
         android:fontFamily="monospace"
         android:gravity="center"
         android:letterSpacing="0.06"
-        android:text="SIMULATED — not a real invite link"
-        android:textAllCaps="true"
+        android:textColor="@color/vuka_text_title"
+        android:textIsSelectable="true"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvInviteState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:accessibilityLiveRegion="polite"
+        android:gravity="center"
+        android:lineSpacingExtra="2dp"
+        android:text="Getting a code from the server…"
         android:textColor="@color/vuka_text_dim"
-        android:textSize="11sp" />
+        android:textSize="12sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnShare"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="16dp"
+        android:enabled="false"
+        android:text="Share code"
+        android:textAllCaps="false"
+        android:textColor="@color/vuka_text_title"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:cornerRadius="27dp"
+        app:strokeColor="?attr/vukaBorder"
+        app:strokeWidth="1dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnDone"
         android:layout_width="match_parent"
         android:layout_height="54dp"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="12dp"
         android:background="@drawable/bg_button_primary"
         app:backgroundTint="@null"
         android:textAllCaps="false"

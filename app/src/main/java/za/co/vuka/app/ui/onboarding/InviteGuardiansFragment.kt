@@ -36,9 +36,10 @@ class InviteGuardiansFragment : Fragment(R.layout.fragment_invite_guardians) {
         ) { _, _ -> onboardingViewModel.addPendingInvite() }
 
         // No PIN prompt here: the PINs were set one step ago, which is the fresh
-        // authorisation spec G1 asks for. Invites from Settings later need the PIN.
+        // authorisation spec G1 asks for, so the invite carries a normal-mode
+        // add_guardian authorisation. Invites from Settings later need the PIN.
         view.findViewById<View>(R.id.btnInvite).setOnClickListener {
-            InviteGuardianSheet().show(childFragmentManager, "invite_guardian")
+            InviteGuardianSheet.newInstance(duress = false).show(childFragmentManager, "invite_guardian")
         }
 
         view.findViewById<View>(R.id.btnFinish).setOnClickListener {

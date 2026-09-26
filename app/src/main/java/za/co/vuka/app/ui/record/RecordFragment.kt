@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
+import za.co.vuka.app.api.ServerSync
 import za.co.vuka.app.ui.settings.vukaColor
 import za.co.vuka.app.ui.home.JourneyViewModel
 import kotlinx.coroutines.launch
@@ -43,6 +44,19 @@ class RecordFragment : Fragment(R.layout.fragment_record) {
                 journey.entries.collect {
                     renderTimeline(view, it)
                     renderChain(view, it)
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                ServerSync.init(requireContext())
+                ServerSync.status.collect { s ->
+                    view.findViewById<TextView>(R.id.tvSync).text = when {
+                        !s.registered -> "NOT LINKED TO VUKA'S SERVER YET"
+                        s.waiting > 0 && s.lastError != null -> "SERVER: ${s.sent} SENT · ${s.waiting} WAITING (${s.lastError.uppercase()})"
+                        s.waiting > 0 -> "SERVER: ${s.sent} SENT · ${s.waiting} SENDING…"
+                        else -> "SERVER: ${s.sent} SIGNED EVENTS RECEIVED" + if (s.refused > 0) " · ${s.refused} REFUSED" else ""
+                    }
                 }
             }
         }

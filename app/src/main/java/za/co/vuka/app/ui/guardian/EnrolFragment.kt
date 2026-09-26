@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,24 +20,23 @@ import androidx.lifecycle.ViewModel
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import za.co.vuka.app.R
+import za.co.vuka.app.api.EventClient
+import za.co.vuka.app.api.ServerSync
 import za.co.vuka.app.ui.onboarding.OnboardingViewModel
 
 class EnrolViewModel : ViewModel() {
     var stage = EnrolFragment.Stage.CODE
     var alertsAsked = false
-    var scanMethod = false
     var code = ""
+    var joining = false
 }
 
 /**
- * Guardian enrolment (Enrol.tsx): enter or scan the 6-digit invite code, then
- * give explicit consent to what is recorded. When the consent screen opens and
- * notifications aren't allowed yet, a "Turn on alerts?" pop-up explains why
- * before Android's own prompt.
- *
- * SIMULATED: there is no invite backend, so any complete code continues and
- * the scanner is a placeholder that opens no camera. The prototype's
- * wrong/expired/locked states aren't built, because nothing could trigger them.
+ * Guardian enrolment (Enrol.tsx): enter the invite code the member shared,
+ * then give explicit consent to what is recorded (POPIA s18). Only after
+ * consent is the code sent to the server (POST /v1/guardians/accept, signed
+ * with this phone's own key). A wrong, expired or used code comes back as one
+ * refusal, and the member is asked for a new code.
  */
 class EnrolFragment : Fragment(R.layout.fragment_guardian_enrol) {
 
@@ -44,7 +44,6 @@ class EnrolFragment : Fragment(R.layout.fragment_guardian_enrol) {
 
     private val vm: EnrolViewModel by viewModels()
     private val onboardingViewModel: OnboardingViewModel by activityViewModels()
-    private lateinit var boxes: List<TextView>
 
     // The answer doesn't change the flow: Standby shows how to turn notifications on later.
     private val requestNotifications = registerForActivityResult(
@@ -60,19 +59,19 @@ class EnrolFragment : Fragment(R.layout.fragment_guardian_enrol) {
         super.onViewCreated(view, savedInstanceState)
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backOneStage)
 
-        boxes = view.findViewById<ViewGroup>(R.id.codeBoxes).children.map { it as TextView }.toList()
-
-        view.findViewById<ViewGroup>(R.id.keypad).children
-            .filterIsInstance<TextView>()
-            .forEach { key -> key.setOnClickListener { onDigit(key.text.toString()) } }
-
-        view.findViewById<View>(R.id.keyDelete).setOnClickListener {
-            vm.code = vm.code.dropLast(1)
-            render()
+        val codeField = view.findViewById<EditText>(R.id.etInviteCode)
+        if (savedInstanceState == null) codeField.setText(vm.code)
+        view.findViewById<View>(R.id.btnCodeContinue).setOnClickListener {
+            val code = codeField.text.toString().trim().lowercase()
+            if (!CODE_PATTERN.matches(code)) {
+                showCodeError("Check the code: 8 letters or numbers, a dash, then 6 digits.")
+                return@setOnClickListener
+            }
+            vm.code = code
+            view.findViewById<View>(R.id.codeError).visibility = View.GONE
+            goTo(Stage.CONSENT)
+            askForAlertsIfNeeded()
         }
-
-        view.findViewById<View>(R.id.tabCode).setOnClickListener { vm.scanMethod = false; render() }
-        view.findViewById<View>(R.id.tabScan).setOnClickListener { vm.scanMethod = true; render() }
 
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             if (vm.stage == Stage.CODE) findNavController().navigateUp() else stepBack()
@@ -110,23 +109,35 @@ class EnrolFragment : Fragment(R.layout.fragment_guardian_enrol) {
             PackageManager.PERMISSION_GRANTED
 
     private fun finishEnrolment() {
-        onboardingViewModel.enrolAsGuardian()
-        findNavController().navigate(
-            if (onboardingViewModel.memberSignedIn) R.id.action_guardianEnrol_to_standbyKeepMember
-            else R.id.action_guardianEnrol_to_standby
-        )
+        if (vm.joining) return
+        vm.joining = true
+        render()
+        ServerSync.acceptInvite(requireContext(), vm.code) { result ->
+            vm.joining = false
+            if (view == null) return@acceptInvite
+            result.onSuccess {
+                onboardingViewModel.enrolAsGuardian()
+                findNavController().navigate(
+                    if (onboardingViewModel.memberSignedIn) R.id.action_guardianEnrol_to_standbyKeepMember
+                    else R.id.action_guardianEnrol_to_standby
+                )
+            }.onFailure { e ->
+                goTo(Stage.CODE)
+                showCodeError(
+                    if (e is EventClient.ServerError && e.status in 400..499) {
+                        "That code didn't work. It may have expired (10 minutes) or been used. Ask for a new one."
+                    } else {
+                        "Couldn't reach VUKA's server. Check your connection and try again."
+                    }
+                )
+            }
+        }
     }
 
-    private fun onDigit(digit: String) {
-        if (vm.code.length >= CODE_LENGTH) return
-        vm.code += digit
-        render()
-        if (vm.code.length == CODE_LENGTH) {
-            // SIMULATED: replace with the real invite-code check.
-            vm.code = ""
-            goTo(Stage.CONSENT)
-            askForAlertsIfNeeded()
-        }
+    private fun showCodeError(message: String) {
+        val view = view ?: return
+        view.findViewById<TextView>(R.id.tvCodeError).text = message
+        view.findViewById<View>(R.id.codeError).visibility = View.VISIBLE
     }
 
     private fun goTo(stage: Stage) {
@@ -149,33 +160,16 @@ class EnrolFragment : Fragment(R.layout.fragment_guardian_enrol) {
         view.findViewById<View>(R.id.stageCode).visibility = if (stage == Stage.CODE) View.VISIBLE else View.GONE
         view.findViewById<View>(R.id.stageConsent).visibility = if (stage == Stage.CONSENT) View.VISIBLE else View.GONE
 
-        view.findViewById<View>(R.id.tabCode).setBackgroundResource(
-            if (vm.scanMethod) R.drawable.bg_tab_inactive else R.drawable.bg_input_field_error
-        )
-        view.findViewById<View>(R.id.tabScan).setBackgroundResource(
-            if (vm.scanMethod) R.drawable.bg_input_field_error else R.drawable.bg_tab_inactive
-        )
-        view.findViewById<View>(R.id.methodCode).visibility = if (vm.scanMethod) View.GONE else View.VISIBLE
-        view.findViewById<View>(R.id.methodScan).visibility = if (vm.scanMethod) View.VISIBLE else View.GONE
-
-        boxes.forEachIndexed { i, box ->
-            val digit = vm.code.getOrNull(i)
-            box.text = digit?.toString().orEmpty()
-            box.setBackgroundResource(
-                if (digit != null) R.drawable.bg_input_field_error else R.drawable.bg_input_field
-            )
-        }
-        view.findViewById<View>(R.id.codeBoxes).contentDescription =
-            "Invite code, ${vm.code.length} of $CODE_LENGTH digits entered"
-
         val understood = view.findViewById<CheckBox>(R.id.cbUnderstood).isChecked
-        view.findViewById<View>(R.id.btnUnderstand).apply {
-            isEnabled = understood
-            alpha = if (understood) 1f else 0.4f
+        view.findViewById<TextView>(R.id.btnUnderstand).apply {
+            isEnabled = understood && !vm.joining
+            alpha = if (understood && !vm.joining) 1f else 0.4f
+            text = if (vm.joining) "Joining…" else "I understand"
         }
     }
 
     companion object {
-        private const val CODE_LENGTH = 6
+        /** server/guardians.py: 4 random bytes as hex, a dash, 6 digits. */
+        private val CODE_PATTERN = Regex("^[0-9a-f]{8}-[0-9]{6}$")
     }
 }

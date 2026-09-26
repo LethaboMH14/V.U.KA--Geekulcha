@@ -41,6 +41,8 @@ object ServerSync {
     private const val K_REFUSED = "refused"
     private const val K_SENT = "sent"
     private const val K_PENDING_HELP = "pending_help"
+    private const val K_G_ID = "guardian_id"
+    private const val K_G_MEMBER = "guardian_member_subject"
 
     data class Status(
         val registered: Boolean = false,
@@ -246,6 +248,101 @@ object ServerSync {
             signer.reset()
             publish()
         }
+    }
+
+    // ── Guardians (spec section 9, #96; PROPOSED server routes) ──
+
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
+    private fun <T> onMain(cb: (Result<T>) -> Unit, r: Result<T>) = main.post { cb(r) }
+
+    /**
+     * Members: invite a guardian. The PIN authorises `add_guardian` (a duress
+     * PIN gets an identical-looking code for a decoy guardian who never gets
+     * alerts); the server then issues a one-time code (10 min, 5 tries).
+     */
+    fun inviteGuardian(context: Context, duress: Boolean, cb: (Result<String>) -> Unit) {
+        init(context)
+        worker.execute {
+            val result = runCatching {
+                val subject = prefs.getString(K_SUBJECT, null) ?: throw IllegalStateException("not registered with the server yet")
+                enqueue(subjectTarget(), "device_event", pinAuthorised("add_guardian", subject, duress))
+                flushNow()
+                if (readList(K_OUTBOX).isNotEmpty()) throw IllegalStateException(_status.value.lastError ?: "can't reach the server")
+                EventClient.request(SERVER_URL, signer, "POST", "/v1/guardians/invites")["invite_code"] as? String
+                    ?: throw IllegalStateException("no invite code in the reply")
+            }
+            onMain(cb, result)
+        }
+    }
+
+    /** gdn_ + the first 8 bytes of SHA-256 over the SPKI key (server/guardians.py). */
+    private fun guardianKeyId(): String {
+        val spki = android.util.Base64.decode(signer.identity().publicKeyB64, android.util.Base64.NO_WRAP)
+        return "gdn_" + EventClient.sha256Hex(spki).take(16)
+    }
+
+    val isGuardian: Boolean get() = ::app.isInitialized && prefs.getString(K_G_ID, null) != null
+
+    /**
+     * Guardians: accept a member's invite with this phone's own key. The
+     * consent (POPIA s18) is given on screen before this is called. No push
+     * token yet: alerts are fetched while the app is open.
+     */
+    fun acceptInvite(context: Context, code: String, cb: (Result<Unit>) -> Unit) {
+        init(context)
+        worker.execute {
+            val result = runCatching {
+                val body = Canonical.json(mapOf(
+                    "invite_code" to code.trim(),
+                    "guardian_key" to signer.identity().publicKeyB64,
+                    "fcm_token" to "sim_poll_while_open",
+                    "popia_s18_acknowledged" to true,
+                ))
+                val r = EventClient.request(SERVER_URL, signer, "POST", "/v1/guardians/accept", body, keyId = guardianKeyId())
+                val id = r["guardian_id"] as? String ?: throw IllegalStateException("no guardian_id in the reply")
+                prefs.edit(commit = true) { putString(K_G_ID, id) }
+                Unit
+            }
+            result.exceptionOrNull()?.let { Log.w(TAG, "accept failed", it) }
+            onMain(cb, result)
+        }
+    }
+
+    /** Guardians: the alerts delivered to this guardian (maps as the server sends them). */
+    fun guardianAlerts(cb: (Result<List<Map<String, Any?>>>) -> Unit) {
+        if (!isGuardian) return
+        worker.execute {
+            val result = runCatching {
+                val r = EventClient.request(SERVER_URL, signer, "GET", "/v1/guardians/me/alerts", keyId = guardianKeyId())
+                (r["subject_id"] as? String)?.let { prefs.edit(commit = true) { putString(K_G_MEMBER, it) } }
+                @Suppress("UNCHECKED_CAST")
+                (r["alerts"] as? List<Map<String, Any?>>) ?: emptyList()
+            }
+            onMain(cb, result)
+        }
+    }
+
+    /** Guardians: a signed acknowledgement (G5): called_10111, handling or stand_down. */
+    fun acknowledge(incidentId: String, action: String) {
+        if (!isGuardian) return
+        worker.execute {
+            try {
+                val member = prefs.getString(K_G_MEMBER, null) ?: throw IllegalStateException("no member yet")
+                val event = EventClient.buildEvent(
+                    signer, member, "guardian_" + prefs.getString(K_G_ID, null), "guardian_event", "subject", member,
+                    mapOf("kind" to "guardian_ack", "pv" to 1, "incident_id" to incidentId, "action" to action),
+                    guardianKeyId = guardianKeyId(),
+                )
+                EventClient.request(SERVER_URL, signer, "POST", "/v1/events", Canonical.json(event), keyId = guardianKeyId())
+            } catch (e: Exception) {
+                Log.w(TAG, "guardian_ack not sent: ${e.message}")
+            }
+        }
+    }
+
+    /** Stop being a guardian on this phone (the server keeps its own record). */
+    fun leaveGuardian() {
+        if (::app.isInitialized) worker.execute { prefs.edit(commit = true) { remove(K_G_ID).remove(K_G_MEMBER) } }
     }
 
     fun retry() {

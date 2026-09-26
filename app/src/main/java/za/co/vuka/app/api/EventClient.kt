@@ -51,8 +51,10 @@ object EventClient {
         payload: Map<String, Any?>,
         genesis: Boolean = false,
         ts: String = rfc3339(),
+        /** A guardian signs with the same Keystore key under its guardian key id (G5). */
+        guardianKeyId: String? = null,
     ): Map<String, Any?> {
-        val id = signer.identity()
+        val id = signer.identity().let { if (guardianKeyId != null) it.copy(keyId = guardianKeyId) else it }
         val saltB64 = signer.randomB64(16)
         val commitment = sha256Hex(Base64.decode(saltB64, Base64.NO_WRAP) + Canonical.bytes(payload))
         val counter = signer.nextCounter()
@@ -72,7 +74,7 @@ object EventClient {
         )
         val details = linkedMapOf<String, Any?>(
             "v" to 2,
-            "signer" to "device",
+            "signer" to if (guardianKeyId != null) "guardian" else "device",
             "signer_key_id" to id.keyId,
             "counter" to counter,
             "event_id" to eventId,
@@ -93,7 +95,7 @@ object EventClient {
     }
 
     /** Headers for a signed request (§7). `body` must be the exact bytes sent. */
-    fun signedHeaders(signer: DeviceSigner, method: String, path: String, body: String): Map<String, String> {
+    fun signedHeaders(signer: DeviceSigner, method: String, path: String, body: String, keyId: String? = null): Map<String, String> {
         val ts = rfc3339()
         val nonce = signer.randomB64(16)
         val statement = mapOf(
@@ -105,7 +107,7 @@ object EventClient {
         )
         return mapOf(
             "Content-Type" to "application/json",
-            "X-Vuka-Key-Id" to signer.identity().keyId,
+            "X-Vuka-Key-Id" to (keyId ?: signer.identity().keyId),
             "X-Vuka-Ts" to ts,
             "X-Vuka-Nonce" to nonce,
             "X-Vuka-Signature" to signer.sign(Canonical.json(statement)),
@@ -117,8 +119,8 @@ object EventClient {
      * a refusal, or an IOException when the server can't be reached. Call off
      * the main thread.
      */
-    fun request(baseUrl: String, signer: DeviceSigner, method: String, path: String, body: String = ""): Map<String, Any?> {
-        val headers = signedHeaders(signer, method, path, body)
+    fun request(baseUrl: String, signer: DeviceSigner, method: String, path: String, body: String = "", keyId: String? = null): Map<String, Any?> {
+        val headers = signedHeaders(signer, method, path, body, keyId)
         val conn = (URL(baseUrl.trimEnd('/') + path).openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 15_000

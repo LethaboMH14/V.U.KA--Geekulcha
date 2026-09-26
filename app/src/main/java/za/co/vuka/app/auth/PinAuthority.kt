@@ -93,12 +93,12 @@ class InterimPinStore(context: Context) : PinAuthority {
 object DuressSignals {
     /**
      * V6: sends `pin_authorised` {mode: duress} for prompts that map to a server
-     * action. journey_end sends its own (ServerSync.endJourney). sign_out and
+     * action. journey_end and guardian_add send their own (ServerSync.endJourney,
+     * ServerSync.inviteGuardian). sign_out and
      * profile_edit and sign_in have no server action yet, so they raise nothing (a gap).
      */
     fun raise(context: Context, action: String) {
         when (action) {
-            "guardian_add" -> ServerSync.duressAt(context, "add_guardian")
             "delete_profile" -> ServerSync.duressAt(context, "delete")
         }
     }

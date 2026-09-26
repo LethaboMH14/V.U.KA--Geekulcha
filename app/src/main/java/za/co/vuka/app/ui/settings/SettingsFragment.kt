@@ -51,8 +51,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         ) { _, _ -> onboardingViewModel.addPendingInvite() }
 
         // Both look identical on screen. Server-side, a duress invite is a decoy (spec G1).
-        PinGateSheet.listen(this, "guardian_add") {
-            InviteGuardianSheet().show(childFragmentManager, "invite_guardian")
+        PinGateSheet.listen(this, "guardian_add") { mode ->
+            InviteGuardianSheet.newInstance(duress = mode == PinResult.DURESS).show(childFragmentManager, "invite_guardian")
         }
 
         // A duress sign-out looks the same and raises the alarm (DuressSignals).

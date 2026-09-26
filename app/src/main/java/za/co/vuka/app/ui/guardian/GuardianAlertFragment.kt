@@ -79,6 +79,7 @@ class GuardianAlertFragment : Fragment(R.layout.fragment_guardian_alert) {
     private fun render() {
         val view = view ?: return
         val ack = GuardianAlerts.ack.value
+        renderServerAlert(view)
 
         view.findViewById<MaterialButton>(R.id.btnPrimary).apply {
             visibility = if (ack == Ack.NEW || ack == Ack.HANDLING) View.VISIBLE else View.GONE
@@ -117,6 +118,37 @@ class GuardianAlertFragment : Fragment(R.layout.fragment_guardian_alert) {
         } else {
             "Their phone ringing could put them in more danger, so calling them unlocks after " +
                 "stand-down or when the incident closes. You can still use your phone for anything else, like reaching family."
+        }
+    }
+
+    /** A real alert from the server: who, why and where, in words (ADR-0047/0048). */
+    private fun renderServerAlert(view: View) {
+        val alert = GuardianAlerts.alert.value
+        view.findViewById<View>(R.id.chipSimulated).visibility = if (alert == null) View.VISIBLE else View.GONE
+        if (alert == null) return
+        view.findViewById<TextView>(R.id.tvWho).text = "Someone you protect"
+        val trigger = when (alert["trigger"]) {
+            "duress_signal" -> "They entered their duress PIN"
+            "no_answer" -> "They didn't answer a Journey check"
+            "contact_lost" -> "Their phone stopped checking in"
+            else -> "VUKA raised an alert"
+        }
+        @Suppress("UNCHECKED_CAST")
+        val reasons = ((alert["why"] as? Map<String, Any?>)?.get("reasons") as? List<String>).orEmpty()
+        view.findViewById<TextView>(R.id.tvWhy).text =
+            if (reasons.isEmpty()) trigger else trigger + " · " + reasons.joinToString(", ") { it.replace('_', ' ') }
+
+        @Suppress("UNCHECKED_CAST")
+        val last = ((alert["location"] as? Map<String, Any?>)?.get("last") as? Map<String, Any?>)
+        val lat = (last?.get("lat_e7") as? Long)?.let { it / 1e7 }
+        val lon = (last?.get("lon_e7") as? Long)?.let { it / 1e7 }
+        if (lat != null && lon != null) {
+            view.findViewById<TextView>(R.id.tvLocTitle).text = "Last known location"
+            view.findViewById<TextView>(R.id.tvLocBody).text =
+                "%.5f, %.5f · within %d m · %s".format(lat, lon, (last["acc_m"] as? Long ?: 0L), last["at"] as? String ?: "")
+        } else {
+            view.findViewById<TextView>(R.id.tvLocTitle).text = "Location unavailable"
+            view.findViewById<TextView>(R.id.tvLocBody).text = "No location was shared for this alert."
         }
     }
 }

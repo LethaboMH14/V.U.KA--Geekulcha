@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
+import za.co.vuka.app.api.ServerSync
 import za.co.vuka.app.ui.onboarding.OnboardingViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
@@ -84,6 +85,14 @@ class StandbyFragment : Fragment(R.layout.fragment_guardian_standby) {
     // Re-checked on every return, e.g. from the system notification settings.
     override fun onResume() {
         super.onResume()
+        // Linked through a real invite code: alerts come from VUKA's server.
+        if (ServerSync.isGuardian) {
+            view?.findViewById<TextView>(R.id.tvLinked)?.text = "Linked"
+            view?.findViewById<TextView>(R.id.tvLinkedBody)?.text =
+                "You joined with their invite code. You'll hear from VIGIL only if they don't answer a check, or if they use their duress PIN. Alerts are checked while VUKA is open on this phone."
+            view?.findViewById<TextView>(R.id.chipAlerts)?.text = "While open"
+            view?.findViewById<View>(R.id.linkPreview)?.visibility = View.GONE
+        }
         view?.findViewById<View>(R.id.notificationsOff)?.visibility =
             if (NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()) View.GONE else View.VISIBLE
     }

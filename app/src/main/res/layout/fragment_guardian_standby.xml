@@ -100,6 +100,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:letterSpacing="-0.01"
+                android:id="@+id/tvLinked"
                 android:text="Not linked yet"
                 android:textColor="@color/vuka_text_title"
                 android:textSize="32sp"
@@ -110,6 +111,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:lineSpacingExtra="3dp"
+                android:id="@+id/tvLinkedBody"
                 android:text="This build can't look up invite codes, so it doesn't know who invited you. Once it can, you'll hear from VIGIL only if they don't answer a check, or if they use their duress PIN."
                 android:textColor="@color/vuka_text_secondary"
                 android:textSize="15sp" />
@@ -148,7 +150,8 @@
 
                 <TextView
                     style="@style/Widget.Vuka.StatusChip"
-                    android:text="Not connected" />
+                    android:id="@+id/chipAlerts"
+                android:text="Not connected" />
             </LinearLayout>
 
             <View

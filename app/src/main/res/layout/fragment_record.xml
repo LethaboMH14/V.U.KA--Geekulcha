@@ -155,6 +155,18 @@
                 android:textColor="@color/vuka_text_secondary"
                 android:textSize="14sp" />
 
+            <!-- Delivery to VUKA's server (ServerSync's outbox) -->
+            <TextView
+                android:id="@+id/tvSync"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:accessibilityLiveRegion="polite"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.04"
+                android:textColor="@color/vuka_text_dim"
+                android:textSize="11sp" />
+
             <!-- One row per record; tap for its view-only events -->
             <LinearLayout
                 android:id="@+id/timeline"
