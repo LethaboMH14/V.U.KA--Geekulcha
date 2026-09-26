@@ -10,13 +10,16 @@
  *
  * As in his 2026-09-26 build: the Terms and Privacy notice must be accepted
  * before any option works, the number is optional on the Google and email
- * routes, and the code can go by text or by email.
+ * routes, and the code can go by text or by email. The email route sets a
+ * password (twice, at least 8 characters), kept only as a salted hash; the
+ * channel the code went to becomes the default for password-reset codes.
  */
 import React, {useEffect, useState} from 'react';
 import {AppState, Linking, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Eyebrow, Key, Lamp, Panel, QuietKey, TopAppBar} from './components';
 import {colors, fonts, radii, space, type} from './theme';
 import {canFullScreen, openFullScreenSettings} from '../sensors/detection';
+import {DocumentText, PasswordFields, passwordProblem, type DocumentId} from './account';
 import {askLocation} from '../sensors/location';
 
 /**
@@ -39,27 +42,25 @@ const BAD_EMAIL = 'Enter a valid email address.';
 const BAD_MOBILE = 'Enter a valid South African mobile number — 9 digits, not starting with 0.';
 
 /**
- * No terms exist yet, and the privacy notice (docs/PRIVACY-POLICY.md) is a
- * PROPOSED draft not shipped in the app. Say so plainly; don't invent either.
+ * Step 2: how to sign up. Nothing works until the Terms and Privacy notice
+ * are accepted. Both are drafts (account.tsx DOCUMENTS): no terms exist yet,
+ * and the privacy notice is PROPOSED. They say so; neither is invented.
  */
-const DOCS = {
-  terms: ['Terms', 'Draft terms — not yet written; team and legal review pending.'],
-  privacy: ['Privacy notice', 'Draft privacy notice — proposed, not yet in the app; team and legal review pending.'],
-} as const;
-
-/** Step 2: how to sign up. Nothing works until the Terms and Privacy notice are accepted. */
 export function AccountStep({
   agreed,
   onAgree,
   onChoose,
   onBack,
+  onSignIn,
 }: {
   agreed: boolean;
   onAgree: (agreed: boolean) => void;
   onChoose: (k: Account['kind']) => void;
   onBack: () => void;
+  /** "Already have an account? Sign in". */
+  onSignIn?: () => void;
 }) {
-  const [doc, setDoc] = useState<keyof typeof DOCS | null>(null);
+  const [doc, setDoc] = useState<Extract<DocumentId, 'terms' | 'privacy'> | null>(null);
   const label = 'I agree to the Terms and the Privacy notice';
   return (
     <View style={styles.screen}>
@@ -85,8 +86,7 @@ export function AccountStep({
       </View>
       {doc ? (
         <Panel>
-          <Eyebrow>{DOCS[doc][0]}</Eyebrow>
-          <Text style={[type.body, {marginTop: space.sm}]}>{DOCS[doc][1]}</Text>
+          <DocumentText id={doc} />
           <View style={{marginTop: space.sm}}>
             <QuietKey label="Close" onPress={() => setDoc(null)} />
           </View>
@@ -100,6 +100,7 @@ export function AccountStep({
       {!agreed ? <Text style={type.caption}>Tick the box above to choose.</Text> : null}
       <Text style={type.caption}>VIGIL never asks for your Google password. Whichever you choose, your identity in VIGIL is a key made on this phone.</Text>
       <Simulated>GOOGLE AND EMAIL SIGN-IN GO LIVE WITH FIREBASE · FOR NOW KEPT ON THIS PHONE ONLY</Simulated>
+      {onSignIn ? <QuietKey label="Already have an account? Sign in" onPress={onSignIn} /> : null}
     </View>
   );
 }
@@ -165,11 +166,26 @@ export function PhoneStep({
   );
 }
 
-/** Step 3 (Google or email): the address, kept on this phone. */
-export function EmailStep({google, initial = '', onNext, onBack}: {google: boolean; initial?: string; onNext: (email: string) => void; onBack: () => void}) {
+/**
+ * Step 3 (Google or email): the address, kept on this phone. The email route
+ * also sets a password, twice; `onNext` gets it once and the caller keeps
+ * only its salted hash. It is cleared from this screen as it leaves.
+ */
+export function EmailStep({google, initial = '', onNext, onBack}: {google: boolean; initial?: string; onNext: (email: string, password?: string) => void; onBack: () => void}) {
   const [email, setEmail] = useState(initial);
+  const [password, setPassword] = useState('');
+  const [again, setAgain] = useState('');
   const [tried, setTried] = useState(false);
-  const valid = EMAIL.test(email.trim());
+  const emailOk = EMAIL.test(email.trim());
+  const problem = !emailOk ? BAD_EMAIL : google ? null : passwordProblem(password, again);
+  const valid = problem === null;
+  const next = () => {
+    if (!valid) return setTried(true);
+    const pw = google ? undefined : password;
+    setPassword('');
+    setAgain('');
+    onNext(email.trim(), pw);
+  };
   return (
     <View style={styles.screen}>
       <TopAppBar title="" onBack={onBack} />
@@ -189,10 +205,13 @@ export function EmailStep({google, initial = '', onNext, onBack}: {google: boole
         style={styles.field}
         accessibilityLabel="Email address"
       />
-      <Text style={type.caption}>{tried && !valid ? BAD_EMAIL : 'Kept on this phone. Nothing is sent until live sign-in.'}</Text>
+      {!google ? <PasswordFields value={password} onChange={setPassword} confirm={again} onConfirm={setAgain} /> : null}
+      <Text style={type.caption} accessibilityLiveRegion="polite">
+        {tried && problem ? problem : google ? 'Kept on this phone. Nothing is sent until live sign-in.' : 'Kept on this phone. The password is saved only as a salted hash, never as typed.'}
+      </Text>
       <Simulated>{google ? 'SIMULATED · GOOGLE SIGN-IN GOES LIVE WITH FIREBASE' : 'SIMULATED · NO EMAIL IS SENT YET'}</Simulated>
       <View style={{flexGrow: 1}} />
-      <Key label="Continue" variant={valid ? 'signal' : 'plain'} onPress={() => (valid ? onNext(email.trim()) : setTried(true))} />
+      <Key label="Continue" variant={valid ? 'signal' : 'plain'} onPress={next} />
     </View>
   );
 }
@@ -215,7 +234,8 @@ export function CodeStep({
   email?: string;
   choose: boolean;
   onAdd: (channel: Channel, value: string) => void;
-  onNext: () => void;
+  /** With the channel the code went to: the default for password-reset codes. */
+  onNext: (via: Channel) => void;
   onBack: () => void;
 }) {
   const [code, setCode] = useState('');
@@ -325,7 +345,7 @@ export function CodeStep({
             accessibilityLabel="Six-digit code"
           />
           <View style={{flexGrow: 1}} />
-          <Key label="Continue" variant={valid ? 'signal' : 'plain'} onPress={() => valid && onNext()} />
+          <Key label="Continue" variant={valid ? 'signal' : 'plain'} onPress={() => valid && onNext(via)} />
           <QuietKey label="Resend code" onPress={() => setCode('')} />
         </>
       )}

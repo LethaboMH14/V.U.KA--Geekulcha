@@ -111,7 +111,62 @@ export type Profile = {
    * boolean) ever leaves it. Kept for both PINs alike.
    */
   pinTimes?: number[];
+  /**
+   * Email sign-in password (Mutarisi's email route): a random 16-byte salt and
+   * hex SHA-256(salt || password), made with this phone's own SecureRandom and
+   * SHA-256 (the signer's commitment). Never the password itself. Kept on this
+   * phone only, like `account`: never sent, never in the record.
+   */
+  password?: PasswordHash;
+  /** Where a password-reset code goes (Settings → Recovery). Never used for the PIN (spec §9). */
+  recovery?: RecoveryChannel;
+  /**
+   * Signed out of this phone (Settings → Sign out). Keys, PINs, profile and
+   * queue all stay; the app shows Welcome until the member signs back in
+   * with the account saved here and their PIN.
+   */
+  signedOut?: boolean;
 };
+
+export type PasswordHash = {salt: string; hash: string};
+export type RecoveryChannel = 'email' | 'phone';
+/** Same rule as Mutarisi's build: at least 8 characters. */
+export const MIN_PASSWORD = 8;
+
+/**
+ * Where a password-reset code goes: the member's choice while that contact
+ * still exists, else whichever contact is left (email first), else null.
+ */
+export function recoveryChannel(p: Profile | null | undefined): RecoveryChannel | null {
+  const c = profileContacts(p);
+  const has = (ch: RecoveryChannel) => Boolean(ch === 'email' ? c.email : c.phone);
+  if (p?.recovery && has(p.recovery)) return p.recovery;
+  return has('email') ? 'email' : has('phone') ? 'phone' : null;
+}
+
+/** "thandi.dlamini@example.co.za" → "t•••@example.co.za": enough to recognise, not to read out. */
+export function maskEmail(email: string): string {
+  const at = email.indexOf('@');
+  return at <= 0 ? email : `${email.charAt(0)}•••${email.slice(at)}`;
+}
+
+/** "+27825550101" → "+27 •• ••• 0101". */
+export function maskPhone(phone: string): string {
+  return phone.length < 4 ? phone : `+27 •• ••• ${phone.slice(-4)}`;
+}
+
+/** Compares two hex digests without stopping at the first difference. */
+function sameDigest(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+const sameEmail = (a: string | undefined, b: string) => Boolean(a) && a!.trim().toLowerCase() === b.trim().toLowerCase();
+
+/** How a returning member identifies themselves at sign-in (then the PIN). */
+export type SignInRoute = {kind: 'google'; email: string} | {kind: 'phone'; phone: string} | {kind: 'email'; email: string; password: string};
 
 /** Same rules as sign-up (signup.tsx PhoneStep and EmailStep). */
 export const SA_MOBILE = /^\+27[1-9][0-9]{8}$/;
@@ -417,6 +472,38 @@ export function createDevice(b: Backend) {
     return flushing;
   }
 
+  /**
+   * Ending a journey needs a PIN (G35, §4b.1): a `pin_authorised` for
+   * `end_journey` whose inner signature covers {action, target_id, mode,
+   * nonce}, then `journey_ended`. Both are queued before either is sent,
+   * so they go in one pass, inside the authorisation's 120 s.
+   */
+  async function endJourney(journeyId: string, pin: string): Promise<'ended' | 'retry'> {
+    const mode = await b.verify(pin);
+    if (mode === 'wrong') return 'retry';
+    await record(await pinAuthorised('end_journey', journeyId, mode), subject(), {send: false});
+    await record({kind: 'journey_ended', pv: 1, journey_id: journeyId}, journey(journeyId));
+    return 'ended';
+  }
+
+  async function hashWith(salt: string, password: string): Promise<string> {
+    return b.signer.commitment(salt, password);
+  }
+
+  async function hashPassword(password: string): Promise<PasswordHash> {
+    if (password.length < MIN_PASSWORD) throw new Error(`Use at least ${MIN_PASSWORD} characters for your password.`);
+    const salt = await b.signer.randomBytes(16);
+    return {salt, hash: await hashWith(salt, password)};
+  }
+
+  const canResetPassword = (email: string): boolean =>
+    Boolean(profile?.role === 'member' && profile.password && sameEmail(profileContacts(profile).email, email));
+
+  async function saveProfile(p: Profile) {
+    profile = p;
+    await b.setProfile(JSON.stringify(p));
+  }
+
   return {
     simulated: b.simulated,
 
@@ -466,11 +553,99 @@ export function createDevice(b: Backend) {
       return profile;
     },
 
-    /** Keeps the sign-up details on this phone (never sent; not live sign-in yet). */
-    async setAccount(account: Profile['account'], surname?: string) {
+    /**
+     * Keeps the sign-up details on this phone (never sent; not live sign-in
+     * yet): the account, the email route's password hash, and where reset
+     * codes go (the channel the sign-up code went to).
+     */
+    async setAccount(account: Profile['account'], surname?: string, extra: {password?: PasswordHash; recovery?: RecoveryChannel} = {}) {
       if (!profile) return;
-      profile = {...profile, account, surname: surname?.trim() || undefined};
+      profile = {...profile, account, surname: surname?.trim() || undefined, password: extra.password, recovery: extra.recovery};
       await b.setProfile(JSON.stringify(profile));
+    },
+
+    /**
+     * A salted hash of a new email password: 16 random bytes from this
+     * phone's SecureRandom, then SHA-256(salt || password). Throws a message
+     * the screen can show. The SIMULATED preview's signer hashes everything
+     * to zeros, so there any password matches; on a phone it is real.
+     */
+    hashPassword,
+
+    /** True when this phone's account has an email password for this address. */
+    canResetPassword,
+
+    /**
+     * Forgot password: a new password for the account's email, after the
+     * (SIMULATED) code. Never touches the PINs: PIN recovery is the spec's
+     * recovery code (§9), not built. Nothing is queued, sent or recorded.
+     */
+    async resetPassword(email: string, password: string): Promise<void> {
+      if (!profile || !canResetPassword(email)) throw new Error("There's no VIGIL account with an email password for that address on this phone.");
+      const next = await hashPassword(password);
+      await saveProfile({...profile, password: next});
+    },
+
+    /** Settings → Recovery: where password-reset codes go. Only a contact on the profile can be chosen. */
+    async setRecovery(channel: RecoveryChannel): Promise<void> {
+      if (!profile) return;
+      const c = profileContacts(profile);
+      if (!(channel === 'email' ? c.email : c.phone)) throw new Error('Add that contact to your profile first.');
+      await saveProfile({...profile, recovery: channel});
+    },
+
+    get signedOut(): boolean {
+      return Boolean(profile?.signedOut);
+    },
+
+    /**
+     * Sign-in, first step: does this match the account saved on THIS phone?
+     * LOCAL ONLY: there is no accounts server, so an account made on another
+     * phone can never be found here. Google (SIMULATED) matches the account
+     * email when no email password is set; an email account needs its
+     * password. Nothing is queued, sent or recorded.
+     */
+    async findAccount(route: SignInRoute): Promise<boolean> {
+      if (!profile || profile.role !== 'member') return false;
+      const c = profileContacts(profile);
+      if (route.kind === 'phone') return Boolean(c.phone) && c.phone === route.phone.replace(/\s/g, '');
+      if (!sameEmail(c.email, route.email)) return false;
+      if (route.kind === 'google') return !profile.password;
+      if (!profile.password) return false;
+      return sameDigest(await hashWith(profile.password.salt, route.password), profile.password.hash);
+    },
+
+    /**
+     * Sign out of this phone. It stops protection, so it takes exactly the
+     * pause-listening path: with a journey running, `endJourney` (the same
+     * PIN check and the same signed `pin_authorised` end_journey +
+     * `journey_ended`). With none running there is nothing to end, so the PIN
+     * is only checked. Either PIN signs out the same way. Keys, PINs,
+     * profile and queue stay; queued events still go out.
+     */
+    async signOut(journeyId: string | null, pin: string): Promise<'ok' | 'retry'> {
+      if (!profile) throw new Error('no profile');
+      if (journeyId) {
+        if ((await endJourney(journeyId, pin)) === 'retry') return 'retry';
+      } else if ((await b.verify(pin)) === 'wrong') {
+        return 'retry';
+      }
+      await saveProfile({...profile, signedOut: true});
+      return 'ok';
+    },
+
+    /**
+     * Sign-in, last step: the PIN, after `findAccount`. Both PINs let the
+     * member in the same way. Nothing is queued or sent: listening starts
+     * again on Home, as always.
+     */
+    async signIn(pin: string): Promise<'ok' | 'retry'> {
+      if (!profile) throw new Error('no profile');
+      if ((await b.verify(pin)) === 'wrong') return 'retry';
+      const rest: Profile = {...profile};
+      delete rest.signedOut;
+      await saveProfile(rest);
+      return 'ok';
     },
 
 
@@ -635,19 +810,8 @@ export function createDevice(b: Backend) {
       };
     },
 
-    /**
-     * Ending a journey needs a PIN (G35, §4b.1): a `pin_authorised` for
-     * `end_journey` whose inner signature covers {action, target_id, mode,
-     * nonce}, then `journey_ended`. Both are queued before either is sent,
-     * so they go in one pass, inside the authorisation's 120 s.
-     */
-    async endJourney(journeyId: string, pin: string): Promise<'ended' | 'retry'> {
-      const mode = await b.verify(pin);
-      if (mode === 'wrong') return 'retry';
-      await record(await pinAuthorised('end_journey', journeyId, mode), subject(), {send: false});
-      await record({kind: 'journey_ended', pv: 1, journey_id: journeyId}, journey(journeyId));
-      return 'ended';
-    },
+    /** Pause listening (see the local `endJourney`); sign-out takes the same path. */
+    endJourney,
 
     /**
      * Opening My record needs the PIN (§9 export authority). Both PINs open

@@ -5,6 +5,10 @@
  * PINs are compared here only to catch typos, then handed to the PIN module,
  * which keeps an Argon2id hash of each and nothing else. The name stays on the
  * phone: the registration entry doesn't carry it.
+ *
+ * Welcome also offers "Already have an account? Sign in" (account.tsx). On a
+ * phone whose member signed out, sign-up never runs again: it would replace
+ * the key, PINs and record, so "Get started" explains instead.
  */
 import React, {useEffect, useState} from 'react';
 import {BackHandler, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
@@ -12,8 +16,9 @@ import {Eyebrow, GlassIcon, Key, Lamp, Panel, PinKeypad, QuietKey, Readout, Rule
 import {Microphone, ShieldChevron} from './icons';
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
 import {version} from '../../package.json';
-import {device, type Delivery} from '../api/device';
-import {AccountStep, CodeStep, EmailStep, InviteStep, PermissionsStep, PhoneStep, StepMark, type Account} from './signup';
+import {device, type Delivery, type PasswordHash, type RecoveryChannel} from '../api/device';
+import {AccountStep, CodeStep, EmailStep, InviteStep, PermissionsStep, PhoneStep, StepMark, type Account, type Channel} from './signup';
+import {AccountOnThisPhone, SignIn} from './account';
 
 type Step =
   | 'welcome'
@@ -29,12 +34,32 @@ type Step =
   | 'duress'
   | 'duressAgain'
   | 'record'
-  | 'invite';
+  | 'invite'
+  | 'signIn'
+  | 'haveAccount';
 
 const TOP_INSET = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
 
-export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; onGuardian: () => void; onInvite?: () => void}) {
+export function Onboarding({
+  onDone,
+  onGuardian,
+  onInvite,
+  onSignIn,
+}: {
+  onDone: () => void;
+  onGuardian: () => void;
+  onInvite?: () => void;
+  /** Sign-in matched the account on this phone: the caller asks for the PIN. */
+  onSignIn?: () => void;
+}) {
   const [step, setStep] = useState<Step>('welcome');
+  /** A member's account is already on this phone (they signed out): never sign up over it. */
+  const hasAccount = device.signedOut;
+  /** The email route's password, as a salted hash only. */
+  const [password, setPassword] = useState<PasswordHash | undefined>(undefined);
+  /** Where the sign-up code went: the default for password-reset codes. */
+  const [codeVia, setCodeVia] = useState<Channel | undefined>(undefined);
+  const [emailError, setEmailError] = useState('');
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [account, setAccount] = useState<Account | null>(null);
@@ -65,6 +90,8 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
       duressAgain: 'duress',
       record: 'record',
       invite: 'invite',
+      signIn: 'welcome',
+      haveAccount: 'welcome',
     } as const)[s];
   const back = () => {
     const to = previous(step);
@@ -150,15 +177,22 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
       <Surface />
       <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
         {step === 'welcome' ? (
-          <Welcome onNext={() => setStep('account')} onGuardian={onGuardian} />
+          <Welcome signedOut={hasAccount} onNext={() => setStep(hasAccount ? 'haveAccount' : 'account')} onGuardian={onGuardian} onSignIn={() => setStep('signIn')} />
+        ) : step === 'signIn' ? (
+          <SignIn onBack={back} onFound={onSignIn ?? onDone} onCreate={() => setStep(hasAccount ? 'haveAccount' : 'account')} />
+        ) : step === 'haveAccount' ? (
+          <AccountOnThisPhone onBack={back} onSignIn={() => setStep('signIn')} />
         ) : step === 'account' ? (
           <AccountStep
             agreed={agreed}
             onAgree={setAgreed}
             onBack={back}
+            onSignIn={() => setStep('signIn')}
             onChoose={k => {
-              // A new route starts clean: no email or number from an earlier choice.
+              // A new route starts clean: no email, number or password from an earlier choice.
               setAccount(null);
+              setPassword(undefined);
+              setCodeVia(undefined);
               setRoute(k);
               setStep(k === 'phone' ? 'phone' : 'email');
             }}
@@ -182,17 +216,28 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
             }}
           />
         ) : step === 'email' ? (
-          <EmailStep
-            google={route === 'google'}
-            initial={account && account.kind !== 'phone' ? account.contact : ''}
-            onBack={back}
-            onNext={email => {
-              const kind = route === 'google' ? 'google' : 'email';
-              // Same route again: keep a number already given (the phone step shows it and can skip it).
-              setAccount(a => ({kind, contact: email, phone: a?.kind === kind ? a.phone : undefined, verified: false}));
-              setStep('phone');
-            }}
-          />
+          <>
+            <EmailStep
+              google={route === 'google'}
+              initial={account && account.kind !== 'phone' ? account.contact : ''}
+              onBack={back}
+              onNext={async (email, pw) => {
+                const kind = route === 'google' ? 'google' : 'email';
+                // Only the salted hash is kept; the typed password goes no further.
+                try {
+                  setPassword(pw ? await device.hashPassword(pw) : undefined);
+                } catch (e) {
+                  setEmailError(e instanceof Error ? e.message : String(e));
+                  return;
+                }
+                setEmailError('');
+                // Same route again: keep a number already given (the phone step shows it and can skip it).
+                setAccount(a => ({kind, contact: email, phone: a?.kind === kind ? a.phone : undefined, verified: false}));
+                setStep('phone');
+              }}
+            />
+            {emailError ? <Text style={[type.body, {color: colors.textTitle}]}>{emailError}</Text> : null}
+          </>
         ) : step === 'code' ? (
           <CodeStep
             phone={account?.kind === 'phone' ? account.contact : account?.phone}
@@ -201,7 +246,10 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
             choose={route !== 'google'}
             onAdd={(channel, value) => setAccount(a => (a ? (channel === 'sms' ? {...a, phone: value} : {...a, email: value}) : a))}
             onBack={back}
-            onNext={() => setStep('name')}
+            onNext={via => {
+              setCodeVia(via);
+              setStep('name');
+            }}
           />
         ) : step === 'name' ? (
           <NameStep
@@ -225,6 +273,8 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
             duress={duress}
             account={account}
             surname={surname}
+            password={password}
+            recovery={codeVia === 'sms' ? 'phone' : codeVia === 'email' ? 'email' : undefined}
             onDone={() => setStep('invite')}
           />
         )}
@@ -238,7 +288,7 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
   );
 }
 
-function Welcome({onNext, onGuardian}: {onNext: () => void; onGuardian: () => void}) {
+function Welcome({signedOut, onNext, onGuardian, onSignIn}: {signedOut: boolean; onNext: () => void; onGuardian: () => void; onSignIn: () => void}) {
   const lines = [
     'It listens on this phone all the time, for trouble like breaking glass or a scream.',
     'A distress sound shows a quiet check-in, not an alarm.',
@@ -275,10 +325,19 @@ function Welcome({onNext, onGuardian}: {onNext: () => void; onGuardian: () => vo
           and discarded within three seconds.
         </Text>
       </View>
+      {signedOut ? (
+        <Panel>
+          <Text style={type.label}>Signed out</Text>
+          <Text style={[type.body, {marginTop: space.xs}]}>
+            VIGIL isn’t listening on this phone. Your account, key and record are still here: sign in to turn protection back on.
+          </Text>
+        </Panel>
+      ) : null}
       <View style={{flexGrow: 1}} />
       <View style={{gap: 10}}>
-        <Key label="Get started" variant="signal" arrow onPress={onNext} />
-        <Key label="I'm a guardian" variant="ghost" onPress={onGuardian} accessibilityHint="Someone sent you a code" />
+        {signedOut ? <Key label="Sign in" variant="signal" arrow onPress={onSignIn} /> : <Key label="Get started" variant="signal" arrow onPress={onNext} />}
+        {signedOut ? null : <Key label="I'm a guardian" variant="ghost" onPress={onGuardian} accessibilityHint="Someone sent you a code" />}
+        <QuietKey label={signedOut ? 'Create account' : 'Already have an account? Sign in'} onPress={signedOut ? onNext : onSignIn} />
       </View>
     </View>
   );
@@ -378,6 +437,8 @@ function CreateRecord({
   duress,
   account,
   surname,
+  password,
+  recovery,
   onDone,
 }: {
   name: string;
@@ -385,6 +446,8 @@ function CreateRecord({
   duress: string;
   account: Account | null;
   surname: string;
+  password?: PasswordHash;
+  recovery?: RecoveryChannel;
   onDone: () => void;
 }) {
   const [phase, setPhase] = useState<Phase>('idle');
@@ -404,7 +467,7 @@ function CreateRecord({
       await device.setPins(pin, duress);
       await device.register(name.trim(), version);
       // Saved with the profile, before anything else can interrupt: kept on this phone only.
-      await device.setAccount(account ?? undefined, surname);
+      await device.setAccount(account ?? undefined, surname, {password: account?.kind === 'email' ? password : undefined, recovery});
       await device.flush();
       setPhase('made');
     } catch (e) {

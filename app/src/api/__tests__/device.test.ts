@@ -1,4 +1,4 @@
-import {createDevice, JourneyStartError, simBackend, type Backend} from '../device';
+import {createDevice, JourneyStartError, recoveryChannel, simBackend, type Backend} from '../device';
 import type {EventSubmission} from '../events';
 import {checkPayload} from '../payloads';
 import {createHash} from 'crypto';
@@ -602,4 +602,150 @@ test('hold-for-help sends the same detection a sound would, marked manual', asyn
   const sig = h.sent.find(e => e.details.event_id === id)!;
   expect(sig.payload).toEqual({kind: 'signal_detected', pv: 1, journey_id: JOURNEY, sense: 'manual', app_version: '0.0.13'});
   expect(sig.target_type).toBe('journey');
+});
+
+describe('account on this phone (Mutarisi’s sign-in, password and recovery)', () => {
+  /** A real salted SHA-256, as the phone's signer computes it (the simulated one hashes to zeros). */
+  const realHash = (h: ReturnType<typeof harness>) => {
+    h.b.signer.commitment = async (salt, t) =>
+      createHash('sha256').update(Buffer.concat([Buffer.from(salt, 'base64'), Buffer.from(t, 'utf8')])).digest('hex');
+  };
+  /** A member who signed up by email with a password, the code sent to their email. */
+  async function emailMember() {
+    const h = harness();
+    realHash(h);
+    const saved: string[] = [];
+    const setProfile = h.b.setProfile;
+    h.b.setProfile = async j => {
+      saved.push(j);
+      return setProfile(j);
+    };
+    await onboarded(h);
+    const password = await h.device.hashPassword('correct horse');
+    await h.device.setAccount({kind: 'email', contact: 'Thandi@Example.co.za', phone: '+27825550101', verified: false}, 'Dlamini', {password, recovery: 'email'});
+    return {h, saved};
+  }
+  const traffic = async (h: ReturnType<typeof harness>) => ({pending: (await h.b.pending()).length, sent: h.sent.length, requests: h.requests.length, queued: h.device.delivery().queued});
+
+  test('a password is kept only as a salted SHA-256, and verifies only with its email', async () => {
+    const {h, saved} = await emailMember();
+    const p = h.device.profile!;
+    expect(p.password?.salt).toMatch(/^[A-Za-z0-9+/]{22}==$/);
+    const expected = createHash('sha256').update(Buffer.concat([Buffer.from(p.password!.salt, 'base64'), Buffer.from('correct horse', 'utf8')])).digest('hex');
+    expect(p.password?.hash).toBe(expected);
+    // The typed password is never stored, anywhere the profile was written.
+    expect(saved.some(j => j.includes('correct horse'))).toBe(false);
+    // A second hash of the same password gets a fresh salt.
+    const again = await h.device.hashPassword('correct horse');
+    expect(again.salt).not.toBe(p.password?.salt);
+    await expect(h.device.hashPassword('short')).rejects.toThrow(/at least 8/);
+
+    expect(await h.device.findAccount({kind: 'email', email: ' thandi@example.CO.ZA ', password: 'correct horse'})).toBe(true);
+    expect(await h.device.findAccount({kind: 'email', email: 'thandi@example.co.za', password: 'wrong horse'})).toBe(false);
+    expect(await h.device.findAccount({kind: 'email', email: 'other@example.co.za', password: 'correct horse'})).toBe(false);
+    // A simulated Google sign-in can't skip an email password.
+    expect(await h.device.findAccount({kind: 'google', email: 'thandi@example.co.za'})).toBe(false);
+    expect(await h.device.findAccount({kind: 'phone', phone: '+27825550101'})).toBe(true);
+    expect(await h.device.findAccount({kind: 'phone', phone: '+27825550102'})).toBe(false);
+  });
+
+  test('Google sign-in matches the account email saved on this phone; nothing matches on a new phone', async () => {
+    const h = harness();
+    expect(await h.device.findAccount({kind: 'google', email: 'thandi@example.co.za'})).toBe(false);
+    await onboarded(h);
+    await h.device.setAccount({kind: 'google', contact: 'thandi@example.co.za', verified: false}, 'Dlamini');
+    expect(await h.device.findAccount({kind: 'google', email: 'THANDI@example.co.za'})).toBe(true);
+    expect(await h.device.findAccount({kind: 'google', email: 'someone@example.co.za'})).toBe(false);
+    expect(await h.device.findAccount({kind: 'phone', phone: '+27825550101'})).toBe(false);
+  });
+
+  test('forgot password: only this phone’s email account, a new salted hash, never the PINs', async () => {
+    const {h} = await emailMember();
+    const old = h.device.profile!.password;
+    expect(h.device.canResetPassword('someone@example.co.za')).toBe(false);
+    expect(h.device.canResetPassword('thandi@example.co.za')).toBe(true);
+    await expect(h.device.resetPassword('someone@example.co.za', 'new password')).rejects.toThrow(/no VIGIL account/);
+    await expect(h.device.resetPassword('thandi@example.co.za', 'short')).rejects.toThrow(/at least 8/);
+    await h.device.resetPassword('thandi@example.co.za', 'new password');
+    expect(h.device.profile!.password?.salt).not.toBe(old?.salt);
+    expect(await h.device.findAccount({kind: 'email', email: 'thandi@example.co.za', password: 'correct horse'})).toBe(false);
+    expect(await h.device.findAccount({kind: 'email', email: 'thandi@example.co.za', password: 'new password'})).toBe(true);
+    // The PINs are untouched.
+    expect(await h.device.signIn('1234')).toBe('ok');
+    expect(await h.device.signIn('9876')).toBe('ok');
+  });
+
+  test('recovery: the sign-up channel by default, only a contact on the profile, falls back when one is removed', async () => {
+    const {h} = await emailMember();
+    expect(recoveryChannel(h.device.profile)).toBe('email');
+    await h.device.setRecovery('phone');
+    expect(recoveryChannel(h.device.profile)).toBe('phone');
+    await h.device.setProfileDetails({name: 'Lerato', surname: 'Dlamini', email: 'thandi@example.co.za'});
+    // The number was removed: codes go to the email instead.
+    expect(recoveryChannel(h.device.profile)).toBe('email');
+    await expect(h.device.setRecovery('phone')).rejects.toThrow(/Add that contact/);
+  });
+
+  test('sign-in, password and recovery actions queue, send and record nothing', async () => {
+    const {h} = await emailMember();
+    await h.device.flush();
+    const before = await traffic(h);
+    await h.device.findAccount({kind: 'email', email: 'thandi@example.co.za', password: 'correct horse'});
+    await h.device.findAccount({kind: 'google', email: 'thandi@example.co.za'});
+    await h.device.findAccount({kind: 'phone', phone: '+27825550101'});
+    await h.device.hashPassword('another password');
+    await h.device.resetPassword('thandi@example.co.za', 'new password');
+    await h.device.setRecovery('phone');
+    expect(await h.device.signIn('0000')).toBe('retry');
+    expect(await h.device.signIn('1234')).toBe('ok');
+    await h.device.flush();
+    expect(await traffic(h)).toEqual(before);
+  });
+
+  test('sign-out with listening on is the pause path: the same signed end_journey for both PINs; keys, profile and queue stay', async () => {
+    const outs: {mode: unknown; kinds: unknown[]}[] = [];
+    for (const pin of ['1234', '9876']) {
+      const {h} = await emailMember();
+      await h.device.startJourney('0.0.14');
+      await h.device.flush();
+      const from = h.sent.length;
+      const subjectId = h.device.profile!.subjectId;
+      expect(await h.device.signOut(JOURNEY, '0000')).toBe('retry');
+      expect(h.device.signedOut).toBe(false);
+      expect(await h.device.signOut(JOURNEY, pin)).toBe('ok');
+      await h.device.flush();
+      const mine = h.sent.slice(from);
+      const auth = mine.find(e => e.payload.kind === 'pin_authorised')!;
+      expect(auth.payload.action).toBe('end_journey');
+      expect(auth.payload.target_id).toBe(JOURNEY);
+      outs.push({mode: auth.payload.mode, kinds: mine.map(e => e.payload.kind)});
+      // Signed out, not deleted.
+      expect(h.device.signedOut).toBe(true);
+      expect(h.device.profile).toMatchObject({subjectId, firstName: 'Lerato', password: expect.any(Object)});
+      // Signing back in: the account on this phone, then the PIN (either one).
+      expect(await h.device.findAccount({kind: 'email', email: 'thandi@example.co.za', password: 'correct horse'})).toBe(true);
+      expect(await h.device.signIn(pin === '1234' ? '9876' : '1234')).toBe('ok');
+      expect(h.device.signedOut).toBe(false);
+    }
+    // The screen can't tell them apart: same events, only the signed mode differs.
+    expect(outs[0].kinds).toEqual(['pin_authorised', 'journey_ended']);
+    expect(outs[1].kinds).toEqual(outs[0].kinds);
+    expect(outs.map(o => o.mode)).toEqual(['normal', 'duress']);
+  });
+
+  test('sign-out with listening paused only checks the PIN (nothing to end); the state survives a restart', async () => {
+    const {h} = await emailMember();
+    await h.device.flush();
+    const before = await traffic(h);
+    expect(await h.device.signOut(null, '9876')).toBe('ok');
+    await h.device.flush();
+    expect(await traffic(h)).toEqual(before);
+    // A restart reads the same sealed profile: still signed out.
+    const again = createDevice(h.b);
+    const {profile} = await again.load();
+    expect(profile?.signedOut).toBe(true);
+    expect(again.signedOut).toBe(true);
+    expect(await again.signIn('1234')).toBe('ok');
+    expect((await again.load()).profile?.signedOut).toBeUndefined();
+  });
 });
