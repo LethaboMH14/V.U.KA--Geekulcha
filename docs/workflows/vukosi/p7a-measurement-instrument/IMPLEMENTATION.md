@@ -134,3 +134,13 @@ Existing tests changed, and why:
 New tests cover 40 attempts with 30 delivered and 30 attempts with 29 delivered. No expected percentile was derived from the implementation.
 
 **Repository evidence — FACT:** docs PASS; intake PASS; contract tests 10/10 PASS; Gitleaks PASS with no leaks; `git diff --check` PASS. The only tracked restricted-data match is the inherited, untouched `research/results/anchor-scale-scenarios.csv`. No model, audio, dataset, result, new CSV, network access, threshold tuning or device check was used. Device checks are **NOT RUN** because this packet has no live check and the phone was not required.
+
+## P7b — provenance status and negative-clock guard (2026-09-26)
+
+**FACT — Criterion C3:** Reports distinguish measured inputs from unverified computation so a reviewer can judge whether a real user could trust the result. `_base` now defaults to `computed_unverified`; M2 can say `measured` only when its input includes a valid model digest, non-empty non-`sim_` run IDs, and `consent_recorded: true`. M1 and M3's current input contracts do not carry that complete provenance. Existing `not_measured` and `insufficient_n` states remain. **PROPOSED:** For any negative M3 adjusted latency, emit `invalid_clock`, preserve `clock_suspect` as the negative-latency count, and omit `median_ms`, `p95_ms`, `min_ms` and `max_ms`; this chooses report suppression rather than exit 2.
+
+Test-first evidence: `py -3.12 -m unittest scripts.tests.test_eval_yamnet -v` before implementation → exit 1, 27 tests, 3 expected failures (synthetic M1 and M3 still said `measured`; negative M3 still said `measured` and exposed percentiles). After implementation, `py -3.12 -m unittest discover -s scripts/tests -v` → PASS, 27 tests, `OK` (0.359 s). Regression coverage verifies synthetic M1/M2/M3 are unverified, negative latency suppresses every percentile while retaining `clock_suspect`, and a clean 30-delivery set still returns its hand-checked percentiles (median 15.5, p95 29, min 1, max 30). These are synthetic tests, not measurements; tests block sockets and no audio/model/data were used.
+
+Repository checks: `node scripts/check-docs.mjs` PASS; `node scripts/check-intake.mjs` PASS; `node --test "test/**/*.test.mjs"` PASS, 23/23; `gitleaks dir --redact --config .gitleaks.toml .` PASS, no leaks; `git diff --check` PASS (exit 0). No live model, field evaluation or device check was run. No dependency, contract, threshold, model, audio or dataset changed.
+
+Executor: Codex / GPT-5. BASE `886d20cf37768e341b6201adadbb5ead4dca7881`. The resulting HEAD is reported with the local commit summary; no push, PR, comment or release was made.

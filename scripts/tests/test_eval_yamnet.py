@@ -83,6 +83,7 @@ class OfflineInstrumentTests(unittest.TestCase):
         code, report, _ = self.invoke(m1_fixture(), "m1")
         m1 = report["reports"][0]
         self.assertEqual(code, 0)
+        self.assertEqual(m1["status"], "computed_unverified")
         self.assertEqual((m1["numerator"], m1["denominator"], m1["n"]), (8, 10, 10))
         self.assertEqual(m1["wilson_95"], [0.4902, 0.9433])
 
@@ -128,6 +129,7 @@ class OfflineInstrumentTests(unittest.TestCase):
         code, report, _ = self.invoke(m2_fixture(), "m2")
         m2 = report["reports"][0]
         self.assertEqual(code, 0)
+        self.assertEqual(m2["status"], "computed_unverified")
         self.assertEqual((m2["raw"], m2["counted"], m2["armed_seconds_total"]), (3, 2, 1800))
         self.assertEqual(m2["false_alarms_per_hour"], 4.0)
 
@@ -206,11 +208,21 @@ class OfflineInstrumentTests(unittest.TestCase):
         for key in ("median_ms", "p95_ms", "min_ms", "max_ms"):
             self.assertNotIn(key, m3)
 
-    def test_e14_m3_negative_offset_corrected_latency_is_flagged_not_clamped(self):
+    def test_p7b_m3_negative_adjusted_latency_suppresses_all_percentiles(self):
         _, report, _ = self.invoke(m3_fixture([-5] + list(range(1, 30)), offset=0), "m3")
         m3 = report["reports"][0]
+        self.assertEqual(m3["status"], "invalid_clock")
+        self.assertEqual(m3["reason"], "negative adjusted latency")
         self.assertEqual(m3["clock_suspect"], 1)
-        self.assertEqual(m3["min_ms"], -5)
+        for key in ("median_ms", "p95_ms", "min_ms", "max_ms"):
+            self.assertNotIn(key, m3)
+
+    def test_p7b_m3_clean_deliveries_still_report_percentiles(self):
+        _, report, _ = self.invoke(m3_fixture(list(range(1, 31))), "m3")
+        m3 = report["reports"][0]
+        self.assertEqual(m3["status"], "computed_unverified")
+        self.assertEqual((m3["median_ms"], m3["p95_ms"], m3["min_ms"], m3["max_ms"]),
+                         (15.5, 29, 1, 30))
 
     def test_e15_m3_requires_clock_offset_and_uncertainty(self):
         for missing in ("clock_offset_ms", "clock_uncertainty_ms"):

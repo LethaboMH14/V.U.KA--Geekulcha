@@ -88,9 +88,21 @@ def _threshold(config: dict, where: str) -> int:
 
 
 def _base(measure: str, config: dict, n: int, method: str,
-          numerator: int, denominator: int) -> dict:
-    return {"measure": measure, "status": "measured", "numerator": numerator,
+          numerator: int, denominator: int, has_provenance: bool = False) -> dict:
+    status = "measured" if has_provenance else "computed_unverified"
+    return {"measure": measure, "status": status, "numerator": numerator,
             "denominator": denominator, "n": n, "config": config, "method": method}
+
+
+def _has_m2_provenance(config: dict, runs: list) -> bool:
+    """M2 is measured only when model, non-synthetic run, and consent fields exist."""
+    if SHA256_RE.fullmatch(config.get("model_sha256", "")) is None or not runs:
+        return False
+    return all(isinstance(run.get("run_id"), str)
+               and bool(run["run_id"].strip())
+               and not run["run_id"].startswith("sim_")
+               and run.get("consent_recorded") is True
+               for run in runs)
 
 
 def _wilson_interval(successes: int, observations: int) -> list[float]:
@@ -189,7 +201,7 @@ def report_m2(data: dict) -> dict:
     denominator = armed_total
     report = _base("M2_false_alarms_per_armed_hour", config, n,
                    "Within each run, sort alarm times and merge an alarm when it is less than refractory_s after the previous counted alarm; counted alarms / armed hours. Limited-sample estimate, not a field rate.",
-                   counted, denominator)
+                   counted, denominator, _has_m2_provenance(config, runs))
     report.update({"raw": raw, "counted": counted, "armed_seconds_total": armed_total,
                    "run_count": n, "rate_unit": "alarms_per_armed_hour"})
     if armed_total == 0:
@@ -234,7 +246,10 @@ def report_m3(data: dict) -> dict:
     report.update({"lost": lost, "delivered": delivered, "clock_offset_ms": offset,
                    "clock_uncertainty_ms": uncertainty,
                    "clock_suspect": sum(value < 0 for value in latencies)})
-    if n < 30:
+    if any(value < 0 for value in latencies):
+        report["status"] = "invalid_clock"
+        report["reason"] = "negative adjusted latency"
+    elif n < 30:
         report["status"] = "insufficient_n"
         report["reason"] = "fewer than 30 attempts"
     elif delivered < 30:
