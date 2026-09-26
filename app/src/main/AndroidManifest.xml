@@ -8,10 +8,15 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
+    <!-- The ANCHOR server (ServerSync) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- VIGIL listening while active: a microphone foreground service (spec V2) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Journey check over the lock screen (spec V4) -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <application
         android:allowBackup="true"
@@ -41,6 +46,16 @@
             android:exported="false"
             android:showWhenLocked="true"
             android:taskAffinity=""
+            tools:targetApi="27" />
+
+        <!-- Journey check: the PIN check-in after a detection or Emergency -->
+        <activity
+            android:name=".detect.CheckinActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:turnScreenOn="true"
             tools:targetApi="27" />
 
         <!-- VIGIL: listens only while the member has activated it (Home) -->

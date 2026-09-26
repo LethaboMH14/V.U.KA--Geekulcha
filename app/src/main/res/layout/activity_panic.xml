@@ -43,8 +43,9 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvSendState"
                 style="@style/Widget.Vuka.StatusChip.Simulated"
-                android:text="Not sent" />
+                android:text="Sending" />
         </LinearLayout>
 
         <LinearLayout
@@ -70,7 +71,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:lineSpacingExtra="3dp"
-                android:text="Your alert is recorded on this phone, but alerts aren't connected in this build yet. Your guardians have not been contacted."
+                android:text="Your alert is signed on this phone and sent to VUKA's server. If it isn't answered, the server alerts your guardians after about 90 seconds. Only guardians who have joined you through VUKA receive it."
                 android:textColor="@color/vuka_text_secondary"
                 android:textSize="15sp" />
 
@@ -80,7 +81,8 @@
                 android:layout_marginTop="10dp"
                 android:fontFamily="monospace"
                 android:letterSpacing="0.08"
-                android:text="SIMULATED ALERT PATH · NOTHING WAS SENT"
+                android:id="@+id/tvSendDetail"
+                android:text="SENDING TO THE SERVER…"
                 android:textColor="@color/vuka_text_dim"
                 android:textSize="11sp" />
         </LinearLayout>

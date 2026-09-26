@@ -68,7 +68,7 @@ class WelcomeBackFragment : Fragment(R.layout.fragment_welcome_back) {
             renderDots()
             return
         }
-        if (result == PinResult.DURESS) DuressSignals.raise("sign_in")
+        if (result == PinResult.DURESS) DuressSignals.raise(requireContext(), "sign_in")
         onboardingViewModel.signInExisting()
         findNavController().navigate(R.id.action_welcomeBack_to_home)
     }

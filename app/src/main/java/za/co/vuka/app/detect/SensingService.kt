@@ -17,6 +17,10 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import za.co.vuka.app.MainActivity
+import za.co.vuka.app.api.ServerSync
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import za.co.vuka.app.R
 import za.co.vuka.app.ui.record.RecordEntry
 import za.co.vuka.app.ui.record.RecordStore
@@ -46,16 +50,14 @@ object Listening {
  * Started only from Activate, with the app in the foreground (V1), which is
  * what Android 14 requires for a microphone foreground service. A detection
  * is written to the on-phone record as "Sound detected" (the class label,
- * never audio) and, outside the cooldown, raises a neutral "Journey check"
- * notification. The PIN check-in and guardian alerts aren't built yet.
+ * never audio), sent to the server as `signal_detected`, and, outside the
+ * cooldown, raises the Journey check ([CheckinActivity]).
  */
 class SensingService : Service() {
     companion object {
         private const val TAG = "VigilSensing"
         private const val CHANNEL_ACTIVE = "journey"
-        private const val CHANNEL_CHECK = "journey_check"
         private const val NOTIFICATION_ACTIVE = 7001
-        private const val NOTIFICATION_CHECK = 7002
 
         fun start(context: Context) {
             Listening.set(Listening.State.Starting)
@@ -71,6 +73,7 @@ class SensingService : Service() {
     private var audio: AudioPipeline? = null
     private var classifier: YamnetClassifier? = null
     private var wake: PowerManager.WakeLock? = null
+    private var heartbeats: ScheduledExecutorService? = null
     private val engine = DetectionEngine()
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -115,6 +118,10 @@ class SensingService : Service() {
                 onStarted = { Listening.set(Listening.State.On) },
                 onFailed = { fail("the microphone couldn't start") },
             ).also { it.start() }
+            // V9: contact clock input every 30 s while active.
+            heartbeats = Executors.newSingleThreadScheduledExecutor().apply {
+                scheduleWithFixedDelay({ ServerSync.heartbeat() }, 0, 30, TimeUnit.SECONDS)
+            }
         }
         return START_NOT_STICKY // no silent restart after the app is killed (V10)
     }
@@ -122,24 +129,12 @@ class SensingService : Service() {
     private fun onWindow(w: WindowResult) {
         val decision = engine.step(w) ?: return
         RecordStore.add(this, RecordEntry.Kind.SOUND_DETECTED, decision.label)
-        if (decision.prompt) postJourneyCheck()
-    }
-
-    // V4: a neutral title. The PIN check-in itself isn't built, so this opens the app.
-    private fun postJourneyCheck() {
-        val n = NotificationCompat.Builder(this, CHANNEL_CHECK)
-            .setContentTitle("Journey check")
-            .setContentText("Tap to open VUKA.")
-            .setSmallIcon(R.drawable.ic_shield_chevron)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setContentIntent(openApp())
-            .setAutoCancel(true)
-            .build()
-        try {
-            NotificationManagerCompat.from(this).notify(NOTIFICATION_CHECK, n)
-        } catch (e: SecurityException) {
-            Log.w(TAG, "notifications not allowed")
+        classifier?.let { c ->
+            val index = c.targetIndices[DetectionEngine.TARGETS.indexOfFirst { it.label == decision.label }]
+            // The Journey check opens once the signal is signed, and only outside the cooldown.
+            ServerSync.signal(decision.label, index, decision.scoreBp, decision.thresholdBp) { journeyId, signalEventId ->
+                if (decision.prompt) CheckinActivity.notify(this, journeyId, signalEventId, fullScreen = true)
+            }
         }
     }
 
@@ -153,7 +148,6 @@ class SensingService : Service() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CHANNEL_ACTIVE, "Journey active", NotificationManager.IMPORTANCE_LOW))
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_CHECK, "Journey check", NotificationManager.IMPORTANCE_HIGH))
     }
 
     /** Startup or capture failed: say so, and don't keep a notification and wake lock for nothing. */
@@ -164,6 +158,8 @@ class SensingService : Service() {
     }
 
     override fun onDestroy() {
+        heartbeats?.shutdownNow()
+        heartbeats = null
         audio?.stop() // blocks until capture and inference have finished
         wake?.let { if (it.isHeld) it.release() }
         classifier?.close()

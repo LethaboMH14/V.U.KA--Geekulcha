@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Journey check (spec V4/V5): the PIN sheet on its own screen. Identical for
+     normal and duress PINs; no close button (not answering is an answer). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/checkinRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/vukaBgBase">
+
+    <include
+        android:id="@+id/pinSheet"
+        layout="@layout/dialog_pin_gate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom" />
+</FrameLayout>

@@ -5,7 +5,13 @@ import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.enableEdgeToEdge
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
+import za.co.vuka.app.api.ServerSync
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -17,8 +23,8 @@ import za.co.vuka.app.ui.settings.ThemePrefs
  * Settings tile can show it over the lock screen without an unlock. That's
  * why it shows nothing private and links nowhere else in the app.
  *
- * The alert path isn't built ([AlertPath]), so the screen says nothing was
- * sent and leads with calling 10111.
+ * The alert goes to the server ([AlertPath]); the chip shows whether it has
+ * arrived, and the screen still leads with calling 10111.
  */
 class PanicActivity : AppCompatActivity() {
 
@@ -39,6 +45,21 @@ class PanicActivity : AppCompatActivity() {
             startActivity(Intent(Intent.ACTION_DIAL, "tel:10111".toUri()))
         }
         findViewById<android.view.View>(R.id.btnClose).setOnClickListener { finish() }
+
+        // Whether the alert has reached the server, from the outbox.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                ServerSync.status.collect { s ->
+                    val (chip, detail) = when {
+                        s.waiting == 0 && s.lastError == null -> "Sent" to "RECEIVED BY THE SERVER"
+                        s.lastError == "can't reach the server" -> "Waiting" to "NO CONNECTION · SENDS WHEN ONLINE"
+                        else -> "Sending" to "SENDING TO THE SERVER…"
+                    }
+                    findViewById<TextView>(R.id.tvSendState).text = chip
+                    findViewById<TextView>(R.id.tvSendDetail).text = detail
+                }
+            }
+        }
     }
 
     @Suppress("DEPRECATION")

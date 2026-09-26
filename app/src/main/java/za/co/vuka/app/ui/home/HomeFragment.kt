@@ -21,6 +21,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
 import za.co.vuka.app.auth.PinGateSheet
+import za.co.vuka.app.auth.PinResult
 import za.co.vuka.app.detect.Listening
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import za.co.vuka.app.panic.Panic
@@ -60,7 +61,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         // Deactivating needs a PIN (ADR-0041). A duress end looks identical here
         // and raises the full alarm server-side (DuressSignals).
-        PinGateSheet.listen(this, "journey_end") { journey.end() }
+        PinGateSheet.listen(this, "journey_end") { mode -> journey.end(duress = mode == PinResult.DURESS) }
         view.findViewById<View>(R.id.btnStart).setOnClickListener {
             if (journey.active.value) PinGateSheet.open(this, "journey_end") else activate()
         }
@@ -71,6 +72,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // Android won't let an app place an emergency call itself, so the member presses call there.
         view.findViewById<View>(R.id.btnEmergency).setOnClickListener {
             Panic.raise(requireContext(), Panic.Source.HOME_BUTTON)
+            // Emergency needs an open journey on the server; turn VIGIL on if it's off.
+            if (!journey.active.value) journey.start()
             startActivity(Intent(Intent.ACTION_DIAL, "tel:10111".toUri()))
         }
 

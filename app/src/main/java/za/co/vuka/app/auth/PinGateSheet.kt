@@ -64,7 +64,7 @@ class PinGateSheet : BottomSheetDialogFragment(R.layout.dialog_pin_gate) {
                 renderDots()
             }
             else -> {
-                if (result == PinResult.DURESS) DuressSignals.raise(action)
+                if (result == PinResult.DURESS) DuressSignals.raise(requireContext(), action)
                 parentFragmentManager.setFragmentResult(resultKey(action), bundleOf(KEY_MODE to result.name))
                 dismiss()
             }

@@ -1,6 +1,7 @@
 package za.co.vuka.app.auth
 
 import android.content.Context
+import za.co.vuka.app.api.ServerSync
 import androidx.core.content.edit
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -90,8 +91,15 @@ class InterimPinStore(context: Context) : PinAuthority {
  * duress to anyone reading the phone's logs.
  */
 object DuressSignals {
-    @Suppress("UNUSED_PARAMETER")
-    fun raise(action: String) {
-        // TODO: send a pin_authorised {mode: duress} for this action once the alert path exists.
+    /**
+     * V6: sends `pin_authorised` {mode: duress} for prompts that map to a server
+     * action. journey_end sends its own (ServerSync.endJourney). sign_out and
+     * profile_edit and sign_in have no server action yet, so they raise nothing (a gap).
+     */
+    fun raise(context: Context, action: String) {
+        when (action) {
+            "guardian_add" -> ServerSync.duressAt(context, "add_guardian")
+            "delete_profile" -> ServerSync.duressAt(context, "delete")
+        }
     }
 }

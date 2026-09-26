@@ -2,6 +2,7 @@ package za.co.vuka.app.ui.home
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import za.co.vuka.app.api.ServerSync
 import za.co.vuka.app.detect.Listening
 import za.co.vuka.app.detect.SensingService
 import za.co.vuka.app.ui.record.RecordEntry
@@ -21,7 +22,8 @@ import kotlinx.coroutines.flow.StateFlow
  */
 class JourneyViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _active = MutableStateFlow(Listening.state.value != Listening.State.Off)
+    // Active while the service listens or a server journey is open (e.g. Emergency opened one).
+    private val _active = MutableStateFlow(Listening.state.value != Listening.State.Off || ServerSync.journeyIdOrNull(application) != null)
     val active: StateFlow<Boolean> = _active
 
     val entries: StateFlow<List<RecordEntry>> = RecordStore.entries
@@ -31,7 +33,10 @@ class JourneyViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun start() {
-        if (set(true, RecordEntry.Kind.JOURNEY_STARTED)) SensingService.start(getApplication())
+        if (set(true, RecordEntry.Kind.JOURNEY_STARTED)) {
+            ServerSync.startJourney(getApplication())
+            SensingService.start(getApplication())
+        }
     }
 
     /** Stop without writing to the record (the record is being wiped). */
@@ -40,8 +45,12 @@ class JourneyViewModel(application: Application) : AndroidViewModel(application)
         SensingService.stop(getApplication())
     }
 
-    fun end() {
-        if (set(false, RecordEntry.Kind.JOURNEY_ENDED)) SensingService.stop(getApplication())
+    /** [duress]: the PIN was the duress PIN. It looks the same here; the server raises the alarm. */
+    fun end(duress: Boolean = false) {
+        if (set(false, RecordEntry.Kind.JOURNEY_ENDED)) {
+            SensingService.stop(getApplication())
+            ServerSync.endJourney(duress)
+        }
     }
 
     private fun set(active: Boolean, kind: RecordEntry.Kind): Boolean {

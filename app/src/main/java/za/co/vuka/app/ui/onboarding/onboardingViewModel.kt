@@ -2,6 +2,7 @@ package za.co.vuka.app.ui.onboarding
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import za.co.vuka.app.api.ServerSync
 import za.co.vuka.app.auth.AccountStore
 import za.co.vuka.app.auth.InterimPasswordStore
 import za.co.vuka.app.auth.InterimPinStore
@@ -46,7 +47,11 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
     val pendingInvites: StateFlow<Int> = _pendingInvites
 
     init {
-        if (store.memberSignedIn) store.profile()?.let(::load)
+        if (store.memberSignedIn) {
+            store.profile()?.let(::load)
+            // Members registered before the server link existed get their server identity now.
+            ServerSync.register(application)
+        }
     }
 
     val memberSignedIn: Boolean get() = store.memberSignedIn
@@ -132,6 +137,7 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
         store.saveProfile(currentProfile())
         store.recoveryChannel = if (verifiedByEmail) AccountStore.RecoveryChannel.EMAIL else AccountStore.RecoveryChannel.PHONE
         store.memberSignedIn = true
+        ServerSync.register(getApplication())
         if (termsAccepted) {
             RecordStore.add(getApplication(), RecordEntry.Kind.TERMS_ACCEPTED, "Terms $TERMS_VERSION and Privacy notice")
         }
@@ -159,6 +165,7 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
         InterimPasswordStore(getApplication()).clear()
         RecordStore.clear(getApplication())
         GuardianAlerts.clear(getApplication())
+        ServerSync.reset(getApplication())
         load(AccountStore.Profile("", "", "", "", false, 0))
     }
 

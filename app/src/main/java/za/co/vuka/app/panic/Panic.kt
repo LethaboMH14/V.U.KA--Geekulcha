@@ -2,6 +2,8 @@ package za.co.vuka.app.panic
 
 import android.content.Context
 import android.content.Intent
+import za.co.vuka.app.api.ServerSync
+import za.co.vuka.app.detect.CheckinActivity
 import za.co.vuka.app.ui.record.RecordEntry
 import za.co.vuka.app.ui.record.RecordStore
 
@@ -18,7 +20,7 @@ object Panic {
     /** Record the alert and hand it to the alert path. Callers then show [screenIntent]. */
     fun raise(context: Context, source: Source) {
         RecordStore.add(context, RecordEntry.Kind.PANIC)
-        AlertPath.sendPanic(source)
+        AlertPath.sendPanic(context, source)
     }
 
     fun screenIntent(context: Context): Intent =
@@ -26,13 +28,17 @@ object Panic {
 }
 
 /**
- * Where a panic alert would leave the phone (guardian alert, then the bank
- * signal, like a duress signal). No alert path or spec event exists yet, so
- * this sends nothing. The panic screen says so and offers 10111 instead.
+ * Where a panic alert leaves the phone: a manual `signal_detected` to the
+ * ANCHOR server (ADR-0049, PROPOSED), on the open journey or on one opened
+ * for it. Unanswered, the server raises the alarm to guardians (~90 s).
  */
 object AlertPath {
     @Suppress("UNUSED_PARAMETER")
-    fun sendPanic(source: Panic.Source) {
-        // TODO: needs a panic event in VUKA-2-SPEC.md (team decision) and the alert path.
+    fun sendPanic(context: Context, source: Panic.Source) {
+        val app = context.applicationContext
+        // The same Journey check a sound gets; a normal notification, so the dialer stays on top.
+        ServerSync.onHelpQueued = { journeyId, signalEventId -> CheckinActivity.notify(app, journeyId, signalEventId, fullScreen = false) }
+        ServerSync.help(context)
+        ServerSync.startJourney(context) // reuses an open journey; opens one if none
     }
 }
