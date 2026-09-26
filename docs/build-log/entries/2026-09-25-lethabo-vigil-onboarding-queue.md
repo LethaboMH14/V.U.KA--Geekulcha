@@ -301,3 +301,20 @@ Evidence:
 - The map was checked in a browser with a sample fix: tiles, pin, accuracy circle, trail and "last seen" note.
 
 Not done: a real-phone run of location and standby; battery; ADR-0048 acceptance (Ipeleng, Sibusiso).
+
+### Addendum, 26 Sep: Mutarisi's additions ported into the live app; the app follows a server move (0.0.13)
+
+Changed:
+- **Member and guardian on one phone.** The guardian slot holds the guarded member's record, so the member's own record is never overwritten. Alerts pop up on any screen.
+- **Hold for help** (ADR-0049, PROPOSED): a 2 s hold, or the "VUKA" Quick Settings tile, opens the same check-in a sound opens (`signal_detected` with `sense: "manual"`). It takes the one prompt slot.
+- **Themes:** Ivory, Silver and Midnight, from the prototype's tokens. The glass washes and edges are tokens now, and the theme is read once at start-up from a native constant.
+- **Following the demo server to a different server** (for the planned move to Azure):
+  - the member registers again there;
+  - events queued for the old chain are parked on the phone (kept, never sent);
+  - My record starts from the new chain.
+- **Not ported, on purpose:** accounts (Google/email/password, SMS code). They would put personal data on a server, against keys-on-device and `sim_` subjects.
+
+Evidence:
+- jest 214/214.
+- journey-e2e: a duress PIN at a hold-for-help check-in raises the alarm on the real server.
+- Device tests cover both roles on one phone and the tunnel / Azure / adoption cases of a server move.
