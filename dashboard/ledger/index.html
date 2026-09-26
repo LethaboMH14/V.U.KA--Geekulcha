@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>VUKA Ledger</title>
   <meta name="description" content="Check a VUKA record's fingerprint against the public Hedera testnet topic, in your own browser." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+  <link rel="preload" href="fonts/IBMPlexSans-Regular.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="carbon.css" />
   <link rel="stylesheet" href="./ledger.css" />
   <link rel="stylesheet" href="views.css" />
   <link rel="stylesheet" href="./terminal.css" />
@@ -22,9 +21,9 @@
           <circle cx="5" cy="8" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5" />
           <path d="M8.25 8H14.5M12.5 8v2.5M10.5 8v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
         </svg>
-        <span class="brand-name">VUKA Ledger</span>
+        <span class="brand-name">VUKA <strong>Ledger</strong></span>
       </a>
-      <span class="net" id="net-chip" title="Dot shows whether the Hedera mirror answered this browser"><span class="dot" id="net-dot" data-state="wait"></span>Hedera testnet</span>
+      <span class="net cds-status" id="net-chip" data-state="wait" title="The icon shows whether the Hedera mirror answered this browser"><span class="src-icon" id="net-icon"><svg class="cds-status__icon" data-kind="idle" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><circle class="cds-status__shape" cx="8" cy="8" r="6.5" /></svg></span><span>Hedera testnet<span class="sr-only" id="net-state">, mirror checking</span></span></span>
       <nav class="tabs" aria-label="Sections">
         <a href="#ledger" data-nav="ledger">Ledger</a>
         <a href="#verify" data-nav="verify">Verify</a>
@@ -33,6 +32,7 @@
       </nav>
       <form class="quick" id="quick-form" role="search" autocomplete="off">
         <label class="sr-only" for="quick-input">Paste a record, or a 64-hex fingerprint</label>
+        <svg class="quick-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M15 14.3 10.8 10a5.5 5.5 0 1 0-.7.7l4.2 4.3ZM2 6.5a4.5 4.5 0 1 1 4.5 4.5A4.5 4.5 0 0 1 2 6.5Z" /></svg>
         <input type="search" id="quick-input" placeholder="Paste a record, or a 64-hex fingerprint" spellcheck="false" enterkeyhint="go" />
       </form>
     </div>
@@ -49,41 +49,44 @@
       </header>
 
       <div class="statusline" aria-label="Connections">
-        <ul class="src-items" id="sources">
-          <li class="src" id="src-api" data-state="wait"><span class="dot" aria-hidden="true"></span><span class="src-name">Azure API</span><span class="src-sep" aria-hidden="true">·</span><span class="src-state">checking</span></li>
-          <li class="src" id="src-feed" data-state="wait"><span class="dot" aria-hidden="true"></span><span class="src-name">Live feed</span><span class="src-sep" aria-hidden="true">·</span><span class="src-state">checking</span></li>
-          <li class="src" id="src-mirror" data-state="wait"><span class="dot" aria-hidden="true"></span><span class="src-name">Hedera mirror</span><span class="src-sep" aria-hidden="true">·</span><span class="src-state">checking</span></li>
-        </ul>
-        <details class="src-details">
-          <summary>Details</summary>
-          <dl class="src-list">
-            <dt>Azure API</dt><dd class="mono" id="src-api-detail">…</dd>
-            <dt>Live feed</dt><dd class="mono" id="src-feed-detail">…</dd>
-            <dt>Hedera mirror</dt><dd class="mono" id="src-mirror-detail">…</dd>
-          </dl>
-        </details>
+        <div class="statusrow">
+          <ul class="src-items" id="sources">
+            <li class="src cds-status" id="src-api" data-state="wait"><span class="src-icon"><svg class="cds-status__icon" data-kind="idle" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><circle class="cds-status__shape" cx="8" cy="8" r="6.5" /></svg></span><span class="src-name">Azure API</span><span class="src-sep" aria-hidden="true">·</span><span class="src-state">checking</span></li>
+            <li class="src cds-status" id="src-feed" data-state="wait"><span class="src-icon"><svg class="cds-status__icon" data-kind="idle" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><circle class="cds-status__shape" cx="8" cy="8" r="6.5" /></svg></span><span class="src-name">Live feed</span><span class="src-sep" aria-hidden="true">·</span><span class="src-state">checking</span></li>
+            <li class="src cds-status" id="src-mirror" data-state="wait"><span class="src-icon"><svg class="cds-status__icon" data-kind="idle" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><circle class="cds-status__shape" cx="8" cy="8" r="6.5" /></svg></span><span class="src-name">Hedera mirror</span><span class="src-sep" aria-hidden="true">·</span><span class="src-state">checking</span></li>
+          </ul>
+          <details class="src-details">
+            <summary>Details</summary>
+            <dl class="src-list">
+              <dt>Azure API</dt><dd class="mono" id="src-api-detail">…</dd>
+              <dt>Live feed</dt><dd class="mono" id="src-feed-detail">…</dd>
+              <dt>Hedera mirror</dt><dd class="mono" id="src-mirror-detail">…</dd>
+            </dl>
+          </details>
+        </div>
+        <div class="cds-notif-stack" id="src-notifs" role="status" aria-live="polite"></div>
       </div>
 
       <dl class="facts" aria-label="Key facts">
-        <div class="fact" id="tile-topic">
+        <div class="fact cds-tile" id="tile-topic">
           <dt>Topic</dt>
           <dd class="fact-value mono"><a id="topic-link" href="https://hashscan.io/testnet/topic/0.0.10687280" target="_blank" rel="noopener noreferrer">0.0.10687280</a></dd>
           <dd class="fact-state tile-pill"></dd>
           <dd class="fact-note" id="topic-note">Pinned in contracts/keys/verify-pins.json</dd>
         </div>
-        <div class="fact" id="tile-latest">
+        <div class="fact cds-tile" id="tile-latest">
           <dt>Latest root</dt>
           <dd class="fact-value" id="latest-value">…</dd>
           <dd class="fact-state tile-pill"></dd>
           <dd class="fact-note" id="latest-note">Asking the server…</dd>
         </div>
-        <div class="fact" id="tile-manifest">
+        <div class="fact cds-tile" id="tile-manifest">
           <dt>Key manifest</dt>
           <dd class="fact-value mono" id="manifest-value">…</dd>
           <dd class="fact-state tile-pill"></dd>
           <dd class="fact-note" id="manifest-note">Hashing the pinned manifest…</dd>
         </div>
-        <div class="fact" id="tile-epoch">
+        <div class="fact cds-tile" id="tile-epoch">
           <dt>Network epoch</dt>
           <dd class="fact-value" id="epoch-value">…</dd>
           <dd class="fact-note" id="epoch-note">Hedera resets testnet from time to time; a reset starts a new epoch.</dd>
@@ -91,12 +94,12 @@
       </dl>
 
       <section class="block" aria-labelledby="chain-title">
-        <div class="block-head">
+        <div class="block-head cds-table-toolbar">
           <h2 id="chain-title">Topic messages</h2>
-          <p class="block-sub" id="chain-note"></p>
         </div>
-        <div class="table-scroll" tabindex="0" role="region" aria-labelledby="chain-title">
-          <table class="tbl chain-table">
+        <p class="block-sub" id="chain-note"></p>
+        <div class="cds-table-wrap table-scroll" tabindex="0" role="region" aria-labelledby="chain-title">
+          <table class="cds-table cds-table--compact chain-table">
             <thead>
               <tr><th scope="col" class="num">Seq</th><th scope="col">Type</th><th scope="col">Payload</th><th scope="col">Consensus time (UTC)</th><th scope="col">Links</th></tr>
             </thead>
@@ -108,11 +111,11 @@
       </section>
 
       <section class="block" aria-labelledby="feed-title">
-        <div class="block-head">
+        <div class="block-head cds-table-toolbar">
           <h2 id="feed-title">Live events</h2>
           <span id="feed-pill"></span>
           <span class="feed-count" id="feed-count">0 events</span>
-          <button type="button" class="btn btn-quiet btn-sm" id="feed-reconnect">Reconnect</button>
+          <button type="button" class="cds-btn cds-btn--ghost cds-btn--sm" id="feed-reconnect">Reconnect</button>
         </div>
         <p class="block-sub">Each event the server accepts, as it arrives from <span class="mono">/ws/panel</span>. Subjects are salted hashes that change on every server restart. Kinds show only for <span class="mono">sim_</span> test subjects, marked SIMULATED.</p>
         <figure class="chart" id="rate-figure">
@@ -122,8 +125,8 @@
             <div class="tooltip" id="rate-tip" hidden></div>
           </div>
         </figure>
-        <div class="table-scroll feed-scroll" tabindex="0" role="region" aria-labelledby="feed-title">
-          <table class="tbl feed">
+        <div class="cds-table-wrap table-scroll feed-scroll" tabindex="0" role="region" aria-labelledby="feed-title">
+          <table class="cds-table cds-table--compact feed">
             <thead>
               <tr><th scope="col">Subject (opaque)</th><th scope="col" class="num">Index</th><th scope="col">Event hash</th><th scope="col">Received (UTC)</th><th scope="col">Kind</th></tr>
             </thead>
@@ -142,63 +145,65 @@
         <h2 id="verify-title" class="vw-title">Verify a record</h2>
         <p class="vw-sub">A member shares their record from VIGIL under <strong>Settings → My record → Share with a bank or insurer</strong>. It is the same export JSON the phone checks; run it here to check it independently.</p>
         <ol class="vf-flow" aria-label="How a record gets checked">
-          <li>Member shares from VIGIL</li>
-          <li>you paste it here</li>
-          <li>your browser recomputes and checks Hedera</li>
-          <li>you file the fingerprint</li>
+          <li><span class="vf-flow-n">Step 1</span><span class="vf-flow-t">Member shares from VIGIL</span></li>
+          <li><span class="vf-flow-n">Step 2</span><span class="vf-flow-t">You paste it here</span></li>
+          <li><span class="vf-flow-n">Step 3</span><span class="vf-flow-t">Your browser recomputes and checks Hedera</span></li>
+          <li><span class="vf-flow-n">Step 4</span><span class="vf-flow-t">You file the fingerprint</span></li>
         </ol>
       </header>
 
       <div class="vf-grid">
-        <div class="vf-panel">
-          <h3 class="vf-panel-title">Record</h3>
-          <label class="vf-drop" id="drop" for="export-file">
-            <span class="vf-drop-row">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
-              <span class="vf-drop-main">Drop the export file here, or <u>choose a file</u></span>
-            </span>
-            <span class="vf-drop-sub">JSON exported from VIGIL. It stays in this browser; nothing is uploaded.</span>
-            <input type="file" id="export-file" accept="application/json,.json" />
-          </label>
+        <div class="cds-tile vf-tile">
+          <div class="vf-uploader">
+            <h3 class="vf-tile-title" id="upload-title">Record</h3>
+            <p class="vf-helper" id="upload-helper">The JSON file VIGIL exported, up to 5 MB. It stays in this browser; nothing is uploaded.</p>
+            <label class="vf-drop" id="drop" for="export-file">
+              <span class="vf-drop-text">Drag and drop a file here or click to upload</span>
+              <input type="file" id="export-file" accept="application/json,.json" aria-describedby="upload-helper" />
+            </label>
+          </div>
           <div class="vf-field">
             <label class="vf-label" for="export-text">Or paste the export JSON</label>
-            <textarea id="export-text" class="vf-text" spellcheck="false" rows="7" placeholder='{"subject_id": "…", "entries": [ … ], "payloads": { … }, "salts": { … }}'></textarea>
+            <textarea id="export-text" class="cds-field vf-text" spellcheck="false" rows="7" placeholder='{"subject_id": "…", "entries": [ … ], "payloads": { … }, "salts": { … }}'></textarea>
           </div>
           <div class="vf-actions">
-            <button type="button" class="btn btn-primary" id="btn-verify">Verify</button>
-            <button type="button" class="btn" id="btn-clear">Clear</button>
+            <button type="button" class="cds-btn cds-btn--primary cds-btn--lg" id="btn-verify">Verify record</button>
+            <button type="button" class="cds-btn cds-btn--ghost cds-btn--lg" id="btn-clear">Clear</button>
           </div>
           <p class="vf-note" id="input-note">Nothing is uploaded. The proof comes from the ANCHOR server and the root from the public Hedera mirror.</p>
         </div>
 
         <div class="vf-run">
           <div class="vf-run-head">
-            <h3 class="vf-panel-title">Verification trace</h3>
-            <span class="vf-run-sub" id="run-sub">Each line is a check your browser ran.</span>
+            <h3 class="vf-tile-title">Verification trace</h3>
+            <span class="vf-helper" id="run-sub">Each line is a check your browser ran.</span>
           </div>
           <div id="terminal" class="terminal-host"></div>
         </div>
       </div>
 
       <article class="vf-result" id="result" aria-labelledby="result-title" hidden>
-        <div class="vf-status">
-          <p class="vf-status-line">
-            <span class="vf-dot" aria-hidden="true"></span>
-            <span id="result-title" class="vf-status-label"></span>
-          </p>
-          <p class="vf-reason" id="result-text"></p>
+        <div class="cds-notif vf-notif" id="result-notif">
+          <span class="cds-notif__icon" id="result-icon" aria-hidden="true"></span>
+          <div class="cds-notif__text">
+            <h3 id="result-title" class="cds-notif__title"></h3>
+            <p class="cds-notif__subtitle" id="result-text"></p>
+          </div>
         </div>
         <div class="vf-keep" id="keep">
           <div class="vf-keep-head">
             <h3 class="vw-h3">Fingerprint</h3>
             <span class="vf-copy-status" id="copy-status" role="status" aria-live="polite"></span>
-            <button type="button" class="btn" id="btn-copy">Copy fingerprint</button>
+            <button type="button" class="cds-btn cds-btn--tertiary cds-btn--md" id="btn-copy">Copy fingerprint</button>
           </div>
           <p class="vf-note" id="keep-note">File these values with your records. Anyone can later check them against the public topic.</p>
-          <table class="vf-fp">
-            <caption class="vf-sr">Fingerprint fields</caption>
-            <tbody id="keep-list"></tbody>
-          </table>
+          <div class="cds-snippet vf-snippet">
+            <pre class="cds-snippet__code" id="snippet-code" tabindex="0" aria-label="Merkle root and chain head, in full"></pre>
+            <button type="button" class="cds-btn cds-btn--ghost cds-btn--md cds-btn--icon cds-snippet__copy" id="btn-snippet" aria-label="Copy the Merkle root and chain head" title="Copy">
+              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M14 5v9H5V5h9m0-1H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Z" /><path d="M2 9H1V2a1 1 0 0 1 1-1h7v1H2Z" /></svg>
+            </button>
+          </div>
+          <dl class="cds-slist vf-slist" id="keep-list" aria-label="Fingerprint fields"></dl>
         </div>
       </article>
     </section>
@@ -221,9 +226,6 @@
               </marker>
               <marker id="ah-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M0 0 10 5 0 10z" class="dg-accent-fill" />
-              </marker>
-              <marker id="ah-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M0 0 10 5 0 10z" class="dg-amber-fill" />
               </marker>
             </defs>
 
@@ -257,7 +259,7 @@
               </g>
               <text x="376" y="206" class="dg-xs">h₀</text>
               <text x="432" y="206" class="dg-xs">h₁</text>
-              <text x="488" y="206" class="dg-xs dg-amber-text">ack</text>
+              <text x="488" y="206" class="dg-xs">ack</text>
               <text x="450" y="258" class="dg-s">Merkle tree of changed heads</text>
             </g>
 
@@ -287,13 +289,13 @@
             </g>
 
             <!-- arrows -->
-            <g class="dg-edge">
-              <line x1="220" y1="78" x2="318" y2="78" marker-end="url(#ah)" />
+            <g class="dg-edge dg-edge-accent">
+              <line x1="220" y1="78" x2="318" y2="78" marker-end="url(#ah-accent)" />
               <text x="269" y="68" class="dg-lbl">signed</text>
               <text x="269" y="98" class="dg-lbl">entries</text>
             </g>
-            <g class="dg-edge dg-edge-amber">
-              <line x1="220" y1="234" x2="318" y2="234" marker-end="url(#ah-amber)" />
+            <g class="dg-edge">
+              <line x1="220" y1="234" x2="318" y2="234" marker-end="url(#ah)" />
               <text x="269" y="224" class="dg-lbl">signed</text>
               <text x="269" y="254" class="dg-lbl">acks</text>
             </g>
@@ -315,8 +317,8 @@
               <line x1="550" y1="408" x2="718" y2="408" marker-end="url(#ah)" />
               <text x="634" y="398" class="dg-lbl">runs it here</text>
             </g>
-            <g class="dg-edge dg-edge-accent">
-              <line x1="830" y1="368" x2="830" y2="134" marker-end="url(#ah-accent)" />
+            <g class="dg-edge">
+              <line x1="830" y1="368" x2="830" y2="134" marker-end="url(#ah)" />
               <text x="842" y="246" class="dg-lbl dg-left">reads message,</text>
               <text x="842" y="262" class="dg-lbl dg-left">matches root</text>
             </g>
@@ -330,14 +332,14 @@
         <figcaption>
           Phones sign; the server orders entries into one hash chain per member and publishes only a 33-byte root to Hedera.
           The record itself travels by hand, from member to bank, and the bank's browser checks it against the public root.
-          The dashed arrow is the separate bank signal (S1), sent by the server through the partner API. In this demo it goes to <span class="mono">sim_bank</span>, which is SIMULATED.
+          The blue path, member to server to Hedera, is the anchoring path. The dashed arrow is the separate bank signal (S1), sent by the server through the partner API. In this demo it goes to <span class="mono">sim_bank</span>, which is SIMULATED.
         </figcaption>
       </figure>
 
       <div class="mt-block">
         <h3 class="vw-h3" id="formulas-title">Formulas</h3>
         <p class="mt-lede">These are the exact steps this page reruns. Hashes are SHA-256; <span class="mono">canon</span> is canonical JSON (spec §5); <span class="mono">‖</span> joins bytes.</p>
-        <table class="mt-table" aria-labelledby="formulas-title">
+        <table class="cds-table mt-table" aria-labelledby="formulas-title">
           <thead>
             <tr><th scope="col">Step</th><th scope="col">Definition</th><th scope="col">What it guarantees</th></tr>
           </thead>
@@ -383,26 +385,29 @@
 
       <div class="mt-proves">
         <div class="mt-proves-col">
-          <h3 class="vw-h3">A match proves</h3>
-          <ul>
-            <li>These exact entries existed, in this order, no later than the topic's consensus time.</li>
-            <li>Each entry was signed by the key registered for it, and the server key is the pinned one.</li>
-            <li>Nobody has edited, removed or reordered an entry since.</li>
+          <h3 class="mt-slist-head" id="proves-title">A match proves</h3>
+          <ul class="cds-slist mt-slist" aria-labelledby="proves-title">
+            <li class="cds-slist__row">These exact entries existed, in this order, no later than the topic's consensus time.</li>
+            <li class="cds-slist__row">Each entry was signed by the key registered for it, and the server key is the pinned one.</li>
+            <li class="cds-slist__row">Nobody has edited, removed or reordered an entry since.</li>
           </ul>
         </div>
         <div class="mt-proves-col">
-          <h3 class="vw-h3">It does not prove</h3>
-          <ul>
-            <li>That the event was real. A signature shows a key was used, not what a microphone heard.</li>
-            <li>That nothing is missing from before the export, or that a compromised server sent every alert.</li>
-            <li>Permanence on testnet. Hedera resets testnet; a re-anchor after a reset is a later record under a new epoch.</li>
+          <h3 class="mt-slist-head" id="not-proves-title">It does not prove</h3>
+          <ul class="cds-slist mt-slist" aria-labelledby="not-proves-title">
+            <li class="cds-slist__row">That the event was real. A signature shows a key was used, not what a microphone heard.</li>
+            <li class="cds-slist__row">That nothing is missing from before the export, or that a compromised server sent every alert.</li>
+            <li class="cds-slist__row">Permanence on testnet. Hedera resets testnet; a re-anchor after a reset is a later record under a new epoch.</li>
           </ul>
         </div>
       </div>
 
-      <aside class="mt-note" aria-labelledby="duress-title">
-        <h3 class="vw-h3" id="duress-title">Duress stays private</h3>
-        <p>A duress PIN is recorded inside a signed commitment, so the chain shows only a hash. The public topic carries one root per window of up to a minute, so anyone watching it sees that something happened in that minute, never whether it was a duress check-in or a normal one. The bank learns of duress separately, through its own bank signal, and can later check that signal against the member's export.</p>
+      <aside class="cds-notif mt-note" data-kind="info" aria-labelledby="duress-title">
+        <span class="cds-notif__icon" aria-hidden="true"><svg class="mt-info-icon" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path fill-rule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm.75 11h-1.5V7h1.5ZM8 5.9a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8Z" /></svg></span>
+        <div class="cds-notif__text">
+        <h3 class="cds-notif__title" id="duress-title">Duress stays private</h3>
+        <p class="cds-notif__subtitle">A duress PIN is recorded inside a signed commitment, so the chain shows only a hash. The public topic carries one root per window of up to a minute, so anyone watching it sees that something happened in that minute, never whether it was a duress check-in or a normal one. The bank learns of duress separately, through its own bank signal, and can later check that signal against the member's export.</p>
+        </div>
       </aside>
     </section>
 
@@ -415,14 +420,17 @@
       <form class="st-form" id="settings-form" novalidate>
         <div class="st-field">
           <label for="server-url">ANCHOR server</label>
-          <input type="url" id="server-url" class="st-input" name="server" inputmode="url" autocomplete="off" spellcheck="false" aria-describedby="server-hint" />
+          <input type="url" id="server-url" class="cds-field st-input" name="server" inputmode="url" autocomplete="off" spellcheck="false" aria-describedby="server-hint" />
           <p class="st-hint" id="server-hint">Also accepted in the address as <span class="mono">?server=https://…</span>. The ledger itself is always read from the public Hedera mirror.</p>
         </div>
         <div class="st-field">
           <label for="network">Network</label>
-          <select id="network" class="st-input" name="network" aria-describedby="network-hint">
-            <option value="testnet" selected>Hedera testnet</option>
-          </select>
+          <div class="st-select">
+            <select id="network" class="cds-field st-input" name="network" aria-describedby="network-hint">
+              <option value="testnet" selected>Hedera testnet</option>
+            </select>
+            <svg class="st-chevron" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8 11 3 6l.7-.7L8 9.6l4.3-4.3.7.7Z" fill="currentColor" /></svg>
+          </div>
           <p class="st-hint" id="network-hint">Only testnet is pinned (<span class="mono">contracts/keys/verify-pins.json</span>).</p>
         </div>
         <fieldset class="st-field">
@@ -434,8 +442,8 @@
           </div>
         </fieldset>
         <div class="st-actions">
-          <button type="submit" class="btn btn-primary" id="btn-apply">Apply and reconnect</button>
-          <button type="button" class="btn" id="btn-reset">Use the default server</button>
+          <button type="submit" class="cds-btn cds-btn--primary cds-btn--md" id="btn-apply">Apply and reconnect</button>
+          <button type="button" class="cds-btn cds-btn--ghost cds-btn--md" id="btn-reset">Use the default server</button>
           <span class="st-status" id="settings-status" role="status" aria-live="polite"></span>
         </div>
       </form>
