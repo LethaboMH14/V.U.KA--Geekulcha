@@ -1,8 +1,10 @@
-"""Guardian delivery boundary. Only a SIMULATED adapter is implemented."""
+"""Guardian delivery boundary and secret-safe FCM adapter."""
 from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
+
+from server.src.notify.fcm import FcmSender, build_message
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS sim_guardians (
@@ -13,6 +15,18 @@ CREATE TABLE IF NOT EXISTS sim_notification_receipts (
     idempotency_key TEXT NOT NULL, guardian_ref TEXT NOT NULL,
     delivered_at TIMESTAMPTZ NOT NULL, evidence_ref TEXT NOT NULL,
     PRIMARY KEY(idempotency_key,guardian_ref)
+);
+CREATE TABLE IF NOT EXISTS fcm_notification_receipts (
+    -- PROPOSED (25 Sep, reconciled with #96 per Khutso's #96 review): recipients
+    -- and tokens are read from server/guardians.py's `guardians` table
+    -- (guardian_id, fcm_token, decoy, status), not a parallel token table —
+    -- that split let the accept-invite path and the delivery path disagree
+    -- about who a guardian is.
+    idempotency_key TEXT NOT NULL,
+    guardian_ref TEXT NOT NULL,
+    delivered_at TIMESTAMPTZ NOT NULL,
+    evidence_ref TEXT NOT NULL,
+    PRIMARY KEY(idempotency_key, guardian_ref)
 );
 CREATE TABLE IF NOT EXISTS guardian_deliveries (
     outbox_id TEXT NOT NULL, incident_id UUID NOT NULL,
@@ -73,5 +87,53 @@ class SimulatedGuardianNotifier:
             evidence = "sim_delivery:" + outbox_row["idempotency_key"] + ":" + outbox_row["guardian_ref"]
             cur.execute("INSERT INTO sim_notification_receipts VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING", (outbox_row["idempotency_key"], outbox_row["guardian_ref"], now, evidence))
             cur.execute("SELECT delivered_at,evidence_ref FROM sim_notification_receipts WHERE idempotency_key=%s AND guardian_ref=%s", (outbox_row["idempotency_key"], outbox_row["guardian_ref"]))
+            delivered_at, evidence = cur.fetchone()
+        return DeliveryResult(True, evidence, delivered_at)
+
+
+class FcmGuardianNotifier:
+    """FCM implementation of the shared outbox notifier contract.
+
+    Registration tokens are provisioned by the controlled enrollment path and
+    stored in PostgreSQL. This class never accepts credentials from a request
+    body and never logs token or bearer values. FCM's collapse key is derived
+    from the stable outbox idempotency key, so a lease retry remains safe.
+    """
+
+    simulated = False
+
+    def __init__(self, connect, clock, sender: FcmSender):
+        self.connect = connect
+        self.clock = clock
+        self.sender = sender
+
+    def recipients(self, subject_id):
+        if not isinstance(subject_id, str) or not subject_id:
+            raise ValueError("subject id is required")
+        from server.guardians import alerting_guardians
+        with closing(self.connect()) as conn, conn, conn.cursor() as cur:
+            return alerting_guardians(cur, subject_id)  # excludes decoy and removed guardians
+
+    def deliver(self, outbox_row):
+        now = self.clock()
+        if now.utcoffset() is None:
+            raise ValueError("delivery clock must be timezone-aware")
+        key = outbox_row["idempotency_key"]
+        guardian = outbox_row["guardian_ref"]
+        with closing(self.connect()) as conn, conn, conn.cursor() as cur:
+            cur.execute("SELECT delivered_at,evidence_ref FROM fcm_notification_receipts WHERE idempotency_key=%s AND guardian_ref=%s", (key, guardian))
+            existing = cur.fetchone()
+            if existing:
+                return DeliveryResult(True, existing[1], existing[0])
+            cur.execute("""SELECT fcm_token FROM guardians WHERE guardian_id=%s AND subject_id=%s
+                           AND NOT decoy AND status IN ('active','removal_scheduled')""",
+                        (guardian, outbox_row["subject_id"]))
+            token_row = cur.fetchone()
+            if token_row is None or not token_row[0]:
+                return DeliveryResult(False, None, None)
+            message = build_message(token=token_row[0], idempotency_key=key)
+            evidence = self.sender.send(message)
+            cur.execute("INSERT INTO fcm_notification_receipts VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING", (key, guardian, now, evidence))
+            cur.execute("SELECT delivered_at,evidence_ref FROM fcm_notification_receipts WHERE idempotency_key=%s AND guardian_ref=%s", (key, guardian))
             delivered_at, evidence = cur.fetchone()
         return DeliveryResult(True, evidence, delivered_at)
