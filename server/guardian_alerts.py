@@ -67,15 +67,21 @@ def why_for(cur, incident_id, trigger, payload_key):
 
 
 def alerts_for(cur, guardian_id, limit=20, payload_key=None):
-    """Alerts delivered to this guardian, newest first."""
+    """Alerts delivered to this guardian, newest first.
+
+    Reads guardian_deliveries, the worker's record of every verified delivery
+    whichever adapter made it (FCM push or in-app), not one adapter's own
+    receipt table: reading sim_notification_receipts meant an alert pushed
+    through FCM never appeared in the guardian's in-app list.
+    """
     cur.execute(
-        """SELECT i.incident_id::text, o.idempotency_key, r.delivered_at, i.opened_at,
+        """SELECT i.incident_id::text, o.idempotency_key, d.delivered_at, i.opened_at,
                   i.closed_at, i.close_reason
-           FROM sim_notification_receipts r
-           JOIN outbox o ON o.idempotency_key = r.idempotency_key AND o.kind = 'guardian_alert'
-           JOIN incidents i ON i.incident_id::text = o.reference_id
-           WHERE r.guardian_ref = %s
-           ORDER BY r.delivered_at DESC, o.idempotency_key
+           FROM guardian_deliveries d
+           JOIN outbox o ON o.idempotency_key = d.outbox_id AND o.kind = 'guardian_alert'
+           JOIN incidents i ON i.incident_id = d.incident_id
+           WHERE d.guardian_ref = %s
+           ORDER BY d.delivered_at DESC, o.idempotency_key
            LIMIT %s""",
         (guardian_id, limit),
     )

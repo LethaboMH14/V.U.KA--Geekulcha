@@ -1,10 +1,11 @@
 """Guardian delivery boundary and secret-safe FCM adapter."""
+import logging
 from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
-from server.src.notify.fcm import FcmSender, build_message
+from server.src.notify.fcm import FcmError, FcmSender, build_message
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS sim_guardians (
@@ -42,6 +43,9 @@ class DeliveryResult:
     delivered: bool
     evidence_ref: str | None
     delivered_at: datetime | None
+    # Set by a notifier that mixes adapters per guardian; None means "use the
+    # notifier's own `simulated` attribute".
+    simulated: bool | None = None
 
 
 class GuardianNotifier(Protocol):
@@ -137,3 +141,51 @@ class FcmGuardianNotifier:
             cur.execute("SELECT delivered_at,evidence_ref FROM fcm_notification_receipts WHERE idempotency_key=%s AND guardian_ref=%s", (key, guardian))
             delivered_at, evidence = cur.fetchone()
         return DeliveryResult(True, evidence, delivered_at)
+
+
+class RoutingGuardianNotifier:
+    """Real FCM push for a guardian who registered a real device token;
+    SIMULATED in-app delivery for one still on a `sim_` placeholder.
+
+    The guardian app enrols with `fcm_token: 'sim_poll_while_open'` (it polls
+    GET /v1/guardians/me/alerts while open) until it registers a real token
+    via PUT /v1/guardians/{id}/token. Sending those placeholders to FCM
+    would fail every alert, record no delivery, and empty the guardian's
+    in-app alert list, so they keep the simulated path. Real tokens never
+    start with `sim_`.
+    """
+
+    simulated = None  # decided per delivery, carried on DeliveryResult
+
+    def __init__(self, connect, clock, sender: FcmSender):
+        self.connect = connect
+        self._fcm = FcmGuardianNotifier(connect, clock, sender)
+        self._sim = SimulatedGuardianNotifier(connect, clock)
+
+    def recipients(self, subject_id):
+        if isinstance(subject_id, str) and subject_id.startswith("sim_"):
+            return self._sim.recipients(subject_id)
+        return self._fcm.recipients(subject_id)
+
+    def deliver(self, outbox_row):
+        from dataclasses import replace
+        with closing(self.connect()) as conn, conn, conn.cursor() as cur:
+            cur.execute("SELECT fcm_token FROM guardians WHERE guardian_id=%s AND subject_id=%s",
+                        (outbox_row["guardian_ref"], outbox_row["subject_id"]))
+            row = cur.fetchone()
+        token = row[0] if row else None
+        if token and not token.startswith("sim_"):
+            try:
+                return replace(self._fcm.deliver(outbox_row), simulated=False)
+            except (FcmError, OSError) as exc:
+                # e.g. FCM_ACCESS_TOKEN expired (OAuth tokens last ~1 h). An alert
+                # must never vanish because a push credential lapsed: a sim_
+                # member's guardian still gets the in-app alert below. The
+                # message is an HTTP status or network error, never a token.
+                logging.warning("FCM push to guardian %s failed (%s: %s); falling back to in-app delivery",
+                                outbox_row["guardian_ref"], type(exc).__name__, exc)
+                if not outbox_row["subject_id"].startswith("sim_"):
+                    return DeliveryResult(False, None, None)
+        if outbox_row["subject_id"].startswith("sim_"):
+            return replace(self._sim.deliver(outbox_row), simulated=True)
+        return DeliveryResult(False, None, None)

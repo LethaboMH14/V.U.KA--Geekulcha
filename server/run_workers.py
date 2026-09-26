@@ -1,10 +1,13 @@
 """One process that runs all background work.
 
 Every second: the deadline and contact-lost scheduler tick, then due
-guardian_alert and bank_signal outbox rows (guardian alerts through the
-SIMULATED notifier, since FCM is not wired here; bank signals over a real
-HTTP call to a live sim_bank at VUKA_SIM_BANK_URL, default
-http://127.0.0.1:8001), then one anchor-batch coordinator tick.
+guardian_alert and bank_signal outbox rows, then one anchor-batch
+coordinator tick. Guardian alerts go through Firebase Cloud Messaging when
+FCM_PROJECT_ID and FCM_ACCESS_TOKEN are both set (per guardian: a real
+device token gets a push, a `sim_` placeholder keeps in-app delivery, see
+RoutingGuardianNotifier), otherwise through the SIMULATED notifier. Bank
+signals go over a real HTTP call to a live sim_bank at VUKA_SIM_BANK_URL,
+default http://127.0.0.1:8001.
 
 The anchor coordinator always uses the real Hedera transport
 (anchor/publish.py -> anchor/hedera-sidecar) — this codebase never fabricates
@@ -34,17 +37,28 @@ from anchor.publish import publish_root
 from server.anchoring import BatchCoordinator, reconcile_mirror_root
 from server.bank_worker import SimBankHTTP, deliver_bank_signal
 from server.db import PostgresDatabase
-from server.guardian_notifier import SimulatedGuardianNotifier
+from server.guardian_notifier import RoutingGuardianNotifier, SimulatedGuardianNotifier
 from server.guardian_worker import deliver_guardian_alert
 from server.outbox import claim_due
 from server.scheduler import tick
+from server.src.notify.fcm import FcmConfig, FcmSender
 
 
 def _default_bank_sender():
     return SimBankHTTP(os.environ.get("VUKA_SIM_BANK_URL", "http://127.0.0.1:8001"))
 
 
-def step(store, now, *, bank_sender=None, batches=None):
+def fcm_configured(environ=os.environ):
+    return bool(environ.get("FCM_PROJECT_ID", "").strip() and environ.get("FCM_ACCESS_TOKEN", "").strip())
+
+
+def guardian_notifier(store, now, environ=os.environ):
+    if fcm_configured(environ):
+        return RoutingGuardianNotifier(store._connection, lambda: now, FcmSender(FcmConfig.from_env(environ)))
+    return SimulatedGuardianNotifier(store._connection, lambda: now)
+
+
+def step(store, now, *, bank_sender=None, batches=None, environ=os.environ):
     """One tick. The notifier shares this tick's clock: delivery evidence must
     never be stamped later than the time the worker acknowledges it."""
     tick(store, now)
@@ -52,7 +66,7 @@ def step(store, now, *, bank_sender=None, batches=None):
     from server.locations import purge_closed
     with closing(store._connection()) as conn, conn, conn.cursor() as cur:
         purge_closed(cur, now)
-    notifier = SimulatedGuardianNotifier(store._connection, lambda: now)
+    notifier = guardian_notifier(store, now, environ)
     # Guardian alerts are claimed on their own, so a bank outage (every
     # bank_signal failing) can never hold back a duress alert.
     with closing(store._connection()) as conn, conn, conn.cursor() as cur:
@@ -84,6 +98,7 @@ def main():
     now = datetime.now(timezone.utc)
     batches = BatchCoordinator(store._connection, publisher=publish_root, reconcile=reconcile_mirror_root)
     batches.initialize(now)
+    print("vuka: guardian alerts via " + ("FCM push (sim_ tokens stay in-app)" if fcm_configured() else "SIMULATED in-app delivery"), flush=True)
     while True:
         try:
             step(store, datetime.now(timezone.utc), batches=batches)

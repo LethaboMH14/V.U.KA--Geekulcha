@@ -7,7 +7,8 @@ A FastAPI + PostgreSQL service providing:
 - a durable, server-owned escalation state machine with a transactional outbox
   (`server/escalation.py`, `server/incidents.py`, `server/contact.py`);
 - guardian invite/accept/decoy/removal (`server/guardians.py`) and delivery
-  (SIMULATED by default; a real FCM adapter exists but is not wired in here);
+  (Firebase push when `FCM_PROJECT_ID`/`FCM_ACCESS_TOKEN` are set and the
+  guardian registered a real device token, otherwise SIMULATED in-app);
 - Merkle batching and Hedera anchoring (`server/anchoring.py`), plus public
   proof/manifest reads;
 - the subject export, with the ADR-0041 pre-incident hold;
@@ -120,18 +121,19 @@ a generic browser dashboard.
   the escalation state machine, Merkle batching, all schema validation, and
   (since 26 Sep) all three outbox effects — guardian alerts, bank signals,
   and anchor batches — driven by the single `run_workers.py` process above.
+- **Real, when configured:** guardian push through Firebase Cloud Messaging
+  (`FCM_PROJECT_ID` + `FCM_ACCESS_TOKEN`), per guardian: a real device token
+  gets a push; a `sim_` placeholder token keeps in-app delivery. Every
+  delivery, push or in-app, appears in `GET /v1/guardians/me/alerts`.
 - **Simulated, by design:** `sim_bank` (a standalone process, in-memory
-  holds — a restart forgets them); guardian FCM delivery (an adapter exists
-  in `server/src/notify/`, but `run_workers.py` uses the SIMULATED notifier);
-  Hedera anchoring only confirms against real testnet, never mainnet, and
-  needs real operator/submit keys to confirm at all (see above).
-- **Not built yet:** real FCM wiring end to end (the SIMULATED notifier is
-  what actually runs); anything that starts `run_workers.py` or `sim_bank`
-  on the live Azure deployment — today Azure only runs the API
-  (`startup.sh`), so a duress incident hit against
-  `https://vuka-anchor-server.azurewebsites.net` will sit in the outbox
-  until someone runs `run_workers.py` pointed at the same `DATABASE_URL`,
-  locally or otherwise.
+  holds — a restart forgets them); in-app guardian delivery when FCM isn't
+  configured; Hedera anchoring only confirms against real testnet, never
+  mainnet, and needs real operator/submit keys to confirm at all (see above).
+- **Not built yet:** the guardian app still enrols with the placeholder
+  token `sim_poll_while_open`, so no guardian gets a real push until the app
+  obtains a real FCM registration token and sends it to
+  `PUT /v1/guardians/{id}/token`. `sim_bank` is not started on the live
+  Azure deployment (`startup.sh` runs the API and `run_workers.py` only).
 
 Do not present this as a finished, production-ready service to anyone
 outside the team without reading the `PROPOSED` flags first.
