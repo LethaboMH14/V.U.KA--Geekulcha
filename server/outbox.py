@@ -77,7 +77,9 @@ def claim_due(cursor: Any, *, now: datetime, limit: int = 10,
                WHERE not_before <= %s AND (
                    state = 'pending' OR (state = 'inflight' AND lease_until <= %s)
                ) AND (%s::text[] IS NULL OR kind = ANY(%s::text[]))
-               ORDER BY not_before, idempotency_key
+               -- Fewest attempts first: rows that keep failing (an unreachable
+               -- bank, a malformed row) can never crowd a fresh one out of the limit.
+               ORDER BY attempts, not_before, idempotency_key
                FOR UPDATE SKIP LOCKED LIMIT %s
            )
            UPDATE outbox AS o SET state = 'inflight', lease_token = %s,
