@@ -12,6 +12,7 @@
         <item name="vukaBorderSubtle">@color/vuka_border_subtle</item>
         <item name="vukaBorderEmphasis">@color/vuka_border_emphasis</item>
         <item name="vukaAction">@color/vuka_action</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Vuka.Dialog</item>
     </style>
     <style name="ThemeOverlay.Vuka.BottomSheet" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/Widget.Vuka.BottomSheet</item>

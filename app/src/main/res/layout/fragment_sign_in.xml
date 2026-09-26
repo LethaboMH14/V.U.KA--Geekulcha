@@ -74,7 +74,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:lineSpacingExtra="3dp"
-                android:text="Choose how you'd like to sign up. Whichever you pick, we'll also verify your mobile number."
+                android:text="Choose how you'd like to sign up. With Google or email, your mobile number is optional."
                 android:textColor="@color/vuka_text_secondary"
                 android:textSize="15sp" />
         </LinearLayout>

@@ -1,9 +1,15 @@
 package za.co.vuka.app.ui.onboarding
 
 import android.os.Bundle
+import android.app.AlertDialog
+import android.graphics.Typeface
 import android.os.CountDownTimer
+import android.text.InputFilter
+import android.text.InputType
+import android.util.Patterns
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
 import androidx.core.view.children
 import androidx.fragment.app.Fragment
@@ -19,6 +25,10 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
  * SIMULATED: no SMS provider exists yet, so [submit] accepts any complete code.
  * The WRONG / EXPIRED / LOCKED states match VerifyCode.tsx. A real
  * verification call can set them; nothing does today.
+ *
+ * The code can go by text or by email. If the member picks one they haven't
+ * given (the number was skipped, or there's no email on the phone route),
+ * they're asked for it first and the code goes there.
  */
 class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
 
@@ -36,8 +46,11 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // No number (skipped on the email route): the code goes to the email.
+        codeByEmail = onboardingViewModel.phoneNumber.value.isBlank()
         savedInstanceState?.let {
-            value = it.getString(KEY_VALUE).orEmpty()
+            codeByEmail = it.getBoolean(KEY_BY_EMAIL, codeByEmail)
+            value =it.getString(KEY_VALUE).orEmpty()
             state = CodeState.valueOf(it.getString(KEY_STATE) ?: CodeState.IDLE.name)
             attemptsLeft = it.getInt(KEY_ATTEMPTS, MAX_ATTEMPTS)
             secondsLeft = it.getInt(KEY_SECONDS, RESEND_SECONDS)
@@ -65,9 +78,9 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
 
         view.findViewById<MaterialButton>(R.id.btnResend).setOnClickListener { resend() }
 
-        // With an email on file (Google or email sign-up), the member chooses where the code goes.
-        val hasEmail = onboardingViewModel.email.value.isNotBlank()
-        view.findViewById<View>(R.id.channelOptions).visibility = if (hasEmail) View.VISIBLE else View.GONE
+        // The member chooses where the code goes. Sign-in checks the number, so it stays on text.
+        view.findViewById<View>(R.id.channelOptions).visibility =
+            if (onboardingViewModel.signingIn) View.GONE else View.VISIBLE
         view.findViewById<View>(R.id.channelSms).setOnClickListener { selectChannel(byEmail = false) }
         view.findViewById<View>(R.id.channelEmail).setOnClickListener { selectChannel(byEmail = true) }
 
@@ -78,9 +91,66 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
 
     private fun selectChannel(byEmail: Boolean) {
         if (codeByEmail == byEmail) return
+        val missing = if (byEmail) onboardingViewModel.email.value.isBlank()
+        else onboardingViewModel.phoneNumber.value.isBlank()
+        if (missing) {
+            askForContact(byEmail)
+            return
+        }
         codeByEmail = byEmail
         renderChannel()
         resend() // a new code goes to the newly chosen place
+    }
+
+    /** Asks for the email or number the member didn't give, then sends the code there. */
+    private fun askForContact(byEmail: Boolean) {
+        val container = layoutInflater.inflate(R.layout.dialog_contact_input, null)
+        container.findViewById<TextView>(R.id.tvLabel).text = if (byEmail) "Email" else "Mobile number"
+        container.findViewById<View>(R.id.tvPrefix).visibility = if (byEmail) View.GONE else View.VISIBLE
+        val error = container.findViewById<View>(R.id.errorContainer)
+        val input = container.findViewById<EditText>(R.id.etValue).apply {
+            if (byEmail) {
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+                hint = "you@example.com"
+            } else {
+                inputType = InputType.TYPE_CLASS_NUMBER
+                typeface = Typeface.MONOSPACE
+                hint = "82 555 0101"
+                filters = arrayOf(InputFilter.LengthFilter(9))
+            }
+        }
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle(if (byEmail) "Add your email" else "Add your mobile number")
+            .setMessage(
+                if (byEmail) "We'll send the code to this address."
+                else "We'll text the code to this number: +27, then 9 digits not starting with 0."
+            )
+            .setView(container)
+            .setPositiveButton("Send code", null)
+            .setNegativeButton("Cancel", null)
+            .create()
+        dialog.setOnShowListener {
+            // Checked before closing, so a typo keeps the dialog open.
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val text = input.text.toString().trim()
+                val ok = if (byEmail) Patterns.EMAIL_ADDRESS.matcher(text).matches()
+                else saMobilePattern.matches(text)
+                if (!ok) {
+                    container.findViewById<TextView>(R.id.tvError).text = if (byEmail) {
+                        "Enter a valid email address."
+                    } else {
+                        "Enter a valid South African mobile number — 9 digits, not starting with 0."
+                    }
+                    error.visibility = View.VISIBLE
+                    return@setOnClickListener
+                }
+                if (byEmail) onboardingViewModel.setContactEmail(text)
+                else onboardingViewModel.setPhoneNumber("+27$text")
+                dialog.dismiss()
+                selectChannel(byEmail)
+            }
+        }
+        dialog.show()
     }
 
     private fun renderChannel() {
@@ -104,6 +174,7 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+        outState.putBoolean(KEY_BY_EMAIL, codeByEmail)
         outState.putString(KEY_VALUE, value)
         outState.putString(KEY_STATE, state.name)
         outState.putInt(KEY_ATTEMPTS, attemptsLeft)
@@ -223,7 +294,8 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
         private const val MAX_ATTEMPTS = 5
         private const val RESEND_SECONDS = 45
 
-        private const val KEY_VALUE = "verify_value"
+        private const val KEY_BY_EMAIL = "verify_by_email"
+        private const val KEY_VALUE ="verify_value"
         private const val KEY_STATE = "verify_state"
         private const val KEY_ATTEMPTS = "verify_attempts"
         private const val KEY_SECONDS = "verify_seconds"

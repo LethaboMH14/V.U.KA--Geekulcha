@@ -10,26 +10,39 @@ import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
 import com.google.android.material.button.MaterialButton
 
+// South African mobile numbers: 9 digits after the country code, not starting with 0.
+internal val saMobilePattern = Regex("^[1-9][0-9]{8}$")
+
+/**
+ * The +27 number. Required on the phone route and for sign-in; optional when
+ * the member signed up with Google or email, because the code can go to the
+ * email instead. It can still be added on the code screen.
+ */
 class PhoneNumberFragment : Fragment(R.layout.fragment_phone_number) {
 
     private val onboardingViewModel: OnboardingViewModel by activityViewModels()
-
-    // South African mobile numbers: 9 digits after the country code, not starting with 0.
-    private val validPattern = Regex("^[1-9][0-9]{8}$")
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val etPhone = view.findViewById<EditText>(R.id.etPhone)
 
-        // Google and email routes: the account exists, but alerts and verification still need a +27 number.
+        // Google and email routes: the account already has an email, so the number is optional.
         val email = onboardingViewModel.email.value
-        if (email.isNotBlank() && !onboardingViewModel.signingIn) {
+        val optional = email.isNotBlank() && !onboardingViewModel.signingIn
+        if (optional) {
             view.findViewById<TextView>(R.id.tvIntro).text =
-                "Add your mobile number too. VIGIL uses it for alerts, and we'll send a code to check it's really you."
+                "Optional. Add your mobile number and we'll text the code there, or skip and we'll email it."
             view.findViewById<TextView>(R.id.tvGoogleAccount).apply {
                 text = if (onboardingViewModel.googleUsed.value) "Google · $email · simulated" else "Email · $email"
                 visibility = View.VISIBLE
+            }
+        }
+        view.findViewById<View>(R.id.btnSkip).apply {
+            visibility = if (optional) View.VISIBLE else View.GONE
+            setOnClickListener {
+                onboardingViewModel.setPhoneNumber("")
+                findNavController().navigate(R.id.action_phoneNumber_to_verifyCode)
             }
         }
         val errorContainer = view.findViewById<View>(R.id.errorContainer)
@@ -41,7 +54,7 @@ class PhoneNumberFragment : Fragment(R.layout.fragment_phone_number) {
         view.findViewById<MaterialButton>(R.id.btnSend).setOnClickListener {
             val digits = etPhone.text.toString()
 
-            if (!validPattern.matches(digits)) {
+            if (!saMobilePattern.matches(digits)) {
                 errorContainer.visibility = View.VISIBLE
                 return@setOnClickListener
             }

@@ -72,8 +72,8 @@ class AccountStore(context: Context) {
     /** Removes the profile and session from this phone. */
     fun clear() = prefs.edit { clear() }
 
-    /** True when this number completed registration on this phone before. */
-    fun isRegistered(phone: String) = profile()?.phone == phone
+    /** True when this number completed registration on this phone before. A skipped (blank) number never matches. */
+    fun isRegistered(phone: String) = phone.isNotBlank() && profile()?.phone == phone
 
     private companion object {
         const val PREFS = "vuka_account"

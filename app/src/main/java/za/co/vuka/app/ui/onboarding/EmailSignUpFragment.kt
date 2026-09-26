@@ -16,7 +16,7 @@ import za.co.vuka.app.auth.InterimPasswordStore
 /**
  * "Sign up with email": the member's own email and a password for VUKA, for
  * people whose Google account on this phone isn't the one they want. The
- * +27 number is still verified next.
+ * +27 number is optional next; the code can go to this email.
  *
  * SIMULATED: no account server exists, so the password is kept only as a
  * salted hash on this phone ([InterimPasswordStore]).

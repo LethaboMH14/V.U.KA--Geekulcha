@@ -137,4 +137,59 @@
         <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>
     </style>
+
+    <!-- Pop-up dialogs (MaterialAlertDialogBuilder), set app-wide via
+         materialAlertDialogTheme: a solid card with the glass-card radius,
+         ink title, secondary body, primary pill for the main action and a
+         quiet text button for the other. -->
+    <style name="ThemeOverlay.Vuka.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">@color/vuka_bg_surface</item>
+        <item name="colorSurfaceContainerHigh">@color/vuka_bg_surface</item>
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Vuka.Dialog</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.Vuka.DialogTitle</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/TextAppearance.Vuka.DialogBody</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.Vuka.DialogButton.Primary</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.Vuka.DialogButton.Ghost</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.Vuka.DialogButton.Ghost</item>
+    </style>
+
+    <style name="ShapeAppearance.Vuka.Dialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
+    </style>
+
+    <style name="TextAppearance.Vuka.DialogTitle" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textColor">@color/vuka_text_title</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Vuka.DialogBody" parent="MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:textColor">@color/vuka_text_secondary</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineSpacingExtra">3dp</item>
+    </style>
+
+    <!-- bg_button_primary: the ink gradient pill -->
+    <style name="Widget.Vuka.DialogButton.Primary" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/bg_button_primary</item>
+        <item name="backgroundTint">@null</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">22dp</item>
+        <item name="android:paddingEnd">22dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/vuka_text_inverse</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Widget.Vuka.DialogButton.Ghost" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/vuka_text_secondary</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="rippleColor">?attr/vukaBorderEmphasis</item>
+    </style>
 </resources>

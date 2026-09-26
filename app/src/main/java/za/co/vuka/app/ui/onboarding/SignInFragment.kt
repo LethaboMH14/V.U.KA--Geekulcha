@@ -9,8 +9,8 @@ import za.co.vuka.app.R
 
 /**
  * Registration, step 2: create an account with Google, with your own email
- * and password, or with just your phone number. Every route verifies the
- * +27 number next, because the spec ties an account to it. Returning
+ * and password, or with just your phone number. The phone route verifies the
+ * +27 number; on Google and email it is optional (code by email). Returning
  * members take "Already have an account? Sign in".
  */
 class SignInFragment : Fragment(R.layout.fragment_sign_in) {

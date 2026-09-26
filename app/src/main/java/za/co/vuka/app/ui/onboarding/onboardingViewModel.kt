@@ -69,6 +69,11 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
         _email.value = email.trim()
     }
 
+    /** An email added on the code screen so the code can go there. How the account was made is unchanged. */
+    fun setContactEmail(email: String) {
+        _email.value = email.trim()
+    }
+
     /**
      * True on the "Already have an account? Sign in" route. If the verified
      * number has no account here, the member is offered registration instead.
