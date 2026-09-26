@@ -12,12 +12,15 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {AppState, BackHandler, NativeModules, Platform, Pressable, ScrollView, Share, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import {CheckCircle, GearSix, Microphone, Phone, ShareNetwork, ShieldChevron, UserPlus, Users, Waveform, WifiSlash} from './icons';
+// Deep-imported one by one, as icons.ts does (the barrel opens every icon file).
+import PencilSimple from 'phosphor-react-native/lib/commonjs/icons/PencilSimple';
+import UserIcon from 'phosphor-react-native/lib/commonjs/icons/User';
 import {Chip, Eyebrow, GlassIcon, Key, Lamp, LevelMeter, ListeningLine, Panel, PinKeypad, QuietKey, Readout, Row, Rule, Surface, TopAppBar} from './components';
 import {colors, fonts, radii, space, THEME, THEMES, TOUCH, type, type ThemeName} from './theme';
 import {Onboarding} from './onboarding';
 import {GuardianHome, GuardianSetup, useGuardianWatch} from './guardian';
 import {MyRecord} from './record';
-import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, type Delivery} from '../api/device';
+import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, profileContacts, type Delivery} from '../api/device';
 import {version} from '../../package.json';
 import {canFullScreen, consumeHelpRequest, openFullScreenSettings, runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
 import {HoldForHelp} from './help';
@@ -37,6 +40,7 @@ type Screen =
   | 'record'
   | 'invitePin'
   | 'invite'
+  | 'profileEdit'
   | 'guardianSetup'
   | 'guardianHome';
 type CheckSession = Awaited<ReturnType<typeof device.openCheckin>>;
@@ -234,7 +238,7 @@ export function VigilApp() {
         setScreen(home);
         return true;
       }
-      if (screen === 'guardian' || screen === 'record' || screen === 'recordPin' || screen === 'invitePin' || screen === 'invite') {
+      if (screen === 'guardian' || screen === 'record' || screen === 'recordPin' || screen === 'invitePin' || screen === 'invite' || screen === 'profileEdit') {
         setScreen('settings');
         return true;
       }
@@ -330,9 +334,11 @@ export function VigilApp() {
   return (
     <View style={{flex: 1}}>
       <Surface />
-      <ScrollView contentContainerStyle={styles.page}>
+      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
         {screen === 'record' ? (
           <MyRecord onBack={() => setScreen('settings')} />
+        ) : screen === 'profileEdit' ? (
+          <EditProfile onDone={() => setScreen('settings')} />
         ) : screen === 'invite' && invite ? (
           <InviteShare invite={invite} onDone={() => setScreen('home')} />
         ) : screen === 'settings' ? (
@@ -342,6 +348,7 @@ export function VigilApp() {
             onGuard={() => setScreen(device.profile?.guardian ? 'guardianHome' : 'guardianSetup')}
             onRecord={() => setScreen(device.simulated ? 'record' : 'recordPin')}
             onInvite={() => setScreen('invitePin')}
+            onProfile={() => setScreen('profileEdit')}
             delivery={delivery}
             detector={startedAt ? detector.current : null}
           />
@@ -717,6 +724,7 @@ function Settings({
   onGuard,
   onRecord,
   onInvite,
+  onProfile,
   delivery,
   detector,
 }: {
@@ -726,12 +734,15 @@ function Settings({
   onGuard: () => void;
   onRecord: () => void;
   onInvite: () => void;
+  /** Edit profile, after the PIN. */
+  onProfile: () => void;
   delivery: Delivery;
   detector: Detector | null;
 }) {
   return (
     <View style={styles.screen}>
       <TopAppBar title="Settings" onBack={onBack} />
+      {device.profile?.role === 'member' ? <ProfileHeader onPress={onProfile} /> : null}
       <Panel style={{padding: 0, overflow: 'hidden'}}>
         <Row
           label="My record"
@@ -760,6 +771,139 @@ function Settings({
       {!device.simulated ? <ServerSetting /> : null}
       {testFeedAvailable() ? <DetectorTest detector={detector} /> : null}
 
+    </View>
+  );
+}
+
+/**
+ * Mutarisi's Settings profile: a big initials circle with a pencil badge and
+ * the full name. Tapping it asks for the PIN, then opens Edit profile.
+ */
+function ProfileHeader({onPress}: {onPress: () => void}) {
+  const p = device.profile;
+  const first = p?.firstName.trim() ?? '';
+  const last = p?.surname?.trim() ?? '';
+  const initials = [first, last].map(s => s.charAt(0).toUpperCase()).join('');
+  const name = [first, last].filter(Boolean).join(' ') || 'Your profile';
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${name}. Edit your details`}
+      onPress={onPress}
+      android_ripple={{color: colors.ripple, borderless: true}}
+      style={styles.profile}>
+      <View>
+        <View style={styles.avatar}>
+          {initials ? (
+            <Text style={styles.initials} importantForAccessibility="no">
+              {initials}
+            </Text>
+          ) : (
+            <UserIcon size={48} color={colors.textTitle} />
+          )}
+        </View>
+        <View style={styles.pencil}>
+          <PencilSimple size={18} weight="bold" color={colors.textInverse} />
+        </View>
+      </View>
+      <Text style={[type.title, {marginTop: space.md, textAlign: 'center'}]}>{name}</Text>
+      <Text style={[type.caption, {marginTop: 2}]}>Edit profile · kept on this phone</Text>
+    </Pressable>
+  );
+}
+
+/**
+ * Edit profile (after the PIN): first name, surname, +27 mobile and email,
+ * with the sign-up forms' rules. Kept on this phone only: nothing is sent,
+ * nothing is written to the record, and no code checks a new number or email.
+ */
+function EditProfile({onDone}: {onDone: () => void}) {
+  const p = device.profile;
+  const had = profileContacts(p);
+  const [first, setFirst] = useState(p?.firstName ?? '');
+  const [last, setLast] = useState(p?.surname ?? '');
+  const [digits, setDigits] = useState(had.phone?.replace(/^\+27/, '') ?? '');
+  const [email, setEmail] = useState(had.email ?? '');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      await device.setProfileDetails({name: first, surname: last, phone: digits ? `+27${digits}` : undefined, email});
+      onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <View style={styles.screen}>
+      <TopAppBar title="Edit profile" onBack={onDone} />
+      <Text style={type.body}>
+        {had.phone || had.email ? 'Keep at least a mobile number or an email so we can reach you.' : 'Your name is shown in the invite you send a guardian.'}
+      </Text>
+      <Panel>
+        <Text style={type.label}>First name</Text>
+        <TextInput
+          value={first}
+          onChangeText={setFirst}
+          autoCapitalize="words"
+          autoComplete="name-given"
+          textContentType="givenName"
+          maxLength={30}
+          style={styles.input}
+          accessibilityLabel="First name"
+        />
+        <Text style={[type.label, {marginTop: space.md}]}>Surname</Text>
+        <TextInput
+          value={last}
+          onChangeText={setLast}
+          autoCapitalize="words"
+          autoComplete="name-family"
+          textContentType="familyName"
+          style={styles.input}
+          accessibilityLabel="Surname"
+        />
+        <Text style={[type.label, {marginTop: space.md}]}>Mobile number</Text>
+        <View style={styles.phoneRow}>
+          <Text style={styles.prefix}>+27</Text>
+          <TextInput
+            value={digits}
+            onChangeText={t => setDigits(t.replace(/\D/g, '').slice(0, 9))}
+            placeholder="82 555 0101"
+            placeholderTextColor={colors.textDim}
+            keyboardType="phone-pad"
+            autoComplete="tel"
+            style={[styles.input, {flex: 1}]}
+            accessibilityLabel="Mobile number"
+          />
+        </View>
+        <Text style={[type.label, {marginTop: space.md}]}>Email</Text>
+        <TextInput
+          value={email}
+          onChangeText={setEmail}
+          placeholder="you@example.com"
+          placeholderTextColor={colors.textDim}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="email-address"
+          autoComplete="email"
+          style={styles.input}
+          accessibilityLabel="Email"
+        />
+      </Panel>
+      <Text style={[type.body, {color: colors.textTitle, minHeight: error ? undefined : 0}]} accessibilityLiveRegion="polite">
+        {error}
+      </Text>
+      <Text style={type.caption}>
+        Changes are kept on this phone only. No code is sent to check a new number or email: no SMS or email service is connected yet.
+        A guardian who has already joined keeps the name they saved.
+      </Text>
+      <Key label={busy ? 'Saving…' : 'Save'} variant="signal" onPress={() => void save()} />
+      <QuietKey label="Cancel" onPress={onDone} />
     </View>
   );
 }
@@ -1229,6 +1373,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textTitle,
   },
+  profile: {alignItems: 'center', alignSelf: 'center', paddingVertical: space.sm, paddingHorizontal: space.md, minHeight: TOUCH},
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.actionDim,
+    borderWidth: 1,
+    borderColor: colors.actionLine,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initials: {fontFamily: fonts.semibold, fontSize: 40, lineHeight: 48, color: colors.dark ? colors.textTitle : colors.action},
+  pencil: {
+    position: 'absolute',
+    right: 2,
+    bottom: 2,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.action,
+    borderWidth: 2,
+    borderColor: colors.bgBase,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  input: {
+    minHeight: 52,
+    marginTop: space.xs,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+    backgroundColor: colors.bgSurface,
+    paddingHorizontal: space.md,
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    color: colors.textTitle,
+  },
+  phoneRow: {flexDirection: 'row', alignItems: 'center', gap: space.sm},
+  prefix: {fontFamily: fonts.medium, fontSize: 16, color: colors.textTitle, marginTop: space.xs},
   /** The check-in, "Checked in" and PIN prompts: a solid ivory, flat and plain. */
   flat: {flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 40, paddingTop: 24 + TOP, backgroundColor: colors.bgBase},
   tick: {

@@ -86,6 +86,13 @@ export type Profile = {
    */
   account?: {kind: 'google' | 'email' | 'phone'; contact: string; verified: false};
   surname?: string;
+  /**
+   * Contact details as last edited in Settings (Mutarisi's Edit profile). Once
+   * set it replaces what sign-up recorded in `account`. Kept on this phone
+   * only: never sent, never in the record, and not verified (no SMS or email
+   * service is connected).
+   */
+  contacts?: {phone?: string; email?: string};
   /** The server this member's chain is registered on (a new one means registering again). */
   registeredOn?: string;
   /** Receipts from this queue number on belong to the current server's chain. */
@@ -105,6 +112,19 @@ export type Profile = {
    */
   pinTimes?: number[];
 };
+
+/** Same rules as sign-up (signup.tsx PhoneStep and EmailStep). */
+export const SA_MOBILE = /^\+27[1-9][0-9]{8}$/;
+export const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/** The member's mobile number and email: as edited in Settings, else as given at sign-up. */
+export function profileContacts(p: Profile | null | undefined): {phone?: string; email?: string} {
+  if (!p) return {};
+  if (p.contacts) return {...p.contacts};
+  const a = p.account;
+  if (!a?.contact) return {};
+  return a.kind === 'phone' ? {phone: a.contact} : {email: a.contact};
+}
 
 const PIN_BASELINE = 20;
 const PIN_BASELINE_MIN = 8;
@@ -450,6 +470,29 @@ export function createDevice(b: Backend) {
       if (!profile) return;
       profile = {...profile, account, surname: surname?.trim() || undefined};
       await b.setProfile(JSON.stringify(profile));
+    },
+
+
+    /**
+     * Edit profile (Settings): name, surname, mobile number and email, kept on
+     * this phone only. Nothing is queued, sent or written to the record, and a
+     * new number or email is not verified. A member who had a number or email
+     * must keep at least one. Throws a message the screen can show.
+     */
+    async setProfileDetails(d: {name: string; surname: string; phone?: string; email?: string}): Promise<Profile> {
+      if (!profile) throw new Error('no profile');
+      const name = d.name.trim();
+      const surname = d.surname.trim();
+      const phone = d.phone?.replace(/\s/g, '') || undefined;
+      const email = d.email?.trim() || undefined;
+      if (name.length < 1 || name.length > 30 || surname.length < 1) throw new Error('Enter both your first name and surname.');
+      if (phone && !SA_MOBILE.test(phone)) throw new Error('Enter a valid South African mobile number — 9 digits, not starting with 0.');
+      if (email && !EMAIL.test(email)) throw new Error('Enter a valid email address.');
+      const had = profileContacts(profile);
+      if ((had.phone || had.email) && !phone && !email) throw new Error('Keep a mobile number or an email, so we can reach you.');
+      profile = {...profile, firstName: name, surname, contacts: {phone, email}};
+      await b.setProfile(JSON.stringify(profile));
+      return profile;
     },
 
     async setServer(url: string) {

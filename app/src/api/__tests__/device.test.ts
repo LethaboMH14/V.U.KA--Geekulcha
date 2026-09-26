@@ -348,6 +348,49 @@ test('My record needs the PIN: both PINs authorise export for this subject, the 
   expect(auths.every(e => e.payload.action === 'export' && e.payload.target_id === h.device.profile?.subjectId)).toBe(true);
 });
 
+test('setProfileDetails keeps trimmed details on this phone only: nothing queued, sent or recorded', async () => {
+  const h = harness();
+  const saved: string[] = [];
+  const setProfile = h.b.setProfile;
+  h.b.setProfile = async j => {
+    saved.push(j);
+    return setProfile(j);
+  };
+  await onboarded(h);
+  await h.device.setAccount({kind: 'phone', contact: '+27825550101', verified: false}, 'Mokoena');
+  const before = {pending: (await h.b.pending()).length, sent: h.sent.length, requests: h.requests.length, queued: h.device.delivery().queued};
+
+  const p = await h.device.setProfileDetails({name: '  Thandi ', surname: ' Dlamini  ', phone: '+27 71 234 5678', email: ' thandi@example.co.za '});
+  expect(p).toMatchObject({firstName: 'Thandi', surname: 'Dlamini', contacts: {phone: '+27712345678', email: 'thandi@example.co.za'}});
+  expect(JSON.parse(saved[saved.length - 1])).toMatchObject({firstName: 'Thandi', surname: 'Dlamini', contacts: {phone: '+27712345678'}});
+  // The sign-up record and the chain identity are untouched.
+  expect(p.account).toEqual({kind: 'phone', contact: '+27825550101', verified: false});
+  expect(p.subjectId).toMatch(/^sim_subj_/);
+
+  // Rejected edits change nothing.
+  await expect(h.device.setProfileDetails({name: ' ', surname: 'Dlamini'})).rejects.toThrow(/first name and surname/);
+  await expect(h.device.setProfileDetails({name: 'x'.repeat(31), surname: 'Dlamini'})).rejects.toThrow(/first name/);
+  await expect(h.device.setProfileDetails({name: 'Thandi', surname: 'Dlamini', phone: '+27012345678'})).rejects.toThrow(/9 digits/);
+  await expect(h.device.setProfileDetails({name: 'Thandi', surname: 'Dlamini', email: 'nope@x'})).rejects.toThrow(/email/);
+  // A member who had a number or email keeps at least one.
+  await expect(h.device.setProfileDetails({name: 'Thandi', surname: 'Dlamini', phone: '', email: ''})).rejects.toThrow(/Keep a mobile number or an email/);
+  expect(h.device.profile?.firstName).toBe('Thandi');
+
+  await h.device.flush();
+  expect((await h.b.pending()).length).toBe(before.pending);
+  expect(h.sent.length).toBe(before.sent);
+  expect(h.requests.length).toBe(before.requests);
+  expect(h.device.delivery().queued).toBe(before.queued);
+});
+
+test('a member who signed up without a number or email may leave both empty', async () => {
+  const h = harness();
+  await onboarded(h);
+  const p = await h.device.setProfileDetails({name: 'Lerato', surname: 'Nkosi'});
+  expect(p.firstName).toBe('Lerato');
+  expect(p.surname).toBe('Nkosi');
+});
+
 test('ending a journey queues both events before sending either', async () => {
   const order: string[] = [];
   const h = harness({
