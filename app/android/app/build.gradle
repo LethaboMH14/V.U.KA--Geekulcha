@@ -1,6 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply plugin: "com.google.gms.google-services"
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -146,6 +147,9 @@ dependencies {
     // LiteRT (ADR D3): the maintained TFLite runtime, for on-device YAMNet.
     implementation("com.google.ai.edge.litert:litert:1.0.1")
     implementation("androidx.core:core-ktx:1.13.1")
+    // FCM only: guardian notifications. No Analytics dependency is needed.
+    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    implementation("com.google.firebase:firebase-messaging")
     // Argon2id for the member's PINs (Bouncy Castle, MIT licence).
     implementation("org.bouncycastle:bcprov-jdk15to18:1.78.1")
 
