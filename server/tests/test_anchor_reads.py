@@ -83,3 +83,35 @@ def test_a_held_records_fingerprint_is_anchored_and_provable(sim_api):
         cur.execute("SELECT root_hex FROM anchor_batches WHERE state='confirmed'")
         root = bytes.fromhex(cur.fetchone()[0].strip())
     assert verify_merkle_proof(root, bytes.fromhex(pre), response.json()["proof"])
+
+
+def test_an_exported_records_head_is_anchored_even_when_exported_at_once(sim_api):
+    """Regression (26 Sep, found on Azure): an export ends at the entry before
+    its own pin_authorised event (server/export_view.py). The authorisation
+    triggers a batch, but the batch took only current heads, i.e. that event
+    itself, so a member who exported within a batch interval of their last
+    event got a record whose head was never a leaf: the ledger said "not
+    anchored yet" forever. The coordinator must anchor every export's head."""
+    from anchor.merkle import verify_merkle_proof
+    from server.tests.test_export_hold import authorise_export, get_export
+    store, client, subject, key, event, post, now, connect = sim_api
+    authorise_export(event, post, key, subject)
+    exported = get_export(client, subject, key, now).json()
+    head = exported["entries"][-1]["event_hash"]
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT event_hash FROM subject_heads WHERE subject_id=%s", (subject,))
+        assert cur.fetchone()[0].strip() != head  # the authorisation already superseded it
+
+    worker = BatchCoordinator(connect, publisher=sim_receipt)
+    worker.initialize(now[0])
+    assert worker.tick(now[0]) == "confirmed"  # due because the authorisation asked for an anchor
+
+    response = client.get("/v1/anchor/proof/" + head)
+    assert response.status_code == 200, response.json()
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT root_hex FROM anchor_batches WHERE state='confirmed'")
+        root = bytes.fromhex(cur.fetchone()[0].strip())
+    assert verify_merkle_proof(root, bytes.fromhex(head), response.json()["proof"])
+    # Fetched again, the same export now carries the proof and receipt inline.
+    again = get_export(client, subject, key, now).json()
+    assert again["entries"][-1]["event_hash"] == head and len(again["proofs"]) == 1

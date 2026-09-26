@@ -358,3 +358,34 @@ Posted a correction on PR #79 acknowledging the gap explicitly rather than letti
 - **Sidecar:** confirmed on the real container. Node v24.18.0 is ready on local disk and `npm ci` finished (102 packages, ~2 min) at 13:19 UTC.
 - **Correction:** container logging had been **off**. Earlier "no output" and "hang" readings were log gaps, not failures; logging is now on (filesystem).
 - **Next:** the stuck `anchor_batches` row is now safe to reset (the SQL steps above). A real root should then land within a minute or two.
+
+## 2026-09-26 (evening) — worker outage fixed, server key rotated, first real root on Hedera, ledger positive path
+
+**Headline: Azure has anchored real roots on Hedera.** The first `0x01` root is mirror seq 5 (root `bd7f395d…c2dcc4c2`), confirmed 19:52:33 UTC; seq 6 and 7 followed. `/v1/anchor/latest` returns 200 with that receipt and the new key manifest. The public ledger (https://lethabomh14.github.io/V.U.KA--Geekulcha/dashboard/ledger/) shows the latest root as "On ledger" and the manifest as "Pinned". This was Lethabo's trigger for moving the phones and the ledger to live-verified.
+
+**What was in the way, in order (all fixed, tested and deployed):**
+1. **Worker outage (`5629d27`).** The server signing key was missing on Azure, and one unsignable deadline made the scheduler raise, which stopped *every* worker effect: ~11k failures in the log, and no alerts or anchors. The scheduler now runs each subject in isolation (with the subject lock), logs each distinct failure at most once per 5 min, and `run_workers.step()` keeps delivery and anchoring going even if a whole scheduler tick fails.
+   - Also fixed: two advisory locks shared key 864204. Schema init now uses 864205, and a test pins that all keys are distinct.
+2. **Server key rotated (`6c8c74e` here, `c5ad883` on `main`).** Sibusiso generated a new Ed25519 key locally with `scripts/new-server-signing-key.py`; the private key never passed through the assistant. He set it on Azure and published the new `0x02` manifest (seq 4, fingerprint `f20cf84a…4830`). `contracts/keys/manifest.json` and `verify-pins.json` are re-pinned on both branches (byte-identical), and Pages serves the new pin. **Needs Ipeleng's review.**
+3. **The deploy package never shipped `shared/` (`0898c34`).** This is the real reason no root had ever landed. `publish.mjs` imports `../../shared/keys.js`, and Node reports a missing source file the same way as a missing npm package. A new packaging test follows every import from `cli.mjs` recursively.
+4. **Held-export heads (`5629d27`).** An incident's `pre_incident_head` is now anchored, so a record held under T30 can still be verified.
+5. **Export heads (this push).** An export ends at the entry *before* its own PIN authorisation, so a record exported right after the member's last event was never a leaf, and the ledger said "not anchored yet" forever. It was found by the live positive path below. The coordinator now anchors every export's head, and the sidecar error names a half-installed package without its full `/tmp` path. See `docs/build-log/entries/2026-09-26-sibusiso-anchor-export-head.md`.
+
+**Other changes this evening.**
+- `https://lethabomh14.github.io` was added to `VUKA_DASHBOARD_ORIGINS` on Azure.
+- The stuck batch was reset over a temporary single-IP DB firewall rule, which was deleted straight after; only `AllowAzureServices` remains.
+
+**Unexplained: the worker went silent from 19:34 to 19:47 UTC.** No log lines at all; an `az webapp restart` at 19:47 fixed it, and the root landed at 19:52. The cause is unknown and could recur. If anchoring stalls before the demo, check that `vuka: anchor status` lines are still appearing in `default_docker.log`, and restart if not.
+
+**Live positive path (ledger ↔ Azure).**
+- **Before the fix:** a fresh `sim_` member, driven by the app's own compiled device layer, registered on Azure, walked a journey, ended it and exported with its PIN. The export (4 entries) passes the stranger verifier offline, but its head was never anchored (bug 5).
+- **After the redeploy:** see the update below.
+
+**Owed / risks before the demo.**
+- (a) The backend (this branch) is still not on `main`.
+- (b) `main`'s CI is red from the `feature/ui` `89f8f1c` Gitleaks false positive. The fix is to delete or rebase `feature/ui`; that is Mutarisi's or Lethabo's call.
+- (c) `FCM_ACCESS_TOKEN` expires hourly and must be refreshed just before the demo.
+- (d) `sim_bank` is not running on Azure, so `bank_signal` rows wait.
+- (e) The key rotation needs Ipeleng's review.
+- (f) #105 was merged with review conditions still open.
+- (g) The 19:34–19:47 worker silence above.

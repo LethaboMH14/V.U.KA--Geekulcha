@@ -33,6 +33,17 @@ test("a missing source file is told apart from a missing package, naming only th
   assert.equal(failureReason(missing, false), "sidecar file missing: keys.js (check the deploy package)");
 });
 
+test("a half-installed package is named by package, never by its full path", () => {
+  // The 26 Sep Azure case while npm ci was still running: the package folder
+  // existed but its entry file did not, and the full /tmp/... path was printed.
+  const partial = new Error("Cannot find package '/tmp/8df1c04b4804758/anchor/hedera-sidecar/node_modules/@hiero-ledger/sdk/index.js' imported from /tmp/8df1c04b4804758/anchor/hedera-sidecar/publish.mjs");
+  partial.code = "ERR_MODULE_NOT_FOUND";
+  assert.equal(failureReason(partial, false), "dependency not installed: @hiero-ledger/sdk (run npm ci)");
+  const plain = new Error(String.raw`Cannot find package 'C:\app\node_modules\long\index.js' imported from x`);
+  plain.code = "ERR_MODULE_NOT_FOUND";
+  assert.equal(failureReason(plain, false), "dependency not installed: long (run npm ci)");
+});
+
 test("anything else stays generic", () => {
   assert.equal(failureReason(new Error("SDK text with 0xdeadbeef"), false), "submission or validation failed (before submit)");
 });

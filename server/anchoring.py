@@ -168,12 +168,19 @@ class BatchCoordinator:
                     # export is held at that head for 6 h (server/export_view.py)
                     # and the signal supersedes it at once, so without this the
                     # held record's fingerprint is never a leaf and can never be
-                    # verified on the ledger. Leaves stay opaque hashes; only the
-                    # root is published.
+                    # verified on the ledger. Likewise every export's head: an
+                    # export ends at the entry before its own pin_authorised
+                    # event, which is the current head by the time this runs.
+                    # Leaves stay opaque hashes; only the root is published.
                     cur.execute("""SELECT DISTINCT btrim(head) FROM (
                             SELECT h.event_hash AS head FROM subject_heads h
                             UNION ALL
-                            SELECT i.pre_incident_head FROM incidents i) AS candidates
+                            SELECT i.pre_incident_head FROM incidents i
+                            UNION ALL
+                            SELECT c.prev_hash FROM pin_authorisations p
+                            JOIN chain_entries c ON c.subject_id = p.subject_id
+                                AND c.details_json->>'event_id' = p.event_id
+                            WHERE p.action = 'export') AS candidates
                         WHERE NOT EXISTS (SELECT 1 FROM anchor_batches b,
                             jsonb_array_elements_text(b.leaves) AS leaf
                             WHERE leaf = btrim(candidates.head))

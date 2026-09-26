@@ -24,6 +24,9 @@ def batch_store(sim_database):
         cur.execute("CREATE TABLE subject_heads(subject_id TEXT PRIMARY KEY,event_hash CHAR(64) NOT NULL)")
         # The coordinator also anchors every incident's pre_incident_head (the head a held export ends at).
         cur.execute("CREATE TABLE incidents(pre_incident_head CHAR(64) NOT NULL)")
+        # ...and every export's head: the entry before its pin_authorised event.
+        cur.execute("CREATE TABLE pin_authorisations(subject_id TEXT, action TEXT, event_id TEXT)")
+        cur.execute("CREATE TABLE chain_entries(subject_id TEXT, details_json JSONB, prev_hash CHAR(64))")
     return sim_database
 
 

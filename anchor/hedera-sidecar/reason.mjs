@@ -11,7 +11,14 @@ export function failureReason(error, submissionMayHaveOccurred) {
     // name which one: a package name, or only the missing file's name.
     const match = /Cannot find (package|module) '([^']+)'/.exec(String(error.message));
     const safe = (value) => String(value).replace(/[^A-Za-z0-9_.@/-]/g, "").slice(0, 80);
-    if (match && match[1] === "package") return `dependency not installed: ${safe(match[2])} (run npm ci)`;
+    // A half-installed package (npm ci still running) is reported by its entry
+    // file's full path; name the package after the last node_modules/ instead.
+    const packageName = (spec) => {
+      const after = String(spec).replace(/\\/g, "/").split("node_modules/").pop();
+      const parts = after.split("/");
+      return parts[0].startsWith("@") ? parts.slice(0, 2).join("/") : parts[0];
+    };
+    if (match && match[1] === "package") return `dependency not installed: ${safe(packageName(match[2]))} (run npm ci)`;
     if (match) return `sidecar file missing: ${safe(match[2].split(/[\\/]/).pop())} (check the deploy package)`;
     return "a module could not be loaded (run npm ci, and check the deploy package)";
   }
