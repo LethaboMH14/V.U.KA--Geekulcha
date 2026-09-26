@@ -1,72 +1,60 @@
 # VUKA — War Room Pitch
 
-> **Spoken target:** 3–5 minutes (war room). **Actual: 759 words (~5.1 min).** One job per beat, drafted to a hard budget.
+> **Spoken target:** 3 minutes (competition round 1). **Actual: 324 words (~2:19 at 140 wpm).** Six beats, hard caps. Under 3:00.
 > **Companion files:** `context.md` · `pitch-deck-outline.md` · `docs/reviews/ANCHOR-ACCESS-MODEL-ADR-PROPOSAL.md`.
 > **Read `docs/MASTER-CONTEXT.md` §2 for the judging criteria** (I 15 · T 15 · U 10 · S 10 · B 15 · Q 5).
 
 ## Word budget (spoken)
 
-| Beat | Job | Criterion | Words |
+| Beat | Job | Cap | Words |
 |---|---|---|---:|
-| 1 · Hook | Make them feel the problem | I, B | 98 |
-| 2 · Problem | Why nothing today fixes it | I, B | 96 |
-| 3 · Solution | What VUKA is | I | 32 |
-| 4A · How it works | The mechanism — automatic | T, U | 56 |
-| 4B · The record | Where it lives; one matched record | T, S, B | 100 |
-| 5 · Why it works | The sale — two halves, one record | I, T | 126 |
-| 6A · The money | Who pays, how much | B | 47 |
-| 6B · Why the insurer pays | Fake claims — the claim and the proof | B, I | 81 |
-| 7 · Compliance | Deployability, licence, ECTA | S, B | 68 |
-| 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **759** |
+| 1 · Hook | Make them feel the problem | 55 | 52 |
+| 2 · Problem | Why nothing fixes it | 65 | 48 |
+| 3 · Solution | What VUKA is (3-sec test) | 45 | 37 |
+| 4 · How It Works (user view, demo) | What the user experiences | 80 | 79 |
+| 5 · Why It Wins | The single differentiator | 70 | 65 |
+| 6 · The Ask | Who pays + what we want | 45 | 43 |
+| | | **Total** | **324** |
 
 ---
 
 ## Part 1 — The Pitch
 
-### Beat 1 — Hook
+### Beat 1 — The Hook
 
-People are forced to move their own money under threat. It happens in many scenarios — in cars, in homes, at ATMs, on the street, in taxis. The attacker doesn't need a weapon. Just a thumb and a phone. The victim makes the transfer. Their face. Their fingerprint. Their phone. And when they try to prove they were forced — there is nothing. No record of the threat. Just a payment that says they did it. This is coerced transfer. It can happen to anyone whose phone is their bank. And it leaves the same hole every time.
+Imagine someone you love, alone at night, forced to hand over their phone. A stranger makes them open their banking app, and transfer their money. Their face. Their fingerprint. Their phone. Then he is gone — and there is no proof they were forced. Just a payment that says they did it.
 
-### Beat 2 — Problem
+### Beat 2 — The Problem
 
-That's coercion — and at its worst, express kidnapping. Nothing today fixes it. The bank holds the transaction, not the duress, so it cannot resolve what it cannot see. The insurer pays first, and a forced transfer looks exactly like a normal one — so it pays a fraudster or fights a real victim. Every tool fails the same way. A panic button needs a free hand. A duress PIN, you must type. A fraud score is a guess, after the fact. An affidavit is just their word. They did everything right, and they still lose.
+Nobody can tell a forced transfer from a willing one. In 2025, South Africans lost two point four billion rand to digital banking crime. If you have no proof, you cannot dispute your transaction — and the criminal wins. So now you are frustrated, and your money is gone.
 
-### Beat 3 — Solution
+### Beat 3 — The Solution
 
-VUKA notices duress without a button, and proves when it happened — so a bank or an insurer can check the record without trusting us. They get what they never had: proof.
+VUKA changes that. It notices duress without a button, and records when it happened. This is now proof that a bank, an insurer or a court can check. Now, for the first time, the victim is believed.
 
-### Beat 4A — How it works
+### Beat 4 — How It Works for the User (the demo)
 
-Nothing to press. Nothing to enter. They just go about their day. VIGIL listens on the phone — a scream, a shout, breaking glass. When it hears duress, it doesn't wait to be asked. Most products wait for a button. VUKA doesn't. And it flags three things: the location, the event, and the duress signal itself.
+A journey begins — then a scream. VUKA quietly asks: are you okay? A normal PIN says yes, and nothing is recorded. No answer — or the secret duress PIN — says no: a record is written, and their guardians are warned. That is how we tell everyday noise from real danger: the person answers, or the silence does. VUKA runs on Android only. We built this for POPIA: no name, no location, no voice is ever made public.
 
-### Beat 4B — The record
+### Beat 5 — Why It Wins
 
-That record is made automatically. It goes to their phone, and to their guardians' phone — so it survives if the phone is stolen. It is hashed into a fingerprint, signed, chained, and written to a public ledger. The victim does nothing, and the proof exists anyway — that is what sets VUKA apart. And the proof they hold is the same record the bank, the insurer and a court audit: one chain, matched. We know exactly what counts as a duress signal — defined by law, confirmed with duress experts. Nothing personal goes on the ledger; it is POPIA-compliant.
+The alternatives? A panic button, like FNB GuardMe — useless if your hands aren't free. A bank's duress code, like Discovery's — only inside that bank. And the "evidence" is just a bank record saying you authorised it, or an affidavit — your word. Every option needs you to press something. VUKA doesn't. It notices on its own, and proves when it happened. That is why we win.
 
-### Beat 5 — Why it works
+### Beat 6 — The Ask
 
-Here's why it wins. This problem has two halves: noticing the duress, and proving it. Nobody does both. Detection tools can notice — a panic button, a fraud score, the safety features on your phone — but they leave the victim with nothing a bank or a court can act on. Evidence tools can prove something happened, but they can't notice it in the first place. And a bank's own duress PIN only works if you can still type — inside that one bank. Everybody owns one half. Nobody owns both. Unlike a panic button, a duress PIN or a fraud score, VUKA notices the duress with nothing pressed — and unlike an evidence tool, it proves when it happened, in one record anyone can verify.
-
-### Beat 6A — The money
-
-Two people pay. The victim pays nothing. The insurer pays twenty rand per member, per month. The bank pays fifteen rand per case — against a five-thousand-rand cost to fight one dispute. Neither pays for the technology. Both pay because it saves them more than it costs.
-
-### Beat 6B — Why the insurer pays
-
-The insurer pays because VUKA cuts its fake-claim payouts. Today, someone can claim they were forced to transfer, and with no proof of the coercion, the insurer can't tell a real claim from a made-up one — so it pays. VUKA changes that: a real coercion leaves a record made at the time, signed and anchored, impossible to fake later. A made-up claim can't produce one. Already proven: ASISA members stopped R1.4 billion of fraud in 2024 just by testing claims.
-
-### Beat 7 — Compliance
-
-Compliance is our moat. We can deploy this here — there is nothing to license. Nothing personal ever touches the ledger, only a fingerprint, and they hold the key. We don't build or run a blockchain; we use an existing public network, hold no customer crypto, and move no money. And the record is built to maximise the ECTA (Electronic Communications and Transactions Act) section 15 reliability factors.
-
-### Beat 8 — Ask
-
-Here's what we want from this room. One insurer, five thousand members, twelve months — let's measure what this is worth. One bank, so we can cost a single dispute. And if you know the person who owns this problem, introduce us. We're not asking you to believe us. We're asking you to check us.
+The insurer pays twenty rand per member, per month. The victim pays nothing. We want one insurer and one bank to switch VUKA on for their customers — and one point nine million rand to run the twelve-month pilot. Help us prove it.
 
 ---
 
 ## Part 2 — Q&A Prep (not spoken)
+
+### Cut from the 3-minute pitch — mapped to its beat
+- **Beat 2:** R2.4bn digital banking crime, 2025 (SABRIC 2025, `FACT`); 110,000+ incidents; 17,061 kidnappings (2023/24), +264%, 44% during a hijacking; ASISA 16,520 cases / R1.4bn prevented; ICB 5–12% fraudulent; Ombud ~R4,962 / ~61 days **[evidence needed]**.
+- **Beat 3:** Android-first, iOS a reduced subset (ADR-0008); the record cannot be backdated or edited.
+- **Beat 4:** the demo is `SIMULATED`; on-device **offline** sound model, **no audio stored**; detection **not measured** (M1–M7); journey mode; normal PIN vs duress PIN; the duress screen is pixel-identical; guardians get the **alert only**; a **32-byte hash** on Hedera + daily OpenTimestamps→Bitcoin; payload encrypted and deletable; bank/insurer access **per case on consent — `PROPOSED`**.
+- **Beat 5:** competitor detail — Discovery Bank Panic Code, FNB GuardMe, OpenTimestamps, Truepic, C2PA; "no tool we found does both."
+- **Beat 6:** R20 between GuardMe R19.90 and iTOO R22.50; break-even 10,973 (469 product-only); actuary test R240/member/year; bank per-case fee R15 `PROPOSED`; the R1,884,583 build-up.
+- **Always:** no tokens; not a financial service; POPIA + ECTA s15; the absence of a record is never evidence against anyone.
 
 ### Proof bank — every claim mapped to its source
 
@@ -86,6 +74,7 @@ Here's what we want from this room. One insurer, five thousand members, twelve m
 | A 32-byte fingerprint to public ledgers (Hedera + Bitcoin) | `docs/VUKA-2-SPEC.md` §10; ADR-0035 |
 | Nothing personal on the ledger; encrypted off-chain; deletable; she holds the key | spec §10 and §13; POPIA s26 |
 | R20 per member/month (`ASSUMPTION`); per-case fee `PROPOSED`; break-even 10,973 at R20 (`ESTIMATE`); anchors: GuardMe R19.90 (FNB, Apr 2022), iTOO R22.50 | `scripts/economics_vigil_anchor.py`; `docs/ECONOMICS-VIGIL-ANCHOR.md`; `docs/EVIDENCE.md` |
+| First-year funding ask **R1,884,583** (product/ledger R80,918 + one-off R3,665 + 5-person team R1,800,000 @ R30,000/month) | `scripts/economics_vigil_anchor.py`; `docs/MARKET-DATA.md` §4 |
 | Blockchain is legal here; not a financial service; no crypto; no tokens | ADR-0034/0035; `context.md` |
 | Built for the ECT Act | ECTA 25 of 2002 s15(3)(a)–(c) |
 
@@ -105,6 +94,12 @@ Here's what we want from this room. One insurer, five thousand members, twelve m
 - **The bank saves** because a verified record **resolves a dispute without escalation**: an Ombud case costs the system **~R4,962** and **~61 days**, and **disbelieved customers leave**. The bank is **not liable for the loss today** (no mandatory reimbursement in SA), so its cost is dispute handling and churn — not the stolen money.
 - **Where money can still be saved:** the **PROPOSED bank protective signal** (ADR-0037) lets the bank place its own hold on new-beneficiary or large transfers on a duress signal — so where the transfer has **not yet cleared or been withdrawn, funds can be frozen**. That is the only path to recovering the money itself; it is partner-dependent and **not yet live**.
 - **The victim** gets the proof — and, where covered, faster reimbursement: the thing they never had.
+
+### The funding ask — what we need, and how it is built
+- **R1,884,583 for the first 12 months** (`ESTIMATE`): itemised product/ledger **R80,917.68** (12 × R6,743.14) + one-off insurance/registration **R3,665** (PI R2,615 + cyber R450 + CIPC R600) + a **5-person team at R30,000/month = R1,800,000** (`ASSUMPTION`).
+- **The technology is R80,918/year** — the rest is the team. This is a runway, not a technology cost.
+- **The ask on stage is distribution, not a member number:** an insurer or bank that switches VUKA on for its customers.
+- **Legal counsel and the Hedera mainnet HBAR float are unpriced** and sit inside the contingency.
 
 ### Governance tokens & deployment economics — the rationale
 - **We issue no token** — no governance token, no coin, no ICO. Hedera is governed by its council; there is nothing to trade. A token would add securities, tax and AML exposure for zero product benefit (ADR-0034/0035).
