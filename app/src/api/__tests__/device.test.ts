@@ -452,8 +452,10 @@ test('My record shows only the server’s held export, however many receipts the
   await c.enter('9876');
   await h.device.flush();
   expect((await h.device.myRecord()).length).toBeGreaterThan(2);
-  const {check, rows} = await h.device.checkMyRecord();
+  const {check, rows, exp} = await h.device.checkMyRecord();
   expect(check.ok).toBe(true);
+  // What My record can share is exactly the held export it checked.
+  expect(exp).toEqual(held);
   expect(rows.map(r => r.kind)).toEqual(['registration', 'journey_armed']);
   expect(JSON.stringify(rows)).not.toMatch(/duress|normal_pin/);
 });

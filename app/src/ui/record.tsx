@@ -19,15 +19,23 @@
  * opens a view-only page of its entries (sequence, full hash, the hash it
  * links to) with that record's share of the phone's chain check. Grouping
  * only changes how the same checked rows are laid out, never which rows.
+ *
+ * Share with a bank or insurer: offered only once the export was fetched and
+ * checked (the same condition that lists the rows). It shares exactly that
+ * export object, deep-copied and wrapped by `buildShare` for the ledger's
+ * verify page, after an in-app confirmation. There is no branch on PIN mode:
+ * under an open incident or its hold the export is the held (pre-incident)
+ * one for either PIN, so sharing can never hand over more than the screen was
+ * given.
  */
 import React, {useEffect, useMemo, useState} from 'react';
-import {BackHandler, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Chip, Lamp, Panel, Readout, Rule, TopAppBar} from './components';
-import {CaretRight, Waveform} from './icons';
+import {BackHandler, Pressable, Share, StyleSheet, Text, View} from 'react-native';
+import {Chip, Dialog, Key, Lamp, Panel, Readout, Rule, TopAppBar} from './components';
+import {CaretRight, ShareNetwork, Waveform} from './icons';
 import {colors, fonts, space, type} from './theme';
 import {device, type Delivery, type RecordRow} from '../api/device';
-import type {RecordCheck} from '../api/verifyRecord';
-import {groupRecord, ZERO_HASH, type RecordGroup} from './recordGroups';
+import type {Export, RecordCheck} from '../api/verifyRecord';
+import {buildShare, groupRecord, VERIFY_URL, ZERO_HASH, type RecordGroup} from './recordGroups';
 
 const KIND: Record<string, string> = {
   registration: 'Record created',
@@ -74,7 +82,7 @@ function summary(g: RecordGroup): string {
 
 type State =
   | {state: 'checking'}
-  | {state: 'done'; check: RecordCheck; rows: RecordRow[]}
+  | {state: 'done'; check: RecordCheck; rows: RecordRow[]; exp: Export}
   | {state: 'unreachable'; detail: string}
   | {state: 'preview'};
 
@@ -82,6 +90,7 @@ export function MyRecord({onBack}: {onBack: () => void}) {
   const [s, setS] = useState<State>(device.simulated ? {state: 'preview'} : {state: 'checking'});
   const [d, setD] = useState<Delivery>(device.delivery());
   const [open, setOpen] = useState<number | null>(null);
+  const [confirmShare, setConfirmShare] = useState(false);
 
   useEffect(() => {
     const off = device.onDelivery(setD);
@@ -89,7 +98,7 @@ export function MyRecord({onBack}: {onBack: () => void}) {
     let live = true;
     device
       .checkMyRecord()
-      .then(({check, rows}) => live && setS({state: 'done', check, rows}))
+      .then(({check, rows, exp}) => live && setS({state: 'done', check, rows, exp}))
       .catch(e => live && setS({state: 'unreachable', detail: String(e instanceof Error ? e.message : e)}));
     return () => {
       live = false;
@@ -101,6 +110,13 @@ export function MyRecord({onBack}: {onBack: () => void}) {
   const head = done?.check.ok ? done.check.head : null;
   const groups = useMemo(() => (done ? groupRecord(done.rows, done.check.firstBroken) : []), [done]);
   const detail = done?.check.ok ? groups.find(g => g.id === open) ?? null : null;
+  // The same condition that lists the rows: fetched, checked, and non-empty.
+  const shareable = done?.check.ok && groups.length ? done : null;
+  const share = () => {
+    setConfirmShare(false);
+    if (!shareable) return;
+    Share.share({message: JSON.stringify(buildShare(shareable.exp, Date.now()))}).catch(() => undefined);
+  };
 
   // Android back closes the record page first; only while it is open, so the
   // app's own back handling (to Settings) applies on the list. Registered
@@ -177,6 +193,43 @@ export function MyRecord({onBack}: {onBack: () => void}) {
           ))}
         </Panel>
       ) : null}
+
+      {shareable ? (
+        <Panel>
+          <Text style={type.label}>Share with a bank or insurer</Text>
+          <Text style={[type.caption, {marginTop: 2}]}>Send this checked record so they can verify it themselves on the public ledger.</Text>
+          <View style={{marginTop: space.md}}>
+            <Key
+              label="Share with a bank or insurer"
+              variant="plain"
+              icon={<ShareNetwork size={18} weight="bold" color={colors.textTitle} />}
+              accessibilityHint="Shows what is shared before anything is sent"
+              onPress={() => setConfirmShare(true)}
+            />
+          </View>
+        </Panel>
+      ) : null}
+
+      <Dialog
+        visible={confirmShare && !!shareable}
+        title="Share your record?"
+        icon={<ShareNetwork size={22} weight="bold" color={colors.action} />}
+        confirm="Share"
+        onConfirm={share}
+        cancel="Not now"
+        onCancel={() => setConfirmShare(false)}>
+        <View style={{gap: space.sm}}>
+          <Text style={type.body}>
+            What is shared: the record shown here, with every entry and its details, including check-in results and any guardians’
+            acknowledgements in it.
+          </Text>
+          <Text style={type.body}>Who can read it: whoever you send it to.</Text>
+          <Text style={type.body}>Where they verify it: they open the VUKA Ledger and paste or drop this record.</Text>
+          <Text style={styles.hashSmall} selectable accessibilityLabel={`Verify page ${VERIFY_URL}`}>
+            {VERIFY_URL}
+          </Text>
+        </View>
+      </Dialog>
     </View>
   );
 }

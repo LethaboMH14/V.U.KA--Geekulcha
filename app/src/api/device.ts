@@ -963,8 +963,10 @@ export function createDevice(b: Backend) {
      * After an export authorisation: fetch the member's export (§9, T30 hold
      * applied by the server) and check it on this phone against the receipts
      * this phone kept. Needs the authorisation to have reached the server.
+     * `exp` is the exact export that was checked (the held one under T30):
+     * sharing it with a bank or insurer shares nothing the check didn't cover.
      */
-    async checkMyRecord(): Promise<{check: RecordCheck; rows: RecordRow[]}> {
+    async checkMyRecord(): Promise<{check: RecordCheck; rows: RecordRow[]; exp: Export}> {
       if (!profile) throw new Error('no profile');
       await flush();
       const exp = await b.request<Export>(profile.serverUrl, 'GET', `/v1/subjects/${encodeURIComponent(profile.subjectId)}/export`, '');
@@ -983,7 +985,7 @@ export function createDevice(b: Backend) {
         hash: e.event_hash,
         fromThisPhone: ours.has(e.event_hash),
       }));
-      return {check, rows};
+      return {check, rows, exp};
     },
 
     /** The member's own copy of their record: every receipt, oldest first. */

@@ -84,3 +84,23 @@ export function groupRecord(rows: readonly RecordRow[], firstBroken: number | nu
     })
     .reverse();
 }
+
+/** Where a bank or insurer checks a shared record (the public ledger dashboard). */
+export const VERIFY_URL = 'https://lethabomh14.github.io/V.U.KA--Geekulcha/dashboard/ledger/#verify';
+
+export type SharedRecord<E> = {format: 'vuka-export-v2'; export: E; shared_at: string};
+
+/**
+ * "Share with a bank or insurer": exactly the export My record fetched and
+ * checked (the held export under T30), wrapped for the ledger's verify page.
+ * A deep copy, unchanged: nothing is added, dropped or re-ordered, and later
+ * changes to the screen's copy can't leak into it. `now` is ms since epoch;
+ * `shared_at` is RFC 3339 UTC to the second.
+ */
+export function buildShare<E>(exp: E, now: number): SharedRecord<E> {
+  return {
+    format: 'vuka-export-v2',
+    export: JSON.parse(JSON.stringify(exp)) as E,
+    shared_at: new Date(now).toISOString().replace(/\.\d{3}Z$/, 'Z'),
+  };
+}
