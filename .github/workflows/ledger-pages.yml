@@ -83,7 +83,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          unexpected="$(find site -type f ! -name '.nojekyll' ! \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' \) ! -path 'site/dashboard/ledger/fonts/*.woff2' ! -path 'site/dashboard/ledger/fonts/OFL-IBM-Plex.txt' -print)"
+          unexpected="$(find site -type f ! -name '.nojekyll' ! \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' \) ! -path 'site/dashboard/ledger/fonts/*.woff2' ! -path 'site/dashboard/ledger/fonts/OFL-*.txt' -print)"
           if [ -n "$unexpected" ]; then echo "Unexpected files in site:"; echo "$unexpected"; exit 1; fi
           find site -type f | sort
       - name: Install checksum-pinned Gitleaks 8.24.3
