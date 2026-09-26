@@ -17,6 +17,7 @@ _SCHEMA_FILES = {
     "checkin_result": "checkin_result.v1.json",
     "journey_ended": "journey_ended.v1.json",
     "guardian_ack": "guardian_ack.v1.json",
+    "evidence_observed": "evidence_observed.v1.json",
 }
 _DIALECT = "https://json-schema.org/draft/2020-12/schema"
 _VALIDATION_KEYWORDS = {
@@ -27,6 +28,9 @@ _VALIDATION_KEYWORDS = {
     "minLength",
     "maxLength",
     "minimum",
+    "maximum",
+    "maxItems",
+    "items",
     "required",
     "additionalProperties",
     "properties",
@@ -87,9 +91,15 @@ def _assert_supported_schema(schema: Any, path: str = "$schema") -> None:
         value = schema.get(keyword)
         if value is not None and (type(value) is not int or value < 0):
             raise PayloadError(f"unsupported {keyword} value at {path}")
-    minimum = schema.get("minimum")
-    if minimum is not None and (type(minimum) is not int or abs(minimum) > 2**53 - 1):
-        raise PayloadError(f"unsupported minimum value at {path}")
+    for keyword in ("minimum", "maximum"):
+        bound = schema.get(keyword)
+        if bound is not None and (type(bound) is not int or abs(bound) > 2**53 - 1):
+            raise PayloadError(f"unsupported {keyword} value at {path}")
+    max_items = schema.get("maxItems")
+    if max_items is not None and (type(max_items) is not int or max_items < 0):
+        raise PayloadError(f"unsupported maxItems value at {path}")
+    if "items" in schema:
+        _assert_supported_schema(schema["items"], f"{path}.items")
     if "pattern" in schema:
         if not isinstance(schema["pattern"], str):
             raise PayloadError(f"pattern at {path} must be a string")
@@ -101,7 +111,7 @@ def _assert_supported_schema(schema: Any, path: str = "$schema") -> None:
         raise PayloadError(f"enum at {path} must be an array")
     if "type" in schema and (
         not isinstance(schema["type"], str)
-        or schema["type"] not in {"object", "string", "integer"}
+        or schema["type"] not in {"object", "string", "integer", "array"}
     ):
         raise PayloadError(f"unsupported type keyword value at {path}")
 
@@ -120,6 +130,8 @@ def _validate_schema(payload: Any, schema: dict, path: str = "$payload") -> None
         _fail("must be a string", path)
     if expected_type == "integer" and type(payload) is not int:
         _fail("must be an integer", path)
+    if expected_type == "array" and not isinstance(payload, list):
+        _fail("must be an array", path)
 
     if "const" in schema and not _same_json_value(payload, schema["const"]):
         _fail(f"must equal {schema['const']!r}", path)
@@ -140,6 +152,15 @@ def _validate_schema(payload: Any, schema: dict, path: str = "$payload") -> None
     if "minimum" in schema and type(payload) is int:
         if payload < schema["minimum"]:
             _fail(f"must be at least {schema['minimum']}", path)
+    if "maximum" in schema and type(payload) is int:
+        if payload > schema["maximum"]:
+            _fail(f"must be at most {schema['maximum']}", path)
+    if "maxItems" in schema and isinstance(payload, list):
+        if len(payload) > schema["maxItems"]:
+            _fail(f"must contain at most {schema['maxItems']} items", path)
+    if "items" in schema and isinstance(payload, list):
+        for i, item in enumerate(payload):
+            _validate_schema(item, schema["items"], f"{path}[{i}]")
 
     if "required" in schema:
         if not isinstance(payload, dict):

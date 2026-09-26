@@ -865,7 +865,7 @@ def create_app(database=None) -> FastAPI:
         try:
             with closing(store._connection()) as connection, connection, connection.cursor() as cur:
                 guardian_id = guardian_for_key(cur, principal.signer_key_id)
-                alerts = alerts_for(cur, guardian_id) if guardian_id else []
+                alerts = alerts_for(cur, guardian_id, payload_key=store._payload_key()) if guardian_id else []
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
         # The member's subject id lets the guardian sign a guardian_ack for it (G5).

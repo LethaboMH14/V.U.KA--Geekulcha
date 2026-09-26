@@ -16,7 +16,15 @@ CREATE TABLE IF NOT EXISTS checkins (
 CREATE TABLE IF NOT EXISTS ended_journeys (
     journey_id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, ended_at TIMESTAMPTZ NOT NULL
 );
+CREATE TABLE IF NOT EXISTS evidence_links (
+    event_id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, journey_id TEXT NOT NULL,
+    received_at TIMESTAMPTZ NOT NULL, signal_event_id TEXT UNIQUE
+);
 """
+# PROPOSED (ADR-0047): an evidence_observed explains the signal_detected the
+# phone queues right after it. Only ids are kept here; the reasons stay in the
+# encrypted private payload, so deleting the member's data removes them too.
+EVIDENCE_LINK_WINDOW = timedelta(seconds=120)
 
 
 def anchor_intent(cur, event_id, now):
@@ -55,7 +63,7 @@ def close_incident(cur, store, subject_id, incident_id, reason, now):
     return True
 
 
-DEVICE_KINDS = {"signal_detected", "checkin_opened", "checkin_result", "journey_ended", "pin_authorised"}
+DEVICE_KINDS = {"signal_detected", "checkin_opened", "checkin_result", "journey_ended", "pin_authorised", "evidence_observed"}
 GUARDIAN_KINDS = {"guardian_ack"}
 
 
@@ -80,10 +88,20 @@ def apply_event(cur, store, subject_id, entry, stored, now):
         except PayloadError as exc:
             raise EventRefused("invalid_request") from exc
     event_id = entry["details"]["event_id"]
-    if kind in {"signal_detected", "checkin_opened", "journey_ended"}:
+    if kind in {"signal_detected", "checkin_opened", "journey_ended", "evidence_observed"}:
         if entry["target_type"] != "journey" or payload.get("journey_id") != entry["target_id"]:
             raise EventRefused("invalid_request")
+    if kind == "evidence_observed":
+        # T0: recorded and anchored with the hour. No incident, no deadline, no outbox.
+        cur.execute("INSERT INTO evidence_links(event_id,subject_id,journey_id,received_at) VALUES(%s,%s,%s,%s)",
+                    (event_id, subject_id, entry["target_id"], now))
+        return
     if kind == "signal_detected":
+        cur.execute("""UPDATE evidence_links SET signal_event_id=%s WHERE event_id=(
+            SELECT event_id FROM evidence_links WHERE subject_id=%s AND journey_id=%s
+              AND signal_event_id IS NULL AND received_at >= %s
+            ORDER BY received_at DESC, event_id DESC LIMIT 1)""",
+                    (event_id, subject_id, entry["target_id"], now - EVIDENCE_LINK_WINDOW))
         incident_id = incidents.incident_for_signal(cur, subject_id, now, stored["prev_hash"])
         escalation.schedule_signal(cur, signal_event_id=event_id, subject_id=subject_id, journey_id=entry["target_id"], received_at=now)
         cur.execute("INSERT INTO incident_signals VALUES(%s,%s)", (event_id, incident_id))
