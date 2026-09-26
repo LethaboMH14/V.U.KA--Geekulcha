@@ -1,6 +1,7 @@
 package za.co.vuka.app.ui.settings
 
 import android.os.Bundle
+import android.util.Patterns
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -15,11 +16,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
+import za.co.vuka.app.auth.AccountStore
 import za.co.vuka.app.auth.PinGateSheet
 import za.co.vuka.app.auth.PinResult
 import za.co.vuka.app.ui.home.JourneyViewModel
 import za.co.vuka.app.ui.onboarding.InviteGuardianSheet
 import za.co.vuka.app.ui.onboarding.OnboardingViewModel
+import za.co.vuka.app.ui.onboarding.saMobilePattern
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -28,7 +33,8 @@ import kotlinx.coroutines.launch
  * Settings (Settings.tsx), grouped as Profile, Guardians, Appearance,
  * Documents and your rights, Privacy and data, and Account.
  *
- * Inviting a guardian and signing out need the PIN ([PinGateSheet]).
+ * Editing the profile, inviting a guardian and signing out need the PIN
+ * ([PinGateSheet]).
  * Guardian removal, deletion and recovery need the server and aren't offered
  * yet. Their rows say why.
  */
@@ -64,6 +70,15 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             if (mode == PinResult.NORMAL) ThemePrefs.reset(requireActivity())
         }
 
+        // Contact details decide who can reach the member, so editing them needs the PIN.
+        // A duress PIN opens the same editor, so the screen gives nothing away.
+        PinGateSheet.listen(this, "profile_edit") {
+            EditProfileSheet().show(childFragmentManager, "edit_profile")
+        }
+        view.findViewById<View>(R.id.profileHeader).setOnClickListener {
+            PinGateSheet.open(this, "profile_edit")
+        }
+
         PinGateSheet.listen(this, "sign_out") { mode ->
             if (mode == PinResult.NORMAL) journey.end()
             onboardingViewModel.signOut()
@@ -78,12 +93,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                combine(
-                    onboardingViewModel.firstName,
-                    onboardingViewModel.surname,
-                    onboardingViewModel.phoneNumber,
-                ) { first, last, phone -> Triple(first, last, phone) }
-                    .collect { (first, last, phone) -> bindProfile(view, "$first $last".trim(), phone) }
+                combine(onboardingViewModel.firstName, onboardingViewModel.surname) { first, last -> first to last }
+                    .collect { (first, last) -> bindProfile(view, first, last) }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
@@ -93,19 +104,17 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
     }
 
-    private fun bindProfile(view: View, name: String, phone: String) {
-        val rows = view.findViewById<ViewGroup>(R.id.profileRows)
-        rows.removeAllViews()
-        rows.addView(row(rows, R.drawable.ic_user, "Name", name.ifBlank { "Not set" }, trailing = "Edit") {
-            EditNameSheet().show(childFragmentManager, "edit_name")
-        })
-        rows.addView(
-            row(
-                rows, R.drawable.ic_phone, "Phone number",
-                // Changing it means a new SMS code, and SMS isn't connected yet.
-                "${phone.ifBlank { "Not set" }} · can't be changed yet"
-            )
-        )
+    private fun bindProfile(view: View, first: String, last: String) {
+        val name = "$first $last".trim()
+        val initials = listOf(first, last).mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString("")
+        view.findViewById<TextView>(R.id.tvAvatar).apply {
+            text = initials
+            visibility = if (initials.isEmpty()) View.GONE else View.VISIBLE
+        }
+        view.findViewById<View>(R.id.ivAvatar).visibility = if (initials.isEmpty()) View.VISIBLE else View.GONE
+        view.findViewById<TextView>(R.id.tvProfileName).text = name.ifBlank { "Your profile" }
+        view.findViewById<View>(R.id.profileHeader).contentDescription =
+            "${name.ifBlank { "Your profile" }}. Edit your details, needs your PIN"
     }
 
     private fun bindGuardians(view: View, pending: Int) {
@@ -161,6 +170,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun bindDocuments(view: View) {
         val rows = view.findViewById<ViewGroup>(R.id.documentRows)
         listOf(
+            Triple(R.drawable.ic_file_text, "Terms and conditions", R.raw.doc_terms),
             Triple(R.drawable.ic_file_text, "Privacy notice", R.raw.doc_privacy),
             Triple(R.drawable.ic_scales, "Your rights", R.raw.doc_rights),
             Triple(R.drawable.ic_info, "About the record", R.raw.doc_record),
@@ -175,7 +185,19 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private fun bindData(view: View) {
         val rows = view.findViewById<ViewGroup>(R.id.dataRows)
-        rows.addView(row(rows, R.drawable.ic_key, "Recovery", "Recovery codes aren't available in this build yet."))
+        // Where password-reset codes go. The PIN is recovery-code only (spec §9); the screen says so.
+        val channel = AccountStore(requireContext()).recoveryChannel
+        rows.addView(
+            row(
+                rows, R.drawable.ic_key, "Recovery",
+                when (channel) {
+                    AccountStore.RecoveryChannel.EMAIL -> "Password resets go to your email"
+                    AccountStore.RecoveryChannel.PHONE -> "Password resets go to your mobile number"
+                    null -> "Choose where password resets go"
+                },
+                chevron = true,
+            ) { findNavController().navigate(R.id.action_settings_to_recovery) }
+        )
         // Deletion is a 72-hour server-side schedule (spec §9); there's no server to schedule it on yet.
         rows.addView(
             row(rows, R.drawable.ic_trash, "Delete my data", "Needs the ANCHOR server, which isn't connected yet.")
@@ -229,8 +251,13 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 }
 
-/** Edit the name guardians see, with YourName's validation. */
-class EditNameSheet : BottomSheetDialogFragment(R.layout.dialog_edit_name) {
+/**
+ * Edit profile: name, surname, mobile number and email, with the sign-up
+ * forms' validation. At least one way to reach the member must remain.
+ * SIMULATED verification: a changed number or email is saved without a code,
+ * because no SMS or email service is connected. The sheet says so.
+ */
+class EditProfileSheet : BottomSheetDialogFragment(R.layout.dialog_edit_profile) {
 
     private val onboardingViewModel: OnboardingViewModel by activityViewModels()
 
@@ -240,20 +267,39 @@ class EditNameSheet : BottomSheetDialogFragment(R.layout.dialog_edit_name) {
         super.onViewCreated(view, savedInstanceState)
         val etFirst = view.findViewById<EditText>(R.id.etFirstName)
         val etLast = view.findViewById<EditText>(R.id.etSurname)
+        val etPhone = view.findViewById<EditText>(R.id.etPhone)
+        val etEmail = view.findViewById<EditText>(R.id.etEmail)
         if (savedInstanceState == null) {
             etFirst.setText(onboardingViewModel.firstName.value)
             etLast.setText(onboardingViewModel.surname.value)
+            etPhone.setText(onboardingViewModel.phoneNumber.value.removePrefix("+27"))
+            etEmail.setText(onboardingViewModel.email.value)
+        }
+        (dialog as? BottomSheetDialog)?.behavior?.apply {
+            state = BottomSheetBehavior.STATE_EXPANDED
+            skipCollapsed = true
         }
 
         view.findViewById<View>(R.id.btnClose).setOnClickListener { dismiss() }
         view.findViewById<View>(R.id.btnSave).setOnClickListener {
             val first = etFirst.text.toString().trim()
             val last = etLast.text.toString().trim()
-            if (first.isEmpty() || last.isEmpty()) {
+            val digits = etPhone.text.toString().trim()
+            val email = etEmail.text.toString().trim()
+            val error = when {
+                first.isEmpty() || last.isEmpty() -> "Enter both your first name and surname."
+                digits.isNotEmpty() && !saMobilePattern.matches(digits) ->
+                    "Enter a valid South African mobile number — 9 digits, not starting with 0."
+                email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> "Enter a valid email address."
+                digits.isEmpty() && email.isEmpty() -> "Keep a mobile number or an email, so we can reach you."
+                else -> null
+            }
+            if (error != null) {
+                view.findViewById<TextView>(R.id.tvError).text = error
                 view.findViewById<View>(R.id.errorContainer).visibility = View.VISIBLE
                 return@setOnClickListener
             }
-            onboardingViewModel.setName(first, last)
+            onboardingViewModel.updateProfile(first, last, if (digits.isEmpty()) "" else "+27$digits", email)
             dismiss()
         }
     }

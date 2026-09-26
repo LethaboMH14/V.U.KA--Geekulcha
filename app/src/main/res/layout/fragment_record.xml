@@ -89,10 +89,61 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:letterSpacing="0.1"
-                android:text="TIMELINE"
+                android:text="RECORDS"
                 android:textColor="@color/vuka_text_dim"
                 android:textSize="11sp"
                 android:textStyle="bold" />
+
+            <!-- Hash-chain check, re-run every time the record changes.
+                 Neutral colours only: green is reserved for real verification. -->
+            <LinearLayout
+                android:id="@+id/chainStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:accessibilityLiveRegion="polite"
+                android:background="@drawable/bg_input_field"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="10dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/ivChain"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_lock"
+                    app:tint="@color/vuka_text_title" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvChainTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/vuka_text_title"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvChainBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:lineSpacingExtra="2dp"
+                        android:textColor="@color/vuka_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvEmpty"
@@ -100,16 +151,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:lineSpacingExtra="3dp"
-                android:text="No entries yet. Activate VIGIL from Home, and each activate and deactivate appears here."
+                android:text="No records yet. Each time you activate VIGIL, an Emergency alert or a profile change, a record appears here. Tap one to see what happened."
                 android:textColor="@color/vuka_text_secondary"
                 android:textSize="14sp" />
 
+            <!-- One row per record; tap for its view-only events -->
             <LinearLayout
                 android:id="@+id/timeline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="vertical" />
+                android:layout_marginTop="4dp"
+                android:divider="@drawable/divider_subtle"
+                android:orientation="vertical"
+                android:showDividers="middle" />
 
             <!-- Evidence line, the one serif line. Qualified, since nothing is anchored yet. -->
             <View
@@ -201,7 +255,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        android:text="Not anchored"
+                        android:text="Chained on this phone · not anchored"
                         android:textColor="@color/vuka_text_secondary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -216,11 +270,11 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="ANCHOR isn't connected in this build. Nothing from this phone has been written to Hedera."
+                    android:text="Each entry carries the SHA-256 fingerprint of the one before it, so changing an earlier entry breaks the chain. Publishing the latest fingerprint to Hedera (the public ledger) needs the ANCHOR server, which isn't connected yet, so nothing has been written there."
                     android:textColor="@color/vuka_text_secondary"
                     android:textSize="12sp" />
 
-                <!-- Mono data block: empty until a real anchor receipt exists -->
+                <!-- Mono data block: this phone's chain head. No Hedera receipt until ANCHOR is connected. -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

@@ -14,7 +14,7 @@
         android:paddingTop="24dp"
         android:paddingBottom="28dp">
 
-        <!-- ═══ Ready (no journey) ═══ -->
+        <!-- ═══ Home: one layout; the hero card's button toggles Activate / Deactivate ═══ -->
         <LinearLayout
             android:id="@+id/stateReady"
             android:layout_width="match_parent"
@@ -95,6 +95,7 @@
                     </FrameLayout>
 
                     <TextView
+                        android:id="@+id/tvVigilLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
@@ -106,16 +107,28 @@
                 </LinearLayout>
 
                 <TextView
+                    android:id="@+id/tvVigilState"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
+                    android:accessibilityLiveRegion="polite"
                     android:letterSpacing="-0.01"
                     android:text="Ready"
                     android:textColor="@color/vuka_text_title"
                     android:textSize="32sp"
                     android:textStyle="bold" />
 
+                <!-- Shown only while Active; drifts (see ListeningLine) -->
+                <za.co.vuka.app.ui.home.ListeningLine
+                    android:id="@+id/listeningLine"
+                    android:layout_width="match_parent"
+                    android:layout_height="24dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="4dp"
+                    android:visibility="gone" />
+
                 <TextView
+                    android:id="@+id/tvVigilBody"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
@@ -144,19 +157,34 @@
                     app:iconTint="@color/vuka_text_inverse" />
             </LinearLayout>
 
-            <!-- Manual panic: a 2-second hold, so a pocket can't send it -->
-            <za.co.vuka.app.panic.HoldToAlertButton
-                android:id="@+id/btnHoldForHelpReady"
+            <!-- Emergency: one tap records the alert and opens the dialer with 10111.
+                 Android still needs a press on call there, so a stray tap can't place a call. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEmergency"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
-                android:layout_marginTop="14dp" />
+                android:layout_marginTop="14dp"
+                android:text="Emergency · call 10111"
+                android:textAllCaps="false"
+                android:textColor="@color/vuka_text_title"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="27dp"
+                app:icon="@drawable/ic_phone"
+                app:iconGravity="textStart"
+                app:iconPadding="10dp"
+                app:iconSize="18dp"
+                app:iconTint="@color/vuka_text_title"
+                app:strokeColor="@color/vuka_text_title"
+                app:strokeWidth="2dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
-                android:text="Hold for 2 seconds if you need help now."
+                android:text="Opens your dialer with 10111 ready. Press call there."
                 android:textColor="@color/vuka_text_dim"
                 android:textSize="12sp" />
 
@@ -260,192 +288,6 @@
                     android:textColor="@color/vuka_text_dim"
                     android:textSize="13sp" />
             </LinearLayout>
-        </LinearLayout>
-
-        <!-- ═══ Journey active. SIMULATED: no listener, server or alerts in
-             this build, and the copy says so. ═══ -->
-        <LinearLayout
-            android:id="@+id/stateActive"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_glass_card"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_circle_icon">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:alpha="0.85"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_waveform"
-                            app:tint="@color/vuka_text_title" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:letterSpacing="0.1"
-                        android:text="VIGIL · SIMULATED"
-                        android:textColor="@color/vuka_text_dim"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:accessibilityHeading="true"
-                    android:letterSpacing="-0.01"
-                    android:text="Active"
-                    android:textColor="@color/vuka_text_title"
-                    android:textSize="32sp"
-                    android:textStyle="bold" />
-
-                <za.co.vuka.app.ui.home.ListeningLine
-                    android:layout_width="match_parent"
-                    android:layout_height="24dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="4dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:lineSpacingExtra="3dp"
-                    android:text="Not listening. This build doesn't include the listener yet."
-                    android:textColor="@color/vuka_text_secondary"
-                    android:textSize="15sp" />
-            </LinearLayout>
-
-            <!-- Guardians + server contact, merged into one supporting card -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_glass_card"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_circle_icon">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:alpha="0.85"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_users"
-                            app:tint="@color/vuka_text_title" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginEnd="8dp"
-                        android:layout_weight="1"
-                        android:text="Guardians ready"
-                        android:textColor="@color/vuka_text_title"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        style="@style/Widget.Vuka.StatusChip"
-                        android:text="Not connected" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvNoGuardians"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:text="No guardians yet."
-                    android:textColor="@color/vuka_text_dim"
-                    android:textSize="14sp" />
-
-                <LinearLayout
-                    android:id="@+id/activeGuardianList"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:orientation="vertical" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="14dp"
-                    android:layout_marginBottom="14dp"
-                    android:background="?attr/vukaBorder" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:lineSpacingExtra="3dp"
-                    android:text="Alerts aren't connected in this build. No guardian will be contacted if you don't answer a check."
-                    android:textColor="@color/vuka_text_secondary"
-                    android:textSize="13sp" />
-            </LinearLayout>
-
-            <!-- Manual panic: a 2-second hold, so a pocket can't send it -->
-            <za.co.vuka.app.panic.HoldToAlertButton
-                android:id="@+id/btnHoldForHelpActive"
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="14dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:gravity="center"
-                android:text="Hold for 2 seconds if you need help now."
-                android:textColor="@color/vuka_text_dim"
-                android:textSize="12sp" />
-
-            <!-- Ghost button from Button.tsx: transparent, hairline border -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnEnd"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="14dp"
-                android:text="Deactivate"
-                android:textAllCaps="false"
-                android:textColor="@color/vuka_text_secondary"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:cornerRadius="27dp"
-                app:strokeColor="?attr/vukaBorder"
-                app:strokeWidth="1dp" />
         </LinearLayout>
     </FrameLayout>
 </ScrollView>

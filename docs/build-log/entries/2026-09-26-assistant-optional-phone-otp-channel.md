@@ -29,3 +29,9 @@ Next: operator to try the email route with Skip, and the phone route choosing Em
 Changed: app-wide `materialAlertDialogTheme` → `ThemeOverlay.Vuka.Dialog` (values/styles.xml, both themes.xml): surface card, 28dp corners, ink bold title, secondary body text, `bg_button_primary` pill for the main action, quiet secondary-colour text button for the other. Applies to every MaterialAlertDialog (No account found, Are they safe?, etc.). The add-email/number pop-up now uses `dialog_contact_input.xml`: FieldLabel, Widget.Vuka.TextField, +27 pill and the forms' InlineError box.
 
 Evidence: `./gradlew :app:assembleDebug -q` → exit 0; installed on emulator-5554, opened the "Add your email" pop-up from the code screen and checked the normal and invalid-email states by screenshot (light/Ivory theme only; Midnight and Silver not checked).
+
+### Follow-up, same day: Sign in with Google for returning members
+
+Changed: "Already have an account? Sign in" now offers "Sign in with Google" above phone and email. It opens the same SIMULATED Google chooser as sign-up; if the chosen address matches the account email saved on this phone (case-insensitive) it goes to "Welcome back" for the PIN, otherwise it shows "No account found" with "Create an account" / "Cancel". LOCAL ONLY, like the other sign-in routes.
+
+Evidence: `./gradlew :app:assembleDebug -q` → exit 0; installed on emulator-5554. Not tried on device: the emulator is signed in and signing out needs a PIN the assistant doesn't have.

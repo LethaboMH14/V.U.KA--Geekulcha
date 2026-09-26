@@ -1,13 +1,17 @@
 package za.co.vuka.app.ui.home
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.LinearGradient
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Shader
+import android.os.Build
 import android.util.AttributeSet
 import android.view.View
+import android.view.animation.LinearInterpolator
 import androidx.core.graphics.ColorUtils
 import za.co.vuka.app.R
 import za.co.vuka.app.ui.settings.vukaColor
@@ -16,9 +20,10 @@ import za.co.vuka.app.ui.settings.vukaColor
  * The signature "listening" line from ListeningLine.tsx. It is a soft wave in
  * the action colour at 40%, fading out at both ends.
  *
- * Drawn STILL on purpose. In the prototype the wave drifts while VIGIL listens.
- * Nothing listens in this build yet, so a moving line would claim protection
- * that isn't there. Add the drift when the listener is real.
+ * The wave drifts sideways while Home shows VIGIL as Active, as in the
+ * prototype. Nothing listens in this build yet, so the card around it says
+ * "SIMULATED" and "Not listening"; keep that wording until the listener is
+ * real. The drift stops when animations are off on the phone.
  */
 class ListeningLine @JvmOverloads constructor(
     context: Context,
@@ -35,6 +40,18 @@ class ListeningLine @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
     }
     private val path = Path()
+    private val shaderMatrix = Matrix()
+    private var phase = 0f
+
+    private val drift = ValueAnimator.ofFloat(0f, 1f).apply {
+        duration = 2400L
+        repeatCount = ValueAnimator.INFINITE
+        interpolator = LinearInterpolator()
+        addUpdateListener {
+            phase = (it.animatedValue as Float) * period
+            invalidate()
+        }
+    }
 
     init {
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
@@ -51,10 +68,11 @@ class ListeningLine @JvmOverloads constructor(
             Shader.TileMode.CLAMP
         )
 
+        // One extra period on the left, so the wave can slide right without a gap.
         val mid = h / 2f
         path.reset()
-        path.moveTo(0f, mid)
-        var x = 0f
+        path.moveTo(-period, mid)
+        var x = -period
         var up = true
         while (x < w) {
             val half = period / 2
@@ -65,6 +83,29 @@ class ListeningLine @JvmOverloads constructor(
     }
 
     override fun onDraw(canvas: Canvas) {
+        // Move the wave, but keep the fade at the edges where it is.
+        shaderMatrix.setTranslate(-phase, 0f)
+        paint.shader?.setLocalMatrix(shaderMatrix)
+        canvas.save()
+        canvas.translate(phase, 0f)
         canvas.drawPath(path, paint)
+        canvas.restore()
+    }
+
+    override fun onVisibilityAggregated(isVisible: Boolean) {
+        super.onVisibilityAggregated(isVisible)
+        // Android 7 can't report the setting; there the animator itself honours it.
+        val animationsOn = Build.VERSION.SDK_INT < Build.VERSION_CODES.O || ValueAnimator.areAnimatorsEnabled()
+        if (isVisible && animationsOn) {
+            if (!drift.isStarted) drift.start()
+        } else {
+            drift.cancel()
+            phase = 0f
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        drift.cancel()
+        super.onDetachedFromWindow()
     }
 }

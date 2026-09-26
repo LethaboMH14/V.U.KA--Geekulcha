@@ -69,6 +69,22 @@ class AccountStore(context: Context) {
         putInt(KEY_INVITES, profile.pendingInvites)
     }
 
+    enum class RecoveryChannel { EMAIL, PHONE }
+
+    /**
+     * Where an email-password reset code goes. The member's choice if the
+     * contact still exists, otherwise whichever contact is left. Never used
+     * for the PIN: PIN recovery is the recovery code only (spec §9).
+     */
+    var recoveryChannel: RecoveryChannel?
+        get() {
+            val p = profile() ?: return null
+            val saved = prefs.getString(KEY_RECOVERY, null)?.let { runCatching { RecoveryChannel.valueOf(it) }.getOrNull() }
+            val has = { c: RecoveryChannel -> if (c == RecoveryChannel.EMAIL) p.email.isNotBlank() else p.phone.isNotBlank() }
+            return saved?.takeIf(has) ?: RecoveryChannel.entries.firstOrNull(has)
+        }
+        set(value) = prefs.edit { putString(KEY_RECOVERY, value?.name) }
+
     /** Removes the profile and session from this phone. */
     fun clear() = prefs.edit { clear() }
 
@@ -86,5 +102,6 @@ class AccountStore(context: Context) {
         const val KEY_EMAIL = "email"
         const val KEY_GOOGLE = "google_used"
         const val KEY_INVITES = "pending_invites"
+        const val KEY_RECOVERY = "recovery_channel"
     }
 }

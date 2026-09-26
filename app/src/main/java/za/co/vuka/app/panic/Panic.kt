@@ -6,13 +6,14 @@ import za.co.vuka.app.ui.record.RecordEntry
 import za.co.vuka.app.ui.record.RecordStore
 
 /**
- * Manual panic: the member asks for help directly, from Home's hold button
- * or the Quick Settings tile. ADR-0008 lists "manual panic" as a feature,
+ * Manual panic: the member asks for help directly, from Home's one-tap
+ * Emergency button (which then opens the dialer with 10111) or the Quick
+ * Settings tile (which shows [PanicActivity]). ADR-0008 lists "manual panic" as a feature,
  * but VUKA-2-SPEC.md defines no event for it yet, so nothing can be sent.
  */
 object Panic {
 
-    enum class Source { HOME_HOLD, QS_TILE }
+    enum class Source { HOME_BUTTON, QS_TILE }
 
     /** Record the alert and hand it to the alert path. Callers then show [screenIntent]. */
     fun raise(context: Context, source: Source) {

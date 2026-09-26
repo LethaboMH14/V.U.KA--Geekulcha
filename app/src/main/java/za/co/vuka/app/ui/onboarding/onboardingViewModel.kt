@@ -6,6 +6,7 @@ import za.co.vuka.app.auth.AccountStore
 import za.co.vuka.app.auth.InterimPasswordStore
 import za.co.vuka.app.auth.InterimPinStore
 import za.co.vuka.app.ui.guardian.GuardianAlerts
+import za.co.vuka.app.ui.record.RecordEntry
 import za.co.vuka.app.ui.record.RecordStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +17,11 @@ import kotlinx.coroutines.flow.StateFlow
  * reopens signed in.
  */
 class OnboardingViewModel(application: Application) : AndroidViewModel(application) {
+
+    companion object {
+        /** Bump when doc_terms.txt changes, so the record shows which version was accepted. */
+        const val TERMS_VERSION = "v0-draft"
+    }
 
     private val store = AccountStore(application)
 
@@ -56,6 +62,28 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
         persistIfSignedIn()
     }
 
+    /**
+     * Settings → Edit profile. Saves what changed and writes one "Profile
+     * updated" entry to the record naming the fields (never their values).
+     * Returns false when nothing changed.
+     */
+    fun updateProfile(first: String, last: String, phone: String, email: String): Boolean {
+        val changed = buildList {
+            if (first != _firstName.value || last != _surname.value) add("Name")
+            if (phone != _phoneNumber.value) add("Mobile number")
+            if (!email.equals(_email.value, ignoreCase = true)) add("Email")
+        }
+        if (changed.isEmpty()) return false
+        if ("Email" in changed && email.isNotBlank()) InterimPasswordStore(getApplication()).changeEmail(email)
+        _firstName.value = first
+        _surname.value = last
+        _phoneNumber.value = phone
+        _email.value = email
+        persistIfSignedIn()
+        RecordStore.add(getApplication(), RecordEntry.Kind.PROFILE_UPDATED, changed.joinToString(", "))
+        return true
+    }
+
     fun setGoogleAccount(email: String, first: String, last: String) {
         _googleUsed.value = true
         _email.value = email
@@ -94,9 +122,19 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
     fun isRegistered(phone: String) = store.isRegistered(phone)
 
     /** End of onboarding: save the profile and stay signed in. */
+    /** Ticked on "Create your account"; recorded when registration completes. */
+    var termsAccepted = false
+
+    /** Where the sign-up code went; becomes the default for password resets. */
+    var verifiedByEmail = false
+
     fun completeRegistration() {
         store.saveProfile(currentProfile())
+        store.recoveryChannel = if (verifiedByEmail) AccountStore.RecoveryChannel.EMAIL else AccountStore.RecoveryChannel.PHONE
         store.memberSignedIn = true
+        if (termsAccepted) {
+            RecordStore.add(getApplication(), RecordEntry.Kind.TERMS_ACCEPTED, "Terms $TERMS_VERSION and Privacy notice")
+        }
     }
 
     /** "Welcome back": restore the saved profile after its PIN was entered. */

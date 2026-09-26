@@ -247,7 +247,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:gravity="center"
-            android:text="Preview: this doesn't open the phone's dialer."
+            android:text="Opens your phone's dialer with 10111 ready. Press call there."
             android:textColor="@color/vuka_text_dim"
             android:textSize="12sp" />
 

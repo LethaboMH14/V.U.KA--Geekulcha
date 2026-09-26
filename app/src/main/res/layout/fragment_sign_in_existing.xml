@@ -61,9 +61,16 @@
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnPhone"
+            android:id="@+id/btnGoogle"
             style="@style/Widget.Vuka.Button.Option"
             android:layout_marginTop="20dp"
+            android:text="Sign in with Google"
+            app:icon="@drawable/ic_user" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPhone"
+            style="@style/Widget.Vuka.Button.Option"
+            android:layout_marginTop="10dp"
             android:text="Sign in with your phone number"
             app:icon="@drawable/ic_phone" />
 
@@ -146,12 +153,27 @@
                     app:tint="@color/vuka_text_secondary" />
             </FrameLayout>
 
+            <!-- Resets the email password only; the PIN is recovery-code only (spec §9) -->
+            <TextView
+                android:id="@+id/linkForgot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:text="Forgot password?"
+                android:textColor="@color/vuka_link"
+                android:textSize="14sp" />
+
             <!-- One message for any mismatch: never says which of email or password was wrong -->
             <LinearLayout
                 android:id="@+id/errorContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="4dp"
                 android:accessibilityLiveRegion="polite"
                 android:background="@drawable/bg_input_field_error"
                 android:orientation="horizontal"

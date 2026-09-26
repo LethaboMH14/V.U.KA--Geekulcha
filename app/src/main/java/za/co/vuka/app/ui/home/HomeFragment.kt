@@ -1,12 +1,13 @@
 package za.co.vuka.app.ui.home
 
+import android.content.res.ColorStateList
+import android.content.Intent
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -15,17 +16,19 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
 import za.co.vuka.app.auth.PinGateSheet
-import za.co.vuka.app.panic.HoldToAlertButton
 import za.co.vuka.app.panic.Panic
 import za.co.vuka.app.ui.onboarding.OnboardingViewModel
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 /**
- * VIGIL member home (VigilHome.tsx): the Ready and Journey active states.
+ * VIGIL member home (VigilHome.tsx). One layout for both states: the hero
+ * card's button reads Activate, and once tapped it turns into Deactivate
+ * (PIN-gated) while everything else on Home stays put.
  *
- * Journey active is SIMULATED and says so on screen. No listener, server or
+ * Active is SIMULATED and says so on screen. No listener, server or
  * alert path exists in this build. Journey check and Checked in are not built,
  * because nothing could trigger them without detection and stored PINs (P3.V3).
  */
@@ -41,19 +44,20 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         view.findViewById<TextView>(R.id.tvName).text =
             onboardingViewModel.firstName.value.ifBlank { "Welcome" }
 
-        view.findViewById<View>(R.id.btnStart).setOnClickListener { journey.start() }
-        // Ending a journey needs a PIN (ADR-0041). A duress end looks identical here
+        // Deactivating needs a PIN (ADR-0041). A duress end looks identical here
         // and raises the full alarm server-side (DuressSignals).
         PinGateSheet.listen(this, "journey_end") { journey.end() }
-        view.findViewById<View>(R.id.btnEnd).setOnClickListener { PinGateSheet.open(this, "journey_end") }
+        view.findViewById<View>(R.id.btnStart).setOnClickListener {
+            if (journey.active.value) PinGateSheet.open(this, "journey_end") else journey.start()
+        }
 
         bindGuardianRole(view)
 
-        listOf(R.id.btnHoldForHelpReady, R.id.btnHoldForHelpActive).forEach { id ->
-            view.findViewById<HoldToAlertButton>(id).onTriggered = {
-                Panic.raise(requireContext(), Panic.Source.HOME_HOLD)
-                startActivity(Panic.screenIntent(requireContext()))
-            }
+        // One tap: record the alert, then straight to the dialer with 10111 filled in.
+        // Android won't let an app place an emergency call itself, so the member presses call there.
+        view.findViewById<View>(R.id.btnEmergency).setOnClickListener {
+            Panic.raise(requireContext(), Panic.Source.HOME_BUTTON)
+            startActivity(Intent(Intent.ACTION_DIAL, "tel:10111".toUri()))
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -66,40 +70,27 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun render(view: View, active: Boolean, pending: Int) {
-        view.findViewById<View>(R.id.stateReady).visibility = if (active) View.GONE else View.VISIBLE
-        view.findViewById<View>(R.id.stateActive).visibility = if (active) View.VISIBLE else View.GONE
+        view.findViewById<TextView>(R.id.tvVigilLabel).text = if (active) "VIGIL · SIMULATED" else "VIGIL"
+        view.findViewById<TextView>(R.id.tvVigilState).text = if (active) "Active" else "Ready"
+        view.findViewById<View>(R.id.listeningLine).visibility = if (active) View.VISIBLE else View.GONE
+        view.findViewById<TextView>(R.id.tvVigilBody).text = if (active) {
+            "Not listening. This build doesn't include the listener yet."
+        } else {
+            "VIGIL isn't listening yet. Activate it and it will listen on this phone until you deactivate it."
+        }
+
+        // Same button, same place: ink pill to activate, outlined pill to deactivate.
+        view.findViewById<MaterialButton>(R.id.btnStart).apply {
+            text = if (active) "Deactivate" else "Activate"
+            setBackgroundResource(if (active) R.drawable.bg_button_secondary else R.drawable.bg_button_primary)
+            val textColor = requireContext().getColor(if (active) R.color.vuka_action else R.color.vuka_text_inverse)
+            setTextColor(textColor)
+            iconTint = ColorStateList.valueOf(textColor)
+            setIconResource(if (active) R.drawable.ic_x else R.drawable.ic_arrow_right)
+        }
 
         // Only simulated invites exist, so nobody has accepted.
         view.findViewById<TextView>(R.id.tvGuardianCounts).text = "0 accepted · $pending pending"
-
-        view.findViewById<View>(R.id.tvNoGuardians).visibility = if (pending == 0) View.VISIBLE else View.GONE
-        val list = view.findViewById<ViewGroup>(R.id.activeGuardianList)
-        list.visibility = if (pending == 0) View.GONE else View.VISIBLE
-        list.removeAllViews()
-        repeat(pending) { i -> list.addView(guardianRow("Invite ${i + 1}", topMargin = i > 0)) }
-    }
-
-    // A row from JourneyActive's guardian list: name left, status word right.
-    private fun guardianRow(name: String, topMargin: Boolean): View {
-        val ctx = requireContext()
-        return LinearLayout(ctx).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { if (topMargin) this.topMargin = (10 * resources.displayMetrics.density).toInt() }
-
-            addView(TextView(ctx).apply {
-                text = name
-                textSize = 14f
-                setTextColor(ctx.getColor(R.color.vuka_text_label))
-                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-            })
-            addView(TextView(ctx).apply {
-                text = "Pending"
-                textSize = 13f
-                setTextColor(ctx.getColor(R.color.vuka_text_dim))
-            })
-        }
     }
 
     // Only shown to people who chose to be a guardian (by accepting an invite).

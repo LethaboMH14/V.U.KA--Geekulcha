@@ -42,6 +42,9 @@
             app:destination="@id/emailSignUpFragment" />
 
         <action
+            android:id="@+id/action_signIn_to_document"
+            app:destination="@id/documentFragment" />
+        <action
             android:id="@+id/action_signIn_to_signInExisting"
             app:destination="@id/signInExistingFragment" />
     </fragment>
@@ -179,7 +182,19 @@
         android:id="@+id/recordFragment"
         android:name="za.co.vuka.app.ui.record.RecordFragment"
         android:label="Record"
-        tools:layout="@layout/fragment_record" />
+        tools:layout="@layout/fragment_record">
+
+        <action
+            android:id="@+id/action_record_to_detail"
+            app:destination="@id/recordDetailFragment" />
+    </fragment>
+
+    <!-- One record's events, view only -->
+    <fragment
+        android:id="@+id/recordDetailFragment"
+        android:name="za.co.vuka.app.ui.record.RecordDetailFragment"
+        android:label="Record details"
+        tools:layout="@layout/fragment_record_detail" />
 
     <fragment
         android:id="@+id/settingsFragment"
@@ -190,6 +205,10 @@
         <action
             android:id="@+id/action_settings_to_document"
             app:destination="@id/documentFragment" />
+
+        <action
+            android:id="@+id/action_settings_to_recovery"
+            app:destination="@id/recoveryFragment" />
 
         <action
             android:id="@+id/action_settings_to_guardianEnrol"
@@ -205,6 +224,13 @@
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
     </fragment>
+
+    <!-- Where password-reset codes go; PIN recovery is the recovery code (spec §9) -->
+    <fragment
+        android:id="@+id/recoveryFragment"
+        android:name="za.co.vuka.app.ui.settings.RecoveryFragment"
+        android:label="Recovery"
+        tools:layout="@layout/fragment_recovery" />
 
     <fragment
         android:id="@+id/documentFragment"

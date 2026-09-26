@@ -79,6 +79,34 @@
                 android:textSize="15sp" />
         </LinearLayout>
 
+        <!-- Consent before any personal information is collected. The options stay
+             disabled until this is ticked; acceptance is written to the record. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/cbTerms"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/vuka_action"
+                android:contentDescription="I agree to the Terms and the Privacy notice" />
+
+            <TextView
+                android:id="@+id/tvTerms"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:lineSpacingExtra="2dp"
+                android:textColor="@color/vuka_text_label"
+                android:textColorLink="@color/vuka_link"
+                android:textSize="14sp" />
+        </LinearLayout>
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGoogle"
             style="@style/Widget.Vuka.Button.Option"

@@ -193,6 +193,7 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
         // state = WRONG, decrement attemptsLeft (LOCKED at 0) and clear value.
         value = ""
         render()
+        onboardingViewModel.verifiedByEmail = codeByEmail
         val existing = onboardingViewModel.isRegistered(onboardingViewModel.phoneNumber.value)
         if (onboardingViewModel.signingIn && !existing) {
             // Signing in, but this number has no account on this phone: say so and offer both ways on.

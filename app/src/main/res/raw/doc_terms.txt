@@ -1,0 +1,14 @@
+## Draft — not the final terms
+These terms are a placeholder. They have not been written or reviewed by the VUKA team or a legal adviser, and they will be replaced before VUKA is offered to the public. Nothing here adds to or overrides the Privacy notice.
+
+## What VUKA is
+VUKA is a hackathon prototype. Parts of it are simulated and say so on screen: VIGIL does not listen yet, alerts are not sent to guardians, and codes are not sent by text or email.
+
+## Emergencies
+VUKA does not replace emergency services. In danger, call 10111.
+
+## Your record
+Your record is kept on this phone and hash-chained so changes show up. It is not yet anchored to Hedera. See "About the record".
+
+## Your data
+How your personal information is used is set out in the Privacy notice.

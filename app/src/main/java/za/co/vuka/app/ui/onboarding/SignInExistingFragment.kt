@@ -9,10 +9,11 @@ import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
 import za.co.vuka.app.auth.AccountStore
 import za.co.vuka.app.auth.InterimPasswordStore
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
- * Returning member: sign in by phone number (code, then PIN) or by the
- * email and password they registered (then PIN). Either way the last step
+ * Returning member: sign in with Google (then PIN), by phone number (code,
+ * then PIN) or by the email and password they registered (then PIN). Either way the last step
  * is the PIN on "Welcome back", so a duress PIN works at sign-in too.
  *
  * LOCAL ONLY: only an account registered on this phone can be found.
@@ -31,6 +32,40 @@ class SignInExistingFragment : Fragment(R.layout.fragment_sign_in_existing) {
         view.findViewById<View>(R.id.btnBack).setOnClickListener { findNavController().navigateUp() }
         view.findViewById<View>(R.id.linkCreate).setOnClickListener { findNavController().navigateUp() }
         bindPasswordToggle(view.findViewById(R.id.btnTogglePassword), etPassword)
+
+        // SIMULATED chooser, as at sign-up. The chosen Google address must match the
+        // account's email on this phone; the PIN on "Welcome back" is still required.
+        childFragmentManager.setFragmentResultListener(
+            GoogleAccountChooserDialog.RESULT_KEY, viewLifecycleOwner
+        ) { _, bundle ->
+            val chosen = bundle.getString(GoogleAccountChooserDialog.RESULT_EMAIL).orEmpty()
+            val saved = AccountStore(requireContext()).profile()?.email.orEmpty()
+            if (chosen.isNotBlank() && chosen.equals(saved, ignoreCase = true)) {
+                findNavController().navigate(R.id.action_signInExisting_to_welcomeBack)
+            } else {
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("No account found")
+                    .setMessage("There's no VUKA account for $chosen on this phone.")
+                    .setPositiveButton("Create an account") { _, _ -> findNavController().navigateUp() }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+        }
+        view.findViewById<View>(R.id.btnGoogle).setOnClickListener {
+            GoogleAccountChooserDialog().show(childFragmentManager, "google_chooser")
+        }
+
+        view.findViewById<View>(R.id.linkForgot).setOnClickListener {
+            ForgotPasswordSheet.newInstance(etEmail.text.toString().trim()).show(childFragmentManager, "forgot_password")
+        }
+        childFragmentManager.setFragmentResultListener(ForgotPasswordSheet.RESULT_KEY, viewLifecycleOwner) { _, _ ->
+            error.visibility = View.GONE
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Password changed")
+                .setMessage("Sign in with your new password. You'll still need your PIN.")
+                .setPositiveButton("OK", null)
+                .show()
+        }
 
         view.findViewById<View>(R.id.btnPhone).setOnClickListener {
             onboardingViewModel.usePhoneOnly()

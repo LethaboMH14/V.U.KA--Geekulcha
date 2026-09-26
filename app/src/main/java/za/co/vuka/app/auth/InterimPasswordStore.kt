@@ -39,6 +39,18 @@ class InterimPasswordStore(context: Context) {
         return matches && saved == normalise(email)
     }
 
+    /** True when an email + password was set at sign-up (the only thing a reset can change). */
+    fun hasPassword(): Boolean = prefs.getString(KEY_HASH, null) != null
+
+    /** True when [email] is the address the password belongs to. */
+    fun isAccountEmail(email: String): Boolean = prefs.getString(KEY_EMAIL, null) == normalise(email)
+
+    /** The member changed their email in Settings: the password stays, sign-in uses the new address. */
+    fun changeEmail(email: String) {
+        if (prefs.getString(KEY_EMAIL, null) == null) return
+        prefs.edit { putString(KEY_EMAIL, normalise(email)) }
+    }
+
     fun clear() = prefs.edit { clear() }
 
     private fun normalise(email: String) = email.trim().lowercase(Locale.ROOT)

@@ -34,22 +34,73 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <!-- Profile -->
+        <!-- Profile: just the big circle and full name. The pencil shows it can be
+             edited; tapping opens Edit profile after the PIN. -->
         <LinearLayout
-            style="@style/Widget.Vuka.SettingsSection"
-            android:layout_marginTop="20dp">
+            android:id="@+id/profileHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <FrameLayout
+                android:layout_width="120dp"
+                android:layout_height="120dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_circle_icon">
+
+                    <TextView
+                        android:id="@+id/tvAvatar"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:importantForAccessibility="no"
+                        android:textColor="@color/vuka_action"
+                        android:textSize="40sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/ivAvatar"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_user"
+                        app:tint="@color/vuka_text_title" />
+                </FrameLayout>
+
+                <!-- Pencil badge on the circle's edge -->
+                <FrameLayout
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="bottom|end"
+                    android:background="@drawable/bg_button_primary">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_pencil"
+                        app:tint="@color/vuka_text_inverse" />
+                </FrameLayout>
+            </FrameLayout>
 
             <TextView
-                style="@style/Widget.Vuka.SettingsSectionTitle"
-                android:text="Profile" />
-
-            <LinearLayout
-                android:id="@+id/profileRows"
-                android:layout_width="match_parent"
+                android:id="@+id/tvProfileName"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:divider="@drawable/divider_subtle"
-                android:orientation="vertical"
-                android:showDividers="middle" />
+                android:layout_marginTop="14dp"
+                android:textColor="@color/vuka_text_title"
+                android:textSize="22sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <!-- Guardians -->

@@ -52,7 +52,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:accessibilityHeading="true"
-                    android:text="Welcome back"
+                    android:text="Enter your PIN"
                     android:textColor="@color/vuka_text_title"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -104,7 +104,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:lineSpacingExtra="3dp"
-                android:text="This number already has a VUKA account on this phone. Enter your PIN to sign back in."
+                android:text="Your VUKA account is on this phone. Enter your PIN to sign back in."
                 android:textColor="@color/vuka_text_secondary"
                 android:textSize="15sp" />
 

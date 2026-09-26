@@ -11,4 +11,4 @@ Hashes are permanent: a hash cannot be reversed into your data, but it stays in 
 A signature shows that a key was used; it does not prove the event was genuine. VUKA is a hackathon prototype on Hedera testnet.
 
 ## In this app today
-ANCHOR isn't connected to this app yet. Journeys you start here are recorded on this phone only and are not anchored.
+ANCHOR isn't connected to this app yet. What you do here (activating, the Emergency button, profile changes) is recorded on this phone only and is not anchored. Each entry carries a SHA-256 fingerprint linked to the one before it, so the Record tab can show if an earlier entry was changed. Someone with full control of the phone could still rebuild that chain; anchoring to Hedera is what will prevent that.
