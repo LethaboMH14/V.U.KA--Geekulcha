@@ -299,14 +299,18 @@ function setSource(id, pillState, pillLabel, detail) {
   if (label) label.textContent = pillLabel;
   const d = $(`${id}-detail`);
   if (d) d.textContent = detail;
-  // a failed source gets a Carbon inline notification under the status row (not red text)
+  // One summary notice for all failed sources, not one card per source: the chips already name
+  // each source and its state, and the exact errors are under Details.
   const stack = $("src-notifs");
   if (stack) {
-    $(`${id}-notif`)?.remove();
-    if (pillState === "failed") {
-      const name = li.querySelector(".src-name")?.textContent ?? "Source";
-      const box = inlineNotif("failed", `${name}: ${pillLabel}`, detail);
-      box.id = `${id}-notif`;
+    const ids = ["src-api", "src-feed", "src-mirror"];
+    const failed = ids.filter(s => $(s)?.dataset.state === "failed");
+    stack.replaceChildren();
+    if (failed.length) {
+      const names = failed.map(s => $(s)?.querySelector(".src-name")?.textContent ?? "a source");
+      const title = failed.length === 1 ? `Can't reach ${names[0]}` : `Can't reach ${failed.length} of ${ids.length} sources`;
+      const box = inlineNotif("failed", title, `${names.join(", ")}. Open Details above for the exact errors. Nothing is shown in place of missing data.`);
+      box.id = "src-summary-notif";
       stack.append(box);
     }
   }
