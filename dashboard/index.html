@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>VUKA Ledger</title>
+  <meta name="description" content="Check a VUKA safety record against the public Hedera testnet topic, in your own browser, without trusting VUKA." />
+  <script>
+    /* The ledger's Settings theme choice (same key as ledger/app.js), per browser only. */
+    try {
+      var t = window.localStorage.getItem("vuka-ledger-theme");
+      if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    } catch (e) { /* storage blocked: follow the system theme */ }
+  </script>
+  <link rel="preload" href="ledger/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="ledger/carbon.css" />
+  <link rel="stylesheet" href="ledger/ledger.css" />
+  <link rel="stylesheet" href="ledger/hashscan.css" />
+  <link rel="stylesheet" href="home.css" />
+</head>
+<body class="hm">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="top hm-top">
+    <div class="hm-bar">
+      <a class="brand" href="./" aria-label="VUKA Ledger, home">
+        <svg class="brand-mark" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <circle cx="5" cy="8" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <path d="M8.25 8H14.5M12.5 8v2.5M10.5 8v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+        </svg>
+        <span class="brand-name">VUKA <strong>Ledger</strong></span>
+      </a>
+      <nav class="hm-nav" id="hm-nav" aria-label="Page sections">
+        <a href="#how">How it works</a>
+        <a href="#banks">For banks and insurers</a>
+        <a href="#security">Security</a>
+      </nav>
+      <button type="button" class="hm-menu" id="hm-menu" aria-expanded="false" aria-controls="hm-nav">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M2 4h12v1.2H2Zm0 3.4h12v1.2H2Zm0 3.4h12V12H2Z" fill="currentColor" /></svg>
+        <span>Menu</span>
+      </button>
+      <a class="cds-btn cds-btn--primary cds-btn--md hm-open" href="ledger/#overview">Open the ledger</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============ HERO ============ -->
+    <section class="hm-hero hm-wrap" aria-labelledby="hero-title">
+      <div class="hm-hero-text">
+        <h1 id="hero-title">Check a safety record without trusting us.</h1>
+        <p class="hm-lede">VIGIL, on the member's phone, records each check-in; every entry is signed and chained to the one before it, and within a minute a fingerprint of every changed record goes onto the public Hedera ledger.</p>
+        <div class="hm-ctas">
+          <a class="cds-btn cds-btn--primary cds-btn--lg" href="ledger/#verify">Verify a record</a>
+          <a class="cds-btn cds-btn--tertiary cds-btn--lg" href="ledger/#overview">See the live ledger</a>
+        </div>
+      </div>
+
+      <aside class="hm-proof" aria-labelledby="proof-title">
+        <div class="hm-proof-head">
+          <h2 id="proof-title">Live from Hedera testnet</h2>
+          <span class="hm-proof-when" id="proof-when">Reading the mirror…</span>
+        </div>
+        <dl class="hm-proof-list">
+          <div class="hm-proof-row">
+            <dt>Topic</dt>
+            <dd>
+              <a class="mono hm-proof-value" id="p-topic" href="https://hashscan.io/testnet/topic/0.0.10687280" target="_blank" rel="noopener noreferrer">0.0.10687280</a>
+              <span class="hm-proof-note" id="p-topic-note">The public topic every record fingerprint is written to.</span>
+            </dd>
+          </div>
+          <div class="hm-proof-row">
+            <dt>Latest record fingerprint</dt>
+            <dd>
+              <span class="hm-proof-status" id="p-root-status"></span>
+              <span class="hm-proof-value" id="p-root">Checking…</span>
+              <span class="hm-proof-note" id="p-root-note">Read from the Hedera mirror node by this browser.</span>
+            </dd>
+          </div>
+          <div class="hm-proof-row">
+            <dt>Key manifest</dt>
+            <dd>
+              <span class="hm-proof-status" id="p-man-status"></span>
+              <span class="hm-proof-value" id="p-man">Checking…</span>
+              <span class="hm-proof-note" id="p-man-note">Hashing the pinned server-key manifest.</span>
+            </dd>
+          </div>
+        </dl>
+        <noscript><p class="hm-proof-note">This panel needs JavaScript to read the mirror. The topic link above works without it.</p></noscript>
+      </aside>
+    </section>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <section class="hm-section hm-wrap" id="how" aria-labelledby="how-title">
+      <header class="hm-section-head">
+        <h2 id="how-title">How it works</h2>
+      </header>
+      <ol class="hm-steps">
+        <li>
+          <span class="hm-step-n">Step 1</span>
+          <h3>Recorded on the phone</h3>
+          <p>VIGIL signs each check-in with a key held on the member's device, and every entry names the hash of the one before it.</p>
+        </li>
+        <li>
+          <span class="hm-step-n">Step 2</span>
+          <h3>Fingerprinted on Hedera</h3>
+          <p>The ANCHOR server writes one 33-byte Merkle root per window of up to a minute to a public Hedera topic, which fixes its time and order.</p>
+        </li>
+        <li>
+          <span class="hm-step-n">Step 3</span>
+          <h3>Checked by anyone</h3>
+          <p>A bank or insurer drops the member's shared record into Verify, and their own browser recomputes every hash and matches the root on Hedera.</p>
+        </li>
+      </ol>
+
+      <figure class="hm-figure">
+        <div class="hm-fig-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways on small screens">
+          <svg viewBox="0 0 960 280" role="img" aria-labelledby="hd-title hd-desc">
+            <title id="hd-title">How a VUKA record reaches Hedera and a bank's files</title>
+            <desc id="hd-desc">The member's phone sends signed entries to the ANCHOR server. The server publishes one Merkle root per window of up to a minute to the Hedera testnet topic 0.0.10687280. The member shares their record with a bank or insurer, whose browser recomputes the root and matches it against the Hedera message.</desc>
+            <defs>
+              <marker id="hm-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0 0 10 5 0 10z" class="hd-rule-fill" />
+              </marker>
+              <marker id="hm-ah-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0 0 10 5 0 10z" class="hd-accent-fill" />
+              </marker>
+            </defs>
+
+            <g class="hd-node">
+              <rect x="20" y="28" width="200" height="76" rx="8" />
+              <text x="120" y="60" class="hd-t">Member phone</text>
+              <text x="120" y="82" class="hd-s">VIGIL · device key</text>
+            </g>
+            <g class="hd-node">
+              <rect x="370" y="28" width="220" height="76" rx="8" />
+              <text x="480" y="60" class="hd-t">ANCHOR server</text>
+              <text x="480" y="82" class="hd-s">a hash chain per member</text>
+            </g>
+            <g class="hd-node">
+              <rect x="720" y="28" width="220" height="76" rx="8" />
+              <text x="830" y="60" class="hd-t">Hedera testnet topic</text>
+              <text x="830" y="82" class="hd-s hd-mono">0.0.10687280</text>
+            </g>
+            <g class="hd-node">
+              <rect x="370" y="180" width="220" height="76" rx="8" />
+              <text x="480" y="212" class="hd-t">Bank or insurer</text>
+              <text x="480" y="234" class="hd-s">verifies in its own browser</text>
+            </g>
+
+            <g class="hd-edge hd-edge-accent">
+              <line x1="220" y1="66" x2="368" y2="66" marker-end="url(#hm-ah-accent)" />
+              <text x="294" y="56" class="hd-lbl">signed entries</text>
+            </g>
+            <g class="hd-edge hd-edge-accent">
+              <line x1="590" y1="66" x2="718" y2="66" marker-end="url(#hm-ah-accent)" />
+              <text x="654" y="56" class="hd-lbl">root per ≤1 min</text>
+              <text x="654" y="88" class="hd-lbl hd-mono">0x01 ‖ root</text>
+            </g>
+            <g class="hd-edge">
+              <path d="M120 104 V218 H368" marker-end="url(#hm-ah)" />
+              <text x="132" y="160" class="hd-lbl hd-left">shares the record</text>
+              <text x="132" y="176" class="hd-lbl hd-left">(member's choice)</text>
+            </g>
+            <g class="hd-edge">
+              <path d="M590 218 H830 V106" marker-end="url(#hm-ah)" />
+              <text x="710" y="194" class="hd-lbl">reads the message,</text>
+              <text x="710" y="210" class="hd-lbl">matches the root</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>The blue path is anchoring: phone to server to Hedera. The record itself travels by hand from the member to the bank, and only a 33-byte fingerprint is public. The full diagram and formulas are in <a href="ledger/#method">Method</a>.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============ BANKS AND INSURERS ============ -->
+    <section class="hm-section hm-wrap" id="banks" aria-labelledby="banks-title">
+      <header class="hm-section-head">
+        <h2 id="banks-title">For banks and insurers</h2>
+        <p class="hm-sub">A member's record reaches you as a file. You check it yourself, in your browser, against a public ledger we cannot edit.</p>
+      </header>
+
+      <dl class="hm-kv">
+        <div>
+          <dt>What you receive</dt>
+          <dd>A record the member chooses to share from VIGIL, under Settings → My record → Share with a bank or insurer. It is one JSON file.</dd>
+        </div>
+        <div>
+          <dt>What you do</dt>
+          <dd>Open Verify and drop the file. Your browser recomputes every hash and signature and checks the root on Hedera. Nothing is uploaded.</dd>
+        </div>
+        <div>
+          <dt>What you file</dt>
+          <dd>The fingerprint: the Merkle root, the chain head, the topic, the sequence number and the consensus time. Anyone can check it against the public topic later.</dd>
+        </div>
+      </dl>
+
+      <div class="hm-proves">
+        <div>
+          <h3 id="proves-title">A match proves</h3>
+          <ul aria-labelledby="proves-title">
+            <li>These exact entries existed, in this order, no later than the topic's consensus time.</li>
+            <li>Each entry was signed by the key registered for it, and the server key is the pinned one.</li>
+            <li>Nobody has edited, removed or reordered an entry since.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 id="not-proves-title">It does not prove</h3>
+          <ul aria-labelledby="not-proves-title">
+            <li>That the event was real. A signature shows a key was used, not what a microphone heard.</li>
+            <li>That nothing is missing from before the export, or that a compromised server sent every alert.</li>
+            <li>Permanence on testnet. Hedera resets testnet; a re-anchor after a reset is a later record under a new epoch.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p><a class="cds-btn cds-btn--primary cds-btn--lg" href="ledger/#verify">Verify a record</a></p>
+    </section>
+
+    <!-- ============ PRIVACY AND DURESS ============ -->
+    <section class="hm-section hm-wrap" id="privacy" aria-labelledby="privacy-title">
+      <header class="hm-section-head">
+        <h2 id="privacy-title">Privacy and duress</h2>
+      </header>
+      <p class="hm-note">A duress PIN is recorded inside a signed commitment, so the chain shows only a hash. The public topic shows at most one root per minute, so anyone watching sees that something happened in that minute, never whether it was a duress check-in or a normal one. Nothing personal goes on-chain: each Hedera message is a type byte and a 32-byte fingerprint.</p>
+    </section>
+
+    <!-- ============ SECURITY ============ -->
+    <section class="hm-section hm-wrap" id="security" aria-labelledby="security-title">
+      <header class="hm-section-head">
+        <h2 id="security-title">Security</h2>
+        <p class="hm-sub">Everything that makes the checks work is open to inspection.</p>
+      </header>
+      <ul class="hm-links">
+        <li>
+          <a href="../security.html">Security scorecard</a>
+          <span>The repository's security controls, weighted, and how much of that weight a passing test backs.</span>
+        </li>
+        <li>
+          <a href="https://github.com/LethaboMH14/V.U.KA--Geekulcha" target="_blank" rel="noopener noreferrer">Source code on GitHub</a>
+          <span>VIGIL, the ANCHOR server, the shared verification code and this site.</span>
+        </li>
+        <li>
+          <a href="ledger/#method">Method</a>
+          <span>The diagram, the exact formulas your browser reruns, and what a match proves.</span>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="foot hm-foot">
+    <div class="hm-wrap hm-foot-inner">
+      <p>Hedera testnet — resets periodically.</p>
+      <p><span class="mono">sim_</span> subjects are SIMULATED.</p>
+      <p><a href="https://github.com/LethaboMH14/V.U.KA--Geekulcha" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
+      <p>Fonts: Inter, Geist Mono, IBM Plex — SIL OFL 1.1.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="./home.js"></script>
+</body>
+</html>
