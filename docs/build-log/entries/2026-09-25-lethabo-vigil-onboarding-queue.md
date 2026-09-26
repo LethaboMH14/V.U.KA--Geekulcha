@@ -262,3 +262,17 @@ Evidence:
 - Server pytest: see the PR comment (the pv2 evidence tests are 8/8).
 
 Not done: the measured record thresholds and the venue false-alarm curve (step d); location and map (step c); a real-phone run.
+
+### Addendum, 26 Sep 08:05: review fixes for graded check-ins (0.0.10)
+
+Two independent post-build reviews of step (b) found these, and all are fixed:
+- **A prompt that can't be carried out now frees the slot.** Before, a failed signal write kept the prompt slot for the rest of the session, so later V4 detections were recorded with no check-in (quieter than V4).
+- **A detection during an open check-in is covered by it (CEM-1 only).** Before, it sent `signal_detected`, and a normal answer was followed by a no-answer alarm 90 s later. ADR-0047 decision 4 is updated, and G39 now covers only the cooldown after a closed check-in.
+- **Pausing during a lift records only.** Before, it could send a signal with no check-in.
+- **Each record-level candidate waits for its own 1 s,** plus a 2 s timer fallback.
+- **The countdown now ticks.** Every audio window re-rendered the screen and reset its timer. It also uses a monotonic clock now, and only the two tracked receipt kinds are kept, capped at 16.
+- **Server:**
+  - `why` comes only from the detection that raised that alert;
+  - exact pv2 evidence replaces an older pv1 guess.
+
+Evidence: jest 204/204; server evidence + alerts tests 15/15; the transition list is unchanged (no T1 → T0).

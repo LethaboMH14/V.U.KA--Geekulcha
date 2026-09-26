@@ -17,7 +17,7 @@ import {colors, fonts, radii, space, TOUCH, type} from './theme';
 import {Onboarding} from './onboarding';
 import {GuardianHome, GuardianSetup} from './guardian';
 import {MyRecord} from './record';
-import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, type Delivery} from '../api/device';
+import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, type Delivery} from '../api/device';
 import {version} from '../../package.json';
 import {runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
 import type {Decision, Reason} from '../brain/detect';
@@ -114,7 +114,7 @@ export function VigilApp() {
     if (!ids?.opened) return null;
     const opened = device.receipt(ids.opened);
     const signal = device.receipt(ids.signal);
-    return checkinRemainingMs(Date.now(), {signalQueuedAt: signal?.queuedAt, openedQueuedAt: opened?.queuedAt, openedReceived: Boolean(opened?.received)});
+    return checkinRemainingMs(monoNow(), {signalQueuedAt: signal?.queuedAt, openedQueuedAt: opened?.queuedAt, openedReceived: Boolean(opened?.received)});
   };
 
   const startListening = async () => {
@@ -754,11 +754,14 @@ function JourneyCheck({
   const [retry, setRetry] = useState(false);
   const [left, setLeft] = useState<number | null>(null);
   const busy = useRef(false);
+  // The parent re-renders every audio window; keep the timer steady.
+  const remainingRef = useRef(remaining);
+  remainingRef.current = remaining;
   // The same plain line for both PINs; it never says why the check-in opened.
   useEffect(() => {
-    const t = setInterval(() => setLeft(remaining()), 500);
+    const t = setInterval(() => setLeft(remainingRef.current()), 500);
     return () => clearInterval(t);
-  }, [remaining]);
+  }, []);
   // checkin_opened means "shown on screen" (§3), so it is recorded on mount.
   useEffect(() => {
     onShown();

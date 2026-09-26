@@ -612,7 +612,11 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
    - there has been no prompt in the last 30 s.
 
    The lift has its own cooldown and never touches V4's. The decision waits until the audio has run 1 s past the candidate, so context such as TV in the next windows is heard. V4 decisions never wait. Pausing settles anything pending as record-only.
-4. **`signal_detected` only when the phone commits.** It is sent for a check-in, and for a V4-level record exactly as before. A record-only detection sends only `evidence_observed`, so it never starts a server deadline, incident or alert.
+4. **`signal_detected` only when the phone commits.** It is sent for a check-in, and for a V4-level record as before. A record-only detection sends only `evidence_observed`, so it never starts a server deadline, incident or alert.
+   - **Covered by the open check-in (CEM-1 only).** A V4-level detection while a check-in is pending or open becomes evidence only. That check-in's own outcome covers it. This stops a normal answer being followed 90 s later by a no-answer alarm for a detection the member was never asked about.
+   - **Other rule changes:**
+     - a prompt that cannot be carried out (a failed write, or listening already paused) frees the slot and records only;
+     - under the `v4` rule nothing changes.
 5. **`evidence_observed` pv 2** (`contracts/payloads/evidence_observed.v2.json`, rules in `server/evidence.py`). There is one shape per decision:
    - **`record`:** candidate facts, and no signal.
    - **`prompt`:** names exactly its own `signal_event_id`. It is sent after the signal and never gates the check-in.
@@ -626,7 +630,7 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 **Costs, stated before anyone asks:**
 - **More check-ins.** The transition list (`docs/eval/cem1-transitions.md`) shows that with the record threshold at half the prompt threshold, most single quieter sounds lift: a scream (7 db), glass (5) or a gunshot (8) alone reaches P ≥ 5. Only a lone shout (4) and conflicting context (the gym case) stay record-only. In effect CEM-1 roughly halves the prompt bar for screams, glass and gun-like sounds until the step-d measurements replace the record thresholds. The false-check rate at these thresholds is **not measured**. V4 already gave about 5.5 prompts per hour on replayed ESC-50 clips (ADR-0046, a lab proxy).
 - **Novel scheme.** No published graded duress scheme exists to copy (research R1). The weights are CEM-0's plus two provisional PIN weights.
-- **Pre-existing V4 behaviour kept, not fixed.** A V4-level detection recorded while a check-in is open (or in the cooldown) still sends `signal_detected`. The server gives it its own no-answer fallback (+90 s), so it can alert guardians even after the member answered the first check-in normally. This ADR keeps V4 exactly as it is and flags this for a separate decision.
+- **Pre-existing V4 behaviour kept, only in the cooldown.** Under CEM-1 a detection during an open check-in is now covered by it (decision 4). A V4-level detection in the 30 s cooldown **after** the check-in has closed still sends `signal_detected`. The server gives it its own no-answer fallback (+90 s, the G34 safeguard for a check-in that never renders), so it can alert guardians even after the member answered the first check-in normally. This ADR keeps V4 exactly as it is; whether a normal answer to the open check-in should cover later detections is a separate decision (G39).
 - **Pin baseline.** `pin_slow` needs 8 accepted entries on this phone, so it rarely fires in a short demo.
 
 **Rejected alternatives:**

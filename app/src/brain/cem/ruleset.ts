@@ -9,7 +9,7 @@
  * __tests__/ruleset.test.ts, so a change that forgets to update it fails CI.
  */
 import {CONTEXT, RULESET_V1} from '../detect';
-import {LIFT_COOLDOWN_MS, LIFT_K_PCT, PROMPT_P_DB, SETTLE_AFTER_MS, STRONG_P_DB, type PromptRule} from './grader';
+import {LIFT_COOLDOWN_MS, LIFT_K_PCT, PROMPT_P_DB, SETTLE_AFTER_MS, SETTLE_TIMEOUT_MS, STRONG_P_DB, type PromptRule} from './grader';
 import {CEM_VERSION, CONTEXT_WINDOW_S, DISTRESS_CAP, HALF_LIFE_S, K_CONFLICT_PCT, LOOKBACK_S, REASONS, SUPPORT_WINDOW_S} from '.';
 
 /**
@@ -40,8 +40,10 @@ export const RULESET_CANONICAL = {
     lift_k_pct: LIFT_K_PCT,
     lift_cooldown_ms: LIFT_COOLDOWN_MS,
     settle_after_ms: SETTLE_AFTER_MS,
+    settle_timeout_ms: SETTLE_TIMEOUT_MS,
+    covered_by_open_checkin: true,
     sim_subjects_only: true,
   },
 };
 
-export const RULESET_DIGEST = 'ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b';
+export const RULESET_DIGEST = '1f858caca29b0ae14acbd25b7ca3791dc13da9117bb6262432203a34a3bd4978';

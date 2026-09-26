@@ -109,6 +109,12 @@ export function pinSlow(times: readonly number[], entryMs: number | undefined): 
   return entryMs > m + 3 * mad;
 }
 
+/** A clock that only moves forward (a phone-clock change never stretches the countdown). */
+export const monoNow = (): number => {
+  const perf = (globalThis as {performance?: {now?: () => number}}).performance;
+  return typeof perf?.now === 'function' ? perf.now() : Date.now();
+};
+
 /**
  * The check-in countdown, never longer than the server really allows. Any
  * phone time at which an event had been created precedes the server's receipt
@@ -192,8 +198,13 @@ export function createDevice(b: Backend) {
    * Checks, signs and seals one event into the queue. It is evidence from
    * this moment. Resolves with the event's id once it is queued.
    */
-  /** When each event was created on this phone, and whether the server has it (for the countdown). */
+  /**
+   * When each detection and check-in was created on this phone (monotonic),
+   * and whether the server has it: only for the countdown, so only those two
+   * kinds, and only the most recent few.
+   */
   const receipts = new Map<string, {queuedAt: number; received: boolean; waiters: (() => void)[]}>();
+  const TRACKED = new Set(['signal_detected', 'checkin_opened']);
   const noteReceived = (eventId: string) => {
     const r = receipts.get(eventId);
     if (!r || r.received) return;
@@ -204,7 +215,7 @@ export function createDevice(b: Backend) {
   async function record(payload: EventPayload, target: Target, opts: {action?: string; genesis?: boolean; send?: boolean} = {}): Promise<string> {
     if (!profile) throw new Error('no profile');
     checkPayload(payload);
-    const queuedAt = Date.now();
+    const queuedAt = monoNow();
     const entry = await buildEvent({
       signer: b.signer,
       subjectId: profile.subjectId,
@@ -217,9 +228,12 @@ export function createDevice(b: Backend) {
       genesis: opts.genesis,
     });
     await b.enqueue(JSON.stringify(entry));
-    receipts.set(entry.details.event_id, {queuedAt, received: false, waiters: []});
-    // The preview has no server: treat events as received, so screens behave.
-    if (b.simulated) noteReceived(entry.details.event_id);
+    if (TRACKED.has(String(payload.kind))) {
+      receipts.set(entry.details.event_id, {queuedAt, received: false, waiters: []});
+      while (receipts.size > 16) receipts.delete(receipts.keys().next().value as string);
+      // The preview has no server: treat events as received, so screens behave.
+      if (b.simulated) noteReceived(entry.details.event_id);
+    }
     publish({queued: delivery.queued + 1});
     if (opts.send !== false) void flush();
     return entry.details.event_id;

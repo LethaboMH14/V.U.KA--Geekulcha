@@ -149,29 +149,49 @@ export async function startDetection(opts: {
       opts.onSignal(
         buildSignalDetected({journeyId: opts.journeyId, candidate: cand, corroboration: d.corroboration, modelSha256: sha256, appVersion: opts.appVersion}),
       );
+    let prompted = false;
     chain = chain
       .then(async () => {
-        if (a.type === 'record') {
-          // T0: record-only evidence. Never a signal_detected (no server deadline).
+        // T0, or a V4 record covered by a pending/open check-in: evidence
+        // alone, never a signal_detected, so no server deadline of its own.
+        if (a.type === 'record' || (a.type === 'v4_record' && a.covered)) {
+          await opts.onEvidence(evidence('record', null));
+          return;
+        }
+        if (a.type === 'v4_record') {
+          // As V4 always did: the signal is recorded; no check-in.
+          await signal();
+          await opts.onEvidence(evidence('record', null)).catch(e => opts.onError?.(String(e)));
+          return;
+        }
+        // A prompt. Once listening has stopped, nothing may start a server
+        // deadline for a check-in that will never show: record only.
+        if (!armed) {
           await opts.onEvidence(evidence('record', null));
           return;
         }
         const eventId = await signal();
-        if (a.type === 'v4_record') {
-          // As V4 always did: the signal is recorded; no check-in.
-          await opts.onEvidence(evidence('record', null)).catch(e => opts.onError?.(String(e)));
-          return;
-        }
-        // A prompt: the check-in opens as soon as its signal is queued; the
-        // evidence follows and never gates it. Once stopped, no check-in.
+        // The check-in opens as soon as its signal is queued; the evidence
+        // follows and never gates it.
         if (eventId && armed) {
           native.showCheckin();
           opts.onPrompt(d, eventId);
+          prompted = true;
         }
         if (eventId) await opts.onEvidence(evidence('prompt', eventId)).catch(e => opts.onError?.(String(e)));
       })
-      .catch(e => opts.onError?.(String(e)));
+      .catch(e => opts.onError?.(String(e)))
+      .finally(() => {
+        // A prompt that could not be carried out must not hold the slot, or
+        // every later V4 detection would be recorded without a check-in.
+        if (a.type === 'prompt' && !prompted) grader.checkinClosed();
+      });
   };
+  // Pending record-level candidates settle after 2 s even if windows stop coming.
+  const settleTimer = setInterval(() => {
+    if (!armed) return;
+    grader.tick(lastEndMs + Math.max(0, Date.now() - lastWallMs)).forEach(act);
+  }, 1000);
   const judge = (raw: AudioWindow) => {
     const w = toWindow(raw, context);
     if (opts.onLevel) opts.onLevel(levelOf(w));
@@ -203,7 +223,10 @@ export async function startDetection(opts: {
     emitter.addListener('vigil.error', (m: string) => opts.onError?.(m)),
   ];
 
-  const stopListening = () => subs.forEach(s => s.remove());
+  const stopListening = () => {
+    clearInterval(settleTimer);
+    subs.forEach(s => s.remove());
+  };
   try {
     const info = await native.arm();
     // Fail closed if the model on this phone disagrees with the engine's class table.

@@ -31,6 +31,7 @@ function rig(opts: {rule?: PromptRule; sim?: boolean} = {}) {
       grader.checkinClosed();
       state = step(state, {type: 'checkin', open: false}, R).state;
     },
+    actions: () => actions,
     summary: () => actions.map(a => (a.type === 'prompt' ? `prompt${a.lifted ? '(lift)' : ''}:${a.decision.candidate?.class_label}` : `${a.type}:${a.decision.candidate?.class_label}`)),
   };
 }
@@ -142,5 +143,52 @@ describe('graded prompt rule (cem1)', () => {
     const settled = r.grader.stop();
     expect(settled.map(a => a.type)).toEqual(['record']);
     expect(r.grader.stop()).toEqual([]);
+  });
+
+  it('a V4 detection while a check-in is open is covered by it (evidence only, no second deadline)', () => {
+    const r = rig();
+    r.feed([win(1, 'Shatter', 9000, 1000)]);
+    // The check-in is still open: a V4 scream 40 s later is recorded, covered.
+    const s = R.thresholdBp.Screaming + 100;
+    r.feed([win(30, 'Screaming', s, 41_000), win(31, 'Screaming', s, 41_500), win(32, 'Screaming', s, 42_000)]);
+    expect(r.summary()).toEqual(['prompt:Shatter', 'v4_record:Screaming']);
+    expect(r.actions().at(-1)).toMatchObject({type: 'v4_record', covered: true});
+  });
+
+  it('under rule v4 the same record is exactly V4 (not covered: signal as before)', () => {
+    const r = rig({rule: 'v4'});
+    r.feed([win(1, 'Shatter', 9000, 1000)]);
+    const s = R.thresholdBp.Screaming + 100;
+    r.feed([win(30, 'Screaming', s, 41_000), win(31, 'Screaming', s, 41_500), win(32, 'Screaming', s, 42_000)]);
+    expect(r.actions().at(-1)).toMatchObject({type: 'v4_record', covered: false});
+  });
+
+  it('a V4 record in the cooldown after the check-in closed keeps V4 behaviour (G39)', () => {
+    const r = rig();
+    r.feed([win(1, 'Shatter', 9000, 1000)]);
+    r.close();
+    r.feed([win(20, 'Shatter', 9000, 12_000)]);
+    expect(r.actions().at(-1)).toMatchObject({type: 'v4_record', covered: false});
+  });
+
+  it('a pending candidate settles after 2 s even if no window comes (tick)', () => {
+    const r = rig();
+    r.feed([win(1, 'Shatter', 9000, 1000)]);
+    r.close();
+    r.feed([win(10, 'Shout', shoutRec, 40_000), win(11, 'Shout', shoutRec, 40_500), win(12, 'Shout', shoutRec, 41_000)]);
+    expect(r.grader.tick(42_500)).toEqual([]);
+    const settled = r.grader.tick(43_000);
+    expect(settled.map(a => (a.type === 'prompt' ? `prompt(${a.lifted})` : a.type))).toEqual(['prompt(true)']);
+  });
+
+  it('a second candidate never settles the first early', () => {
+    const r = rig();
+    r.feed([win(1, 'Shatter', 9000, 1000)]);
+    r.close();
+    const before = r.actions().length;
+    r.feed([win(10, 'Shout', shoutRec, 40_000), win(11, 'Shout', shoutRec, 40_500), win(12, 'Shout', shoutRec, 41_000)]);
+    // Glass at record level 400 ms later: the shout is still inside its 1 s wait.
+    r.feed([win(13, 'Shatter', R.recordThresholdBp.Shatter + 50, 41_400)]);
+    expect(r.actions().length).toBe(before);
   });
 });

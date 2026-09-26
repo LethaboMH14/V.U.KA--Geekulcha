@@ -12,14 +12,19 @@
  *         and no prompt of any kind in the last 30 s (a lift never touches
  *             the engine's V4 cooldown, so it can never silence a V4 prompt).
  *
- * A record-level candidate waits until the audio has run 1 s past it (CEM-0's
- * ±1 s context window, so TV in the next windows is heard) and is then
- * settled. V4 decisions never wait. Stopping settles anything pending as
- * record-only: nothing prompts after the member has paused.
+ * Each record-level candidate waits until the audio has run 1 s past it
+ * (CEM-0's ±1 s context window, so TV in the next windows is heard), or 2 s
+ * of time pass (`tick`), and is then settled. V4 decisions never wait.
+ * Stopping settles anything pending as record-only: nothing prompts after
+ * the member has paused.
  *
  * One prompt slot, reserved synchronously when any prompt is decided and
- * freed when the check-in closes, so a pending lift and a V4 detection in
- * neighbouring windows can never open two check-ins.
+ * freed when the check-in closes (or the prompt could not be carried out),
+ * so a pending lift and a V4 detection in neighbouring windows can never
+ * open two check-ins. Under 'cem1', a V4-level detection while the slot is
+ * held is covered by that check-in: it is recorded as evidence only, so an
+ * answered check-in is never followed by a no-answer alarm for a detection
+ * the member was never asked about. Under 'v4' nothing changes from V4.
  *
  * Pure: the caller supplies engine times (monotonic ms) and executes actions.
  */
@@ -32,14 +37,19 @@ export const STRONG_P_DB = 12;
 export const LIFT_K_PCT = 50;
 export const LIFT_COOLDOWN_MS = 30_000;
 export const SETTLE_AFTER_MS = 1_000;
+export const SETTLE_TIMEOUT_MS = 2_000;
 
 export type PromptRule = 'v4' | 'cem1';
 
 export type GradeAction =
   /** Open a check-in: queue signal_detected, open the check, then the prompt evidence. */
   | {type: 'prompt'; decision: Decision; assessment: Assessment; observations: Observation[]; lifted: boolean}
-  /** V4-level record without a prompt (cooldown or an open check): exactly as V4 does today. */
-  | {type: 'v4_record'; decision: Decision; assessment: Assessment; observations: Observation[]}
+  /**
+   * V4-level record without a prompt (cooldown or an open check). `covered`:
+   * a check-in is pending or open (cem1 only), so evidence alone; otherwise
+   * exactly as V4 does today (signal_detected too).
+   */
+  | {type: 'v4_record'; decision: Decision; assessment: Assessment; observations: Observation[]; covered: boolean}
   /** Record-only evidence (T0): evidence_observed alone, never signal_detected. */
   | {type: 'record'; decision: Decision; assessment: Assessment; observations: Observation[]};
 
@@ -48,8 +58,10 @@ type Pending = {decision: Decision; endMs: number; observations: Observation[]};
 export type Grader = {
   /** Every engine decision for an audio window, after the tracker has observed it. */
   window(d: Decision, endMs: number, observations: Observation[]): GradeAction[];
-  /** The check-in the slot was reserved for has closed. */
+  /** The check-in the slot was reserved for has closed, or could not be opened. */
   checkinClosed(): void;
+  /** Time passes without windows: settle candidates older than 2 s. */
+  tick(nowMs: number): GradeAction[];
   /** Listening stopped: settle anything pending as record-only. */
   stop(): GradeAction[];
   /** For tests and the transition list. */
@@ -62,7 +74,7 @@ export function liftAllowed(a: Assessment): boolean {
 
 export function createGrader(opts: {tracker: Tracker; rule: PromptRule; subjectIsSim: boolean}): Grader {
   const {tracker} = opts;
-  let pending: Pending | null = null;
+  let pending: Pending[] = [];
   let reserved = false;
   let lastPromptMs: number | null = null;
   let latestMs = 0;
@@ -86,6 +98,16 @@ export function createGrader(opts: {tracker: Tracker; rule: PromptRule; subjectI
     return {type: 'record', decision: p.decision, assessment, observations: p.observations};
   };
 
+  /** Settle, oldest first, every pending candidate that matches. */
+  const settleWhere = (due: (p: Pending) => boolean, out: GradeAction[]) => {
+    const keep: Pending[] = [];
+    for (const p of pending) {
+      if (due(p)) out.push(settle(p, true));
+      else keep.push(p);
+    }
+    pending = keep;
+  };
+
   return {
     window(d, endMs, observations) {
       latestMs = Math.max(latestMs, endMs);
@@ -99,35 +121,32 @@ export function createGrader(opts: {tracker: Tracker; rule: PromptRule; subjectI
           out.push({type: 'prompt', decision: d, assessment, observations, lifted: false});
         } else {
           // The engine held the prompt (cooldown / open check), or the slot is
-          // taken by a check-in not yet on screen: record as V4 does today.
-          out.push({type: 'v4_record', decision: d, assessment, observations});
+          // taken. With a check-in pending or open (cem1), that check-in covers it.
+          out.push({type: 'v4_record', decision: d, assessment, observations, covered: opts.rule === 'cem1' && reserved});
         }
       }
-      // A pending record-level candidate settles once the audio is 1 s past it,
-      // or at once if the slot is already taken (it could not lift anyway).
-      if (pending && (reserved || endMs >= pending.endMs + SETTLE_AFTER_MS)) {
-        out.push(settle(pending, true));
-        pending = null;
-      }
+      // Each pending candidate settles once the audio is 1 s past it, or at
+      // once if the slot is taken (it could not lift anyway).
+      settleWhere(p => reserved || endMs >= p.endMs + SETTLE_AFTER_MS, out);
       if (d.record && d.level === 'record') {
-        // Only one candidate waits at a time; an older one settles first.
-        if (pending) out.push(settle(pending, true));
-        pending = {decision: d, endMs, observations};
-        if (reserved) {
-          out.push(settle(pending, false));
-          pending = null;
-        }
+        if (reserved) out.push(settle({decision: d, endMs, observations}, false));
+        else pending.push({decision: d, endMs, observations});
       }
       return out;
     },
     checkinClosed() {
       reserved = false;
     },
+    tick(nowMs) {
+      latestMs = Math.max(latestMs, nowMs);
+      const out: GradeAction[] = [];
+      settleWhere(p => reserved || nowMs >= p.endMs + SETTLE_TIMEOUT_MS, out);
+      return out;
+    },
     stop() {
-      if (!pending) return [];
-      const a = settle(pending, false);
-      pending = null;
-      return [a];
+      const out = pending.map(p => settle(p, false));
+      pending = [];
+      return out;
     },
     get slotReserved() {
       return reserved;
