@@ -22,7 +22,7 @@
 
 ### Beat 1 — The Hook
 
-Right now, somewhere in South Africa, someone is forced to hand over their phone. A stranger makes them transfer their money. Their face. Their fingerprint. The bank sees nothing wrong — and there is no proof they were forced. Three hundred digital banking crimes a day. It could be you, tonight.
+Right now, somewhere in South Africa, someone is forced to hand over their phone. A stranger makes them transfer their money. Their face. Their fingerprint. The bank sees nothing wrong — and there is no proof they were forced. A digital banking crime every five minutes. It could be you, tonight.
 
 ### Beat 2 — The Problem
 
