@@ -15,23 +15,13 @@
         android:paddingTop="24dp"
         android:paddingBottom="28dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:accessibilityHeading="true"
-            android:text="Settings"
-            android:textColor="@color/vuka_text_title"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
         <!-- Profile: just the big circle and full name. The pencil shows it can be
              edited; tapping opens Edit profile after the PIN. -->
         <LinearLayout
             android:id="@+id/profileHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="0dp"
             android:background="?attr/selectableItemBackground"
             android:gravity="center_horizontal"
             android:orientation="vertical"

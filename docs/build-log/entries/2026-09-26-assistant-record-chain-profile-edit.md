@@ -46,3 +46,9 @@ Evidence: `./gradlew :app:assembleDebug -q` → exit 0; on emulator-5554 Home sh
 Changed: Home's greeting and first name are centred, and the decorative three-dots icon is removed (it did nothing; `ic_dots_three_circle.xml` deleted as unused). Settings shows only a centred "Settings" title (the "VUKA" label is gone). The "Delete my data" row under Privacy and data is removed (operator: it belongs with "Delete profile from this phone"). Server-side deletion (spec §9's 72-hour schedule) is not built; when ANCHOR exists it should be wired into Delete profile, as the code comment now says.
 
 Evidence: `./gradlew :app:assembleDebug -q` → exit 0; on emulator-5554 Home shows the centred greeting with no icon, Settings shows the centred title, and Privacy and data lists only Recovery, with Delete profile under Account.
+
+### Follow-up, same day: Settings title removed
+
+Changed: the "Settings" title is removed; the page starts with the profile circle (top margin dropped to 0). The bottom tab still labels the screen "Settings".
+
+Evidence: `./gradlew :app:assembleDebug -q` → exit 0; screenshot on emulator-5554 shows the page opening on the TD circle.
