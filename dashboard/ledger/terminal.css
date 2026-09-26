@@ -1,0 +1,325 @@
+/* Terminal component (terminal.js). Deliberately one dark look on light and dark
+   pages: every colour is set here on .vt-terminal, never inherited from the host. */
+
+.vt-terminal {
+  --vt-bg: #0e1318;
+  --vt-bar: #171d24;
+  --vt-border: #29313b;
+  --vt-fg: #dbe2ea;
+  --vt-muted: #a9b4c0;
+  --vt-dim: #7f8b98;
+  --vt-tag: #8995a3;
+  --vt-ok: #5fd38d;
+  --vt-ok-bg: rgba(95, 211, 141, 0.1);
+  --vt-fail: #ff7676;
+  --vt-fail-bg: rgba(255, 118, 118, 0.13);
+  --vt-warn: #f2c14e;
+  --vt-warn-bg: rgba(242, 193, 78, 0.1);
+  --vt-accent: #7cc4ff;
+  --vt-accent-bg: rgba(124, 196, 255, 0.1);
+  --vt-hover: rgba(255, 255, 255, 0.04);
+  --vt-focus: #7cc4ff;
+  --vt-select: rgba(124, 196, 255, 0.3);
+  --vt-font: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  container-type: inline-size;
+  background: var(--vt-bg);
+  color: var(--vt-fg);
+  border: 1px solid var(--vt-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -12px rgba(0, 0, 0, 0.45);
+  font-family: var(--vt-font);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  text-align: left;
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-variant-ligatures: none;
+  color-scheme: dark;
+}
+.vt-terminal *,
+.vt-terminal *::before,
+.vt-terminal *::after {
+  box-sizing: border-box;
+}
+.vt-terminal [hidden] {
+  display: none !important;
+}
+.vt-terminal ::selection {
+  background: var(--vt-select);
+  color: var(--vt-fg);
+}
+
+/* ---- title bar ---- */
+.vt-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--vt-bar);
+  border-bottom: 1px solid var(--vt-border);
+}
+.vt-dots {
+  display: inline-flex;
+  gap: 6px;
+  flex: none;
+}
+.vt-dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff5f57;
+  opacity: 0.85;
+}
+.vt-dots i:nth-child(2) { background: #febc2e; }
+.vt-dots i:nth-child(3) { background: #28c840; }
+.vt-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  color: var(--vt-dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+.vt-skip {
+  flex: none;
+  appearance: none;
+  margin: 0;
+  padding: 0.12rem 0.55rem;
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--vt-fg);
+  background: transparent;
+  border: 1px solid var(--vt-border);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.vt-skip:hover { background: var(--vt-hover); border-color: var(--vt-dim); }
+.vt-skip:focus-visible,
+.vt-body:focus-visible,
+.vt-copy:focus-visible {
+  outline: 2px solid var(--vt-focus);
+  outline-offset: 2px;
+}
+.vt-body:focus-visible { outline-offset: -2px; }
+
+/* ---- log ---- */
+.vt-body {
+  position: relative;
+  min-height: var(--vt-min-height, 14rem);
+  max-height: var(--vt-max-height, 28rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0.6rem 0 0.8rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--vt-border) transparent;
+}
+
+.vt-cmd {
+  display: flex;
+  gap: 1ch;
+  padding: 0.05rem 0.75rem 0.3rem;
+  color: var(--vt-fg);
+  overflow-wrap: anywhere;
+}
+.vt-ps1 { color: var(--vt-ok); font-weight: 700; flex: none; }
+.vt-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.15em;
+  translate: 0 0.18em;
+  background: var(--vt-fg);
+  animation: vt-blink 1.1s steps(1, end) infinite;
+}
+
+.vt-rule {
+  padding: 0.5rem 0.75rem 0.1rem;
+  color: var(--vt-dim);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.vt-line {
+  display: grid;
+  grid-template-columns: 7ch 1.5ch minmax(0, 1fr);
+  column-gap: 0.75ch;
+  align-items: baseline;
+  padding: 0.04rem 0.75rem;
+}
+.vt-line:hover { background: var(--vt-hover); }
+.vt-tag {
+  color: var(--vt-tag);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+.vt-mark { text-align: center; font-weight: 700; }
+.vt-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 1.5ch;
+  min-width: 0;
+}
+.vt-label { min-width: 0; overflow-wrap: anywhere; }
+.vt-val {
+  margin-left: auto;
+  color: var(--vt-muted);
+  white-space: nowrap;
+}
+.vt-detail {
+  grid-column: 3;
+  color: var(--vt-dim);
+  font-size: 0.93em;
+  overflow-wrap: anywhere;
+}
+.vt-plain { display: block; }
+
+/* tones */
+.vt-line--ok .vt-mark,
+.vt-line--ok .vt-val { color: var(--vt-ok); }
+.vt-line--info .vt-mark,
+.vt-line--info .vt-label { color: var(--vt-muted); }
+.vt-line--dim,
+.vt-line--dim .vt-label,
+.vt-line--dim .vt-mark { color: var(--vt-dim); }
+.vt-line--accent .vt-mark,
+.vt-line--accent .vt-val { color: var(--vt-accent); }
+.vt-plain.vt-line--accent { color: var(--vt-accent); }
+.vt-plain.vt-line--ok { color: var(--vt-ok); }
+.vt-line--warn,
+.vt-line--warn .vt-mark { color: var(--vt-warn); }
+.vt-line--fail,
+.vt-line--fail:hover {
+  background: var(--vt-fail-bg);
+  box-shadow: inset 3px 0 0 var(--vt-fail);
+}
+.vt-line--fail .vt-tag,
+.vt-line--fail .vt-mark,
+.vt-line--fail .vt-val,
+.vt-plain.vt-line--fail { color: var(--vt-fail); }
+.vt-line--fail .vt-label { color: var(--vt-fg); font-weight: 600; }
+
+/* copyable values */
+.vt-copy {
+  position: relative;
+  cursor: copy;
+  border-radius: 3px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.vt-copy:hover { text-decoration: underline dotted; text-underline-offset: 3px; }
+.vt-copy.is-expanded {
+  white-space: normal;
+  word-break: break-all;
+  margin-left: 0;
+}
+.vt-copy.is-copied::before {
+  content: "copied";
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  padding: 0 0.4em;
+  font-size: 0.85em;
+  color: var(--vt-bg);
+  background: var(--vt-ok);
+  border-radius: 3px;
+  pointer-events: none;
+}
+/* keyboard users get the full value on focus (mouse users get the title tooltip) */
+.vt-copy:focus-visible::after {
+  content: attr(data-full);
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 4px);
+  right: 0;
+  width: max-content;
+  max-width: min(34rem, 80cqi);
+  padding: 0.3rem 0.5rem;
+  white-space: normal;
+  word-break: break-all;
+  color: var(--vt-fg);
+  background: var(--vt-bar);
+  border: 1px solid var(--vt-border);
+  border-radius: 5px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+/* verdict */
+.vt-verdict {
+  margin: 0.35rem 0.75rem 0.4rem;
+  padding: 0.55rem 0.8rem 0.6rem;
+  border: 1px solid currentColor;
+  border-radius: 7px;
+}
+.vt-verdict-title {
+  display: flex;
+  align-items: baseline;
+  gap: 1ch;
+  font-size: 1.3em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+}
+.vt-verdict-text { overflow-wrap: anywhere; }
+.vt-verdict-note { margin-top: 0.2rem; color: var(--vt-fg); overflow-wrap: anywhere; }
+.vt-verdict--ok { color: var(--vt-ok); background: var(--vt-ok-bg); }
+.vt-verdict--warn { color: var(--vt-warn); background: var(--vt-warn-bg); }
+.vt-verdict--fail { color: var(--vt-fail); background: var(--vt-fail-bg); }
+.vt-verdict--dim { color: var(--vt-muted); background: var(--vt-hover); }
+.vt-print .vt-label { color: var(--vt-fg); }
+
+/* screen-reader-only text */
+.vt-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- motion (terminal.js sets duration, steps() and delay inline) ---- */
+.vt-typing { animation-name: vt-type; animation-fill-mode: both; }
+.vt-reveal { animation-name: vt-fade; animation-timing-function: ease-out; animation-fill-mode: both; }
+@keyframes vt-type {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes vt-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes vt-blink {
+  50% { opacity: 0; }
+}
+.vt-still .vt-cursor { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .vt-terminal *,
+  .vt-terminal *::before,
+  .vt-terminal *::after { animation: none !important; }
+}
+
+/* ---- narrow containers (phones) ---- */
+@container (max-width: 30rem) {
+  .vt-body { font-size: 0.75rem; }
+  .vt-line { grid-template-columns: 7ch 1.3ch minmax(0, 1fr); column-gap: 0.5ch; padding-inline: 0.6rem; }
+  .vt-cmd, .vt-rule { padding-inline: 0.6rem; }
+  .vt-verdict { margin-inline: 0.6rem; }
+  .vt-val { margin-left: 0; }
+  .vt-dots { display: none; }
+}

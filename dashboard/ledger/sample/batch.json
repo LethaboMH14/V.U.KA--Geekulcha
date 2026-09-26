@@ -1,0 +1,43 @@
+{
+  "sample": true,
+  "note": "SAMPLE batch: 5 random heads, a made-up message and receipt. Never on Hedera.",
+  "leaves": [
+    "04c25b1766fe103748472b1405f9b3dcae26ba7eb8b725206b9a4cd9db2c04e5",
+    "04c31405383840ccf760d310e91ae16f546ddd8696c7134e7b02ffbcc7ff78ec",
+    "0c31907a48bae1ff676ae8a93d32db310d09512062d3bdb42ad1188d46dff800",
+    "686b098db586e64946c849da32aa5e52da46281b0f3f63fbb4db0ed47005b385",
+    "d47cd25be19c5b8ec226a7f429e8c4df3ee271c1e99cb6fc92befac5d05214bd",
+    "fdf4e31c8217ae6be1557b28b5f3a02ec31348607e5ea6ab27bba80a8674a6d0"
+  ],
+  "index": 5,
+  "head": "fdf4e31c8217ae6be1557b28b5f3a02ec31348607e5ea6ab27bba80a8674a6d0",
+  "root": "05f9bf5b5dc7b4f16ea74692d00cd7baf08d4b291957bb7d4efe624b72b1681d",
+  "path": [
+    {
+      "side": "L",
+      "hash": "20688657bc7045201de96b231ebb2f406064c7932ea9a0ac7d863447a045439f"
+    },
+    {
+      "side": "L",
+      "hash": "ac3c777c302b19023e4e23370a9642303314f16284c122b5c5ad52bafe96dbe3"
+    }
+  ],
+  "message": {
+    "sample": true,
+    "topic_id": "0.0.10687280",
+    "sequence_number": 900719,
+    "consensus_timestamp": "1790365958.490227337",
+    "running_hash": "dXXBtKBy5fddpZriX/4jy/oXkB+wj+zBYhTH8N+Co60rLEU3CWmDxLJJnYunvHSy",
+    "bytesHex": "0105f9bf5b5dc7b4f16ea74692d00cd7baf08d4b291957bb7d4efe624b72b1681d",
+    "type": 1,
+    "payloadHex": "05f9bf5b5dc7b4f16ea74692d00cd7baf08d4b291957bb7d4efe624b72b1681d"
+  },
+  "receipt": {
+    "sample": true,
+    "topic_id": "0.0.10687280",
+    "sequence_number": 900719,
+    "consensus_timestamp": "1790365958.490227337",
+    "running_hash": "dXXBtKBy5fddpZriX/4jy/oXkB+wj+zBYhTH8N+Co60rLEU3CWmDxLJJnYunvHSy",
+    "topic_epoch": 1
+  }
+}
