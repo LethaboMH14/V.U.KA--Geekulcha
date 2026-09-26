@@ -29,6 +29,13 @@ REQUIRED_MEMBERS = {
     "server/main.py",
     "server/payload_store.py",
     "server/requirements.txt",
+    # anchor/hedera-sidecar/publish.mjs imports ../../shared/keys.js, which
+    # imports canonical.js and merkle.js; shared/package.json makes Node load
+    # them as ES modules. Missing, the sidecar could never submit a root.
+    "shared/canonical.js",
+    "shared/keys.js",
+    "shared/merkle.js",
+    "shared/package.json",
     "startup.sh",
 }
 
@@ -96,6 +103,10 @@ def should_package(name: str) -> bool:
         return path.suffix == ".py"
     if len(path.parts) > 2 and path.parts[0] == "contracts" and path.parts[1] == "payloads":
         return path.suffix == ".json"
+    if len(path.parts) == 2 and path.parts[0] == "shared":
+        # Top-level shared modules only (the sidecar imports them), never
+        # shared/test/, shared/scripts/ or the test runner's config.
+        return (path.suffix == ".js" and path.name != "vitest.config.js") or path.name == "package.json"
     return name in {
         "anchor/canonical.py",
         "contracts/keys/manifest.json",

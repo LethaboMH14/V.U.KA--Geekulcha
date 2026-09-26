@@ -137,3 +137,31 @@ def test_archive_scan_refuses_private_key_shaped_content_without_echoing_it():
         assert b"simulated-placeholder" not in str(exc).encode()
     else:
         raise AssertionError("private-key-shaped content was not refused")
+
+
+def test_every_file_the_hedera_sidecar_imports_is_packaged():
+    """Regression (26 Sep): publish.mjs imports ../../shared/keys.js and shared/
+    was never packaged, so on Azure the sidecar could not start a single
+    submission. Follow every relative import from cli.mjs, recursively, over the
+    real repository files, and require every file reached to be packaged."""
+    import re
+    repo = MODULE_PATH.parents[1].resolve()
+    patterns = [re.compile(r"""from\s+["'](\.{1,2}/[^"']+)["']"""),
+                re.compile(r"""import\(\s*["'](\.{1,2}/[^"']+)["']\s*\)"""),
+                re.compile(r"""new URL\(\s*["'](\.{1,2}/[^"']+)["']""")]
+    seen, todo = set(), ["anchor/hedera-sidecar/cli.mjs"]
+    while todo:
+        rel = todo.pop()
+        if rel in seen:
+            continue
+        seen.add(rel)
+        path = repo / rel
+        assert path.exists(), f"{rel} is imported but does not exist"
+        if path.suffix in (".js", ".mjs"):
+            for pattern in patterns:
+                for spec in pattern.findall(path.read_text(encoding="utf-8")):
+                    todo.append((path.parent / spec).resolve().relative_to(repo).as_posix())
+    if any(r.startswith("shared/") for r in seen):
+        seen.add("shared/package.json")  # "type": "module" for those files
+    assert "shared/keys.js" in seen
+    assert sorted(r for r in seen if not package_builder.should_package(r)) == []

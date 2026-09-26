@@ -17,7 +17,7 @@ test("a missing dependency exits 2 (not submitted), never Node's ambiguous 1", (
       encoding: "utf8",
     });
     assert.equal(run.status, 2, run.stderr);
-    assert.match(run.stderr, /dependencies not installed/);
+    assert.match(run.stderr, /sidecar file missing: publish\.mjs/);
     assert.equal(run.stdout, "");
   } finally {
     rmSync(dir, { recursive: true, force: true });

@@ -5,7 +5,16 @@
 // The SDK's own message and stack are never used: they may include keys or
 // transaction bytes.
 export function failureReason(error, submissionMayHaveOccurred) {
-  if (error?.code === "ERR_MODULE_NOT_FOUND") return "dependencies not installed (run npm ci)";
+  if (error?.code === "ERR_MODULE_NOT_FOUND") {
+    // Node reports a missing npm package and a missing source file with the
+    // same code. They need different fixes (npm ci vs. the deploy package), so
+    // name which one: a package name, or only the missing file's name.
+    const match = /Cannot find (package|module) '([^']+)'/.exec(String(error.message));
+    const safe = (value) => String(value).replace(/[^A-Za-z0-9_.@/-]/g, "").slice(0, 80);
+    if (match && match[1] === "package") return `dependency not installed: ${safe(match[2])} (run npm ci)`;
+    if (match) return `sidecar file missing: ${safe(match[2].split(/[\\/]/).pop())} (check the deploy package)`;
+    return "a module could not be loaded (run npm ci, and check the deploy package)";
+  }
   const phase = submissionMayHaveOccurred ? "after submit" : "before submit";
   if (typeof error?.message === "string" && error.message.startsWith("mirror ")) {
     return `${error.message} (${phase})`;

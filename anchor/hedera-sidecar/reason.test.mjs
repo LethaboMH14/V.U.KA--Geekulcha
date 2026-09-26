@@ -18,11 +18,19 @@ test("a status is reduced to safe characters, however it renders", () => {
   assert.match(failureReason(error, false), /^Error [A-Za-z0-9_.:-]+ \(before submit\)$/);
 });
 
-test("mirror messages and missing dependencies keep their existing text", () => {
+test("mirror messages keep their text; a missing package is named", () => {
   assert.equal(failureReason(new Error("mirror lag exceeded"), true), "mirror lag exceeded (after submit)");
   const missing = new Error("Cannot find package '@hiero-ledger/sdk'");
   missing.code = "ERR_MODULE_NOT_FOUND";
-  assert.equal(failureReason(missing, false), "dependencies not installed (run npm ci)");
+  assert.equal(failureReason(missing, false), "dependency not installed: @hiero-ledger/sdk (run npm ci)");
+});
+
+test("a missing source file is told apart from a missing package, naming only the file", () => {
+  // The 26 Sep Azure case: publish.mjs imports ../../shared/keys.js, which the
+  // deploy package did not contain; it was misreported as missing npm deps.
+  const missing = new Error("Cannot find module '/tmp/8df1be/shared/keys.js' imported from /tmp/8df1be/anchor/hedera-sidecar/publish.mjs");
+  missing.code = "ERR_MODULE_NOT_FOUND";
+  assert.equal(failureReason(missing, false), "sidecar file missing: keys.js (check the deploy package)");
 });
 
 test("anything else stays generic", () => {
