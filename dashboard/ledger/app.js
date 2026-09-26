@@ -88,30 +88,50 @@ function extLink(href, text) {
 }
 
 // ---------------------------------------------------------------------------
-// pills: state in form (icon + label + border style), never colour alone
+// status: a 6px dot plus a text label (DESIGN.md); the label carries the state,
+// the dot's colour only repeats it
 // ---------------------------------------------------------------------------
-const ICONS = {
-  ok: "M3.5 8.5 6.5 11.5 12.5 4.5",
-  "live-verified": "M3.5 8.5 6.5 11.5 12.5 4.5",
-  failed: "M4.5 4.5 11.5 11.5M11.5 4.5 4.5 11.5",
-  unavailable: "M4 8h8",
-  off: "M4 8h8",
-  archived: "M3 5h10v7.5H3zM2.5 3h11v2h-11zM6.5 8h3",
-  wait: "M8 4.5V8l2.5 1.5",
-  info: "M8 7v4.5M8 4.6v.1",
-};
-function pill(state, label) {
-  const span = el("span", "pill");
+function statusMark(state, label) {
+  const span = el("span", "status");
   span.dataset.state = state;
-  const icon = svg("svg", { viewBox: "0 0 16 16", "aria-hidden": "true", focusable: "false" });
-  if (state === "wait" || state === "info") icon.append(svg("circle", { cx: 8, cy: 8, r: 6, fill: "none", stroke: "currentColor", "stroke-width": 1.6 }));
-  icon.append(svg("path", { d: ICONS[state] ?? ICONS.info, fill: "none", stroke: "currentColor", "stroke-width": 1.9, "stroke-linecap": "round", "stroke-linejoin": "round" }));
-  span.append(icon, el("span", null, label));
+  const dot = el("span", "dot");
+  dot.setAttribute("aria-hidden", "true");
+  span.append(dot, el("span", "status-label", label));
   return span;
 }
 function setPill(container, state, label) {
   if (!container) return;
-  container.replaceChildren(pill(state, label));
+  container.replaceChildren(statusMark(state, label));
+}
+/** A thrown source error → a short state for the status line; the full text goes in Details. */
+function failLabel(message) {
+  const m = String(message ?? "");
+  if (/^Could not reach/i.test(m)) return "can't connect (network or CORS)";
+  if (/did not answer within/i.test(m)) return "timed out";
+  const http = /HTTP (\d{3})/.exec(m);
+  if (http) return `error (HTTP ${http[1]})`;
+  return "error";
+}
+/** Copy a value; if the clipboard is blocked, select the text node instead. */
+function copyText(text, button, target) {
+  const done = (label) => {
+    button.textContent = label;
+    setTimeout(() => { button.textContent = "Copy"; }, 1500);
+  };
+  const fallback = () => {
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(target);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      done("Selected");
+    } catch { done("Copy failed"); }
+  };
+  try {
+    if (!navigator.clipboard?.writeText) { fallback(); return; }
+    navigator.clipboard.writeText(text).then(() => done("Copied"), fallback);
+  } catch { fallback(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -207,15 +227,20 @@ function chooseServer(defaultServer) {
 function setSource(id, pillState, pillLabel, detail) {
   const li = $(id);
   if (!li) return;
-  setPill(li.querySelector(".source-pill"), pillState, pillLabel);
-  $(`${id}-detail`).textContent = detail;
+  li.dataset.state = pillState;
+  const label = li.querySelector(".src-state");
+  if (label) label.textContent = pillLabel;
+  const d = $(`${id}-detail`);
+  if (d) d.textContent = detail;
+  // the header's network dot follows the mirror, the only source the ledger is read from
+  if (id === "src-mirror") { const dot = $("net-dot"); if (dot) dot.dataset.state = pillState; }
 }
 
 function connect() {
   const { sources: srcMod } = state.mods;
   if (state.closeFeed) { try { state.closeFeed(); } catch { /* closed */ } state.closeFeed = null; }
   if (!srcMod) {
-    for (const id of ["src-api", "src-feed", "src-mirror"]) setSource(id, "failed", "Not loaded", "lib/sources.js did not load, so no source can be read.");
+    for (const id of ["src-api", "src-feed", "src-mirror"]) setSource(id, "failed", "not loaded", "lib/sources.js did not load, so no source can be read.");
     renderChainError("The network module did not load.");
     return;
   }
@@ -234,7 +259,7 @@ function connect() {
 
 async function loadLatest() {
   const s = state.sources;
-  setSource("src-api", "wait", "Checking", `${hostOf(s.server)} · GET /v1/anchor/latest`);
+  setSource("src-api", "wait", "checking", `${hostOf(s.server)} · GET /v1/anchor/latest`);
   const tile = $("tile-latest");
   setPill(tile.querySelector(".tile-pill"), "wait", "Checking");
   $("latest-value").textContent = "…";
@@ -242,7 +267,7 @@ async function loadLatest() {
   try {
     const latest = await s.latest();
     if (s !== state.sources) return; // a newer connect() owns the tile now
-    setSource("src-api", "ok", "Reachable", `${hostOf(s.server)} · /v1/anchor/latest answered`);
+    setSource("src-api", "ok", "reachable", `${hostOf(s.server)} · /v1/anchor/latest answered`);
     if (!latest) {
       setPill(tile.querySelector(".tile-pill"), "unavailable", "None yet");
       $("latest-value").textContent = "No confirmed anchor";
@@ -261,7 +286,7 @@ async function loadLatest() {
     const topic = TOPIC_RE.test(String(r.topic_id)) ? r.topic_id : "(invalid)";
     note.append(document.createTextNode(`Topic ${topic}, epoch ${String(r.topic_epoch ?? "?")}. `));
     const tx = hashscanTx(r.consensus_timestamp);
-    if (tx) note.append(extLink(tx, "Open on HashScan"));
+    if (tx) note.append(extLink(tx, "HashScan ↗"));
     // The server's word alone is not "confirmed": check the receipt against the
     // pinned topic and the mirror's own record at that sequence.
     const [pillState, pillLabel, why] = await confirmOnMirror(s, r, seq);
@@ -270,7 +295,7 @@ async function loadLatest() {
     note.append(document.createTextNode(` ${why}`));
   } catch (error) {
     if (s !== state.sources) return;
-    setSource("src-api", "failed", "Unreachable", `${hostOf(s.server)}: ${error.message}`);
+    setSource("src-api", "failed", failLabel(error.message), `${hostOf(s.server)}: ${error.message}`);
     setPill(tile.querySelector(".tile-pill"), "unavailable", "Unknown");
     $("latest-value").textContent = "Unknown";
     $("latest-note").textContent = "The server could not be reached, so the latest anchor is unknown. The mirror below is independent of it.";
@@ -341,7 +366,7 @@ function markManifestOnLedger(messages, error) {
   if (hit) {
     note.append(document.createTextNode(`Pinned manifest hashes to the pin and matches 0x02 message #${safeSeq(hit.sequence_number) ?? "?"} on the topic. `));
     const tx = hashscanTx(hit.consensus_timestamp);
-    if (tx) note.append(extLink(tx, "HashScan"));
+    if (tx) note.append(extLink(tx, "HashScan ↗"));
   } else {
     setPill($("tile-manifest").querySelector(".tile-pill"), "unavailable", "Not on ledger");
     note.textContent = "The pinned manifest hashes to the pin, but no 0x02 message with that fingerprint is among the topic messages read.";
@@ -351,29 +376,37 @@ function markManifestOnLedger(messages, error) {
 // ---------------------------------------------------------------------------
 // the chain of anchored roots (Hedera mirror)
 // ---------------------------------------------------------------------------
+/** One quiet full-width row in the topic-messages table: loading, empty or error. */
+function chainQuietRow(message) {
+  const tr = el("tr", "is-empty");
+  const td = el("td", "empty", message);
+  td.colSpan = 5;
+  tr.append(td);
+  $("chain").replaceChildren(tr);
+}
 function renderChainError(message) {
-  $("chain").replaceChildren();
-  $("chain-note").textContent = message;
+  chainQuietRow(message);
+  $("chain-note").textContent = "";
 }
 
 async function loadChain() {
   const s = state.sources;
   const mirrorHost = hostOf(state.mirror);
-  setSource("src-mirror", "wait", "Checking", `${mirrorHost} · topic ${state.topic}`);
-  $("chain-note").textContent = `Reading topic ${state.topic} from the Hedera mirror…`;
-  $("chain").replaceChildren();
+  setSource("src-mirror", "wait", "checking", `${mirrorHost} · topic ${state.topic}`);
+  $("chain-note").textContent = "";
+  chainQuietRow(`Reading topic ${state.topic} from the Hedera mirror…`);
   let messages;
   try {
     messages = await s.topicMessages(state.topic, { limit: 100, order: "desc" });
   } catch (error) {
     if (s !== state.sources) return;
-    setSource("src-mirror", "failed", "Unreachable", `${mirrorHost}: ${error.message}`);
-    renderChainError(`The Hedera mirror could not be read from this browser: ${error.message} Nothing is shown in its place.`);
+    setSource("src-mirror", "failed", failLabel(error.message), `${mirrorHost}: ${error.message}`);
+    renderChainError(`Hedera mirror: ${failLabel(error.message)}. Nothing is shown in its place. The raw error is under Details in the status line.`);
     markManifestOnLedger([], error);
     return;
   }
   if (s !== state.sources) return;
-  setSource("src-mirror", "ok", "Reachable", `${mirrorHost} · ${messages.length} message${messages.length === 1 ? "" : "s"} read`);
+  setSource("src-mirror", "ok", "reachable", `${mirrorHost} · ${messages.length} message${messages.length === 1 ? "" : "s"} read`);
   let manifestPool = messages;
   const pinnedOnPage = (list) => list.some((m) => m.kind === "manifest" && m.payloadHex === state.manifestFingerprint);
   if (messages.length >= 100 && !pinnedOnPage(messages)) {
@@ -392,7 +425,8 @@ async function loadChain() {
   const count = messages.length >= 100 ? "at least 100 messages (the newest 100 were read)" : `${messages.length} message${messages.length === 1 ? "" : "s"}`;
   const note = $("chain-note");
   if (messages.length === 0) {
-    note.textContent = `Topic ${state.topic} has no messages on the mirror yet.`;
+    note.textContent = "";
+    chainQuietRow(`Topic ${state.topic} has no messages on the mirror yet. Roots appear here once ANCHOR publishes its first batch.`);
     return;
   }
   const parts = [`${roots.length} root${roots.length === 1 ? "" : "s"} (0x01)`, `${manifests.length} key manifest${manifests.length === 1 ? "" : "s"} (0x02)`];
@@ -402,27 +436,44 @@ async function loadChain() {
     : `The mirror returned ${count} on topic ${state.topic}: ${parts.join(", ")}.`;
 
   const list = $("chain");
-  for (const m of messages.slice(0, 30)) list.append(renderBlock(m));
+  list.replaceChildren();
+  for (const m of messages.slice(0, 30)) list.append(renderMessageRow(m));
 }
 
-function renderBlock(m) {
-  const li = el("li", "blk");
-  li.dataset.kind = m.kind;
-  const card = el("div", "blk-card");
-  const top = el("div", "blk-top");
-  const typeLabel = m.kind === "root" ? "Root · 0x01" : m.kind === "manifest" ? "Key manifest · 0x02" : "Other message";
+/** Seq · Type · Payload (short, copyable) · Consensus time (UTC) · Links. */
+function renderMessageRow(m) {
+  const tr = el("tr");
+  tr.dataset.kind = m.kind;
   const seq = safeSeq(m.sequence_number);
-  top.append(el("span", "blk-type", typeLabel), el("span", "blk-seq", seq ? `#${seq}` : "#?"));
-  const hash = el("span", "blk-hash", m.payloadHex ? shortHex(m.payloadHex, 8) : `${m.bytes?.length ?? 0} bytes`);
-  if (m.payloadHex) hash.title = m.payloadHex;
-  const time = el("span", "blk-time", fmtUtc(consensusToDate(m.consensus_timestamp)));
-  const links = el("span", "blk-links");
+  const tdSeq = el("td", "mono num", seq ? String(seq) : "?");
+  const tdType = el("td", m.kind === "root" || m.kind === "manifest" ? null : "type-other",
+    m.kind === "root" ? "Root" : m.kind === "manifest" ? "Manifest" : "Other");
+  tdType.title = m.kind === "root" ? "0x01: a record fingerprint (Merkle root)" : m.kind === "manifest" ? "0x02: the server's key manifest fingerprint" : "Not a VUKA message type";
+  const tdPayload = el("td");
+  if (m.payloadHex) {
+    const wrap = el("span", "payload");
+    const short = el("span", "mono", shortHex(m.payloadHex, 8));
+    short.title = m.payloadHex;
+    short.setAttribute("aria-hidden", "true"); // screen readers get the full value below
+    const full = el("span", "sr-only", m.payloadHex);
+    const btn = el("button", "btn btn-quiet btn-sm", "Copy");
+    btn.type = "button";
+    btn.setAttribute("aria-label", `Copy the full payload of message ${seq ?? "?"}`);
+    btn.addEventListener("click", () => copyText(m.payloadHex, btn, full));
+    wrap.append(short, full, btn);
+    tdPayload.append(wrap);
+  } else {
+    tdPayload.append(el("span", "mono", `${m.bytes?.length ?? 0} bytes`));
+  }
+  const tdTime = el("td", "mono", fmtUtc(consensusToDate(m.consensus_timestamp)).replace(/ UTC$/, ""));
+  const tdLinks = el("td");
+  const links = el("span", "cell-links");
   const tx = hashscanTx(m.consensus_timestamp);
-  if (tx) links.append(extLink(tx, "HashScan"));
-  if (seq && TOPIC_RE.test(state.topic)) links.append(extLink(`${state.mirror}/api/v1/topics/${state.topic}/messages/${seq}`, "Mirror record"));
-  card.append(top, hash, time, links);
-  li.append(card);
-  return li;
+  if (tx) links.append(extLink(tx, "HashScan ↗"));
+  if (seq && TOPIC_RE.test(state.topic)) links.append(extLink(`${state.mirror}/api/v1/topics/${state.topic}/messages/${seq}`, "Mirror ↗"));
+  tdLinks.append(links);
+  tr.append(tdSeq, tdType, tdPayload, tdTime, tdLinks);
+  return tr;
 }
 
 // ---------------------------------------------------------------------------
@@ -431,21 +482,21 @@ function renderBlock(m) {
 function openFeed() {
   const s = state.sources;
   const host = hostOf(s.server);
-  setSource("src-feed", "wait", "Connecting", `${host} · /ws/panel`);
+  setSource("src-feed", "wait", "connecting", `${host} · /ws/panel`);
   setPill($("feed-pill"), "wait", "Connecting");
   $("feed-empty").textContent = "Connecting to the live feed…";
   let opened = false;
   state.closeFeed = s.panel(onFeedRow, (st) => {
     if (st === "open") {
       opened = true;
-      setSource("src-feed", "ok", "Connected", `${host} · /ws/panel open`);
+      setSource("src-feed", "ok", "connected", `${host} · /ws/panel open`);
       setPill($("feed-pill"), "ok", "Live");
       if (state.feedRows.length === 0) $("feed-empty").textContent = "Connected. No events have arrived yet; each accepted event appears here as it happens.";
     } else {
       const why = opened
         ? "The connection closed."
         : "The WebSocket could not be opened (the browser reports no detail for WebSocket failures).";
-      setSource("src-feed", st === "error" ? "failed" : "unavailable", opened ? "Closed" : "Unreachable", `${host} · /ws/panel: ${why}`);
+      setSource("src-feed", st === "error" ? "failed" : "unavailable", opened ? "closed" : "can't connect", `${host} · /ws/panel: ${why}`);
       setPill($("feed-pill"), "unavailable", opened ? "Closed" : "Unreachable");
       if (state.feedRows.length === 0) $("feed-empty").textContent = `No live feed. ${why} Use Reconnect to try again.`;
     }
@@ -476,7 +527,7 @@ function onFeedRow(row) {
   const tdKind = el("td");
   if (kind) {
     const wrap = el("span", "kind");
-    wrap.append(el("span", "mono", kind), el("span", "chip", "Simulated"));
+    wrap.append(el("span", "mono", kind), el("span", "sim-tag", "SIMULATED"));
     tdKind.append(wrap);
   } else {
     tdKind.append(el("span", "mono", "hidden"));
@@ -487,14 +538,24 @@ function onFeedRow(row) {
   body.prepend(tr);
   while (body.children.length > FEED_MAX) body.lastElementChild.remove();
   state.feedRows = [...body.children];
-  $("feed-empty").hidden = true;
+  const emptyBody = $("feed-empty-body");
+  if (emptyBody) emptyBody.hidden = true; else $("feed-empty").hidden = true;
   $("feed-count").textContent = `${state.feedTotal} event${state.feedTotal === 1 ? "" : "s"} since this page opened`;
   drawRate();
 }
 
+let rateObserved = false;
 function drawRate() {
   const chart = $("rate-chart");
-  const W = 560, H = 150, L = 30, R = 8, T = 12, B = 24;
+  if (!chart) return;
+  if (!rateObserved && "ResizeObserver" in window) {
+    // the SVG is drawn at its real pixel width so text never scales; redraw on resize
+    rateObserved = true;
+    new ResizeObserver(() => drawRate()).observe(chart);
+  }
+  const measured = Math.round(chart.getBoundingClientRect().width);
+  const W = measured > 0 ? measured : 1152, H = 96, T = 22, B = 20;
+  chart.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const now = Date.now();
   const minuteNow = Math.floor(now / 60000);
   const bins = [];
@@ -504,60 +565,60 @@ function drawRate() {
     if (idx >= 0 && idx < RATE_MINUTES) bins[idx].n += 1;
   }
   const max = Math.max(...bins.map((b) => b.n));
-  const top = max <= 4 ? 4 : Math.ceil(max / 5) * 5;
-  const plotW = W - L - R, plotH = H - T - B;
-  const y = (v) => T + plotH - (v / top) * plotH;
-  const slot = plotW / RATE_MINUTES;
-  const barW = Math.max(4, slot - 6);
+  const top = Math.max(4, max);
+  const plotH = H - T - B;
+  const base = T + plotH;
+  const slot = W / RATE_MINUTES;
+  const barW = Math.max(3, Math.min(24, slot * 0.6));
+  const barTop = (n) => base - Math.max(2, (n / top) * plotH);
 
   chart.replaceChildren();
-  // grid + y ticks (0, half, top)
-  for (const v of [0, top / 2, top]) {
-    chart.append(svg("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), class: v === 0 ? "c-base" : "c-grid" }));
-    const t = svg("text", { x: L - 6, y: y(v) + 3.5, "text-anchor": "end", class: "c-axis" });
-    t.textContent = String(v);
-    chart.append(t);
-  }
-  // x labels
-  for (const [i, label] of [[0, `-${RATE_MINUTES - 1}m`], [Math.floor(RATE_MINUTES / 2), `-${RATE_MINUTES - 1 - Math.floor(RATE_MINUTES / 2)}m`], [RATE_MINUTES - 1, "now"]]) {
-    const t = svg("text", { x: L + slot * i + slot / 2, y: H - 6, "text-anchor": "middle", class: "c-axis" });
+  chart.append(svg("line", { x1: 0, x2: W, y1: base + 0.5, y2: base + 0.5, class: "c-base" }));
+  for (const [x, anchor, label] of [[0, "start", `${RATE_MINUTES} min ago`], [W, "end", "now"]]) {
+    const t = svg("text", { x, y: H - 4, "text-anchor": anchor, class: "c-axis" });
     t.textContent = label;
     chart.append(t);
   }
   const total = bins.reduce((a, b) => a + b.n, 0);
   if (total === 0) {
-    const t = svg("text", { x: L + plotW / 2, y: T + plotH / 2, "text-anchor": "middle", class: "c-empty" });
-    t.textContent = state.feedTotal === 0 ? "No events received yet" : "No events in the last 15 minutes";
+    const t = svg("text", { x: W / 2, y: T + plotH / 2 + 4, "text-anchor": "middle", class: "c-empty" });
+    t.textContent = state.feedTotal === 0 ? "No events received yet" : `No events in the last ${RATE_MINUTES} minutes`;
+    chart.append(t);
+  } else {
+    // one direct label: the newest minute's value
+    const last = bins[RATE_MINUTES - 1];
+    const cx = slot * (RATE_MINUTES - 1) + slot / 2;
+    const wide = slot >= 56;
+    const t = svg("text", { x: wide ? cx : W, y: (last.n > 0 ? barTop(last.n) : base) - 6, "text-anchor": wide ? "middle" : "end", class: "c-label" });
+    t.textContent = `${last.n}/min`;
     chart.append(t);
   }
   const tip = $("rate-tip");
   bins.forEach((b, i) => {
-    const x = L + slot * i + (slot - barW) / 2;
+    const cx = slot * i + slot / 2;
+    let bar = null;
     if (b.n > 0) {
-      const h = Math.max(2, (b.n / top) * plotH);
-      const r = Math.min(3, barW / 2, h / 2);
-      const x0 = x, x1 = x + barW, y0 = T + plotH - h, yb = T + plotH;
-      // rounded top, square baseline
-      chart.append(svg("path", {
-        d: `M${x0} ${yb}V${y0 + r}Q${x0} ${y0} ${x0 + r} ${y0}H${x1 - r}Q${x1} ${y0} ${x1} ${y0 + r}V${yb}Z`,
-        class: i === RATE_MINUTES - 1 ? "c-bar is-now" : "c-bar",
-      }));
+      const x0 = cx - barW / 2, x1 = cx + barW / 2, y0 = barTop(b.n);
+      const r = Math.min(2, barW / 2, (base - y0) / 2);
+      // rounded top, square on the baseline
+      bar = svg("path", { d: `M${x0} ${base}V${y0 + r}Q${x0} ${y0} ${x0 + r} ${y0}H${x1 - r}Q${x1} ${y0} ${x1} ${y0 + r}V${base}Z`, class: "c-bar" });
+      chart.append(bar);
     }
-    const hit = svg("rect", { x: L + slot * i, y: T, width: slot, height: plotH, class: "c-hit", tabindex: -1 });
+    const hit = svg("rect", { x: slot * i, y: 0, width: slot, height: base, class: "c-hit" });
     const d = new Date(b.minute * 60000);
     const text = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC · ${b.n} event${b.n === 1 ? "" : "s"}`;
-    const show = () => {
+    hit.addEventListener("pointerenter", () => {
       tip.textContent = text;
       const box = chart.getBoundingClientRect();
-      tip.style.left = `${((L + slot * i + slot / 2) / W) * box.width}px`;
-      tip.style.top = `${(y(b.n) / H) * box.height}px`;
+      tip.style.left = `${Math.min(Math.max(cx * (box.width / W), 60), box.width - 60)}px`;
+      tip.style.top = `${(b.n > 0 ? barTop(b.n) : base) * (box.height / H)}px`;
       tip.hidden = false;
-    };
-    hit.addEventListener("pointerenter", show);
-    hit.addEventListener("pointerleave", () => { tip.hidden = true; });
+      bar?.classList.add("is-hover");
+    });
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; bar?.classList.remove("is-hover"); });
     chart.append(hit);
   });
-  chart.setAttribute("aria-label", `Events received per minute over the last ${RATE_MINUTES} minutes: ${total} in total, at most ${max} in one minute. The table beside it lists each event.`);
+  chart.setAttribute("aria-label", `Events received per minute over the last ${RATE_MINUTES} minutes: ${total} in total, at most ${max} in one minute. The table below lists each event.`);
 }
 
 // ---------------------------------------------------------------------------
@@ -596,7 +657,7 @@ async function* tap(gen, sink) {
 function setBusy(on) {
   state.busy = on;
   for (const id of ["btn-verify", "btn-clear"]) { const b = $(id); if (b) b.disabled = on; }
-  $("btn-verify").textContent = on ? "Verifying…" : "Verify this record";
+  $("btn-verify").textContent = on ? "Verifying…" : "Verify";
 }
 
 async function runVerify(text, name = "record.json") {
@@ -689,22 +750,23 @@ async function runVerify(text, name = "record.json") {
   }
 }
 
+// label: the status line next to the dot; lead: the reason's first sentence (none where the reason already says it).
 const RESULT_COPY = {
   "live-verified": {
-    pill: "Live-verified",
-    title: "This record matches the public ledger.",
+    label: "Live-verified",
+    lead: "This record matches the public ledger.",
   },
   archived: {
-    pill: "Archived",
-    title: "Matches a stored copy of the ledger message, not a live reading.",
+    label: "Archived",
+    lead: "Matches a stored copy of the ledger message, not a live reading.",
   },
   unavailable: {
-    pill: "Unavailable",
-    title: "The chain checks out, but it could not be matched to the ledger yet.",
+    label: "Unavailable",
+    lead: "",
   },
   failed: {
-    pill: "Failed",
-    title: "This record did not verify.",
+    label: "Failed",
+    lead: "",
   },
 };
 
@@ -733,8 +795,9 @@ function showResult(result, ctx) {
   const copy = RESULT_COPY[st];
   const card = $("result");
   card.dataset.state = st;
-  setPill($("result-pill"), st, copy.pill);
-  $("result-title").textContent = copy.title;
+  const brokenAt = st === "failed" && Number.isInteger(result.firstBroken) ? result.firstBroken : null;
+  const label = brokenAt === null ? copy.label : `Failed at entry ${brokenAt}`;
+  $("result-title").textContent = label;
 
   const receipt = result.receipt ?? ctx?.proof?.receipt ?? null;
   const msg = ctx?.ledgerMessage ?? null;
@@ -754,15 +817,15 @@ function showResult(result, ctx) {
       ? why
       : `Every hash, link and signature in the record checks out. ${why}${later}`;
   } else {
-    const at = Number.isInteger(result.firstBroken) ? `First broken entry: #${result.firstBroken}. ` : "";
+    // The entry number is already in the status line ("Failed at entry n").
     const reason = plainReason(result.reason);
-    text = `${at}${reason}${/[.!?]$/.test(reason) ? "" : "."} Do not rely on this record.`;
+    text = `${reason}${/[.!?]$/.test(reason) ? "" : "."} Do not rely on this record.`;
   }
-  $("result-text").textContent = text;
+  $("result-text").textContent = copy.lead ? `${copy.lead} ${text}` : text;
 
   const rows = [];
   if (!result.notChecked && (st !== "failed" || result.head)) {
-    rows.push(["Status", copy.pill]);
+    rows.push(["Status", label]);
     rows.push(["Merkle root", result.root ?? "not computed"]);
     rows.push(["Chain head", result.head ?? "unknown"]);
     rows.push(["Entries", String(result.entries ?? "?")]);
@@ -776,8 +839,14 @@ function showResult(result, ctx) {
   }
   const list = $("keep-list");
   list.replaceChildren();
-  for (const [k, v] of rows) list.append(el("dt", null, k), el("dd", null, v));
-  $("keep-list").closest(".keep").hidden = rows.length === 0;
+  for (const [k, v] of rows) {
+    const th = el("th", null, k);
+    th.scope = "row";
+    const tr = el("tr");
+    tr.append(th, el("td", null, v));
+    list.append(tr);
+  }
+  $("keep").hidden = rows.length === 0;
   $("keep-note").textContent = st === "live-verified"
     ? "File these values with your records. Anyone can later check the root against the same topic and sequence."
     : st === "unavailable"
@@ -863,10 +932,39 @@ function wireVerify() {
 // ---------------------------------------------------------------------------
 // nav highlight
 // ---------------------------------------------------------------------------
+/** Header field: Enter moves to Verify with the pasted record (or fingerprint) in the paste box. Nothing runs by itself. */
+function wireQuick() {
+  const form = $("quick-form");
+  const input = $("quick-input");
+  if (!form || !input) return;
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    const box = $("export-text");
+    if (!text || !box) return;
+    box.value = text;
+    const note = $("input-note");
+    if (note) {
+      note.textContent = /^[0-9a-fA-F]{64}$/.test(text)
+        ? "That is a 64-hex fingerprint. This page checks a whole record: paste the export JSON VIGIL shared, then compare its Merkle root or chain head with this value."
+        : "Record copied from the header field. Press Verify to check it.";
+    }
+    input.value = "";
+    if (location.hash === "#verify") $("verify")?.scrollIntoView();
+    else location.hash = "#verify";
+    box.focus({ preventScroll: true });
+  });
+}
+
 function wireNav() {
   const links = [...document.querySelectorAll("[data-nav]")];
   const mark = (id) => links.forEach((a) => a.setAttribute("aria-current", String(a.dataset.nav === id)));
   mark((location.hash || "#ledger").slice(1));
+  // "Method" is the tab label for #how; #method is accepted as an alias
+  const alias = () => { if (location.hash === "#method") { $("how")?.scrollIntoView(); mark("how"); } };
+  alias();
+  window.addEventListener("hashchange", alias);
+  wireQuick();
   if (!("IntersectionObserver" in window)) return;
   const io = new IntersectionObserver((entries) => {
     const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -941,8 +1039,10 @@ async function boot() {
   const topicLink = $("topic-link");
   topicLink.textContent = state.topic;
   topicLink.href = hashscanTopic(state.topic);
-  $("topic-note").textContent = `Hedera ${state.pins?.network ?? "testnet"}, epoch ${state.pins?.topic_epoch ?? "?"}. Pinned in contracts/keys/verify-pins.json.`;
+  $("topic-note").textContent = state.pins ? "Pinned in contracts/keys/verify-pins.json." : "The pin file did not load; this is the built-in default topic.";
   setPill($("tile-topic").querySelector(".tile-pill"), state.pins ? "info" : "unavailable", state.pins ? "Pinned" : "Not loaded");
+  const epochValue = $("epoch-value");
+  if (epochValue) epochValue.textContent = state.pins ? `Hedera ${String(state.pins.network ?? "testnet")} · epoch ${String(state.pins.topic_epoch ?? "?")}` : "Unknown (pins not loaded)";
 
   // terminal
   const host = $("terminal");
