@@ -23,6 +23,7 @@ GENESIS_HASH = "0" * 64
 MAX_APPEND_ATTEMPTS = 5
 NONCE_TTL = timedelta(hours=24)
 MAX_CLOCK_SKEW_SECONDS = 120
+SCHEMA_INIT_LOCK = 864204  # Fixed namespace; distinct from anchoring.py's COORDINATOR_LOCK (864203).
 
 CREATE_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS chain_entries (
@@ -275,6 +276,24 @@ class PostgresDatabase:
         self._payload_key()
         connection = self._connection()
         try:
+            with connection.cursor() as cursor:
+                # Two processes can boot at once (server/run_workers.py's own
+                # main() and uvicorn's startup, both calling this method
+                # independently). Without serializing them, PostgreSQL can
+                # deadlock two concurrent multi-table CREATE TABLE IF NOT
+                # EXISTS transactions against each other (seen in practice on
+                # Azure, 26 Sep) rather than just having the second one wait.
+                # pg_advisory_lock's own effect is immediate, not deferred to
+                # commit, so it must NOT be unlocked from inside the
+                # transaction below — an explicit unlock there would let a
+                # second caller start creating tables before this one's
+                # CREATE TABLE statements are actually durable, which
+                # reintroduces the same race with a "type already exists"
+                # error instead of a deadlock. Relying on connection.close()
+                # to release the session-level lock, only once every
+                # statement below has committed, is what actually serializes
+                # this correctly.
+                cursor.execute("SELECT pg_advisory_lock(%s)", (SCHEMA_INIT_LOCK,))
             with connection:
                 with connection.cursor() as cursor:
                     cursor.execute(CREATE_SCHEMA_SQL)
