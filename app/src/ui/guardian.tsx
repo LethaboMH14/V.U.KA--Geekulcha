@@ -10,7 +10,9 @@
  * (`GET /v1/guardians/me/alerts`). An alert leads with G4, "Don't call or text
  * them. Call 10111."; calling the member unlocks only after stand-down or
  * closure. Every answer is signed with this phone's key (G5, `guardian_ack`).
- * No push yet: alerts arrive while the app is open (FCM is PR #95's path).
+ * Push (FCM, src/api/push.ts) is added on top when the build has Firebase:
+ * a pushed alert shows the same notice and checks at once. Polling stays in
+ * every case; without Firebase alerts arrive while the app is open.
  */
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {AppState, Linking, NativeModules, PermissionsAndroid, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
@@ -23,9 +25,46 @@ import {device, type GuardianAlert} from '../api/device';
 import {whyLine} from './whyLine';
 import {AlertMap} from './map';
 import {keepAwake} from '../sensors/location';
+import {registerGuardianPush, startGuardianPush} from '../api/push';
 
 /** The guardian's alert notice and standby (native, Android only). */
 const notice: {showAlert?(t: string, b: string): void; clearAlert?(): void} | undefined = NativeModules.VigilLocation;
+
+/** When a pushed alert last showed the notice (ms). */
+let pushNoticeAt = 0;
+/**
+ * The alert notice, from a push or a poll. A poll finding the alert a push
+ * just announced doesn't sound it a second time.
+ */
+function alertNotice(fromPush = false): void {
+  if (fromPush) pushNoticeAt = Date.now();
+  else if (Date.now() - pushNoticeAt < 60_000) return;
+  notice?.showAlert?.(`${device.profile?.guardian?.memberName ?? 'Your member'} may need help`, "Open VUKA. Don't call or text them: call 10111.");
+}
+
+/** The alert checks running now (standby and the app-wide watch): a push runs them at once. */
+const pollers = new Set<() => unknown>();
+
+/**
+ * Guardian push while the app runs (does nothing without Firebase): a
+ * foreground alert shows the notice and checks now; tapping an alert's
+ * notification calls onOpen. Polling carries on regardless.
+ */
+export function useGuardianPush(onOpen: () => void): void {
+  const opener = useRef(onOpen);
+  opener.current = onOpen;
+  useEffect(
+    () =>
+      startGuardianPush({
+        onAlert: () => {
+          alertNotice(true);
+          pollers.forEach(p => void p());
+        },
+        onOpen: () => opener.current(),
+      }),
+    [],
+  );
+}
 import {version} from '../../package.json';
 
 const TOP = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
@@ -63,6 +102,7 @@ export function GuardianSetup({onDone, onBack}: {onDone: () => void; onBack: () 
   // Mutarisi's "Turn on alerts?" pop-up: once per enrolment, over the consent screen.
   const [askAlerts, setAskAlerts] = useState(false);
   const alertsAsked = useRef(false);
+  const alertsDeclined = useRef(false);
   const clean = code.trim().toLowerCase();
   const codeOk = /^[0-9a-f]{8}-\d{6}$/.test(clean);
   const who = name.trim() || 'your member';
@@ -86,6 +126,9 @@ export function GuardianSetup({onDone, onBack}: {onDone: () => void; onBack: () 
     setError(null);
     try {
       await device.becomeGuardian(clean, name);
+      // Push on top of polling when the build has Firebase; asks for
+      // notifications unless they just said "Not now". Never blocks enrolment.
+      void registerGuardianPush({ask: !alertsDeclined.current});
       onDone();
     } catch (e) {
       const m = String(e instanceof Error ? e.message : e);
@@ -201,7 +244,10 @@ export function GuardianSetup({onDone, onBack}: {onDone: () => void; onBack: () 
         confirm="Allow"
         onConfirm={allowAlerts}
         cancel="Not now"
-        onCancel={() => setAskAlerts(false)}>
+        onCancel={() => {
+          alertsDeclined.current = true;
+          setAskAlerts(false);
+        }}>
         {`If ${who} may need help, VIGIL shows you a notification, even when your phone is locked or you're in another app. Without it, you'd only see the alert when you next open VIGIL.`}
       </Dialog>
     </View>
@@ -299,14 +345,16 @@ export function useGuardianWatch(enabled: boolean): GuardianAlert | null {
       const fresh = a.find(x => !x.closed_at && !told.current.has(x.incident_id));
       if (fresh) {
         told.current.add(fresh.incident_id);
-        notice?.showAlert?.(`${device.profile?.guardian?.memberName ?? 'Your member'} may need help`, "Open VUKA. Don't call or text them: call 10111.");
+        alertNotice();
       }
     };
     void poll();
     const t = setInterval(poll, 10_000);
+    pollers.add(poll);
     return () => {
       live = false;
       clearInterval(t);
+      pollers.delete(poll);
     };
   }, [enabled]);
   return enabled ? open : null;
@@ -361,9 +409,10 @@ export function GuardianHome({onBack, onSetUpSelf}: {onBack?: () => void; onSetU
       const fresh = a.find(x => !x.closed_at && !told.current.has(x.incident_id));
       if (fresh) {
         told.current.add(fresh.incident_id);
-        notice?.showAlert?.(`${device.profile?.guardian?.memberName ?? 'Your member'} may need help`, "Open VUKA. Don't call or text them: call 10111.");
+        alertNotice();
       }
-      if (!a.some(x => !x.closed_at)) notice?.clearAlert?.();
+      // Not while a just-pushed alert may still be on its way to this list.
+      if (!a.some(x => !x.closed_at) && Date.now() - pushNoticeAt >= 60_000) notice?.clearAlert?.();
       setAlerts(a);
       setReached(new Date().toISOString());
       setOffline(false);
@@ -379,10 +428,12 @@ export function GuardianHome({onBack, onSetUpSelf}: {onBack?: () => void; onSetU
     keepAwake(2 * 3600, true);
     const renew = setInterval(() => keepAwake(2 * 3600, true), 3600_000);
     const t = setInterval(poll, 5000);
+    pollers.add(poll);
     return () => {
       live.current = false;
       clearInterval(t);
       clearInterval(renew);
+      pollers.delete(poll);
     };
   }, [poll]);
 

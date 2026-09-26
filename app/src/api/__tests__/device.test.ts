@@ -604,6 +604,35 @@ describe('a member who is also someone else\'s guardian', () => {
     expect(h.device.profile).toMatchObject({role: 'member', guardian: {guardianId: 'g7654321', memberName: 'Thabo'}});
     expect(h.device.profile?.subjectId).toMatch(/^sim_subj_/);
   });
+
+  test('the push token goes to the guardian\'s token route, signed with the guardian key, once', async () => {
+    const requests: {method: string; path: string; body: string; keyId?: string}[] = [];
+    const h = harness({
+      request: async <T,>(_u: string, method: string, path: string, body: string, keyId?: string) => {
+        requests.push({method, path, body, keyId});
+        if (path === '/v1/guardians/accept') return {guardian_id: 'g1234567'} as T;
+        return (path === '/v1/journeys' ? {journey_id: JOURNEY} : {}) as T;
+      },
+    });
+    await onboarded(h);
+    await expect(h.device.setGuardianPushToken('fcm-token-1')).rejects.toThrow('not a guardian yet');
+    await h.device.becomeGuardian('abcd1234-123456', 'Thabo');
+    const guardianKey = h.device.profile!.guardian!.keyId;
+    expect(guardianKey).toMatch(/^gdn_/);
+    requests.length = 0;
+    // A placeholder is never sent as a device token.
+    await expect(h.device.setGuardianPushToken('sim_poll_while_open')).rejects.toThrow('not a device push token');
+    expect(await h.device.setGuardianPushToken('fcm-token-1')).toBe('sent');
+    // The guardian's key signs it, never this member's own device key.
+    expect(requests).toEqual([{method: 'PUT', path: '/v1/guardians/g1234567/token', body: '{"fcm_token":"fcm-token-1"}', keyId: guardianKey}]);
+    expect(await h.device.setGuardianPushToken('fcm-token-1')).toBe('unchanged');
+    // Kept in the saved profile: after a restart the same token is still not resent.
+    const again = createDevice(h.b);
+    await again.load();
+    expect(await again.setGuardianPushToken('fcm-token-1')).toBe('unchanged');
+    expect(requests).toHaveLength(1);
+    expect(h.device.profile?.subjectId).not.toBe('');
+  });
 });
 
 test('hold-for-help sends the same detection a sound would, marked manual', async () => {

@@ -6,13 +6,16 @@
  * LOCAL ONLY, as in his build: no accounts server exists. Sign-in can only
  * find the account saved on THIS phone, and a member's identity is the
  * signing key made on this phone, so a new phone can't restore it. Codes are
- * SIMULATED (nothing is sent by text or email) and say so. Nothing typed here
- * is sent to a server or written to the record.
+ * SIMULATED (nothing is sent by text or email) and say so. Google sign-in is
+ * real (Google and Firebase Authentication, src/api/google.ts) in a build
+ * connected to Firebase, and SIMULATED otherwise. Nothing typed here is sent
+ * to the VIGIL server or written to the record.
  */
 import React, {useState} from 'react';
 import {Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Eyebrow, Key, Panel, QuietKey, Row, TopAppBar} from './components';
 import {colors, fonts, radii, space, type} from './theme';
+import {googleAvailable, googleSignIn} from '../api/google';
 import {device, EMAIL, maskEmail, maskPhone, MIN_PASSWORD, profileContacts, recoveryChannel, type RecoveryChannel, type SignInRoute} from '../api/device';
 
 const Simulated = ({children}: {children: string}) => <Text style={styles.simTag}>{children}</Text>;
@@ -38,7 +41,7 @@ export const DOCUMENTS = {
     text: `## Draft — not the final terms
 These terms are a placeholder. They have not been written or reviewed by the VUKA team or a legal adviser, and they will be replaced before VUKA is offered to the public. Nothing here adds to or overrides the Privacy notice.
 ## What VUKA is
-VUKA is a hackathon prototype. Parts of it are simulated and say so on screen: Google sign-in is simulated, and sign-in and password-reset codes are not sent by text or email.
+VUKA is a hackathon prototype. Parts of it are simulated and say so on screen: Google sign-in is real only in builds connected to Firebase and simulated in the others, and sign-in and password-reset codes are not sent by text or email.
 ## Emergencies
 VUKA does not replace emergency services. In danger, call 10111.
 ## Your data
@@ -49,7 +52,9 @@ How your personal information is used is set out in the Privacy notice.`,
     text: `## Draft — not the final notice
 This is a draft. The full notice (docs/PRIVACY-POLICY.md) is PROPOSED and awaits team and legal review. VUKA is a hackathon prototype. Team SONAR has no registered legal entity. Information Officer registration is prepared, not submitted. Contact route: UNDEFINED — team to set.
 ## Kept on this phone only
-Your name and surname, your mobile number and email, how you signed up, your recovery choice, and, if you signed up with email, a salted hash of your password (never the password itself). These are never sent to a server and never written to your record.
+Your name and surname, your mobile number and email, how you signed up, your recovery choice, and, if you signed up with email, a salted hash of your password (never the password itself). These are never sent to the VUKA server and never written to your record.
+### If you use Google
+If you sign up or sign in with Google in a build connected to Firebase, Google and Firebase Authentication (Google's sign-in service, in the team's Firebase project) receive that sign-in and keep your Google email, name and account ID to confirm it.
 ## Your PINs
 Each PIN is kept on this phone as a hash. A PIN never leaves the phone.
 ## Sound
@@ -228,8 +233,8 @@ const Problem = ({children}: {children: string}) =>
 type SignInStep = 'choose' | 'google' | 'phone' | 'code' | 'email' | 'forgot' | 'notFound';
 
 /**
- * "Already have an account? Sign in": Google (SIMULATED), phone (SIMULATED
- * code) or email and password. A match with the account saved on this phone
+ * "Already have an account? Sign in": Google (real through Firebase when
+ * configured, else SIMULATED), phone (SIMULATED code) or email and password. A match with the account saved on this phone
  * calls `onFound`, and the caller asks for the PIN (the normal PIN prompt;
  * both PINs let the member in the same way). Anything else is "No account
  * found", never a hint about which part was wrong.
@@ -243,9 +248,12 @@ export function SignIn({onFound, onCreate, onBack}: {onFound: () => void; onCrea
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [who, setWho] = useState('');
+  const [problem, setProblem] = useState('');
+  const googleLive = googleAvailable();
 
   const go = (s: SignInStep) => {
     setTried(false);
+    setProblem('');
     setStep(s);
   };
   const attempt = async (route: SignInRoute, label: string) => {
@@ -264,6 +272,17 @@ export function SignIn({onFound, onCreate, onBack}: {onFound: () => void; onCrea
     }
   };
   const emailOk = EMAIL.test(email.trim());
+  /** Real Google sign-in, then the same match as any Google sign-in: the account email on this phone. */
+  const google = async () => {
+    if (!googleLive) return go('google');
+    if (busy) return;
+    setProblem('');
+    setBusy(true);
+    const r = await googleSignIn();
+    setBusy(false);
+    if (r.ok) await attempt({kind: 'google', email: r.account.email}, r.account.email);
+    else setProblem(r.message);
+  };
 
   if (step === 'forgot') {
     return <ForgotPassword initialEmail={email.trim()} onBack={() => go('email')} />;
@@ -278,12 +297,14 @@ export function SignIn({onFound, onCreate, onBack}: {onFound: () => void; onCrea
           </Text>
           <Text style={type.body}>Sign in with the account you made on this phone, then your PIN.</Text>
           <View style={{gap: 10, marginTop: space.sm}}>
-            <Key label="Sign in with Google" variant="plain" arrow onPress={() => go('google')} />
+            <Key label={busy && googleLive ? 'Opening Google…' : 'Sign in with Google'} variant="plain" arrow onPress={() => void google()} />
             <Key label="Sign in with email" variant="plain" arrow onPress={() => go('email')} />
             <Key label="Use your phone number" variant="signal" arrow onPress={() => go('phone')} />
           </View>
+          <Problem>{problem}</Problem>
           <Text style={type.caption}>
             Your account lives on this phone only: there is no accounts server yet. Your identity in VIGIL is the signing key on this phone, so a new phone can't restore it.
+            {googleLive ? " With Google, the sign-in goes to Google and Firebase Authentication; VIGIL's own server never receives your email." : ''}
           </Text>
           <QuietKey label="Don't have an account? Create account" onPress={onCreate} />
         </>

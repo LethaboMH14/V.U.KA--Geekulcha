@@ -3,10 +3,13 @@
  * account (Google, email or phone), phone number, verify code, your name,
  * permissions, and invite guardians.
  *
- * Accounts are not live yet (Firebase sign-in comes later). Until then the
- * contact detail is kept on this phone only, is never sent to the server and
- * never enters the record; the code step is SIMULATED, exactly as in his
- * build. The member's identity stays the key made on this phone.
+ * In a build connected to Firebase, "Continue with Google" is a real Google
+ * sign-in through Firebase Authentication (src/api/google.ts): Google and
+ * Firebase receive it and confirm the email. Otherwise Google is SIMULATED and
+ * says so. Either way the contact detail is kept on this phone, is never sent
+ * to the VIGIL server and never enters the record; the code step is
+ * SIMULATED, exactly as in his build. The member's identity stays the key
+ * made on this phone.
  *
  * As in his 2026-09-26 build: the Terms and Privacy notice must be accepted
  * before any option works, the number is optional on the Google and email
@@ -21,14 +24,17 @@ import {colors, fonts, radii, space, type} from './theme';
 import {canFullScreen, openFullScreenSettings} from '../sensors/detection';
 import {DocumentText, PasswordFields, passwordProblem, type DocumentId} from './account';
 import {askLocation} from '../sensors/location';
+import type {AccountDetails} from '../api/device';
+import {googleAvailable, googleSignIn, type GoogleAccount} from '../api/google';
 
 /**
  * Sign-up details, kept on this phone only. `contact` is the route's own
  * detail: the email on Google and email, the +27 number on the phone route.
  * `phone` is the optional number on Google and email; `email` is an address
- * added at the code step on the phone route.
+ * added at the code step on the phone route. `verified` is true only after a
+ * real Google sign-in (device.ts AccountDetails).
  */
-export type Account = {kind: 'google' | 'email' | 'phone'; contact: string; phone?: string; email?: string; verified: false};
+export type Account = AccountDetails;
 export type Channel = 'sms' | 'email';
 
 export const TOTAL_STEPS = 8;
@@ -52,6 +58,7 @@ export function AccountStep({
   onChoose,
   onBack,
   onSignIn,
+  onGoogle,
 }: {
   agreed: boolean;
   onAgree: (agreed: boolean) => void;
@@ -59,9 +66,24 @@ export function AccountStep({
   onBack: () => void;
   /** "Already have an account? Sign in". */
   onSignIn?: () => void;
+  /** A real Google sign-in succeeded (Firebase configured). Without it, Google is the SIMULATED route via `onChoose`. */
+  onGoogle?: (a: GoogleAccount) => void;
 }) {
   const [doc, setDoc] = useState<Extract<DocumentId, 'terms' | 'privacy'> | null>(null);
   const label = 'I agree to the Terms and the Privacy notice';
+  const live = Boolean(onGoogle) && googleAvailable();
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState('');
+  const google = async () => {
+    if (!live || !onGoogle) return onChoose('google');
+    if (busy) return;
+    setBusy(true);
+    setProblem('');
+    const r = await googleSignIn();
+    setBusy(false);
+    if (r.ok) onGoogle(r.account);
+    else setProblem(r.message);
+  };
   return (
     <View style={styles.screen}>
       <TopAppBar title="" onBack={onBack} />
@@ -93,13 +115,27 @@ export function AccountStep({
         </Panel>
       ) : null}
       <View style={{gap: 10, marginTop: space.sm}}>
-        <Key label="Continue with Google" variant="plain" arrow disabled={!agreed} onPress={() => onChoose('google')} />
+        <Key label={busy ? 'Opening Google…' : 'Continue with Google'} variant="plain" arrow disabled={!agreed} onPress={() => void google()} />
         <Key label="Sign up with email" variant="plain" arrow disabled={!agreed} onPress={() => onChoose('email')} />
         <Key label="Use your phone number" variant="signal" arrow disabled={!agreed} onPress={() => onChoose('phone')} />
       </View>
       {!agreed ? <Text style={type.caption}>Tick the box above to choose.</Text> : null}
+      {problem ? (
+        <Text style={[type.body, {color: colors.textTitle}]} accessibilityLiveRegion="polite">
+          {problem}
+        </Text>
+      ) : null}
       <Text style={type.caption}>VIGIL never asks for your Google password. Whichever you choose, your identity in VIGIL is a key made on this phone.</Text>
-      <Simulated>GOOGLE AND EMAIL SIGN-IN GO LIVE WITH FIREBASE · FOR NOW KEPT ON THIS PHONE ONLY</Simulated>
+      {live ? (
+        <>
+          <Text style={type.caption}>
+            With Google, Google and Firebase Authentication check your email and keep a sign-in record of it. VIGIL's own server never receives it, and it never enters your record.
+          </Text>
+          <Simulated>EMAIL SIGN-UP IS NOT LIVE YET · KEPT ON THIS PHONE ONLY</Simulated>
+        </>
+      ) : (
+        <Simulated>GOOGLE AND EMAIL SIGN-IN GO LIVE WITH FIREBASE · FOR NOW KEPT ON THIS PHONE ONLY</Simulated>
+      )}
       {onSignIn ? <QuietKey label="Already have an account? Sign in" onPress={onSignIn} /> : null}
     </View>
   );
@@ -113,6 +149,7 @@ export function AccountStep({
 export function PhoneStep({
   optional,
   signedUpAs,
+  verified,
   initial = '',
   onNext,
   onSkip,
@@ -120,6 +157,8 @@ export function PhoneStep({
 }: {
   optional?: 'google' | 'email';
   signedUpAs?: string;
+  /** Google confirmed `signedUpAs` (a real sign-in), rather than the SIMULATED route. */
+  verified?: boolean;
   initial?: string;
   onNext: (msisdn: string) => void;
   onSkip: () => void;
@@ -142,7 +181,7 @@ export function PhoneStep({
       </Text>
       <Text style={type.body}>{intro}</Text>
       {optional && signedUpAs ? (
-        <Text style={type.caption}>{optional === 'google' ? `Google · ${signedUpAs} · simulated` : `Email · ${signedUpAs}`}</Text>
+        <Text style={type.caption}>{optional === 'google' ? `Google · ${signedUpAs} · ${verified ? 'confirmed by Google' : 'simulated'}` : `Email · ${signedUpAs}`}</Text>
       ) : null}
       <Text style={type.label}>Mobile number</Text>
       <View style={styles.phoneRow}>

@@ -19,7 +19,8 @@ import {Chip, Eyebrow, GlassIcon, Key, Lamp, LevelMeter, ListeningLine, Panel, P
 import {colors, fonts, radii, space, THEME_CHOICE, THEME_CHOICES, TOUCH, type, type ThemeChoice} from './theme';
 import {Onboarding} from './onboarding';
 import {AccountSettings, Documents, Recovery} from './account';
-import {AlertBanner, GuardianHome, GuardianSetup, useGuardianWatch} from './guardian';
+import {AlertBanner, GuardianHome, GuardianSetup, useGuardianPush, useGuardianWatch} from './guardian';
+import {openedFromGuardianPush, registerGuardianPush} from '../api/push';
 import {MyRecord} from './record';
 import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, profileContacts, type Delivery} from '../api/device';
 import {version} from '../../package.json';
@@ -63,6 +64,15 @@ export function VigilApp() {
   const guardianAlert = useGuardianWatch(device.profile?.role === 'member' && Boolean(device.profile?.guardian) && !device.signedOut && screen !== 'guardianHome');
   // Where guardian standby's back goes: Home's "You're a guardian" card or Settings.
   const [guardianFrom, setGuardianFrom] = useState<Screen>('settings');
+  // Tapping a pushed guardian alert opens standby, like the banner: never from
+  // a check-in, any PIN screen, setup or while signed out (V5/V6).
+  useGuardianPush(() => {
+    const p = device.profile;
+    const busy = ['boot', 'onboarding', 'check', 'checked', 'end', 'recordPin', 'invitePin', 'signInPin', 'signOutPin', 'guardianSetup'].includes(screen);
+    if (!p?.guardian || busy || (p.role === 'member' && device.signedOut)) return;
+    if (screen !== 'guardianHome') setGuardianFrom(screen === 'home' ? 'home' : 'settings');
+    setScreen('guardianHome');
+  });
   // Mutarisi's amber banner while an alert needs this guardian. Only on the
   // screens below; never on the check-in or any PIN screen (V5/V6).
   const alertBanner = guardianAlert ? (
@@ -101,10 +111,19 @@ export function VigilApp() {
   useEffect(() => {
     device
       .load()
-      .then(({profile, pinsSet}) =>
+      .then(async ({profile, pinsSet}) => {
+        const member = Boolean(profile && pinsSet && !profile.signedOut);
+        // Guardian push when the build has Firebase (else nothing is sent; polling as before).
+        const guarding = Boolean(profile?.guardian && (profile.role === 'guardian' || member));
+        if (guarding) void registerGuardianPush();
+        // Launched by tapping a pushed alert: straight to standby.
+        if (guarding && profile?.role === 'member' && (await openedFromGuardianPush())) {
+          setGuardianFrom('home');
+          return setScreen('guardianHome');
+        }
         // Signed out: Welcome, until they sign in with this phone's account and their PIN.
-        setScreen(profile?.role === 'guardian' ? 'guardianHome' : profile && pinsSet && !profile.signedOut ? 'home' : 'onboarding'),
-      )
+        setScreen(profile?.role === 'guardian' ? 'guardianHome' : member ? 'home' : 'onboarding');
+      })
       .catch(() => setScreen('onboarding'));
   }, []);
 

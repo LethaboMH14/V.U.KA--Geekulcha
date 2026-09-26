@@ -446,3 +446,45 @@ Known gaps, stated rather than hidden:
   - No Firebase secrets are committed; `google-services.json` is gitignored.
 
 Evidence: `npx tsc --noEmit` is clean and `npx jest` gives 241/241 at `358a726`, plus new tests for grouping, emergency presses, the guardian timeline and accounts. Not run on a device or emulator.
+
+### Addendum, 26 Sep evening: Firebase in VIGIL (guardian push and real Google sign-in), off until `google-services.json` is added. Claude Code assistant, two parallel sub-agents, reviewed before commit
+
+**Research:**
+- The server side on #99 (`8cb8459`): `PUT /v1/guardians/{id}/token`, the `vuka_guardian_alerts` channel, and the `RoutingGuardianNotifier`, where `sim_` tokens keep in-app delivery.
+- The `@react-native-google-signin` v11 sources, which need `webClientId` to request an ID token.
+
+**Real data / references:**
+- Libraries pinned for RN 0.74.5: `@react-native-firebase/*` 21.14.0 (Firebase BoM 33.12, compileSdk 34) and `@react-native-google-signin/google-signin` 11.0.1.
+- Signing fingerprints (public), read from the published APK and `debug.keystore`, are in `app/README.md`.
+
+**Business reasoning:** a guardian who has closed the app still gets the alert; a real Google account makes sign-up credible.
+
+Changed:
+- **Build:**
+  - the google-services plugin is applied only when `app/android/app/google-services.json` exists (gitignored);
+  - Jest mocks model "not configured" (`f693d2e`);
+  - the README has the console steps (`1b4bc46`).
+- **Push** (`src/api/push.ts`):
+  - A guardian phone registers its FCM token with `PUT /v1/guardians/{guardian_id}/token` and body `{"fcm_token"}`, signed with the guardian key. It is sent once per token and again on refresh, and saved only after the server accepts it.
+  - The high-importance channel `vuka_guardian_alerts` is created at start-up (`GuardianPushChannel.kt`), and the manifest sets it as FCM's default.
+  - A foreground message shows the in-app notice and polls at once. A background handler is registered in `index.js`.
+  - A notification tap opens guardian standby, never over a check-in or PIN screen.
+  - Polling stays on in every case, and without Firebase nothing changes (`sim_poll_while_open`).
+- **Google sign-in** (`src/api/google.ts`, `GoogleConfigModule.kt`):
+  - "Continue with Google" and "Sign in with Google" use a real Google account through Firebase Authentication.
+  - `webClientId` comes from the `default_web_client_id` resource, looked up by name so the build compiles without the file.
+  - A Google account is stored with `verified: true`, prefilling the name.
+  - Without Firebase, both routes stay SIMULATED with their tags.
+- **Privacy copy:** with Google, Google and Firebase Authentication receive the sign-in, and the team's Firebase project keeps email, name and account ID. VIGIL's server never receives the email, and it never enters the record.
+
+Evidence:
+- `npx tsc --noEmit` is clean; `npx jest` gives 255/255, with 12 new tests across push, Google and device.
+- **Not verified:**
+  - Kotlin, the manifest and Gradle are unbuilt, because this container has no Android SDK.
+  - There has been no real token, push or Google sign-in on a device.
+  - No Firebase project has this app registered yet.
+
+Needs:
+- Lethabo or Sibusiso register `com.teamsonar.vuka` in the team's Firebase project, add the fingerprints and enable Google sign-in, then download `google-services.json`.
+- `FCM_ACCESS_TOKEN` expires after about 1 hour, so it must be refreshed on the server before a demo.
+- Declining notifications on Android 13+ still registers the token, but pushes won't show; polling still delivers.

@@ -19,6 +19,7 @@ import {version} from '../../package.json';
 import {device, type Delivery, type PasswordHash, type RecoveryChannel} from '../api/device';
 import {AccountStep, CodeStep, EmailStep, InviteStep, PermissionsStep, PhoneStep, StepMark, type Account, type Channel} from './signup';
 import {AccountOnThisPhone, SignIn} from './account';
+import {googleName} from '../api/google';
 
 type Step =
   | 'welcome'
@@ -71,14 +72,16 @@ export function Onboarding({
   const [duress, setDuress] = useState('');
   const [note, setNote] = useState('');
 
+  /** A real Google sign-in (Firebase configured) filled the account: there is no Google email screen to go back to. */
+  const realGoogle = account?.kind === 'google' && account.verified;
   /** The step Back leads to; null leaves the app (welcome), and the record and invite steps stay put. */
   const previous = (s: Step): Step | null =>
     ({
       welcome: null,
       account: 'welcome',
       email: 'account',
-      // Phone route: account → phone → code. Google and email: account → email → phone (optional) → code.
-      phone: route === 'phone' ? 'account' : 'email',
+      // Phone route: account → phone → code. Google and email: account → email → phone (optional) → code; real Google: account → phone.
+      phone: route === 'phone' || realGoogle ? 'account' : 'email',
       code: 'phone',
       // Google with the number skipped goes straight from phone to name (no email code on Google).
       name: !account ? 'account' : account.kind === 'google' && !account.phone ? 'phone' : 'code',
@@ -188,6 +191,17 @@ export function Onboarding({
             onAgree={setAgreed}
             onBack={back}
             onSignIn={() => setStep('signIn')}
+            onGoogle={g => {
+              // Real Google sign-in: the email Google confirmed, and the name from the Google profile.
+              setPassword(undefined);
+              setCodeVia(undefined);
+              setRoute('google');
+              setAccount({kind: 'google', contact: g.email, verified: true});
+              const n = googleName(g);
+              if (!name.trim() && n.first) setName(n.first.slice(0, 30));
+              if (!surname.trim() && n.last) setSurname(n.last.slice(0, 40));
+              setStep('phone');
+            }}
             onChoose={k => {
               // A new route starts clean: no email, number or password from an earlier choice.
               setAccount(null);
@@ -201,16 +215,21 @@ export function Onboarding({
           <PhoneStep
             optional={route === 'google' || route === 'email' ? route : undefined}
             signedUpAs={route !== 'phone' ? account?.contact : undefined}
+            verified={realGoogle}
             initial={(route === 'phone' ? account?.contact : account?.phone) ?? ''}
             onBack={back}
             onSkip={() => {
               // Drop any number given earlier; Google then goes on to name, email to a code by email.
-              setAccount(a => (a ? {kind: a.kind, contact: a.contact, verified: false} : a));
+              setAccount(a => (a ? (a.kind === 'google' ? {kind: a.kind, contact: a.contact, verified: a.verified} : {kind: a.kind, contact: a.contact, verified: false}) : a));
               setStep(route === 'google' ? 'name' : 'code');
             }}
             onNext={msisdn => {
               setAccount(a =>
-                route === 'phone' || !a ? {kind: 'phone', contact: msisdn, verified: false} : {kind: a.kind, contact: a.contact, phone: msisdn, verified: false},
+                route === 'phone' || !a
+                  ? {kind: 'phone', contact: msisdn, verified: false}
+                  : a.kind === 'google'
+                    ? {kind: a.kind, contact: a.contact, phone: msisdn, verified: a.verified} // the number itself is not verified
+                    : {kind: a.kind, contact: a.contact, phone: msisdn, verified: false},
               );
               setStep('code');
             }}

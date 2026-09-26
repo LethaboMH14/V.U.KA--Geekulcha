@@ -81,10 +81,10 @@ export type Profile = {
   /** Set when the member typed a server in Settings: discovery then leaves it alone. */
   serverPinned?: boolean;
   /**
-   * Sign-up details (Mutarisi's flow). Not live yet: kept on this phone only,
-   * never sent to the server and never in the record. Identity is the key.
+   * Sign-up details (Mutarisi's flow). Kept on this phone, never sent to the
+   * VIGIL server and never in the record. Identity is the key.
    */
-  account?: {kind: 'google' | 'email' | 'phone'; contact: string; phone?: string; email?: string; verified: false};
+  account?: AccountDetails;
   surname?: string;
   /**
    * Contact details as last edited in Settings (Mutarisi's Edit profile). Once
@@ -103,8 +103,11 @@ export type Profile = {
    * Who this phone guards and its guardian key id (G5). A member can be
    * someone else's guardian too: this slot is separate from their own record
    * (memberSubjectId is the guarded member's record, never this phone's).
+   * push: the FCM token last accepted by that server for this slot (so the
+   * same token is not sent twice); absent while the server holds the
+   * enrolment placeholder and alerts come by polling.
    */
-  guardian?: {guardianId: string; keyId: string; memberName: string; memberSubjectId?: string};
+  guardian?: {guardianId: string; keyId: string; memberName: string; memberSubjectId?: string; push?: {token: string; server: string}};
   /**
    * CEM-1: how long this member's accepted check-in entries took (ms), newest
    * last, at most 20. Stays on this phone; only "slower than usual" (a
@@ -127,6 +130,17 @@ export type Profile = {
    */
   signedOut?: boolean;
 };
+
+/**
+ * How the member signed up. `contact` is the route's own detail (the email
+ * on Google and email, the +27 number on phone). `verified` is true only
+ * when a real Google sign-in through Firebase Authentication confirmed the
+ * email (src/api/google.ts); every other route, and the SIMULATED Google
+ * route, is unverified: no SMS or email service is connected.
+ */
+export type AccountDetails =
+  | {kind: 'google'; contact: string; phone?: string; email?: string; verified: boolean}
+  | {kind: 'email' | 'phone'; contact: string; phone?: string; email?: string; verified: false};
 
 export type PasswordHash = {salt: string; hash: string};
 export type RecoveryChannel = 'email' | 'phone';
@@ -556,8 +570,9 @@ export function createDevice(b: Backend) {
     },
 
     /**
-     * Keeps the sign-up details on this phone (never sent; not live sign-in
-     * yet): the account, the email route's password hash, and where reset
+     * Keeps the sign-up details on this phone (never sent to the VIGIL
+     * server; a real Google sign-in went to Google and Firebase Authentication
+     * only): the account, the email route's password hash, and where reset
      * codes go (the channel the sign-up code went to).
      */
     async setAccount(account: Profile['account'], surname?: string, extra: {password?: PasswordHash; recovery?: RecoveryChannel} = {}) {
@@ -603,8 +618,9 @@ export function createDevice(b: Backend) {
     /**
      * Sign-in, first step: does this match the account saved on THIS phone?
      * LOCAL ONLY: there is no accounts server, so an account made on another
-     * phone can never be found here. Google (SIMULATED) matches the account
-     * email when no email password is set; an email account needs its
+     * phone can never be found here. Google (real through Firebase when the
+     * build is configured, else SIMULATED) matches the account email when no
+     * email password is set; an email account needs its
      * password. Nothing is queued, sent or recorded.
      */
     async findAccount(route: SignInRoute): Promise<boolean> {
@@ -846,8 +862,9 @@ export function createDevice(b: Backend) {
 
     /**
      * Guardians: accept a member's invite with this phone's own key (#96).
-     * The consent (POPIA s18) is given on screen before this is called. No
-     * push token yet: alerts are fetched while the app is open.
+     * The consent (POPIA s18) is given on screen before this is called. It
+     * enrols with a placeholder token (alerts are fetched while the app is
+     * open); setGuardianPushToken replaces it when Firebase is configured.
      */
     async becomeGuardian(code: string, memberName: string): Promise<Profile> {
       const {publicKey} = await b.signer.identity();
@@ -871,6 +888,29 @@ export function createDevice(b: Backend) {
       }
       await b.setProfile(JSON.stringify(profile));
       return profile;
+    },
+
+    /**
+     * Guardians: replace the enrolment placeholder with this phone's FCM
+     * registration token (PUT /v1/guardians/{id}/token, signed with the
+     * guardian key; the server accepts no other signer). Sent once per token,
+     * slot and server. If it fails, nothing is stored and the server keeps
+     * `sim_poll_while_open`, so alerts still arrive by polling. The token is
+     * never logged or put in an error message here.
+     */
+    async setGuardianPushToken(token: string): Promise<'sent' | 'unchanged'> {
+      const g = profile?.guardian;
+      if (!profile || !g) throw new Error('not a guardian yet');
+      if (typeof token !== 'string' || !token || token.startsWith('sim_')) throw new Error('not a device push token');
+      const server = profile.serverUrl;
+      if (g.push?.token === token && g.push.server === server) return 'unchanged';
+      await b.request(server, 'PUT', `/v1/guardians/${encodeURIComponent(g.guardianId)}/token`, JSON.stringify({fcm_token: token}), g.keyId);
+      // Only if this phone still holds the same slot on the same server.
+      if (profile?.guardian?.guardianId === g.guardianId && profile.serverUrl === server) {
+        profile = {...profile, guardian: {...profile.guardian, push: {token, server}}};
+        await b.setProfile(JSON.stringify(profile));
+      }
+      return 'sent';
     },
 
     /** Guardians: the alerts delivered to this guardian, newest first. */
