@@ -26,6 +26,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, status
+from starlette.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
 from starlette.responses import JSONResponse
@@ -403,6 +404,33 @@ def create_app(database=None) -> FastAPI:
         openapi_url=None,
     )
     app.state.database = store
+
+    # PROPOSED (26 Sep): lets a browser-hosted dashboard call the read-only
+    # public surface (/healthz, /v1/anchor/latest, /v1/anchor/proof/{head})
+    # directly. Every other route needs a valid §7/§9 signature, which no
+    # amount of permissive CORS lets a browser forge, so this widens *reach*,
+    # not *authority*. GET-only, and only origins the operator names — never
+    # a wildcard, and never with credentials (there is no cookie/session to
+    # leak). Set VUKA_DASHBOARD_ORIGINS to a comma-separated list; unset
+    # defaults to common local dev ports so a fresh checkout works with zero
+    # configuration, per docs/DASHBOARD-INTEGRATION.md.
+    dashboard_origins = [
+        origin.strip()
+        for origin in os.getenv(
+            "VUKA_DASHBOARD_ORIGINS",
+            "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000",
+        ).split(",")
+        if origin.strip()
+    ]
+    if dashboard_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=dashboard_origins,
+            allow_methods=["GET"],
+            allow_headers=["*"],
+            allow_credentials=False,
+            max_age=600,
+        )
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(_request: Request, _exc: RequestValidationError):
