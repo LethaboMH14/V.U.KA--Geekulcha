@@ -22,7 +22,7 @@
 
 ### Beat 1 — The Hook
 
-Imagine someone you love, alone at night, forced to hand over their phone. A stranger makes them open their banking app and transfer their money. Their face. Their fingerprint. Then he is gone — no proof they were forced. Just a payment that says they did it. It happens to people like you, every day.
+Imagine someone you love, forced to hand over their phone. A stranger makes them open their banking app and transfer their money. Their face. Their fingerprint. Then he is gone — no proof they were forced. Just a payment saying they did it. It happens every day: seventeen thousand kidnappings in South Africa last year.
 
 ### Beat 2 — The Problem
 
