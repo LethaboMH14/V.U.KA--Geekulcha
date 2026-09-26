@@ -103,3 +103,65 @@ def test_anchor_status_changes_are_logged_once_each(sim_api, capsys):
     out = capsys.readouterr().out
     assert out.count("vuka: anchor status not_due") == 1
     assert out.count("vuka: anchor status retry_pending") == 1
+
+
+def test_an_unsignable_deadline_never_stops_guardian_alerts(sim_api, monkeypatch):
+    """The 26 Sep Azure outage: no server signing key, so a due deadline's
+    server-signed `no_answer` could not be written. The scheduler raised out of
+    every worker step, and no guardian alert, bank signal or anchor ran for
+    anyone. A failing deadline must roll back and wait; delivery must go on."""
+    from datetime import timedelta
+    from server.tests.test_guardian_lifecycle import add_real_guardian
+    store, client, subject, key, event, post, now, connect = sim_api
+    add_real_guardian(sim_api)
+    assert post(signal(event)).status_code == 201  # schedules a deadline for this signal
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject,))
+        cur.execute("SELECT incident_id::text FROM incidents")
+        request_alarm(cur, cur.fetchone()[0], trigger="duress_signal", now=now[0])
+    monkeypatch.delenv("VUKA_SERVER_ED25519_KEY_B64", raising=False)  # exactly Azure's state
+    later = now[0] + timedelta(minutes=5)  # the signal's deadline is well past due
+
+    delivered = step(store, later, bank_sender=None, environ={})
+
+    assert delivered >= 1  # the duress alert still reached the guardian
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT state FROM outbox WHERE kind='guardian_alert'")
+        assert cur.fetchone()[0] == "done"
+        cur.execute("SELECT count(*) FROM signal_deadlines WHERE outcome IS NULL")
+        assert cur.fetchone()[0] >= 1  # the unsignable outcome rolled back; retried next tick
+
+
+def test_the_scheduler_isolates_a_subject_it_cannot_sign_for(sim_api, monkeypatch, caplog):
+    """Layer 1: the scheduler itself must not raise; the failing subject is
+    rolled back, logged (once per window, not per second) and retried."""
+    from datetime import timedelta
+    from server import scheduler
+    store, client, subject, key, event, post, now, connect = sim_api
+    assert post(signal(event)).status_code == 201
+    monkeypatch.delenv("VUKA_SERVER_ED25519_KEY_B64", raising=False)
+    later = now[0] + timedelta(minutes=5)
+    with caplog.at_level("ERROR"):
+        assert scheduler.tick(store, later) is True
+        assert scheduler.tick(store, later + timedelta(seconds=1)) is True
+    failures = [r for r in caplog.records if "scheduler deadlines failed for " + subject in r.getMessage()]
+    assert len(failures) == 1  # attempted, logged once, not once per tick
+
+
+def test_a_scheduler_that_raises_does_not_stop_delivery(sim_api, monkeypatch):
+    """Layer 2: whatever the scheduler does, the worker step still delivers."""
+    from server import run_workers
+    from server.tests.test_guardian_lifecycle import add_real_guardian
+    store, client, subject, key, event, post, now, connect = sim_api
+    add_real_guardian(sim_api)
+    assert post(signal(event)).status_code == 201
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject,))
+        cur.execute("SELECT incident_id::text FROM incidents")
+        request_alarm(cur, cur.fetchone()[0], trigger="no_answer", now=now[0])
+
+    def broken_tick(_store, _now):
+        raise RuntimeError("sim_scheduler_failure")
+
+    monkeypatch.setattr(run_workers, "tick", broken_tick)
+    assert step(store, now[0], environ={}) == 1

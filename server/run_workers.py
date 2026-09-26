@@ -61,11 +61,20 @@ def guardian_notifier(store, now, environ=os.environ):
 def step(store, now, *, bank_sender=None, batches=None, environ=os.environ):
     """One tick. The notifier shares this tick's clock: delivery evidence must
     never be stamped later than the time the worker acknowledges it."""
-    tick(store, now)
-    # Location fixes live 24 h past their incident's close (ADR-0048).
-    from server.locations import purge_closed
-    with closing(store._connection()) as conn, conn, conn.cursor() as cur:
-        purge_closed(cur, now)
+    # Each stage is isolated: on 26 Sep a scheduler failure (no server signing
+    # key on Azure) raised out of this step every second, so guardian alerts,
+    # bank signals and anchoring never ran for anyone.
+    try:
+        tick(store, now)
+    except Exception:
+        logging.exception("vuka: scheduler tick failed; delivery and anchoring continue")
+    try:
+        # Location fixes live 24 h past their incident's close (ADR-0048).
+        from server.locations import purge_closed
+        with closing(store._connection()) as conn, conn, conn.cursor() as cur:
+            purge_closed(cur, now)
+    except Exception:
+        logging.exception("vuka: location purge failed; delivery and anchoring continue")
     notifier = guardian_notifier(store, now, environ)
     # Guardian alerts are claimed on their own, so a bank outage (every
     # bank_signal failing) can never hold back a duress alert.

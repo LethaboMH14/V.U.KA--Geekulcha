@@ -23,7 +23,9 @@ GENESIS_HASH = "0" * 64
 MAX_APPEND_ATTEMPTS = 5
 NONCE_TTL = timedelta(hours=24)
 MAX_CLOCK_SKEW_SECONDS = 120
-SCHEMA_INIT_LOCK = 864204  # Fixed namespace; distinct from anchoring.py's COORDINATOR_LOCK (864203).
+# Advisory-lock keys share one namespace: anchoring.COORDINATOR_LOCK is 864203
+# and scheduler.SCHEDULER_LOCK is 864204 (server/tests/test_advisory_locks.py).
+SCHEMA_INIT_LOCK = 864205
 
 CREATE_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS chain_entries (

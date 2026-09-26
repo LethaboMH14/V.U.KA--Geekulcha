@@ -22,6 +22,8 @@ def batch_store(sim_database):
     with sim_database() as conn, conn.cursor() as cur:
         cur.execute(OUTBOX_SCHEMA_SQL)
         cur.execute("CREATE TABLE subject_heads(subject_id TEXT PRIMARY KEY,event_hash CHAR(64) NOT NULL)")
+        # The coordinator also anchors every incident's pre_incident_head (the head a held export ends at).
+        cur.execute("CREATE TABLE incidents(pre_incident_head CHAR(64) NOT NULL)")
     return sim_database
 
 
