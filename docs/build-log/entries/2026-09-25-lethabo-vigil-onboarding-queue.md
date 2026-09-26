@@ -318,3 +318,48 @@ Evidence:
 - jest 214/214.
 - journey-e2e: a duress PIN at a hold-for-help check-in raises the alarm on the real server.
 - Device tests cover both roles on one phone and the tunnel / Azure / adoption cases of a server move.
+
+### Addendum, 26 Sep afternoon: Mutarisi's sign-up flow, a checked release, and the demo run-sheet (0.0.14). Claude Code assistant, at Lethabo's request
+
+**Research:**
+- Read `c41ee8c` (the sign-up port) and `0f96a69` (the CEM-1 measurements). Neither had a build-log line.
+- Downloaded and inspected the published `vigil-demo` assets. Nothing on the release was changed from this session.
+
+**Real data / references** (FACT, measured in this session):
+- `VIGIL.apk` sha256 is `b1df8cef…a44e7` (matches GitHub's digest). It is `com.teamsonar.vuka` 0.0.13, versionCode 13, signed by `CN=Team SONAR VUKA` (cert SHA-256 `ddfbf916…e62d`, the upload key held only on Lethabo's machine).
+- Its JS bundle has hold-for-help, the themes and "Be someone's guardian", but **not** the 8-step sign-up.
+- `VIGIL-download-qr.png` decodes (OpenCV) to `…/releases/download/vigil-demo/VIGIL.apk`, and `VIGIL-release-page-qr.png` to `…/releases/tag/vigil-demo`.
+- `server.json` points at a laptop quick tunnel (updated 10:46Z).
+- CEM-1 figures: see `docs/eval/cem1-measurements.md`. The scream catch rate is 6.5% under V4 and 10.2% under CEM-1 (n = 108, FSD50K eval).
+
+**Business reasoning:** judges install from the QR, and a sign-up that looks like a real product's (while holding no account data server-side) makes the demo credible without widening what we store.
+
+**Correction to the addendum above:** "accounts not ported, on purpose" no longer holds. `c41ee8c` ports Mutarisi's flow:
+- welcome;
+- account (Google / email / phone);
+- number;
+- code (SIMULATED: any 6 digits);
+- name and surname;
+- permissions;
+- both PINs;
+- invite guardians.
+
+The contact detail and surname are kept in the phone's profile only. They are never sent and never enter the record, and backup and device transfer are excluded (T42). Identity is still the key made on the phone.
+
+Changed in this session:
+- **Permissions step:** a permission refused with "Don't ask again" (microphone or notifications) left the member stuck on the step. The row now offers **Open settings**, with a line explaining why.
+- **Wording:** two lines claimed what isn't built. "One account per number" is not enforced, and "With Google we use your name and email" is not live. Both are replaced with what is true.
+- **Version:** 0.0.14 (versionCode 14), so the next APK installs over 0.0.13.
+- **Scripts:**
+  - `app/scripts/publish-server.mjs` refuses non-https addresses and anything whose `/healthz` isn't 200, then replaces `server.json` via `gh`;
+  - `app/scripts/publish-apk.mjs` prints the sha256 and replaces `VIGIL.apk` under the same name, so the link and QR stay valid. Neither script touches the signing key.
+- **`app/README.md`:** a run-sheet covering the server on port 8000, the tunnel, `server.json`, the emulator test build and publishing.
+
+Evidence:
+- `npx tsc --noEmit` is clean; `npx jest` gives 214/214.
+- Script refusal paths were run: http rejected (exit 2), non-200 health rejected (exit 1), missing APK rejected (exit 2), and a `--dry-run` digest of the published APK matches GitHub's.
+
+Not done (blocked):
+- **No APK was built here.** This cloud session has no Android SDK (`dl.google.com` is denied by the environment's network policy), and only the team key can produce an update installable over 0.0.13.
+- **Azure's `/healthz` wasn't checked.** The host is denied by the same policy.
+- **Not run on a device:** the sign-up flow on the emulator or a phone.

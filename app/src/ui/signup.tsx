@@ -9,7 +9,7 @@
  * build. The member's identity stays the key made on this phone.
  */
 import React, {useEffect, useState} from 'react';
-import {AppState, PermissionsAndroid, Platform, StyleSheet, Text, TextInput, View} from 'react-native';
+import {AppState, Linking, PermissionsAndroid, Platform, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Eyebrow, Key, Lamp, Panel, QuietKey, TopAppBar} from './components';
 import {colors, fonts, radii, space, type} from './theme';
 import {canFullScreen, openFullScreenSettings} from '../sensors/detection';
@@ -36,7 +36,7 @@ export function AccountStep({onChoose, onBack}: {onChoose: (k: Account['kind']) 
         <Key label="Sign up with email" variant="plain" arrow onPress={() => onChoose('email')} />
         <Key label="Use your phone number" variant="signal" arrow onPress={() => onChoose('phone')} />
       </View>
-      <Text style={type.caption}>With Google we use your name and email to set up your profile. We never see your Google password.</Text>
+      <Text style={type.caption}>VIGIL never asks for your Google password. Whichever you choose, your identity in VIGIL is a key made on this phone.</Text>
       <Simulated>GOOGLE AND EMAIL SIGN-IN GO LIVE WITH FIREBASE · FOR NOW KEPT ON THIS PHONE ONLY</Simulated>
     </View>
   );
@@ -72,7 +72,7 @@ export function PhoneStep({onNext, onSkip, onBack}: {onNext: (msisdn: string) =>
       <Text style={type.caption}>
         {tried && !valid
           ? 'Enter a valid South African mobile number — 9 digits, not starting with 0.'
-          : 'One account per number. South African SIMs are RICA-registered.'}
+          : 'Kept on this phone only. Nothing is sent until live sign-in.'}
       </Text>
       <View style={{flexGrow: 1}} />
       <Key label="Send code" variant={valid ? 'signal' : 'plain'} onPress={() => (valid ? onNext(`+27${digits}`) : setTried(true))} />
@@ -152,6 +152,8 @@ export function PermissionsStep({onNext, onBack}: {onNext: () => void; onBack: (
   const [notes, setNotes] = useState<PermState>('needed');
   const [loc, setLoc] = useState<PermState>('needed');
   const [full, setFull] = useState<PermState>('needed');
+  /** Permissions Android will no longer ask for ("Don't ask again"): only Settings can grant them. */
+  const [blocked, setBlocked] = useState<string[]>([]);
 
   const refresh = async () => {
     if (Platform.OS !== 'android') {
@@ -171,12 +173,14 @@ export function PermissionsStep({onNext, onBack}: {onNext: () => void; onBack: (
   }, []);
 
   const ask = async (p: string) => {
-    await PermissionsAndroid.request(p as never).catch(() => undefined);
+    const r = await PermissionsAndroid.request(p as never).catch(() => undefined);
+    if (r === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) setBlocked(b => (b.includes(p) ? b : [...b, p]));
     await refresh();
   };
-  const rows: {title: string; why: string; state: PermState; onPress: () => void; required: boolean}[] = [
-    {title: 'Microphone', why: 'To listen for trouble. Sound is judged on this phone and discarded within three seconds.', state: mic, onPress: () => void ask(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO), required: true},
-    {title: 'Notifications', why: 'So a check-in can reach you, and VIGIL can show that it is listening.', state: notes, onPress: () => void ask(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS), required: true},
+  const settingsOnly = (p: string, state: PermState) => state === 'needed' && blocked.includes(p);
+  const rows: {title: string; why: string; state: PermState; onPress: () => void; required: boolean; settings?: boolean}[] = [
+    {title: 'Microphone', why: 'To listen for trouble. Sound is judged on this phone and discarded within three seconds.', state: mic, onPress: () => void ask(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO), required: true, settings: settingsOnly(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, mic)},
+    {title: 'Notifications', why: 'So a check-in can reach you, and VIGIL can show that it is listening.', state: notes, onPress: () => void ask(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS), required: true, settings: settingsOnly(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS, notes)},
     {title: 'Location', why: 'Only for 30 minutes after a check-in, and your guardians see it only if they were alerted.', state: loc, onPress: () => void askLocation().then(refresh), required: false},
     {title: 'Full-screen check-ins', why: 'So a check-in can open over other apps and the lock screen.', state: full, onPress: openFullScreenSettings, required: false},
   ];
@@ -201,7 +205,7 @@ export function PermissionsStep({onNext, onBack}: {onNext: () => void; onBack: (
                 </Text>
                 <Text style={[type.caption, {marginTop: 2}]}>{r.why}</Text>
               </View>
-              {r.state === 'needed' ? <QuietKey label="Allow" onPress={r.onPress} /> : <Text style={type.caption}>{r.state === 'granted' ? 'Allowed' : '—'}</Text>}
+              {r.state === 'needed' ? <QuietKey label={r.settings ? 'Open settings' : 'Allow'} onPress={r.settings ? () => void Linking.openSettings() : r.onPress} /> : <Text style={type.caption}>{r.state === 'granted' ? 'Allowed' : '—'}</Text>}
             </View>
           ))}
         </View>
@@ -211,7 +215,11 @@ export function PermissionsStep({onNext, onBack}: {onNext: () => void; onBack: (
       ) : null}
       <View style={{flexGrow: 1}} />
       <Key label="Continue" variant={ready ? 'signal' : 'plain'} onPress={() => ready && onNext()} />
-      {!ready ? <Text style={type.caption}>Allow the microphone and notifications to continue.</Text> : null}
+      {!ready ? (
+        <Text style={type.caption}>
+          {blocked.length ? 'Android won\u2019t ask again. Tap Open settings, allow it under Permissions, then come back.' : 'Allow the microphone and notifications to continue.'}
+        </Text>
+      ) : null}
     </View>
   );
 }
