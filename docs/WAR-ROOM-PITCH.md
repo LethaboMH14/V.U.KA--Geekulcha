@@ -12,12 +12,12 @@
 | 2 · Problem | Why nothing today fixes it | I, B | 93 |
 | 3 · Solution | What VUKA is | I | 32 |
 | 4A · How it works | The mechanism — automatic | T, U | 54 |
-| 4B · The record | Where it lives; automatic fingerprint | T, S | 89 |
+| 4B · The record | Where it lives; one matched record | T, S, B | 98 |
 | 5 · Why it works | The sale | I, T | 77 |
 | 6 · Business | There is a business | B | 51 |
 | 7 · Compliance | Neutralise the objections; deployability | S, B | 52 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **600** |
+| | | **Total** | **609** |
 
 ---
 
@@ -41,7 +41,7 @@ Nothing to press. Nothing to enter. They just go about their day. VIGIL listens 
 
 ### Beat 4B — The record
 
-That record is made automatically. It goes to their phone, and to their guardians' phone — so it survives if the phone is stolen. It is hashed into a fingerprint, signed, chained, and written to a public ledger — automatically. The victim does nothing, and the proof exists anyway. That is what sets VUKA apart. Anyone can verify it without trusting us. And we know exactly what counts as a duress signal: it is defined by law and confirmed with duress experts. Nothing personal goes on the ledger; it is POPIA-compliant.
+That record is made automatically. It goes to their phone, and to their guardians' phone — so it survives if the phone is stolen. It is hashed into a fingerprint, signed, chained, and written to a public ledger. The victim does nothing, and the proof exists anyway — that is what sets VUKA apart. And the proof they hold is the same record the bank, the insurer and a court audit: one chain, matched. We know exactly what counts as a duress signal — defined by law, confirmed with duress experts. Nothing personal goes on the ledger; it is POPIA-compliant.
 
 ### Beat 5 — Why it works
 
@@ -101,4 +101,4 @@ Here's what we want from this room. One insurer, five thousand members, twelve m
 - **POPIA s26:** biometric information (read to include voice and video) is *special personal information*; a duress event is personal information. **Nothing personal or biometric goes on-chain** — we anchor a keyed hash of a pseudonym. Correction/deletion at **ss 24–25**; deleting the off-chain payload is the erasure mechanism. Information Officer registration is **pending**.
 - **No audio is stored** — YAMNet emits a label and a score on-device; raw audio is discarded.
 - **ECTA s15(3)(a)–(c):** weight turns on how the record was generated, how its integrity was maintained, and how the originator was identified. Never say "court-admissible"; we say **"built to maximise the ECTA s15 reliability factors."** Attestation is **`stored_unverified`** (gap G32).
-- **Access model:** public hash; evidence encrypted to a **victim-held key**; bank/insurer per-case on her consent; court/SAPS on legal process; guardians are a **blind backup**.
+- **Access model:** the public hash is open to anyone; the evidence stays encrypted to a **victim-held key**; the **bank/insurer** pull it per case on her consent; a **court/SAPS** compels production on legal process; guardians are a **blind backup**. **Critically, the proof the victim holds and the record the bank, insurer or court audits are the same chain — so they always match.**
