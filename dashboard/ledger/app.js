@@ -88,16 +88,79 @@ function extLink(href, text) {
 }
 
 // ---------------------------------------------------------------------------
-// status: a 6px dot plus a text label (DESIGN.md); the label carries the state,
-// the dot's colour only repeats it
+// status: a Carbon status indicator, a 16px shape plus a text label
+// (DESIGN.md "Reference system"). The label carries the state; shape and colour
+// only repeat it. Shapes are built with createElementNS, never innerHTML.
 // ---------------------------------------------------------------------------
+/** Page states → Carbon kinds: success, error, warning, idle. */
+function statusKind(state) {
+  if (state === "ok" || state === "live-verified" || state === "success") return "success";
+  if (state === "failed" || state === "fail" || state === "error") return "error";
+  if (state === "archived" || state === "warn" || state === "warning") return "warning";
+  return "idle";
+}
+/** A 16px Carbon status shape (success check-circle, error x-circle, warning triangle, idle hollow circle). */
+export function statusIcon(state) {
+  const kind = statusKind(state);
+  const icon = svg("svg", { class: "cds-status__icon", "data-kind": kind, viewBox: "0 0 16 16", width: 16, height: 16, "aria-hidden": "true", focusable: "false" });
+  const CIRCLE = "M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Z";
+  if (kind === "success") {
+    icon.append(svg("path", { class: "cds-status__shape", "fill-rule": "evenodd", d: `${CIRCLE}M7 10.8 4.2 8l.9-.9L7 9l3.9-3.9.9.9Z` }));
+  } else if (kind === "error") {
+    icon.append(svg("path", { class: "cds-status__shape", "fill-rule": "evenodd", d: `${CIRCLE}M10.7 11.5 8 8.8l-2.7 2.7-.8-.8L7.2 8 4.5 5.3l.8-.8L8 7.2l2.7-2.7.8.8L8.8 8l2.7 2.7Z` }));
+  } else if (kind === "warning") {
+    icon.append(
+      svg("path", { class: "cds-status__shape", d: "M8 1.2 15.2 14.5H.8Z" }),
+      svg("path", { class: "cds-status__glyph", d: "M7.3 5.5h1.4v4.8H7.3ZM8 11.3a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7Z" }),
+    );
+  } else {
+    icon.append(svg("circle", { class: "cds-status__shape", cx: 8, cy: 8, r: 6.5 }));
+  }
+  return icon;
+}
 function statusMark(state, label) {
-  const span = el("span", "status");
+  const span = el("span", "cds-status");
   span.dataset.state = state;
-  const dot = el("span", "dot");
-  dot.setAttribute("aria-hidden", "true");
-  span.append(dot, el("span", "status-label", label));
+  span.append(statusIcon(state), el("span", "cds-status__label", label));
   return span;
+}
+/** A Carbon inline notification: 3px left border, status icon, title and subtitle. */
+function inlineNotif(state, title, subtitle) {
+  const box = el("div", "cds-notif");
+  box.dataset.kind = statusKind(state);
+  const icon = el("span", "cds-notif__icon");
+  icon.setAttribute("aria-hidden", "true");
+  icon.append(statusIcon(state));
+  const text = el("div", "cds-notif__text");
+  if (title) text.append(el("p", "cds-notif__title", title));
+  if (subtitle) text.append(el("p", "cds-notif__subtitle", subtitle));
+  box.append(icon, text);
+  return box;
+}
+/** Carbon's 16px copy icon. */
+function copyIcon() {
+  const icon = svg("svg", { viewBox: "0 0 16 16", width: 16, height: 16, "aria-hidden": "true", focusable: "false" });
+  icon.append(
+    svg("path", { d: "M14 5v9H5V5h9m0-1H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Z" }),
+    svg("path", { d: "M2 9H1V2a1 1 0 0 1 1-1h7v1H2Z" }),
+  );
+  return icon;
+}
+/** A hash in code-02 with a ghost icon button that copies the full value. */
+function hashCell(full, keep, what) {
+  const wrap = el("span", "payload");
+  const short = el("span", "cds-code", shortHex(full, keep));
+  short.title = full;
+  short.setAttribute("aria-hidden", "true"); // screen readers get the full value below
+  const sr = el("span", "sr-only", full);
+  const btn = el("button", "cds-btn cds-btn--ghost cds-btn--sm cds-btn--icon");
+  btn.type = "button";
+  btn.setAttribute("aria-label", `Copy ${what}`);
+  btn.title = "Copy";
+  btn.append(copyIcon());
+  btn.addEventListener("click", () => copyText(full, btn, sr));
+  wrap.append(short, sr, btn);
+  return wrap;
 }
 function setPill(container, state, label) {
   if (!container) return;
@@ -114,9 +177,11 @@ function failLabel(message) {
 }
 /** Copy a value; if the clipboard is blocked, select the text node instead. */
 function copyText(text, button, target) {
+  // an icon-only button keeps its icon and shows the feedback as a tooltip (data-feedback)
+  const iconOnly = button.classList.contains("cds-btn--icon");
   const done = (label) => {
-    button.textContent = label;
-    setTimeout(() => { button.textContent = "Copy"; }, 1500);
+    if (iconOnly) button.dataset.feedback = label; else button.textContent = label;
+    setTimeout(() => { if (iconOnly) delete button.dataset.feedback; else button.textContent = "Copy"; }, 1500);
   };
   const fallback = () => {
     try {
@@ -137,10 +202,11 @@ function copyText(text, button, target) {
 // ---------------------------------------------------------------------------
 // notices (module or pinned-file problems)
 // ---------------------------------------------------------------------------
-function notice(text) {
-  const p = el("p", "notice", text);
-  $("notices").append(p);
-  return p;
+/** A page-level problem, shown as a Carbon inline notification (warning unless told otherwise). */
+function notice(text, { kind = "warning", title = "" } = {}) {
+  const box = inlineNotif(kind, title, text);
+  $("notices").append(box);
+  return box;
 }
 
 /** The non-default-server notice follows the server in use (boot, Apply, Use the default server). */
@@ -151,14 +217,14 @@ function serverNotice(defaultServer) {
   // A shared link can carry ?server=; say so plainly. The server only supplies
   // proofs and the feed: every root is still read from the Hedera mirror on the
   // pinned topic, so a different server cannot make a record verify.
-  state.serverNotice = notice(`This page is using the ANCHOR server ${hostOf(state.server)}, not the default ${hostOf(defaultServer)}. Its feed and "latest anchor" are its own claims; record roots are still read from the Hedera mirror on the pinned topic. Settings → Use the default server switches back.`);
+  state.serverNotice = notice(`This page is using the ANCHOR server ${hostOf(state.server)}, not the default ${hostOf(defaultServer)}. Its feed and "latest anchor" are its own claims; record roots are still read from the Hedera mirror on the pinned topic. Settings → Use the default server switches back.`, { title: "Not the default server" });
 }
 
 async function loadModule(url, label) {
   try {
     return await import(url);
   } catch (error) {
-    notice(`${label} did not load, so part of this page cannot run. ${error?.message ?? ""}`.trim());
+    notice(`${label} did not load, so part of this page cannot run. ${error?.message ?? ""}`.trim(), { kind: "error" });
     return null;
   }
 }
@@ -228,12 +294,30 @@ function setSource(id, pillState, pillLabel, detail) {
   const li = $(id);
   if (!li) return;
   li.dataset.state = pillState;
+  li.querySelector(".src-icon")?.replaceChildren(statusIcon(pillState));
   const label = li.querySelector(".src-state");
   if (label) label.textContent = pillLabel;
   const d = $(`${id}-detail`);
   if (d) d.textContent = detail;
-  // the header's network dot follows the mirror, the only source the ledger is read from
-  if (id === "src-mirror") { const dot = $("net-dot"); if (dot) dot.dataset.state = pillState; }
+  // a failed source gets a Carbon inline notification under the status row (not red text)
+  const stack = $("src-notifs");
+  if (stack) {
+    $(`${id}-notif`)?.remove();
+    if (pillState === "failed") {
+      const name = li.querySelector(".src-name")?.textContent ?? "Source";
+      const box = inlineNotif("failed", `${name}: ${pillLabel}`, detail);
+      box.id = `${id}-notif`;
+      stack.append(box);
+    }
+  }
+  // the header's network indicator follows the mirror, the only source the ledger is read from
+  if (id === "src-mirror") {
+    const net = $("net-chip");
+    if (net) net.dataset.state = pillState;
+    $("net-icon")?.replaceChildren(statusIcon(pillState));
+    const said = $("net-state");
+    if (said) said.textContent = `, mirror ${pillLabel}`;
+  }
 }
 
 function connect() {
@@ -451,17 +535,7 @@ function renderMessageRow(m) {
   tdType.title = m.kind === "root" ? "0x01: a record fingerprint (Merkle root)" : m.kind === "manifest" ? "0x02: the server's key manifest fingerprint" : "Not a VUKA message type";
   const tdPayload = el("td");
   if (m.payloadHex) {
-    const wrap = el("span", "payload");
-    const short = el("span", "mono", shortHex(m.payloadHex, 8));
-    short.title = m.payloadHex;
-    short.setAttribute("aria-hidden", "true"); // screen readers get the full value below
-    const full = el("span", "sr-only", m.payloadHex);
-    const btn = el("button", "btn btn-quiet btn-sm", "Copy");
-    btn.type = "button";
-    btn.setAttribute("aria-label", `Copy the full payload of message ${seq ?? "?"}`);
-    btn.addEventListener("click", () => copyText(m.payloadHex, btn, full));
-    wrap.append(short, full, btn);
-    tdPayload.append(wrap);
+    tdPayload.append(hashCell(m.payloadHex, 8, `the full payload of message ${seq ?? "?"}`));
   } else {
     tdPayload.append(el("span", "mono", `${m.bytes?.length ?? 0} bytes`));
   }
@@ -521,13 +595,17 @@ function onFeedRow(row) {
   const tdSub = el("td", "mono", subject);
   tdSub.title = "Salted hash; changes on every server restart";
   const tdIdx = el("td", "mono num", index === null ? "?" : String(index));
-  const tdHash = el("td", "mono", shortHex(hash, 6));
-  tdHash.title = hash;
+  const tdHash = el("td");
+  if (hash) tdHash.append(hashCell(hash, 6, `event hash ${hash.slice(0, 8)}`));
+  else tdHash.append(el("span", "mono", "?"));
   const tdAt = el("td", "mono", fmtUtc(when, false));
   const tdKind = el("td");
   if (kind) {
+    // only rows the server marks simulated get the SIMULATED indicator
     const wrap = el("span", "kind");
-    wrap.append(el("span", "mono", kind), el("span", "sim-tag", "SIMULATED"));
+    const tag = statusMark("warning", "SIMULATED");
+    tag.classList.add("sim-tag");
+    wrap.append(el("span", "mono", kind), tag);
     tdKind.append(wrap);
   } else {
     tdKind.append(el("span", "mono", "hidden"));
@@ -565,29 +643,38 @@ function drawRate() {
     if (idx >= 0 && idx < RATE_MINUTES) bins[idx].n += 1;
   }
   const max = Math.max(...bins.map((b) => b.n));
-  const top = Math.max(4, max);
+  const top = Math.max(4, max + (max % 2)); // even, so the mid gridline is a whole number
   const plotH = H - T - B;
   const base = T + plotH;
-  const slot = W / RATE_MINUTES;
+  const L = 28; // left axis: tick labels (label-01)
+  const slot = (W - L) / RATE_MINUTES;
   const barW = Math.max(3, Math.min(24, slot * 0.6));
   const barTop = (n) => base - Math.max(2, (n / top) * plotH);
 
   chart.replaceChildren();
-  chart.append(svg("line", { x1: 0, x2: W, y1: base + 0.5, y2: base + 0.5, class: "c-base" }));
-  for (const [x, anchor, label] of [[0, "start", `${RATE_MINUTES} min ago`], [W, "end", "now"]]) {
+  // Carbon chart grid: hairlines in --cds-border-subtle-01, baseline a step stronger
+  for (const v of [top / 2, top]) {
+    const y = Math.round(base - (v / top) * plotH) + 0.5;
+    chart.append(svg("line", { x1: L, x2: W, y1: y, y2: y, class: "c-grid" }));
+    const t = svg("text", { x: L - 8, y: y + 4, "text-anchor": "end", class: "c-axis" });
+    t.textContent = String(v);
+    chart.append(t);
+  }
+  chart.append(svg("line", { x1: L, x2: W, y1: base + 0.5, y2: base + 0.5, class: "c-base" }));
+  for (const [x, anchor, label] of [[L, "start", `${RATE_MINUTES} min ago`], [W, "end", "now"]]) {
     const t = svg("text", { x, y: H - 4, "text-anchor": anchor, class: "c-axis" });
     t.textContent = label;
     chart.append(t);
   }
   const total = bins.reduce((a, b) => a + b.n, 0);
   if (total === 0) {
-    const t = svg("text", { x: W / 2, y: T + plotH / 2 + 4, "text-anchor": "middle", class: "c-empty" });
+    const t = svg("text", { x: L + (W - L) / 2, y: T + plotH / 2 + 4, "text-anchor": "middle", class: "c-empty" });
     t.textContent = state.feedTotal === 0 ? "No events received yet" : `No events in the last ${RATE_MINUTES} minutes`;
     chart.append(t);
   } else {
     // one direct label: the newest minute's value
     const last = bins[RATE_MINUTES - 1];
-    const cx = slot * (RATE_MINUTES - 1) + slot / 2;
+    const cx = L + slot * (RATE_MINUTES - 1) + slot / 2;
     const wide = slot >= 56;
     const t = svg("text", { x: wide ? cx : W, y: (last.n > 0 ? barTop(last.n) : base) - 6, "text-anchor": wide ? "middle" : "end", class: "c-label" });
     t.textContent = `${last.n}/min`;
@@ -595,16 +682,15 @@ function drawRate() {
   }
   const tip = $("rate-tip");
   bins.forEach((b, i) => {
-    const cx = slot * i + slot / 2;
+    const cx = L + slot * i + slot / 2;
     let bar = null;
     if (b.n > 0) {
-      const x0 = cx - barW / 2, x1 = cx + barW / 2, y0 = barTop(b.n);
-      const r = Math.min(2, barW / 2, (base - y0) / 2);
-      // rounded top, square on the baseline
-      bar = svg("path", { d: `M${x0} ${base}V${y0 + r}Q${x0} ${y0} ${x0 + r} ${y0}H${x1 - r}Q${x1} ${y0} ${x1} ${y0 + r}V${base}Z`, class: "c-bar" });
+      const y0 = barTop(b.n);
+      // Carbon bars are square: --cds-interactive, no rounding
+      bar = svg("rect", { x: cx - barW / 2, y: y0, width: barW, height: base - y0, class: "c-bar" });
       chart.append(bar);
     }
-    const hit = svg("rect", { x: slot * i, y: 0, width: slot, height: base, class: "c-hit" });
+    const hit = svg("rect", { x: L + slot * i, y: 0, width: slot, height: base, class: "c-hit" });
     const d = new Date(b.minute * 60000);
     const text = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC · ${b.n} event${b.n === 1 ? "" : "s"}`;
     hit.addEventListener("pointerenter", () => {
@@ -657,7 +743,7 @@ async function* tap(gen, sink) {
 function setBusy(on) {
   state.busy = on;
   for (const id of ["btn-verify", "btn-clear"]) { const b = $(id); if (b) b.disabled = on; }
-  $("btn-verify").textContent = on ? "Verifying…" : "Verify";
+  $("btn-verify").textContent = on ? "Verifying…" : "Verify record";
 }
 
 async function runVerify(text, name = "record.json") {
@@ -796,8 +882,16 @@ function showResult(result, ctx) {
   const card = $("result");
   card.dataset.state = st;
   const brokenAt = st === "failed" && Number.isInteger(result.firstBroken) ? result.firstBroken : null;
-  const label = brokenAt === null ? copy.label : `Failed at entry ${brokenAt}`;
+  // "Not anchored yet" only when the chain checked out and the server simply has no anchor for it;
+  // a fetch error or a check that never ran keeps a plainer label.
+  const unavailableLabel = result.notChecked ? "Not checked"
+    : ctx?.proofError || ctx?.messageError ? "Ledger not reachable" : "Not anchored yet";
+  const label = brokenAt !== null ? `Failed at entry ${brokenAt}`
+    : st === "unavailable" ? unavailableLabel : copy.label;
   $("result-title").textContent = label;
+  const kind = st === "live-verified" ? "success" : st === "failed" || result.notChecked ? "error" : "warning";
+  $("result-notif").dataset.kind = kind;
+  $("result-icon").replaceChildren(statusIcon(kind));
 
   const receipt = result.receipt ?? ctx?.proof?.receipt ?? null;
   const msg = ctx?.ledgerMessage ?? null;
@@ -837,15 +931,20 @@ function showResult(result, ctx) {
     rows.push(["Key manifest", state.pins?.manifest_fingerprint_hex ?? "—"]);
     rows.push(["Checked at", `${fmtUtc(new Date())} by VUKA Ledger in the browser`]);
   }
+  // Root and head go in the code snippet in full; the other facts in the structured list.
+  const SNIPPET_KEYS = new Set(["Merkle root", "Chain head"]);
+  const MONO_KEYS = new Set(["Topic", "Sequence", "Running hash", "Key manifest"]);
   const list = $("keep-list");
   list.replaceChildren();
   for (const [k, v] of rows) {
-    const th = el("th", null, k);
-    th.scope = "row";
-    const tr = el("tr");
-    tr.append(th, el("td", null, v));
-    list.append(tr);
+    if (SNIPPET_KEYS.has(k)) continue;
+    const row = el("div");
+    const dd = el("dd", MONO_KEYS.has(k) && v !== "—" ? "cds-code" : null, v);
+    row.append(el("dt", null, k), dd);
+    list.append(row);
   }
+  const snippet = rows.filter(([k]) => SNIPPET_KEYS.has(k));
+  $("snippet-code").textContent = snippet.map(([k, v]) => `${`${k}:`.padEnd(13)}${v}`).join("\n");
   $("keep").hidden = rows.length === 0;
   $("keep-note").textContent = st === "live-verified"
     ? "File these values with your records. Anyone can later check the root against the same topic and sequence."
@@ -864,7 +963,7 @@ function copyFingerprint() {
   const status = $("copy-status");
   const fallback = () => {
     const range = document.createRange();
-    range.selectNodeContents($("keep-list"));
+    range.selectNodeContents($("keep"));
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
@@ -927,6 +1026,7 @@ function wireVerify() {
     $("input-note").textContent = "Nothing is uploaded. The proof comes from the ANCHOR server and the root from the public Hedera mirror.";
   });
   $("btn-copy").addEventListener("click", copyFingerprint);
+  $("btn-snippet").addEventListener("click", (e) => copyText($("snippet-code").textContent ?? "", e.currentTarget, $("snippet-code")));
 }
 
 // ---------------------------------------------------------------------------

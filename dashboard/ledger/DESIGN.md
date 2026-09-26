@@ -81,3 +81,65 @@ Scale:
 
 ## Don'ts
 Pills, eyebrows, emoji, drop shadows, blobs, numbered circles, centred text blocks, cards in a grid of equal boxes.
+
+---
+
+## Reference system (26 Sep, supersedes the Tokens and Type sections above)
+
+**References:**
+- **Visual system:** IBM's **Carbon Design System**. Its tokens are read from the published packages: `@carbon/themes` 11.82.0 (g10 light, g100 dark, `buttonTokens`), `@carbon/type` and `@carbon/layout`. They live in `carbon.css`.
+- **Fonts:** **IBM Plex Sans 1.1.0 and IBM Plex Mono 2.5.0**, self-hosted from `@ibm/plex-sans` and `@ibm/plex-mono` (SIL OFL 1.1, `fonts/OFL-IBM-Plex.txt`). The page no longer depends on Google Fonts.
+- **Page layout:** block explorers that banks and auditors already know: **HashScan** (Hedera's explorer, the same network as ours) and **Etherscan**. Both use a summary key-value panel, then entity lists as dense tables, with hashes in monospace plus a copy control.
+- **Scope:** Carbon's docs site and Mobbin weren't reachable from the build environment. So component geometry follows Carbon's published tokens and its well-known component conventions below, and exact values come from the packages.
+
+**Components (Carbon conventions):**
+- **UI shell header:**
+  - 48px tall (`--size-lg`), g100 in both themes (`--shell-*`). Product name as "VUKA **Ledger**" in Plex Sans 14px.
+  - Nav items are 48px tall, `--shell-muted` text, `--shell-hover` background on hover. The active item has a 3px bottom border in `--cds-interactive` with `--shell-text`.
+  - The search field sits in the shell at 48px, with `--shell-hover` fill.
+- **Buttons:**
+  - Radius 0, `body-compact-01` (14px, 0.16px letter-spacing).
+  - Sizes: `lg` 48px (the primary action), `md` 40px, `sm` 32px. Padding is 0 64px 0 16px for text buttons (Carbon's left-aligned label), or 0 16px for compact ones.
+  - **Primary:** `--cds-button-primary`, hover `-hover`, active `-active`, text `--cds-text-on-color`.
+  - **Secondary:** `--cds-button-secondary`.
+  - **Tertiary:** 1px outline in `--cds-button-tertiary`, with a filled hover.
+  - **Ghost:** transparent, `--cds-link-primary` text, `--cds-layer-hover-01` hover.
+  - **Focus:** a 2px inset `--cds-focus` border plus a 1px inset `--cds-layer-01` ring.
+- **Text input and textarea:**
+  - Radius 0, background `--cds-field-01` on the page (or `--cds-layer-02` inside a tile).
+  - 1px bottom border in `--cds-border-strong-01` and no other borders.
+  - Height 40px; the label above is `label-01` (12px, 0.32px) in `--cds-text-secondary`; helper text is `helper-text-01` in `--cds-text-helper`.
+  - Focus is a 2px outline `--cds-focus` (inset).
+- **Data table:**
+  - Header row on `--cds-layer-accent-01`, `heading-compact-01` (14px/600), 48px tall.
+  - Body rows on `--cds-layer-01`, 48px tall, or 32px for the dense "Live events" and "Topic messages" lists.
+  - Cell padding 16px. Rows are separated by a 1px `--cds-border-subtle-01` bottom border.
+  - Row hover `--cds-layer-hover-01`. No zebra striping, no outer border, radius 0.
+  - Toolbar above the table: the title in `heading-03` (20px/400) and actions on the right.
+- **Structured list (key-value):**
+  - Rows with a 1px `--cds-border-subtle-01` bottom border and a 16px vertical rhythm.
+  - Label column in `--cds-text-secondary` 14px; value column in `code-02` (Plex Mono 14px) for hashes.
+  - Use it for the latest-anchor facts and the fingerprint result.
+- **Status indicator:** a shape icon plus a text label, never colour alone. Shapes are 16px SVGs:
+  - success: filled circle with check, `--cds-support-success`;
+  - error: filled circle with ×, `--cds-support-error`;
+  - warning: filled triangle with !, `--cds-support-warning` (a dark glyph inside);
+  - idle or unknown: hollow circle, `--cds-border-strong-01`.
+
+  Label text stays `--cds-text-primary`.
+- **Inline notification:**
+  - A full-width bar on `--cds-layer-01` with a 3px left border in the status colour, plus the status icon.
+  - Title in `heading-compact-01` and subtitle in `body-compact-01`.
+  - Use it for "can't connect" source errors, the non-default-server warning and the verify verdict.
+- **Code snippet:** a multi-line block on `--cds-layer-01` in `code-02`, with a 40px square copy button top-right that shows "Copied" feedback. Use it for the fingerprint's full hashes. The terminal keeps its own dark surface.
+- **Tiles:** `--cds-layer-01`, no border, no shadow, radius 0, 16px padding. Only for grouped facts (the key-facts strip becomes a row of tiles separated by 1px gaps on `--cds-border-subtle-01`).
+- **Grid:** max width 1584px, 32px gutters (Carbon 2x grid); 16px side margins at 400px.
+- **Type:**
+  - page title `heading-04`: 28px/400, line-height 1.2857;
+  - section title `heading-03`: 20px/400;
+  - sub-heading `heading-02`: 16px/600;
+  - body `body-01`: 14px, 0.16px;
+  - labels `label-01`;
+  - hashes `code-02`.
+
+  Carbon headings are regular weight (400), not bold, and Plex carries the voice.

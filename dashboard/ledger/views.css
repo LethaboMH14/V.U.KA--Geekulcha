@@ -1,8 +1,12 @@
-/* VUKA Ledger: Verify, Method and Settings views.
-   Loaded after ledger.css. Uses only the DESIGN.md tokens defined there
-   (--bg --surface --sunken --rule --rule-strong --text --muted --faint
-   --accent --accent-ink --ok --warn --fail --idle). No shadows, gradients or pills.
-   Radius 6px on inputs, buttons and the terminal only. Spacing on a 4px grid. */
+/* VUKA Ledger: Verify, Method (#how) and Settings views, in IBM's Carbon Design System.
+   Spec: dashboard/ledger/DESIGN.md "Reference system (26 Sep)". Tokens come only from
+   carbon.css (--cds-*, --font-*, --sp-*, --size-*); no literal colours here.
+   Shared components (.cds-btn, .cds-field, .cds-table, .cds-slist, .cds-status,
+   .cds-notif, .cds-tile, .cds-snippet) are defined in ledger.css; this file adds the
+   view layouts and the parts only these views use (file uploader, select, radio group).
+   Carbon type set used: heading-04 28/36 400, heading-03 20/28 400, heading-compact-01
+   14/18 600 0.16px, body-01 14/20 0.16px, body-compact-01 14/18 0.16px,
+   label-01 / helper-text-01 12/16 0.32px, code-02 14/20 0.32px. Radius 0 throughout. */
 
 .vf-sr {
   position: absolute;
@@ -14,89 +18,116 @@
 }
 
 /* ---------- shared view head ---------- */
-.vw-head { display: grid; gap: 8px; max-width: 72ch; }
+.vw-head { display: grid; gap: var(--sp-03); max-width: 72ch; }
 .vw-title {
   margin: 0;
-  font: 600 28px/34px "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: -0.01em;
-  color: var(--text);
+  font: 400 1.75rem/2.25rem var(--font-sans);            /* heading-04 */
+  letter-spacing: 0;
+  color: var(--cds-text-primary);
 }
-.vw-sub { margin: 0; font-size: 15px; line-height: 24px; color: var(--muted); }
-.vw-sub strong { font-weight: 500; color: var(--text); }
+.vw-sub {
+  margin: 0;
+  font: 400 0.875rem/1.25rem var(--font-sans);           /* body-01 */
+  letter-spacing: 0.16px;
+  color: var(--cds-text-secondary);
+}
+.vw-sub strong { font-weight: 600; color: var(--cds-text-primary); }
 .vw-h3 {
   margin: 0;
-  font: 600 18px/26px "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  color: var(--text);
+  font: 400 1.25rem/1.75rem var(--font-sans);            /* heading-03 */
+  color: var(--cds-text-primary);
 }
 .vw-mono,
 .vw-head .mono {
-  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  letter-spacing: 0.32px;
 }
 
-/* ---------- verify: flow line ---------- */
+/* ---------- verify: flow line (progress-indicator text, no circles) ---------- */
 .vf-flow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 var(--sp-05);
+  margin: var(--sp-05) 0 0;
   padding: 0;
   list-style: none;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--muted);
+  counter-reset: none;
 }
-.vf-flow li { display: inline; }
-.vf-flow li + li::before {
-  content: "\2192" / "";
-  margin-right: 8px;
-  color: var(--faint);
+.vf-flow li {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-01);
+  padding-top: var(--sp-03);
+  border-top: 2px solid var(--cds-interactive);          /* Carbon progress step line */
+}
+.vf-flow-n {
+  font: 400 0.75rem/1rem var(--font-sans);               /* label-01 */
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+}
+.vf-flow-t {
+  font: 400 0.875rem/1.125rem var(--font-sans);          /* body-compact-01 */
+  letter-spacing: 0.16px;
+  color: var(--cds-text-primary);
+}
+@media (max-width: 671px) {                               /* below Carbon md */
+  .vf-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-05) var(--sp-05); }
 }
 
-/* ---------- verify: two-column grid ---------- */
+/* ---------- verify: tile + terminal, side by side from Carbon lg (1056px) ---------- */
 .vf-grid {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-07);
   align-items: start;
 }
-@media (max-width: 900px) {
-  .vf-grid { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1056px) {
+  .vf-grid { grid-template-columns: minmax(0, 6fr) minmax(0, 10fr); }
 }
 
-.vf-panel {
+.vf-tile {
   display: grid;
-  gap: 12px;
+  gap: var(--sp-06);
   min-width: 0;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--rule);
+  padding: var(--sp-05);
+  background: var(--cds-layer-01);
+  border: 0;
+  border-radius: 0;
 }
-.vf-panel-title {
+.vf-uploader { display: grid; gap: var(--sp-03); }
+.vf-tile-title {
   margin: 0;
-  font: 600 15px/24px "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  color: var(--text);
+  font: 600 0.875rem/1.125rem var(--font-sans);          /* heading-compact-01 */
+  letter-spacing: 0.16px;
+  color: var(--cds-text-primary);
+}
+.vf-helper {
+  margin: 0;
+  font: 400 0.875rem/1.125rem var(--font-sans);          /* body-compact-01 */
+  letter-spacing: 0.16px;
+  color: var(--cds-text-secondary);
 }
 
-/* drop area: a label wrapping the file input, so Tab reaches the input and
-   Enter/Space opens the picker; the focus ring is drawn on the label. */
+/* Carbon file uploader drop area: a label wrapping the file input, so Tab reaches the
+   input and Enter/Space opens the picker; the focus ring is drawn on the label. */
 .vf-drop {
   position: relative;
-  display: grid;
-  gap: 4px;
-  padding: 16px;
-  border: 1px dashed var(--rule-strong);
-  border-radius: 6px;
-  background: var(--sunken);
-  color: var(--text);
+  display: flex;
+  align-items: center;
+  min-height: 6rem;
+  padding: var(--sp-05);
+  border: 1px dashed var(--cds-border-strong-01);
+  border-radius: 0;
+  background: transparent;
   cursor: pointer;
 }
-.vf-drop-row { display: flex; align-items: center; gap: 8px; }
-.vf-drop svg { flex: none; width: 18px; height: 18px; color: var(--muted); }
-.vf-drop-main { font-size: 14px; line-height: 20px; font-weight: 500; }
-.vf-drop-main u { color: var(--accent); text-underline-offset: 2px; }
-.vf-drop-sub { font-size: 12px; line-height: 16px; color: var(--muted); }
+.vf-drop-text {
+  font: 400 0.875rem/1.125rem var(--font-sans);          /* body-compact-01 */
+  letter-spacing: 0.16px;
+  color: var(--cds-link-primary);
+}
+.vf-drop:hover .vf-drop-text { color: var(--cds-link-primary-hover); text-decoration: underline; }
 .vf-drop input[type="file"] {
   position: absolute;
   width: 1px;
@@ -104,261 +135,284 @@
   opacity: 0;
   pointer-events: none;
 }
-.vf-drop:hover { border-color: var(--muted); }
-.vf-drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
-.vf-drop.is-over { border-style: solid; border-color: var(--accent); background: var(--surface); }
+.vf-drop:focus-within { outline: 2px solid var(--cds-focus); outline-offset: -2px; }
+.vf-drop.is-over { border: 2px solid var(--cds-focus); padding: calc(var(--sp-05) - 1px); background: var(--cds-layer-hover-01); }
 
-.vf-label {
+/* textarea: Carbon text area inside a tile (field sits on --cds-layer-02) */
+.vf-field { display: grid; gap: var(--sp-03); }
+.vf-label,
+.st-field > label,
+.st-field > legend {
   display: block;
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
-  color: var(--muted);
+  padding: 0;
+  margin: 0;
+  font: 400 0.75rem/1rem var(--font-sans);               /* label-01 */
+  letter-spacing: 0.32px;
+  color: var(--cds-text-secondary);
 }
-.vf-field { display: grid; gap: 4px; }
-.vf-text {
+#verify .vf-text {
   box-sizing: border-box;
   width: 100%;
-  min-height: 160px;
+  min-height: 10rem;
   resize: vertical;
-  padding: 8px 12px;
-  font: 400 13px/20px "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--rule-strong);
-  border-radius: 6px;
+  padding: 0.6875rem var(--sp-05);
+  font: 400 0.875rem/1.25rem var(--font-mono);           /* code-02 for JSON */
+  letter-spacing: 0.32px;
+  color: var(--cds-text-primary);
+  background: var(--cds-layer-02);
+  border: 0;
+  border-bottom: 1px solid var(--cds-border-strong-01);
+  border-radius: 0;
 }
-.vf-text::placeholder { color: var(--faint); }
-.vf-text:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+#verify .vf-text::placeholder { color: var(--cds-text-placeholder); }
+#verify .vf-text:focus { outline: 2px solid var(--cds-focus); outline-offset: -2px; }
 
-.vf-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.vf-note { margin: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
+.vf-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1px; }
+.vf-note {
+  margin: 0;
+  font: 400 0.75rem/1rem var(--font-sans);               /* helper-text-01 */
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+}
 
 /* terminal column */
-.vf-run { display: grid; gap: 8px; min-width: 0; }
-.vf-run-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
-.vf-run-sub { font-size: 12px; line-height: 16px; color: var(--muted); }
-.vf-run .terminal-host { min-width: 0; min-height: 0; overflow: hidden; border-radius: 6px; --vt-min-height: 22rem; }
+.vf-run { display: grid; gap: var(--sp-03); min-width: 0; }
+.vf-run-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--sp-02) var(--sp-05); }
+.vf-run .terminal-host { min-width: 0; min-height: 0; overflow: hidden; border-radius: 0; --vt-min-height: 24rem; }
 
 /* ---------- verify: result ---------- */
-.vf-result {
-  display: grid;
-  gap: 16px;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-}
+.vf-result { display: grid; gap: var(--sp-06); }
 .vf-result[hidden] { display: none; }
-.vf-status { display: grid; gap: 4px; }
-.vf-status-line { display: flex; align-items: center; gap: 8px; margin: 0; }
-.vf-dot {
-  flex: none;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--idle);
-}
-.vf-result[data-state="live-verified"] .vf-dot { background: var(--ok); }
-.vf-result[data-state="archived"] .vf-dot { background: var(--warn); }
-.vf-result[data-state="unavailable"] .vf-dot { background: var(--idle); }
-.vf-result[data-state="failed"] .vf-dot { background: var(--fail); }
-.vf-status-label {
-  margin: 0;
-  font: 600 18px/26px "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  color: var(--text);
-}
-.vf-result[data-state="failed"] .vf-status-label { color: var(--fail); }
-.vf-reason { margin: 0 0 0 14px; max-width: 80ch; font-size: 15px; line-height: 24px; color: var(--muted); }
+.vf-notif .cds-notif__subtitle { max-width: 80ch; }
 
-.vf-keep { display: grid; gap: 8px; }
+.vf-keep { display: grid; gap: var(--sp-05); }
 .vf-keep[hidden] { display: none; }
 .vf-keep-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--rule);
+  gap: var(--sp-03) var(--sp-05);
 }
-.vf-keep-head .vw-h3 { margin-right: auto; font-size: 15px; line-height: 24px; }
-.vf-copy-status { font-size: 12px; line-height: 16px; color: var(--muted); }
+.vf-keep-head .vw-h3 { margin-right: auto; }
+.vf-copy-status {
+  font: 400 0.75rem/1rem var(--font-sans);
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+}
 
-.vf-fp { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 20px; }
-.vf-fp th,
-.vf-fp td {
-  padding: 8px 12px 8px 0;
-  text-align: left;
-  vertical-align: top;
-  border-top: 1px solid var(--rule);
-}
-.vf-fp tr:first-child th,
-.vf-fp tr:first-child td { border-top: 0; }
-.vf-fp th {
-  width: 11rem;
-  font-weight: 500;
-  font-size: 12px;
-  line-height: 20px;
-  color: var(--muted);
-  white-space: nowrap;
-}
-.vf-fp td {
-  padding-right: 0;
-  font: 400 13px/20px "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-@media (max-width: 560px) {
-  .vf-fp tr { display: grid; padding: 8px 0; border-top: 1px solid var(--rule); }
-  .vf-fp tr:first-child { border-top: 0; }
-  .vf-fp th, .vf-fp td { display: block; width: auto; padding: 0; border: 0; }
-  .vf-reason { margin-left: 0; }
-}
+/* code snippet (ledger.css): wrap the 64-hex lines instead of scrolling them */
+#verify .vf-snippet .cds-snippet__code { white-space: pre-wrap; word-break: break-all; }
+#verify .vf-snippet .cds-snippet__code:focus-visible { outline: 2px solid var(--cds-focus); outline-offset: -2px; }
+#verify .vf-snippet .cds-snippet__copy { border: 0; }
 
 /* ---------- method ---------- */
-.mt-figure { display: grid; gap: 12px; margin: 0; }
+.mt-figure { display: grid; gap: var(--sp-05); margin: 0; }
 .mt-scroll {
   overflow-x: auto;
-  background: var(--surface);
-  border: 1px solid var(--rule);
+  background: var(--cds-background);
   scrollbar-width: thin;
 }
-.mt-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.mt-figure svg { display: block; width: 100%; min-width: 720px; height: auto; color: var(--muted); }
-.mt-figure figcaption { max-width: 80ch; font-size: 14px; line-height: 20px; color: var(--muted); }
-.mt-figure figcaption .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; color: var(--text); }
+.mt-scroll:focus-visible { outline: 2px solid var(--cds-focus); outline-offset: -2px; }
+.mt-figure svg { display: block; width: 100%; min-width: 720px; max-width: 960px; height: auto; color: var(--cds-border-strong-01); } /* 1:1 at most, so labels stay 12/14px */
+.mt-figure figcaption {
+  max-width: 80ch;
+  font: 400 0.75rem/1rem var(--font-sans);               /* helper-text-01 */
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+}
+.mt-figure figcaption .mono,
+.st-hint .mono { font-size: 0.75rem; line-height: 1rem; }
+.mt-figure figcaption .mono { color: var(--cds-text-secondary); }
 
-/* diagram: hairlines, flat fills, square corners, 1.5px arrows, 12px Plex labels */
-.mt-figure .dg-node rect { fill: var(--surface); stroke: var(--rule-strong); stroke-width: 1; }
-.mt-figure .dg-server > rect { fill: var(--sunken); stroke: var(--rule-strong); }
-.mt-figure .dg-inner { fill: var(--surface) !important; stroke: var(--rule) !important; }
-.mt-figure .dg-guardian rect { stroke: var(--rule-strong); }
-.mt-figure .dg-hedera rect,
-.mt-figure .dg-verify rect { fill: var(--surface); stroke: var(--accent); stroke-width: 1; }
-.mt-figure .dg-chain rect { fill: var(--surface) !important; stroke: var(--muted) !important; stroke-width: 1; }
-.mt-figure .dg-chain rect.dg-ack { stroke: var(--warn) !important; }
+/* diagram: boxes on layer-01 with 1px subtle borders, radius 0, 1px strong arrows,
+   Plex labels; the anchoring path (member → server → Hedera) in --cds-interactive */
+.mt-figure .dg-node rect { fill: var(--cds-layer-01); stroke: var(--cds-border-subtle-01); stroke-width: 1; }
+.mt-figure .dg-server > rect { fill: var(--cds-layer-01); stroke: var(--cds-border-subtle-01); }
+.mt-figure .dg-inner { fill: var(--cds-layer-02) !important; stroke: var(--cds-border-subtle-01) !important; }
+.mt-figure .dg-chain rect { fill: var(--cds-layer-01) !important; stroke: var(--cds-border-strong-01) !important; stroke-width: 1; }
 .mt-figure .dg-chain rect.dg-fade { stroke-dasharray: 3 3; }
-.mt-figure .dg-chain line { stroke: var(--muted); stroke-width: 1; }
-.mt-figure .dg-t { fill: var(--text); font: 600 14px "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; text-anchor: middle; }
-.mt-figure .dg-s { fill: var(--muted); font: 400 12px "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; text-anchor: middle; }
-.mt-figure .dg-xs { fill: var(--muted); font: 400 12px "IBM Plex Mono", ui-monospace, monospace; text-anchor: middle; }
-.mt-figure .mono-t { font-family: "IBM Plex Mono", ui-monospace, monospace; }
-.mt-figure .dg-amber-text { fill: var(--warn); }
-.mt-figure .dg-edge { color: var(--muted); }
+.mt-figure .dg-chain line { stroke: var(--cds-border-strong-01); stroke-width: 1; }
+.mt-figure .dg-t { fill: var(--cds-text-primary); font: 600 14px var(--font-sans); letter-spacing: 0.16px; text-anchor: middle; }   /* heading-compact-01 */
+.mt-figure .dg-s { fill: var(--cds-text-secondary); font: 400 12px var(--font-sans); letter-spacing: 0.32px; text-anchor: middle; } /* label-01 */
+.mt-figure .dg-xs { fill: var(--cds-text-secondary); font: 400 12px var(--font-mono); letter-spacing: 0.32px; text-anchor: middle; }
+.mt-figure .mono-t { font-family: var(--font-mono); }
+.mt-figure .dg-edge { color: var(--cds-border-strong-01); }
 .mt-figure .dg-edge line,
-.mt-figure .dg-edge path { stroke: var(--muted); stroke-width: 1.5; fill: none; }
-.mt-figure .dg-edge-accent { color: var(--accent); }
-.mt-figure .dg-edge-accent line { stroke: var(--accent); }
-.mt-figure .dg-edge-amber line { stroke: var(--warn); }
-.mt-figure .dg-edge-dash line { stroke-dasharray: 5 4; }
-.mt-figure .dg-accent-fill { fill: var(--accent); }
-.mt-figure .dg-amber-fill { fill: var(--warn); }
-.mt-figure .dg-lbl { fill: var(--muted); font: 400 12px "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; text-anchor: middle; }
-.mt-figure .dg-lbl.mono-t { font-family: "IBM Plex Mono", ui-monospace, monospace; fill: var(--text); }
+.mt-figure .dg-edge path { stroke: var(--cds-border-strong-01); stroke-width: 1; fill: none; }
+.mt-figure .dg-edge marker path,
+.mt-figure marker path { stroke: none; }
+.mt-figure .dg-edge-accent { color: var(--cds-interactive); }
+.mt-figure .dg-edge-accent line { stroke: var(--cds-interactive); stroke-width: 2; }
+.mt-figure .dg-edge-accent .dg-lbl { fill: var(--cds-link-primary); }
+.mt-figure .dg-edge-dash line { stroke-dasharray: 4 4; }
+.mt-figure .dg-accent-fill { fill: var(--cds-interactive); }
+.mt-figure .dg-lbl { fill: var(--cds-text-secondary); font: 400 12px var(--font-sans); letter-spacing: 0.32px; text-anchor: middle; }
+.mt-figure .dg-lbl.mono-t { font-family: var(--font-mono); fill: var(--cds-text-primary); }
+.mt-figure .dg-edge-accent .dg-lbl.mono-t { fill: var(--cds-link-primary); }
 .mt-figure .dg-lbl.dg-left { text-anchor: start; }
 
-.mt-block { display: grid; gap: 12px; }
-.mt-lede { margin: 0; max-width: 80ch; font-size: 15px; line-height: 24px; color: var(--muted); }
-.mt-lede .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; color: var(--text); }
-
-/* formulas table: Step · Definition (mono) · What it guarantees */
-.mt-table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 20px; }
-.mt-table th,
-.mt-table td { padding: 12px 16px 12px 0; text-align: left; vertical-align: top; border-top: 1px solid var(--rule); }
-.mt-table thead th {
-  padding-top: 0;
-  padding-bottom: 8px;
-  border-top: 0;
-  border-bottom: 1px solid var(--rule-strong);
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
-  color: var(--muted);
+.mt-block { display: grid; gap: var(--sp-05); }
+.mt-lede {
+  margin: 0;
+  max-width: 80ch;
+  font: 400 0.875rem/1.25rem var(--font-sans);
+  letter-spacing: 0.16px;
+  color: var(--cds-text-secondary);
 }
-.mt-table thead + tbody tr:first-child > * { border-top: 0; }
-.mt-table tbody th { width: 9rem; font-weight: 600; color: var(--text); white-space: nowrap; }
-.mt-table .mt-def {
+
+/* formulas: a Carbon data table (header on layer-accent, 48px rows, 16px cells) */
+#how .mt-table { width: 100%; border-collapse: collapse; background: var(--cds-layer-01); }
+#how .mt-table th,
+#how .mt-table td {
+  padding: 0.9375rem var(--sp-05);
+  text-align: left;
+  vertical-align: top;
+  font: 400 0.875rem/1.125rem var(--font-sans);
+  letter-spacing: 0.16px;
+  color: var(--cds-text-secondary);
+  border-bottom: 1px solid var(--cds-border-subtle-01);
+}
+#how .mt-table thead th {
+  background: var(--cds-layer-accent-01);
+  font-weight: 600;                                       /* heading-compact-01 */
+  color: var(--cds-text-primary);
+  border-bottom: 0;
+}
+#how .mt-table tbody tr:hover > * { background: var(--cds-layer-hover-01); }
+#how .mt-table tbody th { width: 9rem; font-weight: 400; color: var(--cds-text-primary); white-space: nowrap; background: var(--cds-layer-01); }
+#how .mt-table .mt-def {
   width: 40%;
-  font: 400 13px/20px "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
+  font-family: var(--font-mono);                          /* code-02 */
+  line-height: 1.25rem;
+  letter-spacing: 0.32px;
+  color: var(--cds-text-primary);
   overflow-wrap: anywhere;
 }
-.mt-table .mt-def var { font-style: italic; }
-.mt-table .mt-def .mono { font-family: inherit; font-size: inherit; }
-.mt-table td:last-child { padding-right: 0; color: var(--muted); }
-.mt-table td:last-child .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; }
-@media (max-width: 720px) {
-  .mt-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .mt-table tr { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--rule); }
-  .mt-table tbody tr:first-child { border-top: 0; }
-  .mt-table th, .mt-table td,
-  .mt-table tbody th,
-  .mt-table .mt-def { display: block; width: auto; padding: 0; border: 0; white-space: normal; }
+#how .mt-table .mt-def var { font-style: italic; }
+#how .mt-table .mt-def .mono { font-family: inherit; font-size: inherit; }
+@media (max-width: 671px) {
+  #how .mt-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  #how .mt-table tr { display: grid; gap: var(--sp-02); padding: var(--sp-05); border-bottom: 1px solid var(--cds-border-subtle-01); }
+  #how .mt-table th,
+  #how .mt-table td,
+  #how .mt-table tbody th,
+  #how .mt-table .mt-def { display: block; width: auto; padding: 0; border: 0; white-space: normal; background: none; }
+  #how .mt-table tbody th { font-weight: 600; }
 }
 
-/* proves / does not prove */
+/* proves / does not prove: two Carbon structured lists */
 .mt-proves {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px 32px;
-  padding-top: 16px;
-  border-top: 1px solid var(--rule);
+  gap: var(--sp-07);
 }
-@media (max-width: 720px) { .mt-proves { grid-template-columns: minmax(0, 1fr); } }
-.mt-proves-col { display: grid; gap: 8px; align-content: start; }
-.mt-proves-col .vw-h3 { font-size: 15px; line-height: 24px; }
-.mt-proves ul { display: grid; gap: 8px; margin: 0; padding-left: 20px; font-size: 15px; line-height: 24px; color: var(--text); }
-.mt-proves li::marker { color: var(--faint); }
+@media (max-width: 671px) { .mt-proves { grid-template-columns: minmax(0, 1fr); } }
+.mt-proves-col { display: grid; gap: 0; align-content: start; min-width: 0; }
+.mt-slist-head {
+  margin: 0;
+  padding: var(--sp-03) 0;
+  font: 600 0.875rem/1.125rem var(--font-sans);          /* structured-list header: heading-compact-01 */
+  letter-spacing: 0.16px;
+  color: var(--cds-text-primary);
+  border-bottom: 1px solid var(--cds-border-strong-01);
+}
+#how .mt-slist { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; }
+#how .mt-slist .cds-slist__row {
+  padding: var(--sp-05) 0;
+  font: 400 0.875rem/1.25rem var(--font-sans);           /* body-01 */
+  letter-spacing: 0.16px;
+  color: var(--cds-text-primary);
+  border-bottom: 1px solid var(--cds-border-subtle-01);
+}
 
-/* duress note */
-.mt-note {
-  display: grid;
-  gap: 4px;
-  max-width: 80ch;
-  padding: 4px 0 4px 16px;
-  border-left: 2px solid var(--rule-strong);
-}
-.mt-note .vw-h3 { font-size: 15px; line-height: 24px; }
-.mt-note p { margin: 0; font-size: 15px; line-height: 24px; color: var(--muted); }
+/* duress: an info inline notification */
+#how .mt-note { max-width: 80ch; }
+#how .mt-note .mt-info-icon { fill: var(--cds-support-info); }
+#how .mt-note .cds-notif__title { margin: 0; }
 
-/* ---------- settings ---------- */
-.st-form { display: grid; gap: 24px; max-width: 40rem; }
-.st-field { display: grid; gap: 4px; min-width: 0; margin: 0; padding: 0; border: 0; }
-.st-field > label,
-.st-field > legend {
-  padding: 0;
-  margin-bottom: 4px;
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
-  color: var(--text);
-}
-.st-input {
+/* ---------- settings: a Carbon form ---------- */
+.st-form { display: grid; gap: var(--sp-07); max-width: 40rem; }
+.st-field { display: grid; gap: var(--sp-03); min-width: 0; margin: 0; padding: 0; border: 0; }
+#settings .st-input {
   box-sizing: border-box;
   width: 100%;
-  min-height: 40px;
-  padding: 8px 12px;
-  font: 400 14px/20px "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--rule-strong);
-  border-radius: 6px;
+  height: var(--size-md);
+  padding: 0 var(--sp-05);
+  font: 400 0.875rem/1.125rem var(--font-sans);          /* body-compact-01 */
+  letter-spacing: 0.16px;
+  color: var(--cds-text-primary);
+  background: var(--cds-field-01);
+  border: 0;
+  border-bottom: 1px solid var(--cds-border-strong-01);
+  border-radius: 0;
 }
-.st-input[type="url"] { font: 400 13px/20px "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-.st-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
-.st-hint { margin: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
-.st-hint .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
-.st-radios { display: flex; flex-wrap: wrap; gap: 8px 24px; }
-.st-radio { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; color: var(--text); cursor: pointer; }
-.st-radio input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+#settings .st-input[type="url"] { font-family: var(--font-mono); letter-spacing: 0.32px; }
+#settings .st-input:focus { outline: 2px solid var(--cds-focus); outline-offset: -2px; }
+.st-hint {
+  margin: 0;
+  font: 400 0.75rem/1rem var(--font-sans);               /* helper-text-01 */
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+}
+
+/* select: native control, Carbon chevron */
+.st-select { position: relative; }
+#settings .st-select select { appearance: none; -webkit-appearance: none; padding-right: var(--sp-09); cursor: pointer; }
+.st-chevron {
+  position: absolute;
+  top: 50%;
+  right: var(--sp-05);
+  translate: 0 -50%;
+  fill: var(--cds-text-primary);
+  pointer-events: none;
+}
+
+/* radio group: 16px Carbon radio, body-compact-01 labels */
+.st-radios { display: flex; flex-wrap: wrap; gap: var(--sp-03) var(--sp-06); }
+.st-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-03);
+  min-height: 1.5rem;
+  font: 400 0.875rem/1.125rem var(--font-sans);
+  letter-spacing: 0.16px;
+  color: var(--cds-text-primary);
+  cursor: pointer;
+}
+.st-radio input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  display: grid;
+  place-content: center;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  border: 1px solid var(--cds-border-strong-01);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.st-radio input:checked { border-color: var(--cds-text-primary); }
+.st-radio input:checked::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--cds-text-primary);
+}
+.st-radio input:focus-visible { outline: 2px solid var(--cds-focus); outline-offset: 1px; }
+
 .st-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--rule);
+  gap: 1px;
 }
-.st-status { font-size: 12px; line-height: 16px; color: var(--muted); }
+.st-status {
+  flex-basis: 100%;
+  font: 400 0.75rem/1rem var(--font-sans);
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+}
+.st-status:empty { display: none; }
