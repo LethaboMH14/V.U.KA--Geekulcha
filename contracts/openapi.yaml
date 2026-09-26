@@ -576,7 +576,8 @@ paths:
         PROPOSED (Lethabo, 25 Sep). Guardian-signed only; the key identifies the guardian.
         Built only from recorded delivery evidence, so a decoy guardian (never delivered to)
         sees an empty list in the same shape as a real guardian with no alerts. Returns no
-        member payload: incident id, trigger and times only. subject_id is returned so the
+        member payload: incident id, trigger, times and, for a detection, the evidence band
+        and reason names (`why`). subject_id is returned so the
         guardian can sign a guardian_ack for that record (G5).
       x-vuka-required-signer-role: guardian
       security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
@@ -595,7 +596,7 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [incident_id, trigger, delivered_at, opened_at, closed_at, close_reason]
+                      required: [incident_id, trigger, delivered_at, opened_at, closed_at, close_reason, why]
                       additionalProperties: false
                       properties:
                         incident_id: { type: string }
@@ -604,6 +605,21 @@ paths:
                         opened_at: { type: string, format: date-time }
                         closed_at: { type: [string, 'null'], format: date-time }
                         close_reason: { type: [string, 'null'] }
+                        why:
+                          description: >-
+                            PROPOSED (ADR-0047). For an incident that began with a detection, the
+                            phone's evidence band and up to three reason names from the
+                            evidence_observed recorded just before it. Words only, never a number;
+                            null when there is none (or the member's data was deleted).
+                          type: [object, 'null']
+                          required: [band, reasons]
+                          additionalProperties: false
+                          properties:
+                            band: { type: string, enum: [faint, some, strong, very strong, overwhelming] }
+                            reasons:
+                              type: array
+                              maxItems: 3
+                              items: { type: string, pattern: '^[a-z][a-z0-9_]{0,39}$' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/InsufficientApproval' }
   /v1/alerts/{id}/ack:

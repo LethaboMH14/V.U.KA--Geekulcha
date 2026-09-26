@@ -40,7 +40,9 @@ def test_a_guardian_reads_the_alert_delivered_to_them(sim_api):
     assert body["alerts"][0]["trigger"] == "no_answer"
     assert body["alerts"][0]["closed_at"] is None
     # Nothing from the member's payloads rides along.
-    assert set(body["alerts"][0]) == {"incident_id", "trigger", "delivered_at", "opened_at", "closed_at", "close_reason"}
+    assert set(body["alerts"][0]) == {"incident_id", "trigger", "delivered_at", "opened_at", "closed_at", "close_reason", "why"}
+    # A detection with no evidence_observed before it has no "why".
+    assert body["alerts"][0]["why"] is None
 
 
 def test_a_decoy_guardian_sees_the_same_empty_shape(sim_api):
