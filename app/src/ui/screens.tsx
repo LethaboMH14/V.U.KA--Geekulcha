@@ -11,10 +11,11 @@
  */
 import React, {useEffect, useRef, useState} from 'react';
 import {AppState, BackHandler, NativeModules, Platform, Pressable, ScrollView, Share, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
-import {CheckCircle, GearSix, Microphone, Phone, ShareNetwork, ShieldChevron, UserPlus, Users, Waveform, WifiSlash} from './icons';
+import {CheckCircle, FileText, GearSix, House, Microphone, Phone, ShareNetwork, ShieldChevron, UserPlus, Users, Waveform, WifiSlash} from './icons';
 import {Chip, Eyebrow, GlassIcon, Key, Lamp, LevelMeter, ListeningLine, Panel, PinKeypad, QuietKey, Readout, Row, Rule, Surface, TopAppBar} from './components';
 import {colors, fonts, radii, space, THEME, THEMES, TOUCH, type, type ThemeName} from './theme';
 import {Onboarding} from './onboarding';
+import {recordDestination} from './navigation';
 import {GuardianHome, GuardianSetup, useGuardianWatch} from './guardian';
 import {MyRecord} from './record';
 import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, type Delivery} from '../api/device';
@@ -330,7 +331,7 @@ export function VigilApp() {
   return (
     <View style={{flex: 1}}>
       <Surface />
-      <ScrollView contentContainerStyle={styles.page}>
+      <ScrollView style={{flex: 1}} contentContainerStyle={styles.page}>
         {screen === 'record' ? (
           <MyRecord onBack={() => setScreen('settings')} />
         ) : screen === 'invite' && invite ? (
@@ -340,7 +341,7 @@ export function VigilApp() {
             onBack={() => setScreen(home)}
             onGuardian={() => setScreen('guardian')}
             onGuard={() => setScreen(device.profile?.guardian ? 'guardianHome' : 'guardianSetup')}
-            onRecord={() => setScreen(device.simulated ? 'record' : 'recordPin')}
+            onRecord={() => setScreen(recordDestination(device.simulated))}
             onInvite={() => setScreen('invitePin')}
             delivery={delivery}
             detector={startedAt ? detector.current : null}
@@ -377,6 +378,51 @@ export function VigilApp() {
           <Text style={styles.simId}>{version}</Text>
         </Text>
       </ScrollView>
+      {screen === 'home' || screen === 'settings' ? (
+        <MemberNavigation
+          selected={screen}
+          onHome={() => setScreen('home')}
+          onRecord={() => setScreen(recordDestination(device.simulated))}
+          onSettings={() => setScreen('settings')}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+/** The member destinations from Mutarisi's glass-pill navigation. */
+function MemberNavigation({
+  selected,
+  onHome,
+  onRecord,
+  onSettings,
+}: {
+  selected: 'home' | 'settings';
+  onHome: () => void;
+  onRecord: () => void;
+  onSettings: () => void;
+}) {
+  const tabs = [
+    {label: 'Home', icon: House, selected: selected === 'home', onPress: onHome},
+    {label: 'Record', icon: FileText, selected: false, onPress: onRecord},
+    {label: 'Settings', icon: GearSix, selected: selected === 'settings', onPress: onSettings},
+  ];
+  return (
+    <View style={styles.navOuter}>
+      <View style={styles.navPill}>
+        {tabs.map(({label, icon: Icon, selected: active, onPress}) => (
+          <Pressable
+            key={label}
+            accessibilityRole="button"
+            accessibilityLabel={label}
+            accessibilityState={{selected: active}}
+            onPress={onPress}
+            style={[styles.navTab, active && styles.navTabActive]}>
+            <Icon size={20} color={active ? colors.action : colors.textSecondary} />
+            <Text style={[styles.navLabel, active && styles.navLabelActive]}>{label}</Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
@@ -568,7 +614,7 @@ function NotListening({
       <GuardiansCard delivery={device.delivery()} live={false} onInvite={onInvite} />
       <View style={styles.note}>
         <Microphone size={16} color={colors.textDim} style={{marginTop: 2}} />
-        <Text style={[type.caption, {flex: 1}]}>Discreet, not invisible: Android shows a microphone dot while VIGIL is listening.</Text>
+        <Text style={[type.caption, {flex: 1}]}>Android shows a microphone indicator while VIGIL is listening.</Text>
       </View>
     </View>
   );
@@ -626,6 +672,9 @@ function Listening({
         </Text>
         <LevelMeter score={level.score} threshold={level.threshold} label={level.label} />
       </Panel>
+      <HoldForHelp onHelp={onHelp} />
+      <GuardiansCard delivery={delivery} live onInvite={onInvite} />
+      <Key label="Pause listening" variant="ghost" onPress={onPause} accessibilityHint="Asks for your PIN" />
       {sharingUntil > now && windowUntil() ? (
         <View style={styles.note}>
           <Text style={[type.caption, {flex: 1}]}>
@@ -635,9 +684,6 @@ function Listening({
         </View>
       ) : null}
       <FullScreenNotice />
-      <HoldForHelp onHelp={onHelp} />
-      <GuardiansCard delivery={delivery} live onInvite={onInvite} />
-      <Key label="Pause listening" variant="ghost" onPress={onPause} accessibilityHint="Asks for your PIN" />
       {onSimCheck ? <QuietKey label="Preview: show a check-in" onPress={onSimCheck} /> : null}
     </View>
   );
@@ -1203,6 +1249,12 @@ const TOP = TOP_INSET;
 const styles = StyleSheet.create({
   page: {flexGrow: 1, paddingHorizontal: 22, paddingBottom: 28, paddingTop: 12 + TOP, width: '100%', maxWidth: 560, alignSelf: 'center'},
   screen: {flexGrow: 1, gap: 14},
+  navOuter: {width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 16, paddingTop: space.sm, paddingBottom: space.md},
+  navPill: {height: 64, flexDirection: 'row', padding: 6, gap: 6, backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border, borderRadius: radii.bezel},
+  navTab: {flex: 1, minHeight: TOUCH, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: radii.round},
+  navTabActive: {backgroundColor: colors.actionDim},
+  navLabel: {fontFamily: fonts.medium, fontSize: 10, letterSpacing: 0.6, textTransform: 'uppercase', color: colors.textSecondary},
+  navLabelActive: {color: colors.action},
   greeting: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm, marginBottom: space.xs},
   name: {fontFamily: fonts.semibold, fontSize: 26, lineHeight: 32, letterSpacing: -0.3, color: colors.textTitle},
   iconBtn: {minHeight: TOUCH, minWidth: TOUCH, justifyContent: 'center', alignItems: 'flex-end'},

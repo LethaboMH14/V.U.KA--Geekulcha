@@ -275,6 +275,9 @@ export function GuardianHome({onBack}: {onBack?: () => void} = {}) {
             </View>
             <Chip status={reached && !offline ? 'received' : 'neutral'} label={offline ? 'Offline' : reached ? `Checked ${hhmm(reached)}` : 'Connecting'} />
           </View>
+          {open && offline ? (
+            <Text style={type.caption}>Last refreshed {reached ? hhmm(reached) : 'not yet'}. This alert view may be out of date.</Text>
+          ) : null}
 
           {open ? (
             <OpenAlert who={who} alert={open} acks={acked[open.incident_id] ?? []} onAnswer={a => answer(open, a)} note={note} />
@@ -287,10 +290,14 @@ export function GuardianHome({onBack}: {onBack?: () => void} = {}) {
                 <Eyebrow>VIGIL · {who}</Eyebrow>
               </View>
               <Text style={[type.display, {marginTop: space.md}]} accessibilityRole="header">
-                All quiet
+                {offline ? 'Status unknown' : reached ? 'All quiet' : 'Checking alerts'}
               </Text>
               <Text style={[type.body, {marginTop: space.sm}]}>
-                Nothing needs you right now. Keep VIGIL open or check back: alerts arrive while this app is open.
+                {offline
+                  ? `Couldn't refresh alerts. ${reached ? `Last checked ${hhmm(reached)}. ` : ''}Keep VIGIL open: alerts arrive while this app is open.`
+                  : reached
+                    ? 'Nothing needs you right now. Keep VIGIL open or check back: alerts arrive while this app is open.'
+                    : 'Checking for alerts. Keep VIGIL open: alerts arrive while this app is open.'}
               </Text>
             </Panel>
           )}
@@ -302,6 +309,11 @@ export function GuardianHome({onBack}: {onBack?: () => void} = {}) {
                 <View key={a.incident_id}>
                   <Rule />
                   <Readout label={`${hhmm(a.opened_at)} · ${a.trigger === 'duress_signal' ? 'second PIN' : a.trigger === 'no_answer' ? 'no answer' : 'contact lost'}`} value={a.close_reason === 'stand_down' ? 'stood down' : a.close_reason ?? 'closed'} />
+                  {acked[a.incident_id]?.length ? (
+                    <Text style={[type.caption, {marginTop: space.xs}]}>
+                      Response recorded: {[...new Set(acked[a.incident_id])].map(action => action === 'called_10111' ? 'called 10111' : action === 'handling' ? 'handling it' : 'stood down').join(' · ')}
+                    </Text>
+                  ) : null}
                 </View>
               ))}
             </Panel>
@@ -330,20 +342,58 @@ function OpenAlert({
   note: string | null;
 }) {
   const stood = acks.includes('stand_down');
+  const responses = [...new Set(acks)];
   return (
     <>
       <Panel hero tone="guardian">
-        <Eyebrow style={{color: colors.amberText}}>Alert · {hhmm(alert.opened_at)}</Eyebrow>
-        <Text style={[type.display, {marginTop: space.sm}]} accessibilityRole="header">
-          {who} may need help
-        </Text>
-        <Text style={[type.body, {marginTop: space.sm}]}>{WHY[alert.trigger](who)}</Text>
-        {whyLine(alert.why) ? <Text style={[type.body, {marginTop: space.xs}]}>{whyLine(alert.why)}</Text> : null}
-        {alert.location ? <AlertMap loc={alert.location} who={who} /> : null}
-        <View style={styles.g4}>
-          <Text style={styles.g4Text}>Don't call or text {who}. Call 10111.</Text>
-          <Text style={[type.caption, {color: colors.amberText, marginTop: 4}]}>If someone is with {who}, a ringing phone could put them at risk.</Text>
+        <View style={styles.rowHeader}>
+          <Eyebrow style={{color: colors.amberText}}>Guardian · alert · {hhmm(alert.opened_at)}</Eyebrow>
+          {device.simulated ? <Chip status="simulated" label="Simulated" /> : null}
         </View>
+        <Text style={[type.title, {marginTop: space.md, color: colors.amberText}]} accessibilityRole="header">
+          Don't call or text them. Call 10111.
+        </Text>
+        <Text style={[type.caption, {marginTop: space.sm, color: colors.amberText}]}>
+          If someone is with {who}, a ringing phone could put them at risk.
+        </Text>
+      </Panel>
+
+      {responses.length ? (
+        <Panel tone="guardian">
+          <Text style={type.label}>Response recorded</Text>
+          {responses.map(action => (
+            <View key={action} style={{marginTop: space.sm}}>
+              <Readout
+                label={action === 'called_10111' ? 'Emergency services' : action === 'handling' ? 'Your response' : 'Alert decision'}
+                value={action === 'called_10111' ? 'called 10111' : action === 'handling' ? 'handling it' : 'stood down'}
+              />
+            </View>
+          ))}
+          <Text style={[type.caption, {marginTop: space.sm}]}>The alert stays open until it closes.</Text>
+        </Panel>
+      ) : null}
+
+      <Panel tone="guardian">
+        <Eyebrow>Who</Eyebrow>
+        <Text style={[type.title, {marginTop: space.xs}]}>{who} may need help</Text>
+        <Rule />
+        <Eyebrow>Why</Eyebrow>
+        <Text style={[type.body, {marginTop: space.xs}]}>{WHY[alert.trigger](who)}</Text>
+        {whyLine(alert.why) ? <Text style={[type.body, {marginTop: space.xs}]}>{whyLine(alert.why)}</Text> : null}
+      </Panel>
+
+      <Panel tone="guardian">
+        {alert.location ? (
+          <AlertMap loc={alert.location} who={who} />
+        ) : (
+          <>
+            <Text style={type.label}>Location unavailable</Text>
+            <Text style={[type.caption, {marginTop: space.xs}]}>No location fix is available for this alert.</Text>
+          </>
+        )}
+      </Panel>
+
+      <View style={{gap: space.sm}}>
         <Key
           label={acks.includes('called_10111') ? 'Call 10111 again' : 'Call 10111'}
           variant="guardian"
@@ -353,14 +403,12 @@ function OpenAlert({
             void Linking.openURL('tel:10111');
           }}
         />
-      </Panel>
-      <View style={{gap: space.sm}}>
         <Key label={acks.includes('handling') ? "You're handling it" : "I'm handling it"} variant="guardianPlain" onPress={() => onAnswer('handling')} />
         <Key label={stood ? 'Stood down' : `Stand down: ${who} is safe`} variant="ghost" onPress={() => onAnswer('stand_down')} />
       </View>
       {note ? <Text style={[type.caption, {color: colors.amberText}]}>{note}</Text> : null}
       <Text style={type.caption}>
-        Each answer is signed with this phone's key and joins {who}'s record. VIGIL doesn't dispatch anyone. Calling {who} unlocks after the alert closes.
+        VIGIL doesn't dispatch anyone. Calling {who} unlocks after the alert closes.
       </Text>
     </>
   );
