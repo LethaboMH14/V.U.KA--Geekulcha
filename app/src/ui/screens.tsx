@@ -10,7 +10,7 @@
  * on which PIN it was, and none of those frames moves.
  */
 import React, {useEffect, useRef, useState} from 'react';
-import {BackHandler, Platform, Pressable, ScrollView, Share, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
+import {AppState, BackHandler, Platform, Pressable, ScrollView, Share, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import {CheckCircle, GearSix, Microphone, Phone, ShareNetwork, ShieldChevron, UserPlus, Users, Waveform, WifiSlash} from './icons';
 import {Chip, Eyebrow, GlassIcon, Key, Lamp, LevelMeter, ListeningLine, Panel, PinKeypad, QuietKey, Readout, Row, Rule, Surface, TopAppBar} from './components';
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
@@ -19,7 +19,7 @@ import {GuardianHome, GuardianSetup} from './guardian';
 import {MyRecord} from './record';
 import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, type Delivery} from '../api/device';
 import {version} from '../../package.json';
-import {runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
+import {canFullScreen, openFullScreenSettings, runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
 import type {Decision, Reason} from '../brain/detect';
 
 type Screen =
@@ -572,10 +572,38 @@ function Listening({
         </Text>
         <LevelMeter score={level.score} threshold={level.threshold} label={level.label} />
       </Panel>
+      <FullScreenNotice />
       <GuardiansCard delivery={delivery} live onInvite={onInvite} />
       <Key label="Pause listening" variant="ghost" onPress={onPause} accessibilityHint="Asks for your PIN" />
       {onSimCheck ? <QuietKey label="Preview: show a check-in" onPress={onSimCheck} /> : null}
     </View>
+  );
+}
+
+/**
+ * Android 14+ can stop a check-in from opening over other apps. Until the
+ * member allows it, a check-in while VIGIL is in the background is only a
+ * notification that slides away, so say so, once, plainly. Rechecked when
+ * the member comes back from Settings.
+ */
+function FullScreenNotice() {
+  const [allowed, setAllowed] = useState(true);
+  useEffect(() => {
+    const check = () => void canFullScreen().then(setAllowed);
+    check();
+    const sub = AppState.addEventListener('change', s => s === 'active' && check());
+    return () => sub.remove();
+  }, []);
+  if (allowed) return null;
+  return (
+    <Panel>
+      <Eyebrow>So a check-in can reach you</Eyebrow>
+      <Text style={[type.body, {marginTop: space.sm, marginBottom: space.md}]}>
+        When VIGIL is in the background, a check-in has to open over your other apps and the lock screen. Android needs you to allow
+        that once.
+      </Text>
+      <Key label="Allow full-screen check-ins" variant="plain" arrow onPress={openFullScreenSettings} />
+    </Panel>
   );
 }
 

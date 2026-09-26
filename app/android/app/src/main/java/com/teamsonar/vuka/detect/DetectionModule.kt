@@ -98,6 +98,30 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
     @ReactMethod
     fun clearCheckin() = CheckinNotice.clear(ctx)
 
+    /**
+     * Whether a check-in can open over other apps and the lock screen
+     * (Android 14+ lets the user switch full-screen notifications off, and
+     * apps installed outside the Play Store often start with it off).
+     */
+    @ReactMethod
+    fun canFullScreen(promise: Promise) {
+        val nm = ctx.getSystemService(android.app.NotificationManager::class.java)
+        promise.resolve(android.os.Build.VERSION.SDK_INT < 34 || nm.canUseFullScreenIntent())
+    }
+
+    /** Opens the system page where the member can allow full-screen check-ins. */
+    @ReactMethod
+    fun openFullScreenSettings() {
+        val intent = if (android.os.Build.VERSION.SDK_INT >= 34) {
+            android.content.Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT)
+                .setData(android.net.Uri.parse("package:" + ctx.packageName))
+        } else {
+            android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, ctx.packageName)
+        }
+        ctx.startActivity(intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
     /** The JS runtime is going away: stop sending to it, so output waits for the next one. */
     override fun invalidate() {
         if (DetectionBus.listener === this) DetectionBus.listener = null

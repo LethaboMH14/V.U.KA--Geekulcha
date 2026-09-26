@@ -34,6 +34,8 @@ type Native = {
   disarm(): Promise<boolean>;
   showCheckin(): void;
   clearCheckin(): void;
+  canFullScreen?(): Promise<boolean>;
+  openFullScreenSettings?(): void;
 };
 
 const native: Native | undefined = NativeModules.VigilDetection;
@@ -309,6 +311,20 @@ export function levelOf(w: AudioWindow): Level {
   const score = w.targetBp[best];
   const threshold = RULESET_V1.thresholdBp[TARGETS[best].label];
   return {label: score >= 300 ? TARGETS[best].label : null, score, threshold};
+}
+
+/**
+ * Whether a check-in can open over other apps and the lock screen. On
+ * Android 14+ the member may need to allow it once; without it a check-in is
+ * only a notification that slides away. True where there is nothing to ask.
+ */
+export async function canFullScreen(): Promise<boolean> {
+  if (!native?.canFullScreen) return true;
+  return native.canFullScreen().catch(() => true);
+}
+
+export function openFullScreenSettings(): void {
+  native?.openFullScreenSettings?.();
 }
 
 /** True only in builds made with -PvigilTestFeed=true. */
