@@ -42,3 +42,15 @@ Needs/blockers:
 Business handoff: Not applicable.
 
 Next: redeploy; confirm `vuka: guardian alerts via FCM push` and `vuka: sidecar ready` in the App Service log.
+
+**Correction, same day (13:20 UTC), after deploy.** The "nothing for 9+ minutes" reading in Research above was wrong. Container logging was off on the App Service (`az webapp log show`: `httpLogs.fileSystem.enabled: false`), so only the startup window was being kept. Output after "Site started" was never recorded, so a gap in the log was not evidence of a hang. The same applies to the earlier entry's "no boot logged any `npm ci` output". Enabled with `az webapp log config --docker-container-logging filesystem`, then restarted once.
+
+The full boot is now on record:
+- **13:16:20** — `vuka: guardian alerts via FCM push`
+- **13:16:20** — `using cached Node tarball` (pinned checksum passed)
+- **13:16:24** — uvicorn up
+- **13:16:44** — `node v24.18.0 ready on local disk`
+- **13:19:15** — `added 102 packages in 2m`
+- **13:19:16** — `vuka: sidecar ready`
+
+Keeping `/home` to one file is still the documented best practice for App Service network storage, but it was not what fixed anything observed here. `npm ci` took ~2 min even on local disk, so the cost is the registry download. The `startup.sh` comment is corrected to match.

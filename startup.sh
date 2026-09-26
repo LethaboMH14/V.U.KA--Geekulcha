@@ -15,14 +15,17 @@ fi
 # (anchor/hedera-sidecar). App Service's Python image has no Node runtime, and
 # this app's own content is re-extracted to a fresh /tmp path on every boot.
 #
-# Where things live, and why (both learned from real Azure boots on 26 Sep):
-# - /home is the only path Azure persists, but it is a network file share.
-#   Writing or deleting thousands of small files there (an extracted Node,
-#   node_modules, an npm cache) takes minutes: one boot sat for 9+ minutes
-#   just deleting a half-extracted Node tree. So /home holds exactly one
-#   file, the Node tarball, downloaded once.
+# Where things live, and why:
+# - /home is the only path Azure persists, but it is network storage, which
+#   Microsoft documents as slow for many small files (an extracted Node,
+#   node_modules, an npm cache). So /home holds exactly one file, the Node
+#   tarball, downloaded once.
 # - Node is extracted, and the sidecar's dependencies installed, on local
-#   disk (/tmp) every boot, which takes seconds.
+#   disk (/tmp) every boot. On Azure (26 Sep, 13:16 UTC) extraction took
+#   ~20 s and the sidecar's `npm ci` ~2 min, all in the background.
+# - Container logging must be on (az webapp log config
+#   --docker-container-logging filesystem) to see any of this after the
+#   site starts; with it off, only the startup window is kept.
 # - The tarball's SHA-256 is pinned below (verified against nodejs.org's
 #   SHASUMS256.txt when this version was chosen) and checked before every
 #   extraction, so a cached or downloaded file is never trusted unverified.
