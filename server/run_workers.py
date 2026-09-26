@@ -53,8 +53,12 @@ def step(store, now, *, bank_sender=None, batches=None):
     with closing(store._connection()) as conn, conn, conn.cursor() as cur:
         purge_closed(cur, now)
     notifier = SimulatedGuardianNotifier(store._connection, lambda: now)
+    # Guardian alerts are claimed on their own, so a bank outage (every
+    # bank_signal failing) can never hold back a duress alert.
     with closing(store._connection()) as conn, conn, conn.cursor() as cur:
-        rows = claim_due(cur, now=now, kinds=("guardian_alert", "bank_signal"))
+        rows = claim_due(cur, now=now, kinds=("guardian_alert",))
+    with closing(store._connection()) as conn, conn, conn.cursor() as cur:
+        rows += claim_due(cur, now=now, kinds=("bank_signal",))
     delivered = 0
     for row in rows:
         try:
