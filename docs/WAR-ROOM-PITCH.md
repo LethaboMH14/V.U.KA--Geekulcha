@@ -11,12 +11,13 @@
 | 1 · Hook | Make them feel the problem | I, B | 97 |
 | 2 · Problem | Why nothing today fixes it | I, B | 93 |
 | 3 · Solution | What VUKA is | I | 32 |
-| 4 · How it works | The mechanism | T, U | 100 |
+| 4A · How it works | The mechanism | T, U | 66 |
+| 4B · The record | Where it lives; who can verify | T, S | 77 |
 | 5 · Why it works | The sale | I, T | 77 |
 | 6 · Business | There is a business | B | 51 |
 | 7 · Compliance | Neutralise the four objections | S | 40 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **545** |
+| | | **Total** | **588** |
 
 ---
 
@@ -34,9 +35,13 @@ That's coercion — and at its worst, express kidnapping. Nothing today fixes it
 
 VUKA notices duress without a button, and proves when it happened — so a bank or an insurer can check the record without trusting us. They get what they never had: proof.
 
-### Beat 4 — How it works
+### Beat 4A — How it works
 
-They start a journey. VIGIL listens on the phone — for a scream, a shout, breaking glass. No button. No free hand. When it hears something, it doesn't sound an alarm. It quietly asks a Journey check: are you okay? They answer with their normal PIN. Or with a duress PIN — and it looks exactly the same. Same screen, same timing. Nobody watching can tell. But a duress PIN, or no answer, alerts their guardians. And it makes a record — signed, so it can't be faked, and fingerprinted publicly, so it can't be changed. The record stays private. They hold the key.
+They start a journey. VIGIL listens — a scream, a shout, breaking glass. No button. No free hand. When it hears something, it quietly asks a Journey check: are you okay? They answer with their normal PIN, or a duress PIN — and the two look identical. Same screen, same timing. Nobody watching can tell. But the phone flags three things: the location, the event, and the duress signal itself.
+
+### Beat 4B — The record
+
+That record goes to their phone, and to their guardians' phone — so it survives if their phone is stolen. It is signed, chained, and fingerprinted to a public ledger — anyone can verify it without trusting us. We know exactly what counts as a duress signal: it is defined by law and confirmed with duress experts. Nothing personal goes on the ledger; it is POPIA-compliant. And the record stays private — they hold the key.
 
 ### Beat 5 — Why it works
 
