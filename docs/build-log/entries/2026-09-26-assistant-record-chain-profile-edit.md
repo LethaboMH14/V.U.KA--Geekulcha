@@ -34,3 +34,15 @@ Evidence: `./gradlew :app:assembleDebug -q` → exit 0; on emulator-5554 the Rec
 Changed: Settings profile is no longer in a card and has no "Profile" label: a 120dp initials circle with a pencil badge (new `ic_pencil.xml`, ink pill background) and the full name below; tapping still needs the PIN before Edit profile opens (stated in the content description). The PIN screen after sign-in said "Welcome back" twice (header and card); the header is now "Enter your PIN", and its body no longer says "This number" (wrong for the Google and email routes).
 
 Evidence: `./gradlew :app:assembleDebug -q` → exit 0; Settings screenshot on emulator-5554 shows the circle, pencil badge and name. The PIN screen change is build-checked only (reaching it needs sign-out, which needs the PIN).
+
+### Follow-up, same day: visual clean-up; Proof details removed
+
+Changed: no arrow on "Get started" (welcome), "Finish setup" (invite guardians) or Activate; no × on Deactivate. Steps 3 (Phone number) and 5 (Your name) now use the same icon back button as the other screens (ImageView `ic_caret_left`, content description "Back") instead of a text "←". Record's "Proof details" card is removed, with its code and `item_proof_row.xml` (operator: the records and their chain check are the proof). Its "not anchored" statement moved into the chain status box: "Chained on this phone; not yet published to Hedera."
+
+Evidence: `./gradlew :app:assembleDebug -q` → exit 0; on emulator-5554 Home shows "Activate" with no arrow, and Record shows no Proof details, the new chain-status wording, and a "Terms accepted · Terms v0-draft and Privacy notice" record (from a sign-up the operator did, confirming the consent entry). Not seen on device: Get started, steps 3 and 5, Finish setup and Deactivate (build-checked).
+
+### Follow-up, same day: centred headers; decorative icon and "Delete my data" removed
+
+Changed: Home's greeting and first name are centred, and the decorative three-dots icon is removed (it did nothing; `ic_dots_three_circle.xml` deleted as unused). Settings shows only a centred "Settings" title (the "VUKA" label is gone). The "Delete my data" row under Privacy and data is removed (operator: it belongs with "Delete profile from this phone"). Server-side deletion (spec §9's 72-hour schedule) is not built; when ANCHOR exists it should be wired into Delete profile, as the code comment now says.
+
+Evidence: `./gradlew :app:assembleDebug -q` → exit 0; on emulator-5554 Home shows the centred greeting with no icon, Settings shows the centred title, and Privacy and data lists only Recovery, with Delete profile under Account.

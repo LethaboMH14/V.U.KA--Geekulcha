@@ -198,10 +198,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 chevron = true,
             ) { findNavController().navigate(R.id.action_settings_to_recovery) }
         )
-        // Deletion is a 72-hour server-side schedule (spec §9); there's no server to schedule it on yet.
-        rows.addView(
-            row(rows, R.drawable.ic_trash, "Delete my data", "Needs the ANCHOR server, which isn't connected yet.")
-        )
+        // Server-side deletion (spec §9's 72-hour schedule) belongs with "Delete profile"
+        // under Account once the ANCHOR server exists; there's no separate row for it.
     }
 
     private fun bindAccount(view: View) {

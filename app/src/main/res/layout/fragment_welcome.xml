@@ -169,7 +169,7 @@
             android:layout_height="54dp"
             android:background="@drawable/bg_button_primary"
             app:backgroundTint="@null"
-            android:text="Get started  →"
+            android:text="Get started"
             android:textAllCaps="false"
             android:textColor="@color/vuka_text_inverse"
             android:textSize="16sp"

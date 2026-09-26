@@ -22,8 +22,8 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * ANCHOR · My record (MyRecord.tsx): the member's own timeline, with proof
- * details collapsed below.
+ * ANCHOR · My record (MyRecord.tsx): the member's own records. The records
+ * and their chain check are the proof; there's no separate proof section.
  *
  * Lists this phone's records from [RecordStore], newest first: each
  * Activate → Deactivate session, and events on their own (profile changes,
@@ -35,22 +35,9 @@ import java.util.Locale
 class RecordFragment : Fragment(R.layout.fragment_record) {
 
     private val journey: JourneyViewModel by activityViewModels()
-    private var proofOpen = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        proofOpen = savedInstanceState?.getBoolean(KEY_PROOF_OPEN) ?: false
-
-        proofRow(view, R.id.rowRoot, "Chain head")
-        proofRow(view, R.id.rowSequence, "Sequence")
-        proofRow(view, R.id.rowRecorded, "Last entry")
-
-        view.findViewById<View>(R.id.proofHeader).setOnClickListener {
-            proofOpen = !proofOpen
-            renderProof(view)
-        }
-        renderProof(view)
-
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 journey.entries.collect {
@@ -59,11 +46,6 @@ class RecordFragment : Fragment(R.layout.fragment_record) {
                 }
             }
         }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putBoolean(KEY_PROOF_OPEN, proofOpen)
     }
 
     private fun renderTimeline(view: View, entries: List<RecordEntry>) {
@@ -117,7 +99,7 @@ class RecordFragment : Fragment(R.layout.fragment_record) {
         val check = RecordStore.verify(entries)
         val (title, body) = when (check) {
             ChainCheck.Intact -> "Chain intact · ${entries.size} entr${if (entries.size == 1) "y" else "ies"}" to
-                "Every entry still matches its fingerprint and links to the one before it."
+                "Every entry still matches its fingerprint and links to the one before it. Chained on this phone; not yet published to Hedera."
             is ChainCheck.Broken -> "Chain broken at #${check.seq}" to
                 "Entry #${check.seq} or the link before it was changed after it was recorded."
         }
@@ -128,34 +110,10 @@ class RecordFragment : Fragment(R.layout.fragment_record) {
         view.findViewById<View>(R.id.chainStatus).setBackgroundResource(
             if (check == ChainCheck.Intact) R.drawable.bg_input_field else R.drawable.bg_input_field_error
         )
-
-        val head = entries.lastOrNull()
-        proofValue(view, R.id.rowRoot, head?.let { "${it.hash.take(16)}…" } ?: "—")
-        proofValue(view, R.id.rowSequence, head?.seq?.toString() ?: "—")
-        proofValue(view, R.id.rowRecorded, head?.let { formatTime(it.timeMillis) } ?: "—")
-    }
-
-    private fun proofValue(view: View, id: Int, value: String) {
-        view.findViewById<View>(id).findViewById<TextView>(R.id.tvValue).text = value
-    }
-
-    private fun renderProof(view: View) {
-        view.findViewById<View>(R.id.proofBody).visibility = if (proofOpen) View.VISIBLE else View.GONE
-        view.findViewById<View>(R.id.ivProofCaret).rotation = if (proofOpen) 90f else 0f
-        view.findViewById<View>(R.id.proofHeader).contentDescription =
-            if (proofOpen) "Proof details, expanded" else "Proof details, collapsed"
-    }
-
-    private fun proofRow(view: View, id: Int, label: String) {
-        view.findViewById<View>(id).findViewById<TextView>(R.id.tvLabel).text = label
     }
 
     private fun formatTime(millis: Long): String {
         val pattern = if (DateUtils.isToday(millis)) "HH:mm" else "d MMM · HH:mm"
         return SimpleDateFormat(pattern, Locale.getDefault()).format(Date(millis))
-    }
-
-    companion object {
-        private const val KEY_PROOF_OPEN = "record_proof_open"
     }
 }

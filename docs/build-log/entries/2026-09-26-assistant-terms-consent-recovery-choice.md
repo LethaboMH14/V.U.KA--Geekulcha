@@ -23,3 +23,9 @@ Needs/blockers: real terms text (team + legal review) and a TERMS_VERSION bump w
 Business handoff: not applicable — no pricing or cost change.
 
 Next: operator to register a test account, check Settings → Recovery, and try Forgot password end to end.
+
+### Follow-up, same day: recovery-code step removed from sign-up
+
+Changed: sign-up step 7 no longer has a "Recovery code" stage (it only said codes weren't available). Confirming the duress PIN now saves both PINs to `InterimPinStore`, clears them from memory and goes to Invite guardians — what the removed Continue button did. Removed the `RECOVERY` stage, its back-press handler and the `recoveryStage` layout. Operator decision, consistent with spec §14's cut line ("recovery endpoint (and then show no code)"). Settings → Recovery and the Forgot password sheet still correctly say PIN recovery isn't in this build.
+
+Evidence: `./gradlew :app:assembleDebug -q` → exit 0. Not run through on device (the emulator holds a signed-in member; re-registering would replace it).

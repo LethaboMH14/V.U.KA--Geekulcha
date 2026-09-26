@@ -220,11 +220,6 @@
             android:textColor="@color/vuka_text_inverse"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:cornerRadius="27dp"
-            app:icon="@drawable/ic_arrow_right"
-            app:iconGravity="textEnd"
-            app:iconPadding="10dp"
-            app:iconSize="16dp"
-            app:iconTint="@color/vuka_text_inverse" />
+            app:cornerRadius="27dp" />
     </LinearLayout>
 </ScrollView>

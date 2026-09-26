@@ -1,6 +1,5 @@
 package za.co.vuka.app.ui.home
 
-import android.content.res.ColorStateList
 import android.content.Intent
 import android.os.Bundle
 import android.util.TypedValue
@@ -85,8 +84,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             setBackgroundResource(if (active) R.drawable.bg_button_secondary else R.drawable.bg_button_primary)
             val textColor = requireContext().getColor(if (active) R.color.vuka_action else R.color.vuka_text_inverse)
             setTextColor(textColor)
-            iconTint = ColorStateList.valueOf(textColor)
-            setIconResource(if (active) R.drawable.ic_x else R.drawable.ic_arrow_right)
         }
 
         // Only simulated invites exist, so nobody has accepted.
