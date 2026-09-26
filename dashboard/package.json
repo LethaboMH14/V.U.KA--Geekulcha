@@ -1,0 +1,21 @@
+{
+  "name": "@vuka/dashboard",
+  "private": true,
+  "type": "module",
+  "description": "VUKA Verify Page",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@vuka/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vitest": "^5.0.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

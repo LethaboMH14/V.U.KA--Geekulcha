@@ -1,6 +1,6 @@
 # VUKA Secure Software Development Lifecycle (SSDLC) — GKHack26 build
 
-> **Owner:** Ipeleng Constance Modise (security, privacy and compliance). **Issued** 23 Sep 2026 by Lethabo (co-lead) as her starting programme. **Status:** `PROPOSED` until Ipeleng accepts it and Lethabo reviews it. It becomes the Sonke SSDLC submission (due **Sat 26 Sep 12:30**, internal **11:00**).
+> **Owner:** Ipeleng Constance Modise (security, privacy and compliance). **Issued** 23 Sep 2026 by Lethabo (co-lead) as her starting programme. **Status:** `ACCEPTED` — 25 Sep 2026, Ipeleng Constance Modise (owner). Accepted as issued: 70 controls with honest status counts (15 Done / 29 In build / 25 Planned / 1 Not doing), every product control carrying an owner and a test or evidence reference; nothing is treated as done that is not in the repository today. This file is the Sonke SSDLC submission source (due **Sat 26 Sep 12:30**, internal **11:00**); control statuses update when their tests run, never from this document alone. Lethabo review pending per P3.S9.
 > **Serves:** S (security and ethics), T (technical). **Answers "Would a real user trust and use this?"** by making every security claim checkable against a test or a file.
 > **Companions:** `docs/security/THREAT-MODEL.md` · `docs/security/PENTEST-PLAN.md` · `docs/security/COMPLIANCE-GOVERNANCE.md` · `docs/VUKA-2-SPEC.md` (requirement and test IDs) · ADR-0034 to ADR-0038.
 > This file supersedes the path `docs/SSDLC-GKHACK26.md` named in `team/ipeleng.md`.

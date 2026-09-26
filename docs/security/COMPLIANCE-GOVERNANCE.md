@@ -1,6 +1,6 @@
 # VUKA compliance and governance — POPIA, RICA, Cybercrimes Act, Play policy
 
-> **Owner:** Ipeleng Constance Modise. **Issued** 23 Sep 2026 by Lethabo (co-lead). **Status:** `PROPOSED`.
+> **Owner:** Ipeleng Constance Modise. **Issued** 23 Sep 2026 by Lethabo (co-lead). **Status:** `ACCEPTED` — 25 Sep 2026, Ipeleng Constance Modise (owner). Accepted as issued: 14 POPIA obligations traced to controls and evidence; the ⚑ marks are counsel questions Q-C1–Q-C7, recorded as open — this acceptance does not resolve them. Not legal advice.
 > **Serves:** S, B. **Not legal advice.** ⚑ marks a point that needs counsel or a primary-text read before it goes on a slide. Statutory quotes below come from the Accessible Law copy of POPIA (popia.co.za) and cybercrimesact.co.za, retrieved 23 Sep 2026; both are secondary copies ⚑ until checked against the Gazette.
 > Companions: `docs/security/SSDLC.md` (controls C-nn), `docs/security/THREAT-MODEL.md`, `docs/VUKA-2-SPEC.md` §13, `docs/POPIA-IO-REGISTRATION.md`, [RICA position](../RICA-POSITION.md).
 
