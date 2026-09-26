@@ -1,6 +1,6 @@
 # VUKA — War Room Pitch
 
-> **Spoken target:** 3–5 minutes (war room). **Actual: 751 words (~5.0 min).** One job per beat, drafted to a hard budget.
+> **Spoken target:** 3–5 minutes (war room). **Actual: 759 words (~5.1 min).** One job per beat, drafted to a hard budget.
 > **Companion files:** `context.md` · `pitch-deck-outline.md` · `docs/reviews/ANCHOR-ACCESS-MODEL-ADR-PROPOSAL.md`.
 > **Read `docs/MASTER-CONTEXT.md` §2 for the judging criteria** (I 15 · T 15 · U 10 · S 10 · B 15 · Q 5).
 
@@ -8,17 +8,17 @@
 
 | Beat | Job | Criterion | Words |
 |---|---|---|---:|
-| 1 · Hook | Make them feel the problem | I, B | 97 |
-| 2 · Problem | Why nothing today fixes it | I, B | 93 |
+| 1 · Hook | Make them feel the problem | I, B | 98 |
+| 2 · Problem | Why nothing today fixes it | I, B | 96 |
 | 3 · Solution | What VUKA is | I | 32 |
-| 4A · How it works | The mechanism — automatic | T, U | 54 |
-| 4B · The record | Where it lives; one matched record | T, S, B | 98 |
-| 5 · Why it works | The sale — two halves, nobody does both | I, T | 111 |
-| 6A · The money | Who pays, how much | B | 51 |
-| 6B · Why the insurer pays | Fake claims — the claim and the proof | B, I | 80 |
-| 7 · Compliance | Deployability, licence, ECTA | S, B | 80 |
+| 4A · How it works | The mechanism — automatic | T, U | 56 |
+| 4B · The record | Where it lives; one matched record | T, S, B | 100 |
+| 5 · Why it works | The sale — two halves, one record | I, T | 126 |
+| 6A · The money | Who pays, how much | B | 47 |
+| 6B · Why the insurer pays | Fake claims — the claim and the proof | B, I | 81 |
+| 7 · Compliance | Deployability, licence, ECTA | S, B | 68 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **751** |
+| | | **Total** | **759** |
 
 ---
 
@@ -46,11 +46,11 @@ That record is made automatically. It goes to their phone, and to their guardian
 
 ### Beat 5 — Why it works
 
-Here's why it wins. This problem has two halves: noticing the duress, and proving it. Nobody does both. Detection tools can notice — a panic button, a fraud score, the safety features on your phone — but they leave the victim with nothing a bank or a court can act on. Evidence tools can prove something happened, but they can't notice it in the first place. And a bank's own duress PIN only works if you can still type — inside that one bank. Everybody owns one half. Nobody owns both. VUKA notices without them touching a button, and hands back a record anyone can verify. For the first time, the proof is theirs.
+Here's why it wins. This problem has two halves: noticing the duress, and proving it. Nobody does both. Detection tools can notice — a panic button, a fraud score, the safety features on your phone — but they leave the victim with nothing a bank or a court can act on. Evidence tools can prove something happened, but they can't notice it in the first place. And a bank's own duress PIN only works if you can still type — inside that one bank. Everybody owns one half. Nobody owns both. Unlike a panic button, a duress PIN or a fraud score, VUKA notices the duress with nothing pressed — and unlike an evidence tool, it proves when it happened, in one record anyone can verify.
 
 ### Beat 6A — The money
 
-Two people pay; the victim pays nothing. The insurer pays about fifty rand per member, per month. The bank pays fifteen rand per case — far less than the R5,000 it costs to fight a dispute. Break-even is three thousand seven hundred and seventy-four members, and the model carries the infrastructure cost.
+Two people pay. The victim pays nothing. The insurer pays twenty rand per member, per month. The bank pays fifteen rand per case — against a five-thousand-rand cost to fight one dispute. Neither pays for the technology. Both pay because it saves them more than it costs.
 
 ### Beat 6B — Why the insurer pays
 
@@ -58,7 +58,7 @@ The insurer pays because VUKA cuts its fake-claim payouts. Today, someone can cl
 
 ### Beat 7 — Compliance
 
-Compliance is our moat. We can deploy this here — there is nothing to license. Nothing personal ever touches the ledger, only a fingerprint, and they hold the key. We don't build or run a blockchain; we use an existing public network, hold no customer crypto, and move no money. Running it costs only network fees — a fixed, bounded cost we've modelled. And the record is built to maximise the ECTA (Electronic Communications and Transactions Act) section 15 reliability factors.
+Compliance is our moat. We can deploy this here — there is nothing to license. Nothing personal ever touches the ledger, only a fingerprint, and they hold the key. We don't build or run a blockchain; we use an existing public network, hold no customer crypto, and move no money. And the record is built to maximise the ECTA (Electronic Communications and Transactions Act) section 15 reliability factors.
 
 ### Beat 8 — Ask
 
@@ -85,7 +85,7 @@ Here's what we want from this room. One insurer, five thousand members, twelve m
 | The other half proves, no detection | OpenTimestamps; Bernstein; Truepic / C2PA |
 | A 32-byte fingerprint to public ledgers (Hedera + Bitcoin) | `docs/VUKA-2-SPEC.md` §10; ADR-0035 |
 | Nothing personal on the ledger; encrypted off-chain; deletable; she holds the key | spec §10 and §13; POPIA s26 |
-| R50 per member/month (working); R15 per case (proposed); break-even 3,774; infra carried by the model | `scripts/economics_vigil_anchor.py`; `docs/ECONOMICS-VIGIL-ANCHOR.md` |
+| R20 per member/month (`ASSUMPTION`); per-case fee `PROPOSED`; break-even 10,973 at R20 (`ESTIMATE`); anchors: GuardMe R19.90 (FNB, Apr 2022), iTOO R22.50 | `scripts/economics_vigil_anchor.py`; `docs/ECONOMICS-VIGIL-ANCHOR.md`; `docs/EVIDENCE.md` |
 | Blockchain is legal here; not a financial service; no crypto; no tokens | ADR-0034/0035; `context.md` |
 | Built for the ECT Act | ECTA 25 of 2002 s15(3)(a)–(c) |
 

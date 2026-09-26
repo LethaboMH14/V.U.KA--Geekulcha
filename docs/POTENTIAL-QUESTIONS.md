@@ -43,6 +43,18 @@ Because they cannot verify a coercion. A coerced transfer looks exactly like a v
 ### 1.6 Why the whole book (ubiquity logic)
 A fraudster will not opt into a test. If VUKA were optional, the people most likely to fake a claim would be the ones who don't have it — so the insurer extends it across the book, the way cover is conditioned on a working device. On the whole book, a claim **without** a record is the exception, not a loophole. **"Everyone needs VUKA" is a consequence of the anti-fraud logic, not an assertion.**
 
+### 1.7 How many members to break even?
+**10,973 at current stipend levels** (`ESTIMATE`, `scripts/economics_vigil_anchor.py`). We're priced into an existing shelf — GuardMe **R19.90**, iTOO express-kidnapping cover **R22.50** — so **adoption, not price, is the lever**.
+
+### 1.8 Why R20 and not R50?
+R50 sits **above both verified comparables**. R20 sits **inside the shelf the market already pays** for this kind of cover. **Competitive entry, not premium positioning.** (R20 is final; no range, no R50.)
+
+### 1.9 What does the insurer save?
+The pilot must show a saving of at least **12× the annual fee — R240 per member, per year** — measured on the insurer's own claims data. **We never quote a rand saving.**
+
+### 1.10 What's your margin?
+**R14.28 contribution per member per month at R20**, before fixed costs (`ESTIMATE`).
+
 ---
 
 ## 2 · Blockchain compliance & eligibility in South Africa

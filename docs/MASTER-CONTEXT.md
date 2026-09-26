@@ -127,13 +127,13 @@ Full provenance in `EVIDENCE.md` ("Verified 23 September 2026").
 | Bank fraud attempts rising | **75%** of SA banking leaders (vendor survey) | `FACT` — BioCatch, May 2026 |
 | Price anchor | FNB GuardMe **R19.90/month** (press report, Apr 2022); iTOO express-kidnapping cover **from R22.50/month** (2026) | `FACT` — re-check GuardMe's current price |
 | VUKA price | **~R20 per member per month**, partner-funded; app free | `ASSUMPTION` — the starting point, set 23 Sep. Babatunde owns it and may revise it during the build |
-| Break-even | **10,901 members at R20** (rounded up; includes the anchoring ceiling). If the price changes, quote whatever the script prints | `ESTIMATE` — `scripts/economics_vigil_anchor.py` |
+| Break-even | **10,973 members at R20** (rounded up; fixed cost itemised, incl. the anchoring ceiling and 5 stipends). The product alone (no stipends) breaks even at **469**. If the price or costs change, quote whatever the script prints | `ESTIMATE` — `scripts/economics_vigil_anchor.py` |
 | Anchoring cost, whole network | **at most ≈ R570/month** (hourly R9.34 + immediate roots capped at one a minute), whatever the member count | `ESTIMATE` — Hedera $0.0008/message, R16.21/USD |
 | Detection accuracy, latency, battery | **Not measured** — `VUKA-2-SPEC.md` §16 | — |
 | ADRs | **37** | `FACT` — `git grep -c "^## ADR-" docs/adr.md` |
 | TRL | **4** (ADR-0027), to be re-argued for VIGIL once the port runs | `ASSESSED` |
 
-> 🔴 **Dead numbers — if you see these anywhere, they are wrong:** "R1.9bn / 97,975" as current · "85% of banks" · "R100 per member" · "10,861" as break-even (it is 10,901, rounded up) · "three independent signatures" (it is two independent principals) · "3% claims reduction saves R20.7m" · R1.09bn as a market or a saving · "Santam 3.7m policyholders" · "94% net margin" · the 318 ms (n = 10) historical figure presented as VIGIL's speed · "2.7m security officers" · "27 ADRs" · "440 tests" · bare "TRL 5" · "R1.30/month".
+> 🔴 **Dead numbers — if you see these anywhere, they are wrong:** "R1.9bn / 97,975" as current · "85% of banks" · "R100 per member" · "10,861" or "10,901" as break-even (it is 10,973, rounded up) · "three independent signatures" (it is two independent principals) · "3% claims reduction saves R20.7m" · R1.09bn as a market or a saving · "Santam 3.7m policyholders" · "94% net margin" · the 318 ms (n = 10) historical figure presented as VIGIL's speed · "2.7m security officers" · "27 ADRs" · "440 tests" · bare "TRL 5" · "R1.30/month".
 
 ---
 

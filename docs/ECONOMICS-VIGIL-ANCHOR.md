@@ -22,18 +22,20 @@
 | Line | Value | Tag |
 |---|---:|---|
 | Variable cost per member per month (cloud R0.15 + support R5.00 + compliance R0.57; anchoring moved into fixed cost) | **R5.72** | `ESTIMATE` — Babatunde's plan |
-| Fixed cost per month (5 stipends × R30,000 + R5,090 tools, hosting, insurance) + anchoring ceiling R569.47 | **R155,659.47** | `ESTIMATE` — Babatunde's plan (7 people, 5 stipends: to confirm) + `docs/VUKA-2-SPEC.md` §10 |
+| Fixed cost per month, **itemised** — stipends R150,000 (`ASSUMPTION`) + R6,683.98 register-backed (Azure R348.30 · anchoring R569.47 `ESTIMATE` · insurance R667.92 · accountant R4,400 · tools R648.30 · CIPC R50) | **R156,683.98** | `ESTIMATE`; every non-stipend line is `FACT`-derived from `docs/MARKET-DATA.md` §4 |
 | Contribution margin at R20 | **71.4%** | `ESTIMATE` |
-| **Break-even at R20** (rounded **up**) | **10,901 members** | `ESTIMATE` |
-| Operating margin at R20 | 10,000 members **−6.4%** · 25,000 **40.3%** · 50,000 **55.8%** · 100,000 **63.6%** | `ESTIMATE` |
-| Annual operating profit at R20 | 25,000 members **R2.42m** · 50,000 **R6.70m** · 100,000 **R15.27m** | `ESTIMATE` |
+| **Break-even at R20** (rounded **up**) | **10,973 members** | `ESTIMATE` |
+| Operating margin at R20 | 10,000 members **−6.9%** · 25,000 **40.1%** · 50,000 **55.7%** · 100,000 **63.6%** | `ESTIMATE` |
+| Annual operating profit at R20 | 25,000 members **R2.40m** · 50,000 **R6.69m** · 100,000 **R15.26m** | `ESTIMATE` |
 | Anchoring, whole network | hourly **R9.34/month** + immediate roots **at most R560.13/month** (one per 60 s window) = **ceiling R569.47/month, whatever the member count and whatever the check-in volume**, because immediate roots are coalesced to at most one per 60 s across the whole network (1,440 a day; `docs/VUKA-2-SPEC.md` §10). Without coalescing, one outcome per member per day at 10,000 members would cost about R3,900/month; ≈ R259 immediate at 10,000 members × 2 PIN-gated outcomes a month (`ASSUMPTION`) | `ESTIMATE` — $0.0008 per message × R16.21 (Hedera fee from Jan 2026; USD/ZAR 22 Sep 2026) |
 
-**Break-even by price** (⌈fixed R155,659.47 ÷ (price − R5.72)⌉, rounded up):
+**Break-even by price** (⌈fixed R156,683.98 ÷ (price − R5.72)⌉, rounded up):
 
-| Price / member / month | R10 | R15 | R19.90 | **R20** | R22.50 | R25 | R50 | R100 |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| Members to break even | 36,370 | 16,774 | 10,978 | **10,901** | 9,277 | 8,074 | 3,516 | 1,652 |
+| Price / member / month | R10 | R15 | R19.90 | **R20** | R22.50 | R25 |
+|---|---:|---:|---:|---:|---:|---:|
+| Members to break even | 36,609 | 16,885 | 11,050 | **10,973** | 9,338 | 8,127 |
+
+> **R20 is the decided price (single tier, 26 Sep 2026).** With **7 stipends** instead of 5, fixed cost is **R216,683.98/month** and break-even is **15,174** (`ESTIMATE`). Position at R20 (5 stipends): 5,000 members **−R85,284/month** · 10,000 **−R13,884/month** · 25,000 **+R200,316/month** (`ESTIMATE`). The **product alone** (no stipends) costs **R6,683.98/month** and breaks even at **469 members**.
 
 **The equations:**
 
@@ -45,6 +47,18 @@ a partner pays if             value per member per year ≥ 12·p
 insurer break-even reduction  r* = 12·p / c     (c = relevant claims cost per member per year)
 adoption in one channel       F(t) = (1 − e^−(p+q)t) / (1 + (q/p)·e^−(p+q)t),  p = 0.03, q = 0.38
 ```
+
+**Initial investment (one-off / first period)** — before recurring revenue:
+
+| Item | Amount | Tag | Source |
+|---|---:|---|---|
+| Professional indemnity, year 1 | R2,615 | `FACT` | `docs/MARKET-DATA.md` |
+| Cyber insurance, first month | R450 | `FACT` | `docs/MARKET-DATA.md` |
+| CIPC annual return | R600 | `FACT` | `docs/MARKET-DATA.md` |
+| POPIA Information Officer registration | R0 (free, online) | ⚑ **not in register** | — |
+| Legal counsel — POPIA + ECTA + blockchain legality | **quote needed** | evidence request | — |
+| Hedera mainnet HBAR float (fund real anchoring) | **quote needed** | evidence request | — |
+| Team stipends during build | R30,000/person/month | `ASSUMPTION` | — |
 
 ## 3 · What the South African market already pays for this shelf
 
@@ -68,7 +82,7 @@ A penetration percentage needs a base. The honest base is **one partner's custom
 | Share of the partner's base | Members | Months after switch-on |
 |---|---:|---:|
 | 1% | 10,000 | ~3.8 |
-| **Break-even at R20 (1.09%)** | **10,901** | **~4.1** |
+| **Break-even at R20 (1.1%)** | **10,973** | **~4.1** |
 | 5% | 50,000 | ~15.9 |
 | 10% | 100,000 | ~27.0 |
 
@@ -103,6 +117,6 @@ False alarms per armed hour · missed events · share of alerts delivered · gua
 | NFO 35% motor / 8% theft-hijack | Not found — removed | — |
 | 94% "net margin" | **94.28% was contribution margin at R100**; at R20 it is 71.4% | this script |
 | Profit "~R9.8m at break-even" | Zero by definition | arithmetic |
-| Bank per-case 2,000 cases = break-even | **10,378 cases/month** at R15 | this script |
+| Bank per-case 2,000 cases = break-even | **10,446 cases/month** at R15 | this script |
 | "South Africa is expected to follow" the UK | No statement found — removed | — |
 | Crime displacement as an advantage | Removed (see `docs/STAGED-DURESS-DEFENCE.md` §7) | Guerette & Bowers 2009 |
