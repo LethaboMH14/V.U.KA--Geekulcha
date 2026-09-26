@@ -82,7 +82,9 @@ class RecordDetailFragment : Fragment(R.layout.fragment_record_detail) {
                 val links = if (e.prevHash == RecordStore.GENESIS) "start of chain" else "${e.prevHash.take(16)}…"
                 text = buildString {
                     if (e.kind == RecordEntry.Kind.PANIC) append("No one was contacted\n")
-                    if (e.detail.isNotEmpty()) append("Changed: ${e.detail}\n")
+                    if (e.detail.isNotEmpty()) {
+                        append(if (e.kind == RecordEntry.Kind.SOUND_DETECTED) "Heard: ${e.detail}\n" else "Changed: ${e.detail}\n")
+                    }
                     append("#${e.seq}\n")
                     append("Fingerprint ${e.hash}\n")
                     append("Links to    $links")

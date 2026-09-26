@@ -19,7 +19,7 @@ data class RecordEntry(
     val prevHash: String,
     val hash: String,
 ) {
-    enum class Kind { JOURNEY_STARTED, JOURNEY_ENDED, PANIC, PROFILE_UPDATED, TERMS_ACCEPTED, PASSWORD_RESET }
+    enum class Kind { JOURNEY_STARTED, JOURNEY_ENDED, PANIC, PROFILE_UPDATED, TERMS_ACCEPTED, PASSWORD_RESET, SOUND_DETECTED }
 }
 
 /** Result of re-checking every link in the chain. */

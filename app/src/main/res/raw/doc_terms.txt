@@ -2,7 +2,7 @@
 These terms are a placeholder. They have not been written or reviewed by the VUKA team or a legal adviser, and they will be replaced before VUKA is offered to the public. Nothing here adds to or overrides the Privacy notice.
 
 ## What VUKA is
-VUKA is a hackathon prototype. Parts of it are simulated and say so on screen: VIGIL does not listen yet, alerts are not sent to guardians, and codes are not sent by text or email.
+VUKA is a hackathon prototype. Parts of it are simulated and say so on screen: alerts are not sent to guardians, and codes are not sent by text or email. VIGIL does listen on this phone while you have activated it, but its detection thresholds are not yet calibrated, so it can miss a sound or react to the wrong one.
 
 ## Emergencies
 VUKA does not replace emergency services. In danger, call 10111.

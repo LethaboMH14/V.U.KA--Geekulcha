@@ -57,12 +57,13 @@ data class RecordGroup(val entries: List<RecordEntry>) {
         }
 
         fun label(e: RecordEntry) = when (e.kind) {
-            RecordEntry.Kind.JOURNEY_STARTED -> "Activated · simulated"
+            RecordEntry.Kind.JOURNEY_STARTED -> "Activated"
             RecordEntry.Kind.JOURNEY_ENDED -> "Deactivated"
             RecordEntry.Kind.PANIC -> "Emergency alert · not sent"
             RecordEntry.Kind.PROFILE_UPDATED -> "Profile updated"
             RecordEntry.Kind.TERMS_ACCEPTED -> "Terms accepted"
             RecordEntry.Kind.PASSWORD_RESET -> "Password reset"
+            RecordEntry.Kind.SOUND_DETECTED -> "Sound detected"
         }
 
         @DrawableRes
@@ -73,6 +74,7 @@ data class RecordGroup(val entries: List<RecordEntry>) {
             RecordEntry.Kind.PROFILE_UPDATED -> R.drawable.ic_user
             RecordEntry.Kind.TERMS_ACCEPTED -> R.drawable.ic_file_text
             RecordEntry.Kind.PASSWORD_RESET -> R.drawable.ic_key
+            RecordEntry.Kind.SOUND_DETECTED -> R.drawable.ic_ear
         }
     }
 }

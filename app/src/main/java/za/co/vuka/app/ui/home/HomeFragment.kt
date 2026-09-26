@@ -1,11 +1,17 @@
 package za.co.vuka.app.ui.home
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.Settings
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -15,6 +21,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
 import za.co.vuka.app.auth.PinGateSheet
+import za.co.vuka.app.detect.Listening
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import za.co.vuka.app.panic.Panic
 import za.co.vuka.app.ui.onboarding.OnboardingViewModel
 import com.google.android.material.button.MaterialButton
@@ -27,14 +35,21 @@ import java.util.Calendar
  * card's button reads Activate, and once tapped it turns into Deactivate
  * (PIN-gated) while everything else on Home stays put.
  *
- * Active is SIMULATED and says so on screen. No listener, server or
- * alert path exists in this build. Journey check and Checked in are not built,
- * because nothing could trigger them without detection and stored PINs (P3.V3).
+ * Activate asks for the microphone and notifications first (spec V1), then
+ * starts listening on the phone with YAMNet ([SensingService]). The card
+ * says what's really happening: starting, listening, or why it couldn't.
+ * Detection is uncalibrated, and no guardian alert or PIN check-in exists
+ * yet, so the card says that too.
  */
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private val onboardingViewModel: OnboardingViewModel by activityViewModels()
     private val journey: JourneyViewModel by activityViewModels()
+
+    // Spec V1: activating refuses without the microphone and notifications, and says why.
+    private val askPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        if (result.values.all { it }) journey.start() else explainPermissions()
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -47,7 +62,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // and raises the full alarm server-side (DuressSignals).
         PinGateSheet.listen(this, "journey_end") { journey.end() }
         view.findViewById<View>(R.id.btnStart).setOnClickListener {
-            if (journey.active.value) PinGateSheet.open(this, "journey_end") else journey.start()
+            if (journey.active.value) PinGateSheet.open(this, "journey_end") else activate()
         }
 
         bindGuardianRole(view)
@@ -61,21 +76,49 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                journey.active.combine(onboardingViewModel.pendingInvites) { active, pending ->
-                    active to pending
-                }.collect { (active, pending) -> render(view, active, pending) }
+                combine(journey.active, Listening.state, onboardingViewModel.pendingInvites) { active, listening, pending ->
+                    Triple(active, listening, pending)
+                }.collect { (active, listening, pending) -> render(view, active, listening, pending) }
             }
         }
     }
 
-    private fun render(view: View, active: Boolean, pending: Int) {
-        view.findViewById<TextView>(R.id.tvVigilLabel).text = if (active) "VIGIL · SIMULATED" else "VIGIL"
+    private fun activate() {
+        val needed = buildList {
+            add(Manifest.permission.RECORD_AUDIO)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
+        }.filter { ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED }
+        if (needed.isEmpty()) journey.start() else askPermissions.launch(needed.toTypedArray())
+    }
+
+    private fun explainPermissions() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("VIGIL can't listen yet")
+            .setMessage(
+                "VIGIL needs the microphone to listen for distress sounds, and notifications to show a Journey check. " +
+                    "Allow both in your phone's settings for VUKA, then tap Activate again."
+            )
+            .setPositiveButton("Open settings") { _, _ ->
+                startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${requireContext().packageName}".toUri())
+                )
+            }
+            .setNegativeButton("Not now", null)
+            .show()
+    }
+
+    private fun render(view: View, active: Boolean, listening: Listening.State, pending: Int) {
+        val on = active && listening == Listening.State.On
+        view.findViewById<TextView>(R.id.tvVigilLabel).text = if (on) "VIGIL · LISTENING" else "VIGIL"
         view.findViewById<TextView>(R.id.tvVigilState).text = if (active) "Active" else "Ready"
-        view.findViewById<View>(R.id.listeningLine).visibility = if (active) View.VISIBLE else View.GONE
-        view.findViewById<TextView>(R.id.tvVigilBody).text = if (active) {
-            "Not listening. This build doesn't include the listener yet."
-        } else {
-            "VIGIL isn't listening yet. Activate it and it will listen on this phone until you deactivate it."
+        // The wave only moves when the microphone really is recording.
+        view.findViewById<View>(R.id.listeningLine).visibility = if (on) View.VISIBLE else View.GONE
+        view.findViewById<TextView>(R.id.tvVigilBody).text = when {
+            !active -> "VIGIL isn't listening yet. Activate it and it will listen on this phone until you deactivate it."
+            listening is Listening.State.Failed -> "Not listening: ${listening.reason}. Deactivate, then try again."
+            listening == Listening.State.On ->
+                "Listening on this phone. Detection isn't calibrated yet, and guardians aren't alerted yet: a detected sound is saved to your record."
+            else -> "Starting to listen…"
         }
 
         // Same button, same place: ink pill to activate, outlined pill to deactivate.

@@ -20,10 +20,9 @@ import za.co.vuka.app.ui.settings.vukaColor
  * The signature "listening" line from ListeningLine.tsx. It is a soft wave in
  * the action colour at 40%, fading out at both ends.
  *
- * The wave drifts sideways while Home shows VIGIL as Active, as in the
- * prototype. Nothing listens in this build yet, so the card around it says
- * "SIMULATED" and "Not listening"; keep that wording until the listener is
- * real. The drift stops when animations are off on the phone.
+ * The wave drifts sideways while the microphone is really recording (Home
+ * shows it only when [za.co.vuka.app.detect.Listening] is On), as in the
+ * prototype. It stops when animations are off on the phone.
  */
 class ListeningLine @JvmOverloads constructor(
     context: Context,
