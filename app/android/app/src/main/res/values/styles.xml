@@ -1,0 +1,15 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!-- Ivory from the first frame: no flash at launch, dark system-bar icons. -->
+        <item name="android:windowBackground">@color/vigil_graphite</item>
+        <item name="android:statusBarColor">@color/vigil_graphite</item>
+        <item name="android:navigationBarColor">@color/vigil_graphite</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+    </style>
+
+</resources>

@@ -36,7 +36,7 @@
 | P3.V1 | File-by-file port of the predecessor app + the four defect fixes | Vukosi | T | Sep 24 | ☐ | Added 23 Sep, Lethabo |
 | P3.V2 | YAMNet by label, sha256 fetch, input shape asserted | Vukosi | T | Sep 24 | ☐ | Added 23 Sep, Lethabo |
 | P3.V3 | Keystore signer, native salts, encrypted queue, heartbeats | Vukosi | T, S | Sep 24 | ☐ | Added 23 Sep, Lethabo |
-| P3.V4 | **Signed release APK cold-installed from QR** + deny-each-permission test (D1, T17) | Vukosi | U, T | **Sep 24 22:00** | ☐ | Added 23 Sep, Lethabo |
+| P3.V4 | **Signed release APK cold-installed from QR** + deny-each-permission test (D1, T17) | Vukosi | U, T | **Sep 24 22:00** | ◐ | Added 23 Sep, Lethabo · 24 Sep: RN 0.74.5 shell + signed `assembleRelease` working locally (Lethabo, PR open); release publish, QR and T20 cold install still open |
 | P3.V5 | Android CI job | Vukosi | T | Sep 25 | ☐ | Added 23 Sep, Lethabo |
 | P3.V6 | Measurements M1–M5, M7 with n | Vukosi | T, B | Sep 26 18:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.U1 | UI foundation: NativeWind + Reusables + Reanimated, Plex type, Phosphor icons | Mutarisi | U | Sep 24 | ☐ | Added 23 Sep, Lethabo |
