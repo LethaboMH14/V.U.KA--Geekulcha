@@ -23,6 +23,7 @@ REQUIRED_MEMBERS = {
     "anchor/publish.py",
     "anchor/verify.py",
     "contracts/keys/manifest.json",
+    "contracts/keys/verify-pins.json",
     "requirements.txt",
     "server/db.py",
     "server/main.py",
@@ -83,6 +84,7 @@ def should_package(name: str) -> bool:
     return name in {
         "anchor/canonical.py",
         "contracts/keys/manifest.json",
+        "contracts/keys/verify-pins.json",
         "requirements.txt",
         "startup.sh",
     }
