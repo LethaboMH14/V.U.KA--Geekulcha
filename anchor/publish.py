@@ -8,6 +8,7 @@ ambiguous failure before retrying a submission.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import subprocess
@@ -30,6 +31,19 @@ class AnchorNotSubmitted(AnchorPublicationError):
     its SDK execute call. Distinct from a genuinely ambiguous failure (the
     process was running and may have reached the SDK call before we lost
     track of it) -- the durable coordinator treats this as safe to retry."""
+
+
+_REASON_PREFIX = "Hedera sidecar failed: "
+
+
+def _sidecar_reason(result: Any) -> str:
+    """The sidecar's own one-line reason (cli.mjs writes only a fixed message,
+    an error code's meaning, or a `mirror ...` line; never the SDK exception).
+    Any other stderr output could carry credentials and is never logged."""
+    for line in (getattr(result, "stderr", "") or "").splitlines():
+        if line.startswith(_REASON_PREFIX):
+            return line[len(_REASON_PREFIX):][:200]
+    return "no reason reported"
 
 
 def _publish(
@@ -57,11 +71,17 @@ def _publish(
         # sidecar's own exit-code-2 signal below -- not the ambiguous case a
         # plain AnchorPublicationError means to the durable coordinator,
         # which never auto-retries out of that state.
+        logging.warning("vuka: hedera sidecar could not start (%s)", type(exc).__name__)
         raise AnchorNotSubmitted("sidecar could not be started; nothing was submitted") from exc
     except subprocess.TimeoutExpired as exc:
         # The process WAS running and may have reached the SDK call before
         # being killed -- genuinely ambiguous, unlike the OSError case above.
+        logging.warning("vuka: hedera sidecar timed out after 90 s; batch left for reconciliation")
         raise AnchorPublicationError("sidecar timed out; reconcile before retry") from exc
+    if result.returncode != 0:
+        # Without this, the coordinator's status is the only trace of a
+        # failure, and it says nothing about why.
+        logging.warning("vuka: hedera sidecar exit %s: %s", result.returncode, _sidecar_reason(result))
     if result.returncode == 2:
         raise AnchorNotSubmitted("sidecar stopped before submission")
     if result.returncode != 0:

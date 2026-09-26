@@ -95,3 +95,16 @@ def test_wrong_root_receipt_rejected():
 
     with pytest.raises(AnchorPublicationError, match="receipt is invalid"):
         publish_root(bytes.fromhex("ab" * 32), runner=wrong)
+
+
+def test_the_sidecars_own_reason_is_logged_but_nothing_else_from_stderr(caplog):
+    """A failed submission must say why in the server log, but only through
+    cli.mjs's own sanitised line: other stderr output (an SDK stack, a Node
+    warning) could carry credentials and is never logged."""
+    from anchor.publish import AnchorNotSubmitted
+    stderr = ("(node:1) Warning: sim_secret_0xdeadbeef\n"
+              "Hedera sidecar failed: dependencies not installed (run npm ci)\n")
+    with caplog.at_level("WARNING"), pytest.raises(AnchorNotSubmitted):
+        publish_root(bytes(32), runner=lambda *_a, **_kw: SimpleNamespace(returncode=2, stdout="", stderr=stderr))
+    assert "exit 2: dependencies not installed (run npm ci)" in caplog.text
+    assert "deadbeef" not in caplog.text

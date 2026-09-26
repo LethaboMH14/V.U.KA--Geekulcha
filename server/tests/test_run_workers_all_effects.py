@@ -84,3 +84,22 @@ def test_a_single_worker_tick_delivers_a_guardian_alert_a_bank_signal_and_an_anc
         assert cur.fetchone()[0] == "confirmed"
 
     assert len(bank_app.state.sim_state["holds"]) == 1
+
+
+def test_anchor_status_changes_are_logged_once_each(sim_api, capsys):
+    """The coordinator returns a status and never raises for transport
+    failures; the worker must print each change so a stuck batch is visible."""
+    store, *_, now, _connect = sim_api
+
+    class Batches:
+        statuses = iter(["not_due", "not_due", "retry_pending", "retry_pending"])
+
+        def tick(self, _now):
+            return next(self.statuses)
+
+    batches = Batches()
+    for _ in range(4):
+        step(store, now[0], batches=batches, environ={})
+    out = capsys.readouterr().out
+    assert out.count("vuka: anchor status not_due") == 1
+    assert out.count("vuka: anchor status retry_pending") == 1

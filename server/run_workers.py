@@ -86,9 +86,16 @@ def step(store, now, *, bank_sender=None, batches=None, environ=os.environ):
             logging.exception("%s %s failed", row["kind"], row["idempotency_key"])
     if batches is not None:
         try:
-            batches.tick(now)
+            status = batches.tick(now)
         except Exception:
             logging.exception("anchor batch tick failed")
+        else:
+            # The coordinator returns a status and never raises for transport
+            # failures, so without this a stuck batch leaves no trace at all.
+            # Only changes are printed; the worker ticks every second.
+            if status != getattr(batches, "last_logged_status", None):
+                print(f"vuka: anchor status {status}", flush=True)
+                batches.last_logged_status = status
     return delivered
 
 
