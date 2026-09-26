@@ -7,8 +7,9 @@
   <meta name="description" content="Check a VUKA record's fingerprint against the public Hedera testnet topic, in your own browser." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="./ledger.css" />
+  <link rel="stylesheet" href="views.css" />
   <link rel="stylesheet" href="./terminal.css" />
 </head>
 <body>
@@ -16,22 +17,24 @@
 
   <header class="top">
     <div class="top-inner">
-      <a class="brand" href="#ledger" aria-label="VUKA Ledger, go to the ledger summary">
-        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-          <rect x="2" y="9" width="9" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" />
-          <rect x="21" y="9" width="9" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" />
-          <path d="M11 16h10" stroke="currentColor" stroke-width="2" />
-          <circle cx="16" cy="16" r="2.5" fill="currentColor" />
+      <a class="brand" href="#ledger" aria-label="VUKA Ledger, go to the public ledger">
+        <svg class="brand-mark" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <circle cx="5" cy="8" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <path d="M8.25 8H14.5M12.5 8v2.5M10.5 8v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
         </svg>
         <span class="brand-name">VUKA Ledger</span>
       </a>
-      <span class="net-chip" id="net-chip">Hedera testnet</span>
+      <span class="net" id="net-chip" title="Dot shows whether the Hedera mirror answered this browser"><span class="dot" id="net-dot" data-state="wait"></span>Hedera testnet</span>
       <nav class="tabs" aria-label="Sections">
         <a href="#ledger" data-nav="ledger">Ledger</a>
-        <a href="#verify" data-nav="verify">Verify a record</a>
-        <a href="#how" data-nav="how">How it works</a>
+        <a href="#verify" data-nav="verify">Verify</a>
+        <a href="#how" data-nav="how">Method</a>
         <a href="#settings" data-nav="settings">Settings</a>
       </nav>
+      <form class="quick" id="quick-form" role="search" autocomplete="off">
+        <label class="sr-only" for="quick-input">Paste a record, or a 64-hex fingerprint</label>
+        <input type="search" id="quick-input" placeholder="Paste a record, or a 64-hex fingerprint" spellcheck="false" enterkeyhint="go" />
+      </form>
     </div>
   </header>
 
@@ -40,204 +43,214 @@
 
     <!-- ============ 1. LEDGER ============ -->
     <section id="ledger" class="view" aria-labelledby="ledger-title">
-      <div class="intro">
-        <p class="eyebrow">Public ledger · topic <span class="mono" id="intro-topic">0.0.10687280</span></p>
-        <h1 id="ledger-title">One fingerprint a minute, public for anyone to check.</h1>
-        <p class="lede">
-          ANCHOR keeps a hash chain for each VIGIL member. When a chain changes, the server publishes a
-          33-byte Merkle root to a Hedera topic. A bank, an insurer or the member can check an exported record
-          against that root here, in the browser, without trusting VUKA.
-        </p>
+      <header class="view-head">
+        <h1 id="ledger-title">Public ledger</h1>
+        <p class="view-sub">Messages on topic <span class="mono" id="intro-topic">0.0.10687280</span>, Hedera testnet, read live from the public mirror in this browser.</p>
+      </header>
+
+      <div class="statusline" aria-label="Connections">
+        <ul class="src-items" id="sources">
+          <li class="src" id="src-api" data-state="wait"><span class="dot" aria-hidden="true"></span><span class="src-name">Azure API</span><span class="src-sep" aria-hidden="true">·</span><span class="src-state">checking</span></li>
+          <li class="src" id="src-feed" data-state="wait"><span class="dot" aria-hidden="true"></span><span class="src-name">Live feed</span><span class="src-sep" aria-hidden="true">·</span><span class="src-state">checking</span></li>
+          <li class="src" id="src-mirror" data-state="wait"><span class="dot" aria-hidden="true"></span><span class="src-name">Hedera mirror</span><span class="src-sep" aria-hidden="true">·</span><span class="src-state">checking</span></li>
+        </ul>
+        <details class="src-details">
+          <summary>Details</summary>
+          <dl class="src-list">
+            <dt>Azure API</dt><dd class="mono" id="src-api-detail">…</dd>
+            <dt>Live feed</dt><dd class="mono" id="src-feed-detail">…</dd>
+            <dt>Hedera mirror</dt><dd class="mono" id="src-mirror-detail">…</dd>
+          </dl>
+        </details>
       </div>
 
-      <ul class="sources" id="sources" aria-label="Connections">
-        <li class="source" id="src-api">
-          <span class="source-name">Azure API</span>
-          <span class="source-pill"></span>
-          <span class="source-detail mono" id="src-api-detail">…</span>
-        </li>
-        <li class="source" id="src-feed">
-          <span class="source-name">Live feed</span>
-          <span class="source-pill"></span>
-          <span class="source-detail mono" id="src-feed-detail">…</span>
-        </li>
-        <li class="source" id="src-mirror">
-          <span class="source-name">Hedera mirror</span>
-          <span class="source-pill"></span>
-          <span class="source-detail mono" id="src-mirror-detail">…</span>
-        </li>
-      </ul>
-
-      <dl class="status-strip" aria-label="Ledger status">
-        <div class="tile" id="tile-latest">
-          <dt>Latest confirmed anchor</dt>
-          <dd class="tile-pill"></dd>
-          <dd class="tile-value" id="latest-value">…</dd>
-          <dd class="tile-note" id="latest-note">Asking the server…</dd>
-        </div>
-        <div class="tile" id="tile-manifest">
-          <dt>Key manifest (0x02)</dt>
-          <dd class="tile-pill"></dd>
-          <dd class="tile-value mono" id="manifest-value">…</dd>
-          <dd class="tile-note" id="manifest-note">Hashing the pinned manifest…</dd>
-        </div>
-        <div class="tile" id="tile-topic">
+      <dl class="facts" aria-label="Key facts">
+        <div class="fact" id="tile-topic">
           <dt>Topic</dt>
-          <dd class="tile-pill"></dd>
-          <dd class="tile-value mono"><a id="topic-link" href="https://hashscan.io/testnet/topic/0.0.10687280" target="_blank" rel="noopener">0.0.10687280</a></dd>
-          <dd class="tile-note" id="topic-note">Pinned in contracts/keys/verify-pins.json</dd>
+          <dd class="fact-value mono"><a id="topic-link" href="https://hashscan.io/testnet/topic/0.0.10687280" target="_blank" rel="noopener noreferrer">0.0.10687280</a></dd>
+          <dd class="fact-state tile-pill"></dd>
+          <dd class="fact-note" id="topic-note">Pinned in contracts/keys/verify-pins.json</dd>
+        </div>
+        <div class="fact" id="tile-latest">
+          <dt>Latest root</dt>
+          <dd class="fact-value" id="latest-value">…</dd>
+          <dd class="fact-state tile-pill"></dd>
+          <dd class="fact-note" id="latest-note">Asking the server…</dd>
+        </div>
+        <div class="fact" id="tile-manifest">
+          <dt>Key manifest</dt>
+          <dd class="fact-value mono" id="manifest-value">…</dd>
+          <dd class="fact-state tile-pill"></dd>
+          <dd class="fact-note" id="manifest-note">Hashing the pinned manifest…</dd>
+        </div>
+        <div class="fact" id="tile-epoch">
+          <dt>Network epoch</dt>
+          <dd class="fact-value" id="epoch-value">…</dd>
+          <dd class="fact-note" id="epoch-note">Hedera resets testnet from time to time; a reset starts a new epoch.</dd>
         </div>
       </dl>
 
-      <div class="block-head">
-        <h2 id="chain-title">Anchored roots</h2>
-        <p class="block-sub">Messages on the topic, newest first. <span class="mono">0x01</span> carries a Merkle root; <span class="mono">0x02</span> pins the server's key manifest.</p>
-      </div>
-      <p class="chain-note" id="chain-note">Reading the topic from the Hedera mirror…</p>
-      <div class="chain-scroll" tabindex="0" role="region" aria-labelledby="chain-title">
-        <ol class="chain" id="chain"></ol>
-      </div>
+      <section class="block" aria-labelledby="chain-title">
+        <div class="block-head">
+          <h2 id="chain-title">Topic messages</h2>
+          <p class="block-sub" id="chain-note"></p>
+        </div>
+        <div class="table-scroll" tabindex="0" role="region" aria-labelledby="chain-title">
+          <table class="tbl chain-table">
+            <thead>
+              <tr><th scope="col" class="num">Seq</th><th scope="col">Type</th><th scope="col">Payload</th><th scope="col">Consensus time (UTC)</th><th scope="col">Links</th></tr>
+            </thead>
+            <tbody id="chain">
+              <tr class="is-empty"><td class="empty" colspan="5">Reading the topic from the Hedera mirror…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-      <div class="block-head">
-        <h2 id="feed-title">Live activity</h2>
-        <p class="block-sub">Every event the server accepts, as it arrives from <span class="mono">/ws/panel</span>. Subjects are salted hashes that change on every server restart. Event kinds appear only for <span class="mono">sim_</span> test subjects, marked SIMULATED.</p>
-      </div>
-      <div class="feed-grid">
-        <figure class="chart-card" id="rate-figure">
-          <figcaption>
-            <span class="chart-title">Events received per minute</span>
-            <span class="chart-sub" id="rate-sub">Last 15 minutes, from this browser's feed</span>
-          </figcaption>
+      <section class="block" aria-labelledby="feed-title">
+        <div class="block-head">
+          <h2 id="feed-title">Live events</h2>
+          <span id="feed-pill"></span>
+          <span class="feed-count" id="feed-count">0 events</span>
+          <button type="button" class="btn btn-quiet btn-sm" id="feed-reconnect">Reconnect</button>
+        </div>
+        <p class="block-sub">Each event the server accepts, as it arrives from <span class="mono">/ws/panel</span>. Subjects are salted hashes that change on every server restart. Kinds show only for <span class="mono">sim_</span> test subjects, marked SIMULATED.</p>
+        <figure class="chart" id="rate-figure">
+          <figcaption id="rate-sub">Events received per minute, last 15 minutes, counted by this browser</figcaption>
           <div class="chart-wrap">
-            <svg id="rate-chart" viewBox="0 0 560 150" role="img" aria-label="Events received per minute, last 15 minutes"></svg>
+            <svg id="rate-chart" viewBox="0 0 1152 96" role="img" aria-label="Events received per minute, last 15 minutes"></svg>
             <div class="tooltip" id="rate-tip" hidden></div>
           </div>
         </figure>
-        <div class="feed-card">
-          <div class="feed-bar">
-            <span id="feed-pill"></span>
-            <span class="feed-count" id="feed-count">0 events</span>
-            <button type="button" class="btn btn-quiet" id="feed-reconnect">Reconnect</button>
-          </div>
-          <div class="feed-scroll" tabindex="0" role="region" aria-labelledby="feed-title">
-            <table class="feed">
-              <thead>
-                <tr><th scope="col">Subject (opaque)</th><th scope="col">Index</th><th scope="col">Event hash</th><th scope="col">Received</th><th scope="col">Kind</th></tr>
-              </thead>
-              <tbody id="feed-body"></tbody>
-            </table>
-            <p class="feed-empty" id="feed-empty">Waiting for the feed.</p>
-          </div>
+        <div class="table-scroll feed-scroll" tabindex="0" role="region" aria-labelledby="feed-title">
+          <table class="tbl feed">
+            <thead>
+              <tr><th scope="col">Subject (opaque)</th><th scope="col" class="num">Index</th><th scope="col">Event hash</th><th scope="col">Received (UTC)</th><th scope="col">Kind</th></tr>
+            </thead>
+            <tbody id="feed-body"></tbody>
+            <tbody id="feed-empty-body">
+              <tr class="is-empty"><td class="empty" colspan="5" id="feed-empty">Waiting for the feed.</td></tr>
+            </tbody>
+          </table>
         </div>
-      </div>
+      </section>
     </section>
 
     <!-- ============ 2. VERIFY ============ -->
     <section id="verify" class="view" aria-labelledby="verify-title">
-      <div class="block-head">
-        <p class="eyebrow">For banks, insurers and members</p>
-        <h2 id="verify-title" class="h-section">Verify a record</h2>
-        <p class="block-sub">A member gets their record in VIGIL: <strong>Settings → My record → Share with a bank or insurer</strong>. That shares the same export JSON the app checks on the phone. Drop it here to check it independently.</p>
-      </div>
-      <ol class="flow-steps">
-        <li><span class="step-n">1</span><span>The member shares their record from VIGIL (My record).</span></li>
-        <li><span class="step-n">2</span><span>They give the file to you: a bank, an insurer, or themselves.</span></li>
-        <li><span class="step-n">3</span><span>You run it here. Your browser recomputes every hash and signature and the Merkle root, then reads the root from Hedera.</span></li>
-        <li><span class="step-n">4</span><span>You keep the fingerprint: root, head, topic, sequence and consensus time.</span></li>
-      </ol>
+      <header class="vw-head">
+        <h2 id="verify-title" class="vw-title">Verify a record</h2>
+        <p class="vw-sub">A member shares their record from VIGIL under <strong>Settings → My record → Share with a bank or insurer</strong>. It is the same export JSON the phone checks; run it here to check it independently.</p>
+        <ol class="vf-flow" aria-label="How a record gets checked">
+          <li>Member shares from VIGIL</li>
+          <li>you paste it here</li>
+          <li>your browser recomputes and checks Hedera</li>
+          <li>you file the fingerprint</li>
+        </ol>
+      </header>
 
-      <div class="verify-grid">
-        <div class="input-card">
-          <label class="drop" id="drop" for="export-file">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
-            <span class="drop-main">Drop an export file here, or <u>choose a file</u></span>
-            <span class="drop-sub">JSON exported from VIGIL. It stays in this browser; nothing is uploaded.</span>
+      <div class="vf-grid">
+        <div class="vf-panel">
+          <h3 class="vf-panel-title">Record</h3>
+          <label class="vf-drop" id="drop" for="export-file">
+            <span class="vf-drop-row">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              <span class="vf-drop-main">Drop the export file here, or <u>choose a file</u></span>
+            </span>
+            <span class="vf-drop-sub">JSON exported from VIGIL. It stays in this browser; nothing is uploaded.</span>
             <input type="file" id="export-file" accept="application/json,.json" />
           </label>
-          <label class="field-label" for="export-text">Or paste the export JSON</label>
-          <textarea id="export-text" spellcheck="false" rows="7" placeholder='{"subject_id": "…", "entries": [ … ], "payloads": { … }, "salts": { … }}'></textarea>
-          <div class="actions">
-            <button type="button" class="btn btn-primary" id="btn-verify">Verify this record</button>
-            <button type="button" class="btn btn-quiet" id="btn-clear">Clear</button>
+          <div class="vf-field">
+            <label class="vf-label" for="export-text">Or paste the export JSON</label>
+            <textarea id="export-text" class="vf-text" spellcheck="false" rows="7" placeholder='{"subject_id": "…", "entries": [ … ], "payloads": { … }, "salts": { … }}'></textarea>
           </div>
-          <p class="input-note" id="input-note">Nothing is uploaded. The proof comes from the ANCHOR server and the root from the public Hedera mirror.</p>
+          <div class="vf-actions">
+            <button type="button" class="btn btn-primary" id="btn-verify">Verify</button>
+            <button type="button" class="btn" id="btn-clear">Clear</button>
+          </div>
+          <p class="vf-note" id="input-note">Nothing is uploaded. The proof comes from the ANCHOR server and the root from the public Hedera mirror.</p>
         </div>
 
-        <div class="run-card">
-          <div class="run-head">
-            <span class="run-title">Verification trace</span>
-            <span class="run-sub" id="run-sub">Each line is a check your browser ran.</span>
+        <div class="vf-run">
+          <div class="vf-run-head">
+            <h3 class="vf-panel-title">Verification trace</h3>
+            <span class="vf-run-sub" id="run-sub">Each line is a check your browser ran.</span>
           </div>
           <div id="terminal" class="terminal-host"></div>
         </div>
       </div>
 
-      <article class="result" id="result" aria-labelledby="result-title" hidden>
-        <header class="result-head">
-          <span id="result-pill"></span>
-          <h3 id="result-title" class="result-title"></h3>
-        </header>
-        <p class="result-text" id="result-text"></p>
-        <div class="keep">
-          <div class="keep-head">
-            <h4>Fingerprint to keep</h4>
-            <button type="button" class="btn" id="btn-copy">Copy all</button>
-            <span class="copy-status" id="copy-status" role="status" aria-live="polite"></span>
+      <article class="vf-result" id="result" aria-labelledby="result-title" hidden>
+        <div class="vf-status">
+          <p class="vf-status-line">
+            <span class="vf-dot" aria-hidden="true"></span>
+            <span id="result-title" class="vf-status-label"></span>
+          </p>
+          <p class="vf-reason" id="result-text"></p>
+        </div>
+        <div class="vf-keep" id="keep">
+          <div class="vf-keep-head">
+            <h3 class="vw-h3">Fingerprint</h3>
+            <span class="vf-copy-status" id="copy-status" role="status" aria-live="polite"></span>
+            <button type="button" class="btn" id="btn-copy">Copy fingerprint</button>
           </div>
-          <p class="keep-note" id="keep-note">File these values with your records. Anyone can later check them against the public topic.</p>
-          <dl class="keep-list" id="keep-list"></dl>
+          <p class="vf-note" id="keep-note">File these values with your records. Anyone can later check them against the public topic.</p>
+          <table class="vf-fp">
+            <caption class="vf-sr">Fingerprint fields</caption>
+            <tbody id="keep-list"></tbody>
+          </table>
         </div>
       </article>
     </section>
 
-    <!-- ============ 3. HOW IT WORKS ============ -->
+    <!-- ============ 3. METHOD (anchor #how kept) ============ -->
     <section id="how" class="view" aria-labelledby="how-title">
-      <div class="block-head">
-        <p class="eyebrow">VIGIL · guardians · ANCHOR · Hedera</p>
-        <h2 id="how-title" class="h-section">How it works</h2>
-      </div>
+      <header class="vw-head">
+        <h2 id="how-title" class="vw-title">Method</h2>
+        <p class="vw-sub">How a record moves from VIGIL, through the ANCHOR server, to a Hedera topic and a bank's files, and the exact checks this page reruns.</p>
+      </header>
 
-      <figure class="diagram">
-        <div class="diagram-scroll" tabindex="0" role="region" aria-label="System diagram, scrolls sideways on small screens">
+      <figure class="mt-figure">
+        <div class="mt-scroll" tabindex="0" role="region" aria-label="System diagram, scrolls sideways on small screens">
           <svg viewBox="0 0 960 470" role="img" aria-labelledby="dg-title dg-desc">
             <title id="dg-title">How a VUKA record reaches the public ledger and a bank's files</title>
             <desc id="dg-desc">The member's phone and the guardians' phones send signed entries to the ANCHOR server, which keeps one hash chain per member in PostgreSQL. The server publishes one Merkle root per window of up to a minute to a Hedera testnet topic as a 33-byte message. The member exports their record and gives it to a bank or insurer, who runs it on this verify page, which matches the recomputed root against the Hedera message. Separately, the server sends a bank signal to the bank through the partner API.</desc>
             <defs>
-              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M0 0 10 5 0 10z" fill="currentColor" />
               </marker>
-              <marker id="ah-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <marker id="ah-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M0 0 10 5 0 10z" class="dg-accent-fill" />
               </marker>
-              <marker id="ah-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <marker id="ah-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M0 0 10 5 0 10z" class="dg-amber-fill" />
               </marker>
             </defs>
 
             <!-- column A: phones -->
             <g class="dg-node">
-              <rect x="20" y="40" width="200" height="76" rx="12" />
+              <rect x="20" y="40" width="200" height="76" />
               <text x="120" y="72" class="dg-t">Member phone</text>
               <text x="120" y="94" class="dg-s">VIGIL · device key</text>
             </g>
             <g class="dg-node dg-guardian">
-              <rect x="20" y="196" width="200" height="76" rx="12" />
+              <rect x="20" y="196" width="200" height="76" />
               <text x="120" y="228" class="dg-t">Guardian phones</text>
               <text x="120" y="250" class="dg-s">own guardian keys</text>
             </g>
 
             <!-- column B: server -->
             <g class="dg-node dg-server">
-              <rect x="320" y="24" width="260" height="264" rx="14" />
+              <rect x="320" y="24" width="260" height="264" />
               <text x="450" y="56" class="dg-t">ANCHOR server</text>
               <text x="450" y="76" class="dg-s">checks, orders, signs server events</text>
-              <rect x="342" y="98" width="216" height="130" rx="10" class="dg-inner" />
+              <rect x="342" y="98" width="216" height="130" class="dg-inner" />
               <text x="450" y="122" class="dg-s">PostgreSQL · a chain per member</text>
               <g class="dg-chain">
-                <rect x="358" y="146" width="36" height="36" rx="6" />
-                <rect x="414" y="146" width="36" height="36" rx="6" />
-                <rect x="470" y="146" width="36" height="36" rx="6" class="dg-ack" />
-                <rect x="526" y="146" width="22" height="36" rx="6" class="dg-fade" />
+                <rect x="358" y="146" width="36" height="36" />
+                <rect x="414" y="146" width="36" height="36" />
+                <rect x="470" y="146" width="36" height="36" class="dg-ack" />
+                <rect x="526" y="146" width="22" height="36" class="dg-fade" />
                 <line x1="394" y1="164" x2="414" y2="164" />
                 <line x1="450" y1="164" x2="470" y2="164" />
                 <line x1="506" y1="164" x2="526" y2="164" />
@@ -250,7 +263,7 @@
 
             <!-- column C: Hedera -->
             <g class="dg-node dg-hedera">
-              <rect x="720" y="40" width="220" height="92" rx="12" />
+              <rect x="720" y="40" width="220" height="92" />
               <text x="830" y="72" class="dg-t">Hedera testnet topic</text>
               <text x="830" y="94" class="dg-s mono-t">0.0.10687280</text>
               <text x="830" y="114" class="dg-xs">consensus time + order</text>
@@ -258,17 +271,17 @@
 
             <!-- bottom row -->
             <g class="dg-node">
-              <rect x="20" y="370" width="200" height="76" rx="12" />
+              <rect x="20" y="370" width="200" height="76" />
               <text x="120" y="402" class="dg-t">Member's export</text>
               <text x="120" y="424" class="dg-s">chain + payloads + salts</text>
             </g>
             <g class="dg-node">
-              <rect x="350" y="370" width="200" height="76" rx="12" />
+              <rect x="350" y="370" width="200" height="76" />
               <text x="450" y="402" class="dg-t">Bank / insurer</text>
               <text x="450" y="424" class="dg-s">files the fingerprint</text>
             </g>
             <g class="dg-node dg-verify">
-              <rect x="720" y="370" width="220" height="76" rx="12" />
+              <rect x="720" y="370" width="220" height="76" />
               <text x="830" y="402" class="dg-t">VUKA Ledger</text>
               <text x="830" y="424" class="dg-s">this page, in the browser</text>
             </g>
@@ -321,103 +334,109 @@
         </figcaption>
       </figure>
 
-      <div class="math">
-        <h3 class="h-sub">The mathematical model</h3>
-        <p class="math-lede">These are the exact steps this page reruns. Hashes are SHA-256; <span class="mono">canon</span> is canonical JSON (spec §5); <span class="mono">‖</span> joins bytes.</p>
-        <dl class="formulas">
-          <div class="f">
-            <dt>Commitment</dt>
-            <dd class="eq"><var>c</var> = SHA-256(<var>salt</var> ‖ canon(<var>payload</var>))</dd>
-            <dd class="why">The event's kind and details stay private. Only <var>c</var> is in the chain; the salt is 16 random bytes.</dd>
-          </div>
-          <div class="f">
-            <dt>Event hash</dt>
-            <dd class="eq"><var>h</var><sub>i</sub> = SHA-256(canon(<var>entry</var><sub>i</sub> without <span class="mono">event_hash</span>))</dd>
-            <dd class="why">Any change to any field of an entry changes its hash.</dd>
-          </div>
-          <div class="f">
-            <dt>Link</dt>
-            <dd class="eq"><span class="mono">prev_hash</span><sub>i</sub> = <var>h</var><sub>i−1</sub>,&nbsp;&nbsp; <span class="mono">prev_hash</span><sub>0</sub> = 0<sup>64</sup></dd>
-            <dd class="why">Each entry names the one before it, so entries cannot be removed or reordered unnoticed.</dd>
-          </div>
-          <div class="f">
-            <dt>Signature</dt>
-            <dd class="eq"><var>σ</var><sub>i</sub> = Sign<sub><var>k</var></sub>(canon(<var>statement</var><sub>i</sub>))</dd>
-            <dd class="why">The statement binds subject, actor, target, action, source time, key id, counter, event id and <var>c</var>. Device and guardian keys come from the chain; the server key only from the pinned manifest.</dd>
-          </div>
-          <div class="f">
-            <dt>Leaf</dt>
-            <dd class="eq"><var>leaf</var> = SHA-256(0x00 ‖ <var>head</var>),&nbsp;&nbsp; <var>head</var> = <var>h</var><sub>n−1</sub></dd>
-            <dd class="why">One leaf per member chain that changed in the window.</dd>
-          </div>
-          <div class="f">
-            <dt>Node</dt>
-            <dd class="eq"><var>node</var> = SHA-256(0x01 ‖ <var>L</var> ‖ <var>R</var>)</dd>
-            <dd class="why">For <var>n</var> leaves, split at the largest power of two below <var>n</var> (RFC 6962). Odd leaves are never duplicated.</dd>
-          </div>
-          <div class="f">
-            <dt>Message</dt>
-            <dd class="eq"><var>m</var> = 0x01 ‖ <var>root</var>&nbsp;&nbsp; (33 bytes)</dd>
-            <dd class="why">The page decodes the Hedera message and requires its 32 bytes to equal the root it recomputed. Key manifests use 0x02 ‖ SHA-256(canon(<var>manifest</var>)).</dd>
-          </div>
-        </dl>
+      <div class="mt-block">
+        <h3 class="vw-h3" id="formulas-title">Formulas</h3>
+        <p class="mt-lede">These are the exact steps this page reruns. Hashes are SHA-256; <span class="mono">canon</span> is canonical JSON (spec §5); <span class="mono">‖</span> joins bytes.</p>
+        <table class="mt-table" aria-labelledby="formulas-title">
+          <thead>
+            <tr><th scope="col">Step</th><th scope="col">Definition</th><th scope="col">What it guarantees</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Commitment</th>
+              <td class="mt-def"><var>c</var> = SHA-256(<var>salt</var> ‖ canon(<var>payload</var>))</td>
+              <td>The event's kind and details stay private. Only <var>c</var> is in the chain; the salt is 16 random bytes.</td>
+            </tr>
+            <tr>
+              <th scope="row">Event hash</th>
+              <td class="mt-def"><var>h</var><sub>i</sub> = SHA-256(canon(<var>entry</var><sub>i</sub> without <span class="mono">event_hash</span>))</td>
+              <td>Any change to any field of an entry changes its hash.</td>
+            </tr>
+            <tr>
+              <th scope="row">Link</th>
+              <td class="mt-def"><span class="mono">prev_hash</span><sub>i</sub> = <var>h</var><sub>i−1</sub>,&nbsp;&nbsp; <span class="mono">prev_hash</span><sub>0</sub> = 0<sup>64</sup></td>
+              <td>Each entry names the one before it, so entries cannot be removed or reordered unnoticed.</td>
+            </tr>
+            <tr>
+              <th scope="row">Signature</th>
+              <td class="mt-def"><var>σ</var><sub>i</sub> = Sign<sub><var>k</var></sub>(canon(<var>statement</var><sub>i</sub>))</td>
+              <td>The statement binds subject, actor, target, action, source time, key id, counter, event id and <var>c</var>. Device and guardian keys come from the chain; the server key only from the pinned manifest.</td>
+            </tr>
+            <tr>
+              <th scope="row">Leaf</th>
+              <td class="mt-def"><var>leaf</var> = SHA-256(0x00 ‖ <var>head</var>),&nbsp;&nbsp; <var>head</var> = <var>h</var><sub>n−1</sub></td>
+              <td>One leaf per member chain that changed in the window.</td>
+            </tr>
+            <tr>
+              <th scope="row">Node</th>
+              <td class="mt-def"><var>node</var> = SHA-256(0x01 ‖ <var>L</var> ‖ <var>R</var>)</td>
+              <td>For <var>n</var> leaves, split at the largest power of two below <var>n</var> (RFC 6962). Odd leaves are never duplicated.</td>
+            </tr>
+            <tr>
+              <th scope="row">Message</th>
+              <td class="mt-def"><var>m</var> = 0x01 ‖ <var>root</var>&nbsp;&nbsp; (33 bytes)</td>
+              <td>The page decodes the Hedera message and requires its 32 bytes to equal the root it recomputed. Key manifests use <span class="mono">0x02 ‖ SHA-256(canon(manifest))</span>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-        <div class="proves">
-          <div class="proves-col">
-            <h4>A match proves</h4>
-            <ul>
-              <li>These exact entries existed, in this order, no later than the topic's consensus time.</li>
-              <li>Each entry was signed by the key registered for it, and the server key is the pinned one.</li>
-              <li>Nobody has edited, removed or reordered an entry since.</li>
-            </ul>
-          </div>
-          <div class="proves-col">
-            <h4>It does not prove</h4>
-            <ul>
-              <li>That the event was real. A signature shows a key was used, not what a microphone heard.</li>
-              <li>That nothing is missing from before the export, or that a compromised server sent every alert.</li>
-              <li>Permanence on testnet. Hedera resets testnet; a re-anchor after a reset is a later record under a new epoch.</li>
-            </ul>
-          </div>
+      <div class="mt-proves">
+        <div class="mt-proves-col">
+          <h3 class="vw-h3">A match proves</h3>
+          <ul>
+            <li>These exact entries existed, in this order, no later than the topic's consensus time.</li>
+            <li>Each entry was signed by the key registered for it, and the server key is the pinned one.</li>
+            <li>Nobody has edited, removed or reordered an entry since.</li>
+          </ul>
         </div>
-
-        <div class="duress">
-          <h3 class="h-sub">Duress stays private</h3>
-          <p>A duress PIN is recorded inside a signed commitment, so the chain shows only a hash. The public topic carries one root per window of up to a minute, so anyone watching it sees that something happened in that minute, never whether it was a duress check-in or a normal one. The bank learns of duress separately, through its own bank signal, and can later check that signal against the member's export.</p>
+        <div class="mt-proves-col">
+          <h3 class="vw-h3">It does not prove</h3>
+          <ul>
+            <li>That the event was real. A signature shows a key was used, not what a microphone heard.</li>
+            <li>That nothing is missing from before the export, or that a compromised server sent every alert.</li>
+            <li>Permanence on testnet. Hedera resets testnet; a re-anchor after a reset is a later record under a new epoch.</li>
+          </ul>
         </div>
       </div>
+
+      <aside class="mt-note" aria-labelledby="duress-title">
+        <h3 class="vw-h3" id="duress-title">Duress stays private</h3>
+        <p>A duress PIN is recorded inside a signed commitment, so the chain shows only a hash. The public topic carries one root per window of up to a minute, so anyone watching it sees that something happened in that minute, never whether it was a duress check-in or a normal one. The bank learns of duress separately, through its own bank signal, and can later check that signal against the member's export.</p>
+      </aside>
     </section>
 
     <!-- ============ 4. SETTINGS ============ -->
     <section id="settings" class="view" aria-labelledby="settings-title">
-      <div class="block-head">
-        <h2 id="settings-title" class="h-section">Settings</h2>
-      </div>
-      <form class="settings" id="settings-form" novalidate>
-        <div class="field">
+      <header class="vw-head">
+        <h2 id="settings-title" class="vw-title">Settings</h2>
+        <p class="vw-sub">The server address and theme are stored in this browser only.</p>
+      </header>
+      <form class="st-form" id="settings-form" novalidate>
+        <div class="st-field">
           <label for="server-url">ANCHOR server</label>
-          <input type="url" id="server-url" name="server" inputmode="url" autocomplete="off" spellcheck="false" />
-          <p class="hint">Also accepted in the address as <span class="mono">?server=https://…</span>. The ledger itself is always read from the public Hedera mirror.</p>
+          <input type="url" id="server-url" class="st-input" name="server" inputmode="url" autocomplete="off" spellcheck="false" aria-describedby="server-hint" />
+          <p class="st-hint" id="server-hint">Also accepted in the address as <span class="mono">?server=https://…</span>. The ledger itself is always read from the public Hedera mirror.</p>
         </div>
-        <div class="field">
+        <div class="st-field">
           <label for="network">Network</label>
-          <select id="network" name="network">
+          <select id="network" class="st-input" name="network" aria-describedby="network-hint">
             <option value="testnet" selected>Hedera testnet</option>
           </select>
-          <p class="hint">Only testnet is pinned (<span class="mono">contracts/keys/verify-pins.json</span>).</p>
+          <p class="st-hint" id="network-hint">Only testnet is pinned (<span class="mono">contracts/keys/verify-pins.json</span>).</p>
         </div>
-        <fieldset class="field">
+        <fieldset class="st-field">
           <legend>Theme</legend>
-          <div class="seg">
-            <input type="radio" name="theme" id="theme-system" value="system" checked /><label for="theme-system">System</label>
-            <input type="radio" name="theme" id="theme-light" value="light" /><label for="theme-light">Ivory</label>
-            <input type="radio" name="theme" id="theme-dark" value="dark" /><label for="theme-dark">Midnight</label>
+          <div class="st-radios">
+            <label class="st-radio" for="theme-system"><input type="radio" name="theme" id="theme-system" value="system" checked />System</label>
+            <label class="st-radio" for="theme-light"><input type="radio" name="theme" id="theme-light" value="light" />Light</label>
+            <label class="st-radio" for="theme-dark"><input type="radio" name="theme" id="theme-dark" value="dark" />Dark</label>
           </div>
         </fieldset>
-        <div class="actions">
+        <div class="st-actions">
           <button type="submit" class="btn btn-primary" id="btn-apply">Apply and reconnect</button>
-          <button type="button" class="btn btn-quiet" id="btn-reset">Use the default server</button>
-          <span class="copy-status" id="settings-status" role="status" aria-live="polite"></span>
+          <button type="button" class="btn" id="btn-reset">Use the default server</button>
+          <span class="st-status" id="settings-status" role="status" aria-live="polite"></span>
         </div>
       </form>
     </section>

@@ -36,7 +36,7 @@ Result states follow `CONTRACT.md`: **live-verified**, **unavailable** (the chai
 - Exports never leave the browser: it reads them with `FileReader`, with no upload.
 - Payload kinds appear only for `sim_` subjects, with a SIMULATED chip, in the feed and in the trace.
 - If a module fails to load (`lib/sources.js`, `lib/pipeline.js`, `terminal.js`, `shared/*.js`), the page names it in a visible notice and keeps working without it. A plain log replaces a missing terminal.
-- Theme: VIGIL's Ivory (light) and Midnight (dark) tokens from `app/src/ui/theme.ts`, following `prefers-color-scheme` unless the viewer chooses one. The page respects reduced motion and shows visible focus.
+- Theme: the light and dark tokens in `DESIGN.md` (IBM Plex, hairlines, one accent, status as a dot plus text), following `prefers-color-scheme` unless the viewer chooses Light or Dark in Settings. The page respects reduced motion and shows visible focus.
 
 ## Files
 
