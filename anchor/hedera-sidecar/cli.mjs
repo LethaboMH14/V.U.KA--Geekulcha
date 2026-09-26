@@ -1,3 +1,7 @@
+// Our own file with no dependencies, so a static import is safe here; it is
+// the SDK in node_modules that must never be imported at the top level.
+import { failureReason } from "./reason.mjs";
+
 let submissionMayHaveOccurred = false;
 
 async function main() {
@@ -31,8 +35,6 @@ async function main() {
 
 main().catch((error) => {
   // Do not print the SDK's exception: it may contain credentials or transaction data.
-  const reason = error.code === "ERR_MODULE_NOT_FOUND" ? "dependencies not installed (run npm ci)"
-    : error.message.startsWith("mirror ") ? error.message : "submission or validation failed";
-  process.stderr.write(`Hedera sidecar failed: ${reason}\n`);
+  process.stderr.write(`Hedera sidecar failed: ${failureReason(error, submissionMayHaveOccurred)}\n`);
   process.exitCode = submissionMayHaveOccurred ? 1 : 2;
 });
