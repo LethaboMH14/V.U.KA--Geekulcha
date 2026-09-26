@@ -1256,5 +1256,28 @@ async function boot() {
   setInterval(drawRate, 30000);
 }
 
+// The footer's Security scorecard link (a[data-scorecard], ../../security.html from here). The Pages
+// workflow carries security.html to the site root only when a security-score run on main has one,
+// and a local checkout has none; when it is absent, link to the CI runs that compute it (as
+// ../home.js does) rather than to a 404.
+const SCORE_RUNS = "https://github.com/LethaboMH14/V.U.KA--Geekulcha/actions/workflows/security-score.yml";
+async function checkScorecard() {
+  const links = [...document.querySelectorAll("a[data-scorecard]")];
+  if (!links.length) return;
+  let present = false;
+  try {
+    present = (await fetch(links[0].href, { method: "HEAD", cache: "no-store" })).ok;
+  } catch { /* offline or blocked: treat as absent */ }
+  if (present) return;
+  for (const link of links) {
+    link.href = SCORE_RUNS;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+  }
+}
+
 // Imported by node tests (resolveRoute) without a DOM: boot only in a browser.
-if (typeof document !== "undefined") boot().catch((error) => notice(`The page could not start: ${error.message}`));
+if (typeof document !== "undefined") {
+  checkScorecard();
+  boot().catch((error) => notice(`The page could not start: ${error.message}`));
+}

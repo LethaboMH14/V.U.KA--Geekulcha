@@ -43,3 +43,42 @@ Needs / blockers:
 - **Pages deploys:** the two deploys (`security-score.yml` and the ledger workflow) should be merged into one.
 
 Business handoff: the dashboard and fingerprint card are demo-ready once a root lands. Babatunde can use the "How it works" view in the bank and insurer conversations.
+
+### Addendum, 26 Sep evening: real references, home page, routed app and a connected system. Claude Code assistant, parallel sub-agents and review rounds
+
+**Research:**
+- **Design audit:** results in `dashboard/ledger/DESIGN.md`.
+- **Carbon Design System:** tokens read from `@carbon/themes` 11.82.0, `@carbon/type` and `@carbon/layout` on npm.
+- **HashScan's own source,** read as the look reference: `hashgraph/hedera-mirror-node-explorer` (Apache-2.0), covering `style-config.css`, `explorer.css`, `DashboardCardV2` and `Property`.
+- **Product audit and information architecture:** in `dashboard/IA.md`. It covers who visits (investigator, member, judge, operator), their jobs, and what was wrong.
+
+**Blocked:** Mobbin needs a paid plan. Dribbble, the Carbon docs site and hashscan.io are blocked by the sandbox. The Figma account holds only Material 3, Simple Design System and the Apple kits.
+
+**Real data / references:**
+- Fonts, self-hosted under SIL OFL 1.1: Inter 5.3.0, Geist Mono 5.3.0 and IBM Plex Sans 1.1.0 / Mono 2.5.0.
+- Measured contrast: light body 20.38, secondary 5.02, link 5.36; dark 17.93, 7.02 and 6.32.
+
+**Business reasoning:**
+- The investigator reaches a verdict in three actions or fewer from the home page.
+- The home page explains the product and proves it's live.
+- VIGIL, ANCHOR and the ledger link to each other, so a judge or bank sees one system.
+
+Changed:
+- `carbon.css` (Carbon tokens) and `hashscan.css` (the HashScan look, loaded last).
+- **Home page** (`dashboard/index.html`): a hero, a live Hedera proof strip, how it works, "The VUKA system", banks and insurers, privacy and security.
+- **Routed app** (`dashboard/ledger/`): Overview, Verify, Anchors, Activity, Method, and Settings behind a gear. Deep links (`#verify`) are kept.
+- **One summary notice** for failed sources.
+- **The VIGIL Android download,** with an inline QR (decoded: equals the APK URL), and "Android only for now" for iPhone.
+- **ANCHOR's live `/healthz` status,** plus links to the OpenAPI contract and the server source.
+- **A site bar** on `security.html` and `verify-min.html`.
+- **Pages:** the root opens the home page; one deploy (`security-score.yml` no longer deploys); fonts and licences are allowed; `sample/` is no longer published.
+
+Evidence:
+- `node --test "dashboard/ledger/test/*.test.js"`: 42/42. `node --check` passes on every `.js` file under `dashboard/`.
+- A Playwright check of local serving and a rebuilt Pages layout: every internal link returns 200, and nothing scrolls sideways at 400 px.
+- Review rounds found 6 problems in the latest round; clean after fixes.
+
+Not verified:
+- Live data. The sandbox cannot reach Azure or the mirror.
+- `security.html` changes reach Pages only after a `security-score` run on main.
+- **iOS:** needs a Mac with Xcode, an Apple Developer account for TestFlight, and a Swift port of five native modules. The owner must decide on this.

@@ -427,3 +427,12 @@ html[data-boot-view="anchors"] section.view[data-view="anchors"],
 html[data-boot-view="activity"] section.view[data-view="activity"],
 html[data-boot-view="method"] section.view[data-view="method"],
 html[data-boot-view="settings"] section.view[data-view="settings"] { display: grid !important; }
+
+/* ---------------------------------------------------------------- links to the rest of VUKA
+   The Azure API source is the ANCHOR server; its explanation and live status are on Home. The link
+   sits beside the status chips, not inside one, so it keeps link contrast on a failed (filled) chip. */
+.statusrow .src-more { font: 400 14px/20px var(--font-sans); white-space: nowrap; }
+/* Footer: the products row (Home, VIGIL, ANCHOR, HashScan, scorecard). */
+.foot-products { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding-top: 8px; }
+.foot-products-title { color: var(--cds-text-primary); font-weight: 500; }
+.foot-products ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; }

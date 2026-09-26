@@ -4,7 +4,7 @@
    no colours; every colour below is a token from those files, so light and dark follow them. */
 
 html { scroll-padding-top: calc(var(--head-h) + 16px); }
-.hm main section[id] { scroll-margin-top: calc(var(--head-h) + 16px); }
+.hm main section[id], .hm-sys-card[id] { scroll-margin-top: calc(var(--head-h) + 16px); }
 body.hm { background: var(--cds-background); color: var(--cds-text-primary); }
 
 .hm-wrap { max-width: 1200px; margin-inline: auto; padding-inline: var(--gutter); }
@@ -141,6 +141,46 @@ body.hm { background: var(--cds-background); color: var(--cds-text-primary); }
 .hd-edge-accent .hd-lbl { fill: var(--cds-link-primary); }
 .hd-lbl.hd-left { text-anchor: start; }
 
+/* the VUKA system: three product cards (HashScan DashboardCardV2 look: layer-01, hairline, 16px radius) */
+.hm-sys { display: grid; gap: 16px; }
+@media (min-width: 1080px) { .hm-sys { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; } }
+.hm-sys-card {
+  display: flex; flex-direction: column; gap: 16px; min-width: 0;
+  background: var(--cds-layer-01);
+  border: 1px solid var(--cds-border-subtle-01);
+  border-radius: 16px;
+  padding: var(--hs-card-pad);
+}
+.hm-sys-head { display: grid; gap: 2px; }
+.hm-sys-kind { color: var(--cds-text-secondary); font: 500 12px/16px var(--font-sans); }
+.hm .hm-sys-head h3 { font: 500 1.25rem/1.75rem var(--font-sans); }
+.hm-sys-text { max-width: 60ch; color: var(--cds-text-secondary); font: 400 0.9375rem/1.6 var(--font-sans); }
+.hm-sys-note { color: var(--cds-text-secondary); font: 400 0.8125rem/1.5 var(--font-sans); }
+.hm-sys-note strong { color: var(--cds-text-primary); font-weight: 500; }
+.hm-sys-ios { padding-left: 12px; border-left: 2px solid var(--cds-border-subtle-01); }
+.hm-sys-btn { justify-self: start; align-self: flex-start; }
+.hm-sys-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* download: the button and notes beside the QR code */
+.hm-sys-get { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; }
+.hm-sys-get-text { display: grid; gap: 8px; flex: 1 1 12rem; min-width: 0; }
+/* The QR stays dark on light in both themes so phone cameras can read it: --shell-bg and
+   --cds-text-on-color keep the same value in light and dark (hashscan.css). */
+.hm-qr { flex: none; display: block; width: 160px; height: 160px; border-radius: 8px; border: 1px solid var(--cds-border-subtle-01); }
+.hm-qr-paper { fill: var(--cds-text-on-color); }
+.hm-qr-ink { fill: var(--shell-bg); }
+
+/* ANCHOR status and address */
+.hm-sys-kv { margin: 0; display: grid; }
+.hm-sys-kv > div { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--cds-border-subtle-01); }
+.hm-sys-kv dt { color: var(--cds-text-secondary); font: 500 12px/16px var(--font-sans); }
+.hm-sys-kv dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0; overflow-wrap: anywhere; }
+.hm-sys-host { font: 400 0.875rem/1.5 var(--font-mono); }
+
+/* the card's own links sit at its foot */
+.hm-sys-links { list-style: none; margin: auto 0 0; padding: 12px 0 0; display: flex; flex-wrap: wrap; gap: 8px 24px; border-top: 1px solid var(--cds-border-subtle-01); }
+.hm-sys-links a { font: 500 0.875rem/1.5rem var(--font-sans); }
+
 /* for banks and insurers */
 .hm-kv { margin: 0; display: grid; }
 .hm-kv > div { display: grid; gap: 4px 32px; padding: 16px 0; border-top: 1px solid var(--cds-border-subtle-01); }
@@ -170,4 +210,23 @@ body.hm { background: var(--cds-background); color: var(--cds-text-primary); }
 .hm-links span { color: var(--cds-text-secondary); font: 400 0.875rem/1.55 var(--font-sans); }
 
 /* ---------------------------------------------------------------- footer */
-.hm-foot-inner { display: flex; flex-wrap: wrap; gap: 8px 32px; padding-block: 24px 48px; }
+.hm-foot-inner { display: grid; gap: 24px 48px; padding-block: 24px 48px; }
+@media (min-width: 760px) { .hm-foot-inner { grid-template-columns: minmax(0, 1fr) auto; } }
+.hm-foot-notes { display: flex; flex-wrap: wrap; align-content: start; gap: 8px 32px; }
+.hm-foot-col { display: grid; gap: 8px; align-content: start; }
+.hm .hm-foot-col h2 { color: var(--cds-text-primary); font: 500 12px/16px var(--font-sans); }
+.hm-foot-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+
+/* ---------------------------------------------------------------- lite top bar (verify-min.html)
+   Three links that stay visible at every width; no menu button, no script needed. */
+.hm-nav-lite { display: flex; align-items: center; gap: 4px; min-width: 0; margin-left: auto; overflow-x: auto; }
+.hm-nav-lite a {
+  display: inline-flex; align-items: center;
+  height: 32px; padding: 0 12px; border-radius: 8px;
+  color: var(--cds-text-secondary); white-space: nowrap;
+  font: 400 14px/1.35 var(--font-sans);
+}
+.hm-nav-lite a:hover { background: var(--hs-tab-bg); color: var(--cds-text-primary); text-decoration: none; }
+.hm-nav-lite a[aria-current="page"] { background: var(--hs-tab-bg); color: var(--cds-text-primary); font-weight: 500; }
+.hm-nav-lite a:focus-visible { outline: 2px solid var(--cds-focus); outline-offset: -2px; }
+@media (max-width: 479px) { .hm-bar { gap: 8px; } .hm-nav-lite a { padding: 0 8px; } }

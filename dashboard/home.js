@@ -1,4 +1,4 @@
-// dashboard/home.js: the home page's mobile menu and its live proof strip.
+// dashboard/home.js: the home page's mobile menu, its live proof strip and the ANCHOR status.
 // The strip reads the public Hedera mirror in this browser (ledger/lib/sources.js)
 // and hashes the pinned key manifest exactly as the app does
 // (shared/keys.js: sha256(canonicalManifestBytes(manifest))). Network data is written with textContent only.
@@ -17,6 +17,9 @@ const TS_RE = /^\d+\.\d{1,9}$/;
 const HASHSCAN = "https://hashscan.io/testnet";
 const REFRESH_MS = 60_000;
 const SCORE_RUNS = "https://github.com/LethaboMH14/V.U.KA--Geekulcha/actions/workflows/security-score.yml";
+// The ANCHOR server (same default as ledger/lib/sources.js DEFAULT_SERVER) and its public health route.
+const ANCHOR = "https://vuka-anchor-server.azurewebsites.net";
+const HEALTH_TIMEOUT_MS = 8_000;
 
 const $ = (id) => document.getElementById(id);
 
@@ -256,27 +259,83 @@ async function initProof() {
   setInterval(renderRoot, 15_000);
 }
 
-/* ---------------------------------------------------------------- security scorecard link */
+/* ---------------------------------------------------------------- ANCHOR status */
+// GET /healthz from this browser, 8 s timeout. A browser can only read the answer when the server
+// lists this site's origin in VUKA_DASHBOARD_ORIGINS (CORS). When the readable request fails, a
+// second, opaque (no-cors) request tells "the server answered but the browser may not read it"
+// apart from "nothing answered", so a CORS block is never reported as the server being down.
+async function timedFetch(url, init) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, cache: "no-store", signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function checkAnchor() {
+  if (!$("a-health")) return;
+  const url = `${ANCHOR}/healthz`;
+  const at = () => `${new Date().toISOString().slice(11, 16)} UTC`;
+  let response;
+  try {
+    response = await timedFetch(url, { headers: { accept: "application/json" } });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      setItem("a-health", { kind: "error", label: "Can't reach", value: "No answer", note: `GET /healthz did not answer within ${HEALTH_TIMEOUT_MS / 1000} seconds (checked ${at()}).` });
+      return;
+    }
+    let answered = false;
+    try {
+      await timedFetch(url, { mode: "no-cors" });
+      answered = true;
+    } catch { /* nothing answered either */ }
+    if (answered) {
+      setItem("a-health", {
+        kind: "idle", label: "Not readable", value: "Status not readable from this browser yet",
+        note: `The server answered, but it does not yet let this site's address read the reply (CORS: VUKA_DASHBOARD_ORIGINS). That is not the same as down. Checked ${at()}.`,
+      });
+    } else {
+      setItem("a-health", {
+        kind: "idle", label: "Not readable", value: "Status not readable from this browser yet",
+        note: `The request failed before any reply could be read: the network, a blocker, or the server being offline. Checked ${at()}.`,
+      });
+    }
+    return;
+  }
+  if (response.ok) {
+    setItem("a-health", { kind: "success", label: "Reachable", value: "Reachable", note: `GET /healthz answered HTTP ${response.status} (checked ${at()}).` });
+  } else {
+    setItem("a-health", { kind: "error", label: "Not healthy", value: `HTTP ${response.status}`, note: `The server answered GET /healthz with HTTP ${response.status}, not 200 (checked ${at()}).` });
+  }
+}
+
+/* ---------------------------------------------------------------- security scorecard links */
 // ledger-pages.yml carries security.html to the site root only when a security-score run on main
 // has one to download (best effort), and a local checkout has none. When this copy of the site
-// does not have it, link to the CI runs that compute it rather than to a 404.
+// does not have it, every scorecard link (a[data-scorecard]) opens the CI runs that compute it
+// rather than a 404.
 async function checkScorecard() {
-  const link = $("score-link");
+  const links = [...document.querySelectorAll("a[data-scorecard]")];
   const note = $("score-note");
-  if (!link) return;
+  if (!links.length) return;
   let present = false;
   try {
-    present = (await fetch(link.href, { method: "HEAD", cache: "no-store" })).ok;
+    present = (await fetch(links[0].href, { method: "HEAD", cache: "no-store" })).ok;
   } catch { /* offline or blocked: treat as absent */ }
   if (present) return;
-  link.href = SCORE_RUNS;
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
+  for (const link of links) {
+    link.href = SCORE_RUNS;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+  }
   if (note) note.textContent = "This copy of the site does not carry the scorecard, so the link opens the CI runs on GitHub that compute it.";
 }
 
 initMenu();
 checkScorecard();
+checkAnchor().then(() => setInterval(checkAnchor, REFRESH_MS));
 initProof().catch((error) => {
   const when = $("proof-when");
   if (when) when.textContent = `Unavailable: ${reason(error)}`;
