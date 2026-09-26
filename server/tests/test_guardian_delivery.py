@@ -7,6 +7,10 @@ from server.guardian_notifier import DeliveryResult, SimulatedGuardianNotifier
 from server.guardian_worker import deliver_guardian_alert
 from server.incidents import request_alarm, stand_down
 from server.outbox import claim_due
+
+# What server/run_workers.py claims through the lease. anchor_request rows (now
+# also queued when an incident opens) are consumed by the batch coordinator.
+WORKER_KINDS = ("guardian_alert", "bank_signal")
 from server.bank_worker import deliver_bank_signal
 from server.tests.sim_postgres import sim_database
 from server.tests.test_slice3_events import sim_api, signal
@@ -38,9 +42,9 @@ def test_proposed_no_bank_without_delivery_timer_uses_delivery_then_stand_down(s
     with connect() as conn, conn.cursor() as cur:
         cur.execute("SELECT not_before FROM outbox WHERE kind='bank_signal'")
         assert cur.fetchone()[0] == now[0] + timedelta(minutes=3)
-        assert claim_due(cur, now=now[0] + timedelta(seconds=179)) == []
+        assert claim_due(cur, now=now[0] + timedelta(seconds=179), kinds=WORKER_KINDS) == []
         stand_down(cur, incident, now[0] + timedelta(seconds=179))
-        assert claim_due(cur, now=now[0] + timedelta(seconds=180)) == []
+        assert claim_due(cur, now=now[0] + timedelta(seconds=180), kinds=WORKER_KINDS) == []
 
 
 def test_delivery_failure_then_success_and_crash_before_ack_is_deduped(sim_api):
@@ -69,9 +73,9 @@ def test_delivery_failure_then_success_and_crash_before_ack_is_deduped(sim_api):
         assert cur.fetchone()[0] == 1
         cur.execute("SELECT not_before FROM outbox WHERE kind='bank_signal'")
         assert cur.fetchone()[0] == delivered_at + timedelta(minutes=3)
-        due = claim_due(cur, now=delivered_at + timedelta(minutes=3))
+        due = claim_due(cur, now=delivered_at + timedelta(minutes=3), kinds=WORKER_KINDS)
         assert [r["kind"] for r in due] == ["bank_signal"]
-        assert claim_due(cur, now=delivered_at + timedelta(minutes=3)) == []
+        assert claim_due(cur, now=delivered_at + timedelta(minutes=3), kinds=WORKER_KINDS) == []
 
 
 def test_proposed_zero_guardians_records_gap_but_duress_needs_no_delivery(sim_api):

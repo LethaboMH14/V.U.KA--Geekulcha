@@ -23,6 +23,9 @@ GENESIS_HASH = "0" * 64
 MAX_APPEND_ATTEMPTS = 5
 NONCE_TTL = timedelta(hours=24)
 MAX_CLOCK_SKEW_SECONDS = 120
+# Advisory-lock keys share one namespace: anchoring.COORDINATOR_LOCK is 864203
+# and scheduler.SCHEDULER_LOCK is 864204 (server/tests/test_advisory_locks.py).
+SCHEMA_INIT_LOCK = 864205
 
 CREATE_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS chain_entries (
@@ -271,16 +274,34 @@ class PostgresDatabase:
             raise DatabaseUnavailable("PostgreSQL connection failed") from exc
 
     def initialize(self) -> None:
-        from server import anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery, deletion, guardians
+        from server import anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery, deletion, guardians, locations
         self._payload_key()
         connection = self._connection()
         try:
+            with connection.cursor() as cursor:
+                # Two processes can boot at once (server/run_workers.py's own
+                # main() and uvicorn's startup, both calling this method
+                # independently). Without serializing them, PostgreSQL can
+                # deadlock two concurrent multi-table CREATE TABLE IF NOT
+                # EXISTS transactions against each other (seen in practice on
+                # Azure, 26 Sep) rather than just having the second one wait.
+                # pg_advisory_lock's own effect is immediate, not deferred to
+                # commit, so it must NOT be unlocked from inside the
+                # transaction below — an explicit unlock there would let a
+                # second caller start creating tables before this one's
+                # CREATE TABLE statements are actually durable, which
+                # reintroduces the same race with a "type already exists"
+                # error instead of a deadlock. Relying on connection.close()
+                # to release the session-level lock, only once every
+                # statement below has committed, is what actually serializes
+                # this correctly.
+                cursor.execute("SELECT pg_advisory_lock(%s)", (SCHEMA_INIT_LOCK,))
             with connection:
                 with connection.cursor() as cursor:
                     cursor.execute(CREATE_SCHEMA_SQL)
                     cursor.execute(CREATE_EVENT_ID_INDEX_SQL)
                     cursor.execute(OUTBOX_SCHEMA_SQL)
-                    for module in (anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery, deletion, guardians):
+                    for module in (anchoring, escalation, incidents, guardian_notifier, pin_records, event_effects, bank_worker, contact, recovery, deletion, guardians, locations):
                         cursor.execute(module.SCHEMA_SQL)
         finally:
             connection.close()

@@ -17,11 +17,25 @@ import zipfile
 PRIVATE_KEY_SHAPE = re.compile(rb"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----")
 REQUIRED_MEMBERS = {
     "anchor/canonical.py",
+    "anchor/merkle.py",
+    "anchor/payloads.py",
+    "anchor/pin_authority.py",
+    "anchor/publish.py",
+    "anchor/verify.py",
+    "contracts/keys/manifest.json",
+    "contracts/keys/verify-pins.json",
     "requirements.txt",
     "server/db.py",
     "server/main.py",
     "server/payload_store.py",
     "server/requirements.txt",
+    # anchor/hedera-sidecar/publish.mjs imports ../../shared/keys.js, which
+    # imports canonical.js and merkle.js; shared/package.json makes Node load
+    # them as ES modules. Missing, the sidecar could never submit a root.
+    "shared/canonical.js",
+    "shared/keys.js",
+    "shared/merkle.js",
+    "shared/package.json",
     "startup.sh",
 }
 
@@ -48,7 +62,11 @@ def forbidden_path_reason(name: str) -> str | None:
             return "Git metadata path"
         if lowered == "node_modules":
             return "node_modules path"
-        if lowered.startswith(".env"):
+        if lowered.startswith(".env") and lowered != ".env.example":
+            # .env.example (repo root) is a secret-free template, the same
+            # carve-out .gitignore already makes with `!.env.example`. It is
+            # never read by the server at runtime either way; should_package
+            # decides separately whether to actually include it.
             return "environment-file path"
         if lowered.endswith(".pem"):
             return "PEM-key path"
@@ -58,11 +76,41 @@ def forbidden_path_reason(name: str) -> str | None:
 
 
 def should_package(name: str) -> bool:
+    """The server imports every non-test module under anchor/, plus the payload
+    schemas and key manifest anchor/payloads.py and server/server_signing.py
+    read from disk. Packaging only anchor/canonical.py (the original scope,
+    from when the server had three routes) leaves those imports unresolved at
+    runtime; a deployed server would fail on its first request, not at boot,
+    since most are imported lazily inside route handlers."""
     path = PurePosixPath(name)
+    parts = [p.lower() for p in path.parts]
     if len(path.parts) > 1 and path.parts[0] == "server":
-        return not any(part.lower() in {"tests", "__pycache__", ".pytest_cache"} for part in path.parts)
+        return not any(part in {"tests", "__pycache__", ".pytest_cache"} for part in parts)
+    if len(path.parts) > 2 and path.parts[0] == "anchor" and path.parts[1] == "hedera-sidecar":
+        # anchor/publish.py shells out to this sidecar for real Hedera
+        # submission (server/anchoring.py's BatchCoordinator, run every
+        # second by server/run_workers.py). node_modules is never packaged —
+        # forbidden_path_reason already refuses it — so a deploy target still
+        # needs its own `npm ci --ignore-scripts` run here after unpacking.
+        if "node_modules" in parts or "tests" in parts or "__pycache__" in parts:
+            return False
+        if path.name.endswith(".test.mjs"):
+            return False
+        return path.suffix in {".mjs", ".json"}
+    if len(path.parts) > 1 and path.parts[0] == "anchor":
+        if path.parts[1] == "hedera-sidecar" or "tests" in parts or "__pycache__" in parts:
+            return False
+        return path.suffix == ".py"
+    if len(path.parts) > 2 and path.parts[0] == "contracts" and path.parts[1] == "payloads":
+        return path.suffix == ".json"
+    if len(path.parts) == 2 and path.parts[0] == "shared":
+        # Top-level shared modules only (the sidecar imports them), never
+        # shared/test/, shared/scripts/ or the test runner's config.
+        return (path.suffix == ".js" and path.name != "vitest.config.js") or path.name == "package.json"
     return name in {
         "anchor/canonical.py",
+        "contracts/keys/manifest.json",
+        "contracts/keys/verify-pins.json",
         "requirements.txt",
         "startup.sh",
     }

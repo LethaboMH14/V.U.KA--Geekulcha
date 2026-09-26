@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vuka.example/contracts/payloads/evidence_observed.v2.json",
+  "title": "evidence_observed payload, pv 2 (PROPOSED, ADR-0047)",
+  "description": "Committed private payload: the phone's CEM-1 evidence. One shape per decision, enforced by server/evidence.py on top of this schema. decision \"record\": a record-only (T0) detection, candidate set, signal_event_id null; no server effect and never a signal_detected. decision \"prompt\": the evidence for the check-in the phone opened, signal_event_id = exactly that signal (the only evidence a guardian's `why` may read). decision \"pin\": what the member's check-in entry looked like, identical in shape for both PINs (V5): checkin_id and exactly [pin_retry, pin_slow] with weights 0 or 2, and none of the aggregate fields. The tally is an uncalibrated sum of integer decibans, never a probability (ADR-0039). Numeric fields are integers (spec §5).",
+  "type": "object",
+  "required": ["kind", "pv", "journey_id", "cem_version", "ruleset_digest", "decision", "reasons"],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {"const": "evidence_observed"},
+    "pv": {"const": 2},
+    "journey_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "cem_version": {"const": "CEM-1"},
+    "ruleset_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decision": {"enum": ["record", "prompt", "pin"]},
+    "tally_db": {"type": "integer", "minimum": -1000, "maximum": 1000},
+    "band": {"enum": ["faint", "some", "strong", "very strong", "overwhelming"]},
+    "k_pct": {"type": "integer", "minimum": 0, "maximum": 100},
+    "context": {"enum": ["on", "off"]},
+    "reasons": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["name", "db"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,39}$"},
+          "db": {"type": "integer", "minimum": -100, "maximum": 100}
+        }
+      }
+    },
+    "observations": {"type": "array", "maxItems": 4, "items": {"enum": ["snatch_liu"]}},
+    "candidate": {
+      "type": "object",
+      "required": ["class_label", "class_index", "score_bp", "threshold_bp", "level"],
+      "additionalProperties": false,
+      "properties": {
+        "class_label": {"type": "string", "minLength": 1, "maxLength": 64},
+        "class_index": {"type": "integer", "minimum": 0, "maximum": 520},
+        "score_bp": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "threshold_bp": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "level": {"enum": ["record", "prompt"]}
+      }
+    },
+    "signal_event_id": {"type": ["string", "null"], "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "checkin_id": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"}
+  },
+  "examples": [
+    {
+      "kind": "evidence_observed", "pv": 2, "journey_id": "sim_journey_1", "cem_version": "CEM-1",
+      "ruleset_digest": "ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b",
+      "decision": "prompt", "tally_db": 8, "band": "some", "k_pct": 0, "context": "on",
+      "reasons": [{"name": "shout_or_yell", "db": 4}, {"name": "glass_or_breaking", "db": 4}],
+      "observations": [],
+      "candidate": {"class_label": "Shout", "class_index": 6, "score_bp": 3100, "threshold_bp": 3000, "level": "record"},
+      "signal_event_id": "6c1f7e0e-2f4b-4a55-9b1a-0d1c2e3f4a5b"
+    },
+    {
+      "kind": "evidence_observed", "pv": 2, "journey_id": "sim_journey_1", "cem_version": "CEM-1",
+      "ruleset_digest": "ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b",
+      "decision": "pin", "checkin_id": "0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70",
+      "reasons": [{"name": "pin_retry", "db": 0}, {"name": "pin_slow", "db": 2}]
+    }
+  ]
+}

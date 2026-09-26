@@ -6,6 +6,8 @@ import checkinOpenedSchema from "../contracts/payloads/checkin_opened.v1.json" w
 import checkinResultSchema from "../contracts/payloads/checkin_result.v1.json" with { type: "json" };
 import journeyEndedSchema from "../contracts/payloads/journey_ended.v1.json" with { type: "json" };
 import guardianAckSchema from "../contracts/payloads/guardian_ack.v1.json" with { type: "json" };
+import evidenceObservedV1Schema from "../contracts/payloads/evidence_observed.v1.json" with { type: "json" };
+import evidenceObservedV2Schema from "../contracts/payloads/evidence_observed.v2.json" with { type: "json" };
 import { canonicalize, canonicalizeJson } from "./canonical.js";
 
 const DIALECT = "https://json-schema.org/draft/2020-12/schema";
@@ -17,6 +19,9 @@ const VALIDATION_KEYWORDS = new Set([
   "minLength",
   "maxLength",
   "minimum",
+  "maximum",
+  "maxItems",
+  "items",
   "required",
   "additionalProperties",
   "properties",
@@ -30,7 +35,10 @@ const SCHEMAS = Object.freeze({
   journey_ended: journeyEndedSchema,
   guardian_ack: guardianAckSchema,
   pin_authorised: pinAuthorisedSchema,
+  // Keyed by pv, as anchor/payloads.py does (ADR-0047, PROPOSED).
+  evidence_observed: Object.freeze({ 1: evidenceObservedV1Schema, 2: evidenceObservedV2Schema }),
 });
+const TYPES = new Set(["object", "string", "integer", "array", "null"]);
 
 export class PayloadError extends Error {
   constructor(reason) {
@@ -86,10 +94,14 @@ function assertSupportedSchema(schema, path = "$schema") {
       (!Array.isArray(schema.required) || schema.required.some((name) => typeof name !== "string"))) {
     throw new PayloadError(`required at ${path} must be an array of strings`);
   }
-  for (const keyword of ["minLength", "maxLength", "minimum"]) {
+  if (Object.hasOwn(schema, "maxItems") && (!Number.isSafeInteger(schema.maxItems) || schema.maxItems < 0)) {
+    throw new PayloadError(`unsupported maxItems value at ${path}`);
+  }
+  if (Object.hasOwn(schema, "items")) assertSupportedSchema(schema.items, `${path}.items`);
+  for (const keyword of ["minLength", "maxLength", "minimum", "maximum"]) {
     if (Object.hasOwn(schema, keyword) &&
         (!Number.isSafeInteger(schema[keyword]) ||
-          (keyword !== "minimum" && schema[keyword] < 0))) {
+          (keyword !== "minimum" && keyword !== "maximum" && schema[keyword] < 0))) {
       throw new PayloadError(`unsupported ${keyword} value at ${path}`);
     }
   }
@@ -104,18 +116,27 @@ function assertSupportedSchema(schema, path = "$schema") {
   if (Object.hasOwn(schema, "enum") && !Array.isArray(schema.enum)) {
     throw new PayloadError(`enum at ${path} must be an array`);
   }
-  if (Object.hasOwn(schema, "type") && !["object", "string", "integer"].includes(schema.type)) {
-    throw new PayloadError(`unsupported type keyword value at ${path}`);
+  if (Object.hasOwn(schema, "type")) {
+    const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+    if (types.length === 0 || !types.every((t) => typeof t === "string" && TYPES.has(t))) {
+      throw new PayloadError(`unsupported type keyword value at ${path}`);
+    }
   }
 }
 
 function validateAgainstSchema(payload, schema, path = "$payload") {
   assertSupportedSchema(schema);
 
-  if (schema.type === "object" && !isObject(payload)) fail("must be an object", path);
-  if (schema.type === "string" && typeof payload !== "string") fail("must be a string", path);
-  if (schema.type === "integer" && (typeof payload !== "number" || !Number.isSafeInteger(payload))) {
-    fail("must be an integer", path);
+  if (Object.hasOwn(schema, "type")) {
+    const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+    const checks = {
+      object: (v) => isObject(v),
+      string: (v) => typeof v === "string",
+      integer: (v) => typeof v === "number" && Number.isSafeInteger(v),
+      array: (v) => Array.isArray(v),
+      null: (v) => v === null,
+    };
+    if (!types.some((t) => checks[t](payload))) fail(`must be ${types.join(" or ")}`, path);
   }
 
   if (Object.hasOwn(schema, "const") && !sameJsonValue(payload, schema.const)) {
@@ -138,6 +159,15 @@ function validateAgainstSchema(payload, schema, path = "$payload") {
   }
   if (Object.hasOwn(schema, "minimum") && typeof payload === "number" && payload < schema.minimum) {
     fail(`must be at least ${schema.minimum}`, path);
+  }
+  if (Object.hasOwn(schema, "maximum") && typeof payload === "number" && payload > schema.maximum) {
+    fail(`must be at most ${schema.maximum}`, path);
+  }
+  if (Object.hasOwn(schema, "maxItems") && Array.isArray(payload) && payload.length > schema.maxItems) {
+    fail(`must contain at most ${schema.maxItems} items`, path);
+  }
+  if (Object.hasOwn(schema, "items") && Array.isArray(payload)) {
+    payload.forEach((item, i) => validateAgainstSchema(item, schema.items, `${path}[${i}]`));
   }
 
   if (Object.hasOwn(schema, "required")) {
@@ -162,11 +192,18 @@ function validateAgainstSchema(payload, schema, path = "$payload") {
   }
 }
 
-function loadSchema(kind) {
+function loadSchema(kind, pv = 1) {
   if (!Object.hasOwn(SCHEMAS, kind)) {
     throw new PayloadError(`unsupported payload kind ${JSON.stringify(kind)}`);
   }
-  const schema = SCHEMAS[kind];
+  let schema = SCHEMAS[kind];
+  if (!Object.hasOwn(schema, "$schema")) {
+    // A pv-keyed family: pick the version the payload names.
+    if (!Number.isSafeInteger(pv) || !Object.hasOwn(schema, String(pv))) {
+      throw new PayloadError(`unsupported pv ${JSON.stringify(pv)} for payload kind ${JSON.stringify(kind)}`);
+    }
+    schema = schema[String(pv)];
+  }
   assertSupportedSchema(schema);
   return schema;
 }
@@ -178,7 +215,7 @@ export function validatePayload(kind, payload) {
   } catch (error) {
     throw new PayloadError(`invalid canonical payload: ${error.message}`);
   }
-  validateAgainstSchema(payload, loadSchema(kind));
+  validateAgainstSchema(payload, loadSchema(kind, isObject(payload) ? payload.pv : undefined));
   return payload;
 }
 

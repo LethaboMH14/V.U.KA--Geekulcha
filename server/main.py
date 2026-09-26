@@ -26,6 +26,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, status
+from starlette.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
 from starlette.responses import JSONResponse
@@ -403,6 +404,33 @@ def create_app(database=None) -> FastAPI:
         openapi_url=None,
     )
     app.state.database = store
+
+    # PROPOSED (26 Sep): lets a browser-hosted dashboard call the read-only
+    # public surface (/healthz, /v1/anchor/latest, /v1/anchor/proof/{head})
+    # directly. Every other route needs a valid §7/§9 signature, which no
+    # amount of permissive CORS lets a browser forge, so this widens *reach*,
+    # not *authority*. GET-only, and only origins the operator names — never
+    # a wildcard, and never with credentials (there is no cookie/session to
+    # leak). Set VUKA_DASHBOARD_ORIGINS to a comma-separated list; unset
+    # defaults to common local dev ports so a fresh checkout works with zero
+    # configuration, per docs/DASHBOARD-INTEGRATION.md.
+    dashboard_origins = [
+        origin.strip()
+        for origin in os.getenv(
+            "VUKA_DASHBOARD_ORIGINS",
+            "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000",
+        ).split(",")
+        if origin.strip()
+    ]
+    if dashboard_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=dashboard_origins,
+            allow_methods=["GET"],
+            allow_headers=["*"],
+            allow_credentials=False,
+            max_age=600,
+        )
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(_request: Request, _exc: RequestValidationError):
@@ -853,6 +881,24 @@ def create_app(database=None) -> FastAPI:
 
     stream_interval = float(os.getenv("VUKA_STREAM_POLL_SECONDS", "1"))
 
+    @app.get("/v1/guardians/me/alerts")
+    async def guardian_alerts(request: Request):
+        """PROPOSED (Lethabo, 25 Sep): the alerts delivered to the calling guardian.
+        Signed with the guardian's own key; a decoy sees an empty list, same shape."""
+        from contextlib import closing
+        from server.guardian_alerts import alerts_for, guardian_for_key
+        principal, refused = await _signed_caller(request, role="guardian")
+        if refused:
+            return refused
+        try:
+            with closing(store._connection()) as connection, connection, connection.cursor() as cur:
+                guardian_id = guardian_for_key(cur, principal.signer_key_id)
+                alerts = alerts_for(cur, guardian_id, payload_key=store._payload_key()) if guardian_id else []
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        # The member's subject id lets the guardian sign a guardian_ack for it (G5).
+        return {"subject_id": principal.subject_id, "alerts": alerts}
+
     @app.websocket("/ws/panel")
     async def panel_stream(websocket: WebSocket):
         """PROPOSED public opaque panel (see server/streams.py)."""
@@ -973,6 +1019,61 @@ def create_app(database=None) -> FastAPI:
         except DatabaseUnavailable:
             return _error_response(503, "database_unavailable", "database unavailable")
         return {"receipt_id": str(uuid4()), "state": "accepted", "journey_id": journey_id}
+
+    @app.post("/v1/journeys/{id}/location", status_code=202)
+    async def journey_location(id: str, request: Request):
+        """PROPOSED (ADR-0048): a location fix, kept only while guardians are alerted.
+
+        The phone sends fixes for 30 minutes after any check-in opens, after
+        either PIN alike, and gets the same 202 whether the fix was kept or
+        dropped, so it can never learn whether an alert was raised (T30)."""
+        from contextlib import closing
+        from server.locations import store_fix, valid_fix
+        body = await request.body()
+        try:
+            subject_id = store.get_journey_subject(id)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if subject_id is None:
+            return _error_response(404, "not_found", "journey was not found")
+        try:
+            principal = verify_request(request, subject_id=subject_id, database=store, body=body)
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != "device":
+            return _error_response(404, "not_found", "journey was not found")
+        try:
+            fix = json.loads(body)
+            if not valid_fix(fix):
+                raise ValueError("location shape")
+            _validate_rfc3339(fix["ts"], "ts")
+        except (ValueError, TypeError):
+            return _error_response(400, "invalid_request", "location body is invalid")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id,
+                subject_id=principal.subject_id,
+                nonce=principal.nonce,
+                request_ts=principal.request_ts,
+                now=datetime.now(timezone.utc),
+            )
+            with closing(store._connection()) as connection, connection, connection.cursor() as cur:
+                store_fix(cur, subject_id, id, fix, now)
+            store.record_heartbeat(subject_id, now)
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return _error_response(404, "not_found", "journey was not found")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        # The same answer whether the fix was kept or dropped.
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
 
     @app.post("/v1/journeys/{id}/heartbeat", status_code=202)
     async def journey_heartbeat(id: str, request: Request):

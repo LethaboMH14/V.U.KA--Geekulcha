@@ -46,6 +46,29 @@ def ended_payload(*, journey_id: str = "sim_journey_1") -> dict:
     return {"kind": "journey_ended", "pv": 1, "journey_id": journey_id}
 
 
+DIGEST = "ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b"
+
+
+def evidence_v1() -> dict:
+    return {"kind": "evidence_observed", "pv": 1, "journey_id": "sim_journey_1", "cem_version": "CEM-1",
+            "ruleset_digest": DIGEST, "decision": "prompt", "tally_db": 12, "band": "strong", "k_pct": 0,
+            "reasons": [{"name": "scream_single", "db": 7}, {"name": "snatch", "db": 5}]}
+
+
+def evidence_v2(decision: str = "record") -> dict:
+    if decision == "pin":
+        return {"kind": "evidence_observed", "pv": 2, "journey_id": "sim_journey_1", "cem_version": "CEM-1",
+                "ruleset_digest": DIGEST, "decision": "pin", "checkin_id": CHECKIN_ID,
+                "reasons": [{"name": "pin_retry", "db": 2}, {"name": "pin_slow", "db": 0}]}
+    return {"kind": "evidence_observed", "pv": 2, "journey_id": "sim_journey_1", "cem_version": "CEM-1",
+            "ruleset_digest": DIGEST, "decision": decision, "tally_db": 9, "band": "some", "k_pct": 0,
+            "context": "on", "reasons": [{"name": "glass_or_breaking", "db": 5}, {"name": "impact", "db": 4}],
+            "observations": ["snatch_liu"],
+            "candidate": {"class_label": "Shatter", "class_index": 437, "score_bp": 2100, "threshold_bp": 1500,
+                          "level": "record" if decision == "record" else "prompt"},
+            "signal_event_id": SIGNAL_EVENT_ID if decision == "prompt" else None}
+
+
 def make_golden(name: str, kind: str, payload: dict) -> dict:
     canonical_bytes = canonical(payload)
     return {
@@ -232,6 +255,27 @@ def build_vectors() -> dict:
         ("signature_base64", {**pin, "sig": "!bad"}),
     ):
         rejections.append(rejection("sim_pin_authorised_" + name, "pin_authorised", raw_json(invalid), "invalid proposed PIN payload"))
+    # evidence_observed (ADR-0047, PROPOSED): pv 1 and pv 2, one schema per pv.
+    golden.append(make_golden("sim_evidence_observed_v1_prompt", "evidence_observed", evidence_v1()))
+    for decision in ("record", "prompt", "pin"):
+        golden.append(make_golden("sim_evidence_observed_v2_" + decision, "evidence_observed", evidence_v2(decision)))
+    for name, invalid in (
+        ("v1_float_db", None),
+        ("v1_extra_property", {**evidence_v1(), "confidence": 93}),
+        ("v1_nine_reasons", {**evidence_v1(), "reasons": [{"name": "impact", "db": 1}] * 9}),
+        ("v1_k_over_100", {**evidence_v1(), "k_pct": 101}),
+        ("v1_reason_extra_field", {**evidence_v1(), "reasons": [{"name": "impact", "db": 1, "p": 2}]}),
+        ("v2_unknown_decision", {**evidence_v2(), "decision": "maybe"}),
+        ("v2_signal_not_uuid", {**evidence_v2("prompt"), "signal_event_id": "not-a-uuid"}),
+        ("v2_unknown_observation", {**evidence_v2(), "observations": ["heart_rate"]}),
+        ("v2_candidate_level", {**evidence_v2(), "candidate": {**evidence_v2()["candidate"], "level": "maybe"}}),
+        ("pv3_unknown", {**evidence_v1(), "pv": 3}),
+    ):
+        if invalid is None:
+            text = raw_json(evidence_v1()).replace('"db":7', '"db":7.5')
+        else:
+            text = raw_json(invalid)
+        rejections.append(rejection("sim_evidence_observed_" + name, "evidence_observed", text, "invalid proposed evidence payload"))
     return {
         "description": "Simulated §4b payload golden and raw-JSON rejection vectors; schemas remain PROPOSED under ADR-0044.",
         "golden": golden,

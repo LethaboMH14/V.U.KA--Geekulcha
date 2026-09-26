@@ -43,6 +43,12 @@ def incident_for_signal(cursor, subject_id, now, pre_incident_head):
     else:
         incident_id = str(uuid.uuid4())
         cursor.execute("INSERT INTO incidents(incident_id,subject_id,pre_incident_head,opened_at,last_signal_at) VALUES(%s,%s,%s,%s,%s)", (incident_id, subject_id, pre_incident_head, now, now))
+        # The export is held at this head for 6 h (server/export_view.py), and
+        # the signal itself supersedes it, so no snapshot of current heads would
+        # ever capture it. Ask for an anchor now; the coordinator includes every
+        # incident's pre_incident_head as a leaf (server/anchoring.py).
+        enqueue(cursor, idempotency_key="anchor:pre_incident:" + incident_id, kind="anchor_request",
+                reference_id=incident_id, not_before=now)
     return incident_id
 
 
