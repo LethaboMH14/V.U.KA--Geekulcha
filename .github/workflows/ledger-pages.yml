@@ -1,0 +1,126 @@
+name: ledger-pages
+# Publishes the static public-ledger dashboard (dashboard/ledger/) to GitHub Pages.
+# The site artifact holds ONLY dashboard/ pages, shared/*.js, contracts/keys/*.json
+# and a root redirect (plus the security score page, see below). Hosting notes:
+# docs/LEDGER-DASHBOARD-HOSTING.md.
+#
+# GitHub Pages serves one artifact per repository, and security-score.yml also
+# deploys on push to main. So that neither deploy erases the other, this workflow
+# re-runs after every completed security-score run on main and carries the latest
+# successful security score page (security.html, security.js, security-score.json)
+# at the site root, where security-score.yml publishes them.
+on:
+  push:
+    branches: [main, claude/nifty-edison-mibetp]
+    paths:
+      - "dashboard/**"
+      - "shared/**"
+      - "contracts/keys/**"
+      - ".github/workflows/ledger-pages.yml"
+  workflow_run:
+    workflows: [security-score]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ledger-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+      pages: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Assemble allow-listed static site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p site/dashboard site/shared site/contracts/keys
+          # dashboard/: pages and sample data only; no docs, tests, Node scripts or placeholders.
+          # security.* is served from the site root below, where security-score.yml puts it.
+          tar -C dashboard --exclude='*.md' --exclude='*.mjs' --exclude='*.test.js' --exclude='test' \
+            --exclude='.gitkeep' --exclude='./security.html' --exclude='./security.js' -cf - . | tar -C site/dashboard -xf -
+          # shared/*.js only: no node_modules, tests, scripts or package files.
+          cp shared/*.js site/shared/
+          rm -f site/shared/vitest.config.js
+          cp contracts/keys/*.json site/contracts/keys/
+          cat > site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta http-equiv="refresh" content="0; url=dashboard/ledger/">
+          <title>VUKA public ledger</title>
+          <link rel="canonical" href="dashboard/ledger/">
+          </head>
+          <body><p><a href="dashboard/ledger/">Open the VUKA public ledger dashboard</a></p></body>
+          </html>
+          HTML
+          touch site/.nojekyll
+      - name: Carry the latest successful main security score page (best effort)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --branch main --workflow security-score.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+          if [ -n "$run_id" ] && gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name security-score --dir "$RUNNER_TEMP/score" \
+             && [ -f "$RUNNER_TEMP/score/security-score.json" ]; then
+            cp "$RUNNER_TEMP/score/dashboard/security.html" "$RUNNER_TEMP/score/dashboard/security.js" "$RUNNER_TEMP/score/security-score.json" site/
+            echo "Included security score page from run $run_id."
+          else
+            echo "::notice::No downloadable security-score artifact from main; security.html is not part of this deploy."
+          fi
+      - name: Fail if the site holds anything but static page files
+        shell: bash
+        run: |
+          set -euo pipefail
+          unexpected="$(find site -type f ! -name '.nojekyll' ! \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' \) -print)"
+          if [ -n "$unexpected" ]; then echo "Unexpected files in site:"; echo "$unexpected"; exit 1; fi
+          find site -type f | sort
+      - name: Install checksum-pinned Gitleaks 8.24.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl --fail --location --retry 3 --output gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz
+          echo '9991e0b2903da4c8f6122b5c3186448b927a5da4deef1fe45271c3793f4ee29c  gitleaks.tar.gz' | sha256sum --check --strict
+          tar -xzf gitleaks.tar.gz gitleaks
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Fail if any site file matches a secret pattern
+        shell: bash
+        run: |
+          set -euo pipefail
+          gitleaks dir --redact --config .gitleaks.toml site
+          if grep -rniE 'private_key|BEGIN [A-Z ]*PRIVATE KEY' site; then
+            echo "Private-key material pattern found in the site artifact."; exit 1
+          fi
+      # actions/configure-pages is not used elsewhere in this repo, so no SHA could be
+      # verified from the checkout; it is pinned by major tag. Replace with a SHA.
+      - uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
