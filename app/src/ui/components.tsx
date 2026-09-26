@@ -388,7 +388,8 @@ export function Dialog({
   children: React.ReactNode;
   confirm: string;
   onConfirm: () => void;
-  cancel: string;
+  /** The quiet choice's label; without one only the main action shows (Back and a tap outside still call `onCancel`). */
+  cancel?: string;
   onCancel: () => void;
   tone?: Tone;
 }) {
@@ -404,9 +405,11 @@ export function Dialog({
           </Text>
           <View style={{marginTop: space.sm}}>{typeof children === 'string' ? <Text style={type.body}>{children}</Text> : children}</View>
           <View style={styles.dialogActions}>
-            <Pressable accessibilityRole="button" onPress={onCancel} hitSlop={4} style={({pressed}) => [styles.dialogQuiet, pressed && {opacity: 0.6}]}>
-              <Text style={[type.label, {color: colors.textSecondary}]}>{cancel}</Text>
-            </Pressable>
+            {cancel ? (
+              <Pressable accessibilityRole="button" onPress={onCancel} hitSlop={4} style={({pressed}) => [styles.dialogQuiet, pressed && {opacity: 0.6}]}>
+                <Text style={[type.label, {color: colors.textSecondary}]}>{cancel}</Text>
+              </Pressable>
+            ) : null}
             <Pressable
               accessibilityRole="button"
               onPress={onConfirm}
