@@ -1,6 +1,6 @@
 # VUKA — War Room Pitch
 
-> **Spoken target:** 3 minutes (competition round 1). **Actual: 325 words (~2:19 at 140 wpm).** Six beats, hard caps. Under 3:00.
+> **Spoken target:** 3 minutes (competition round 1). **Actual: 326 words (~2:20 at 140 wpm).** Six beats, hard caps. Under 3:00.
 > **Companion files:** `context.md` · `pitch-deck-outline.md` · `docs/reviews/ANCHOR-ACCESS-MODEL-ADR-PROPOSAL.md`.
 > **Read `docs/MASTER-CONTEXT.md` §2 for the judging criteria** (I 15 · T 15 · U 10 · S 10 · B 15 · Q 5).
 
@@ -8,13 +8,13 @@
 
 | Beat | Job | Cap | Words |
 |---|---|---|---:|
-| 1 · Hook | Make them feel the problem | 55 | 50 |
+| 1 · Hook | Make them feel the problem | 55 | 51 |
 | 2 · Problem | Why nothing fixes it | 65 | 48 |
 | 3 · Solution | What VUKA is (3-sec test) | 45 | 37 |
 | 4 · How It Works (user view, demo) | What the user experiences | 80 | 79 |
 | 5 · Why It Wins | The single differentiator | 70 | 70 |
 | 6 · The Ask | Who pays + what we want | 45 | 41 |
-| | | **Total** | **325** |
+| | | **Total** | **326** |
 
 ---
 
@@ -22,7 +22,7 @@
 
 ### Beat 1 — The Hook
 
-Right now, somewhere in South Africa, someone is forced to hand over their phone. A stranger makes them transfer their money. Their face. Their fingerprint. The bank sees nothing wrong — and there is no proof they were forced. A digital banking crime every five minutes. It could be you, tonight.
+What would you do if a stranger forced you to hand over your phone, and empty your bank account? Their face. Their fingerprint. The bank sees nothing wrong — and there is no proof they were forced. In South Africa, a digital banking crime every five minutes. It could be you, tonight.
 
 ### Beat 2 — The Problem
 
