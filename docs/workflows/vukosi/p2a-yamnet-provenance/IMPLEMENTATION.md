@@ -103,3 +103,35 @@ Local Semgrep availability check: `Get-Command semgrep -ErrorAction SilentlyCont
 | B — whitespace | PASS | `git diff --check` → exit 0, no whitespace errors (Git emitted working-copy LF-to-CRLF notices). |
 | C — Semgrep | NOT RUN | `Get-Command semgrep -ErrorAction SilentlyContinue` found no command; no package was installed. CI is the Semgrep oracle. |
 | D — scope and offline boundary | PASS | Unit tests use synthetic inputs and block `socket.socket`; no model, class-map file, audio or live request used; no dependency or files outside the allowed set changed. |
+
+## P2c — class-map index and digest gate (2026-09-26)
+
+Status: **FACT — offline implementation and host tests pass; live model/runtime check NOT RUN.** Criterion C3 (progress of solution profile): a reviewer can verify that the detector's named labels map to the specified indices and that the exact class-map bytes are registered before installation. This makes the provenance boundary checkable, but does not establish that any live YAMNet asset was fetched or tested. Trust answer: no class map can be installed until a reviewer-sourced digest is registered; the current `PENDING` row returns a visible NOT RUN.
+
+Executor: Codex / GPT-5 (runtime variant not exposed). `BASE_SHA`: `b2a778ab5003b7fef534e412119b9b27b3da26f4`. Final `HEAD_SHA` is reported in the handoff because a commit cannot contain its own SHA.
+
+Changes: `class_indices_by_label` now requires `Screaming=11`, `Shout=6`, `Yell=9`, `Glass=435`, `Shatter=437`, `Breaking=464`; these are the indices specified in Khutso's finding/task, not independently measured from a real class map here. The separate M7 YAMNet class-map row was added to `docs/MODEL-LICENCES.md` with `PENDING — digest not registered`; no digest was invented or obtained. `registered_class_map_sha256` accepts exactly one lowercase 64-hex digest explicitly tagged `FACT`; missing, malformed, duplicate, `PENDING`, or `PROPOSED` rows raise `PrerequisiteMissing("class-map digest not registered")`. The CLI therefore prints `NOT RUN: class-map digest not registered`, exits 3 before reading/installing sources, and leaves the destination absent. A well-formed class map with a nonmatching registered digest fails before either asset is installed. The P2b HTTPS-only opener and its handler set were not edited.
+
+Red → green evidence (all tests are synthetic and the test fixture blocks `socket.socket`):
+
+- Red-first `py -3.12 -m unittest discover -s scripts/tests -v` after writing tests and before implementation: exit 1; 25 methods, 3 failures and 3 errors. Failures demonstrated wrong-index acceptance and missing-digest status; errors showed the class-map register lookup was absent. Existing-test fixture mutations were adjusted to use the newly fixed-index fixture so they continue testing malformed rows rather than stale literals.
+- Additional strictness red run: the same command exited 1, 25 methods, 1 failure: a mixed PENDING plus valid duplicate M7 row was incorrectly accepted.
+- Proposed-digest red run: `py -3.12 -m unittest discover -s scripts/tests -p test_fetch_models.py -k u25 -v` → exit 1 because a 64-hex row tagged `PROPOSED` was accepted; after requiring the row's `FACT` tag, the same targeted command passed 1/1.
+- Final `py -3.12 -m unittest discover -s scripts/tests -v`: exit 0, `Ran 25 tests`, `OK`. Includes map remapping rejection, mismatch digest rejection with no destination, and missing digest NOT RUN with no destination.
+
+Register format: the existing six-column pipe table supports a distinct M7 row and `registered_sha256` selects only M1/YAMNet TFLite; offline tests verify both lookups remain separate. M7 is explicitly pending until a source and digest are verified. No model, class map, audio, URL, interpreter or network request was used. Live model/runtime check: **NOT RUN**.
+
+Semgrep-safe opener: unchanged from P2b. `git diff` inspection against base showed no changes to `_make_https_opener` or `_read_source`'s HTTPS opener path; existing tests still assert that the handler list has no file/FTP handler, file/http URLs are refused before opening, redirect-to-file is blocked, and the size cap remains.
+
+## P2c acceptance checks
+
+| Check | Status | Actual command/result |
+|---|---|---|
+| Offline suite | PASS | Red as above; green `py -3.12 -m unittest discover -s scripts/tests -v` → 25 tests, 25 pass, 0 fail. |
+| Documentation contracts | PASS | `node scripts/check-docs.mjs` → `Document contracts, required counts, local links and selected claim safeguards passed. Human fact/quality review is still required.` |
+| Intake | PASS | `node scripts/check-intake.mjs` → `Intake gate has evidence references and approval records; reviewers must verify their authenticity.` |
+| Contract tests | PASS | `node --test "test/**/*.test.mjs"` → 23 tests, 23 pass, 0 fail. |
+| Secret scan | PASS | `C:\Users\khoza\Desktop\Geekulture\.tools\gitleaks.exe dir --redact --config .gitleaks.toml .` → scanned ~3.10 MB, `no leaks found`. |
+| Whitespace | PASS | `git diff --check` → exit 0; Git only printed LF-to-CRLF working-copy notices. |
+| P2b opener unchanged | PASS | Diff inspection shows no opener/source-reader changes; related offline opener tests pass in the 25-test suite. |
+| Live model/runtime check | NOT RUN | No model/class-map source was supplied or fetched, no digest was invented, and no runtime package was installed. |

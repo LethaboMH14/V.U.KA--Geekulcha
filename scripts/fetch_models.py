@@ -25,6 +25,11 @@ ROOT = Path(__file__).resolve().parents[1]
 REGISTER = ROOT / "docs" / "MODEL-LICENCES.md"
 DEFAULT_DEST = ROOT / "app" / "android" / "app" / "src" / "main" / "assets" / "models"
 DETECTOR_LABELS = ("Screaming", "Shout", "Yell", "Glass", "Shatter", "Breaking")
+# Expected indices from the P2c review finding; no live class map was checked.
+DETECTOR_INDICES = {"Screaming": 11, "Shout": 6, "Yell": 9,
+                    "Glass": 435, "Shatter": 437, "Breaking": 464}
+CLASS_MAP_REGISTER_ID = "M7"
+CLASS_MAP_REGISTER_NAME = "YAMNet class map CSV"
 SHA256_HEX = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -39,8 +44,15 @@ class DigestMismatch(ValueError):
         super().__init__(f"model sha256 mismatch: observed {observed}; expected {expected}")
 
 
+class ClassMapDigestMismatch(ValueError):
+    def __init__(self, observed: str, expected: str):
+        self.observed = observed
+        self.expected = expected
+        super().__init__(f"class-map sha256 mismatch: observed {observed}; expected {expected}")
+
+
 class ClassMapError(ValueError):
-    """A class map is malformed or misses one of the required exact labels."""
+    """A class map is malformed or misses a required label/index mapping."""
 
 
 class InputShapeError(ValueError):
@@ -65,6 +77,27 @@ def registered_sha256(register_text: str) -> str:
     if len(matches) != 1:
         raise RegisterError(f"expected one YAMNet TFLite row; found {len(matches)}")
     return matches[0]
+
+
+def registered_class_map_sha256(register_text: str) -> str:
+    """Return the separately registered YAMNet class-map digest, if verified."""
+    rows = []
+    for line in register_text.splitlines():
+        cells = [part.strip() for part in line.split("|")]
+        if (len(cells) > 4 and cells[1] in (CLASS_MAP_REGISTER_ID,
+                                            f"**{CLASS_MAP_REGISTER_ID}**")
+                and cells[2] == CLASS_MAP_REGISTER_NAME):
+            rows.append(cells[4])
+    if len(rows) != 1:
+        raise PrerequisiteMissing("class-map digest not registered")
+    if (re.search(r"`FACT`", rows[0]) is None
+            or re.search(r"`(?:PENDING|PROPOSED|ASSUMPTION)`", rows[0]) is not None):
+        raise PrerequisiteMissing("class-map digest not registered")
+    digests = [value for value in re.findall(r"`([^`]+)`", rows[0])
+               if SHA256_HEX.fullmatch(value) is not None]
+    if len(digests) != 1:
+        raise PrerequisiteMissing("class-map digest not registered")
+    return digests[0]
 
 
 def _sha256_file(path: Path) -> str:
@@ -108,8 +141,7 @@ def install_verified(src_bytes_or_path: bytes | str | Path,
         temporary.unlink(missing_ok=True)
 
 
-def class_indices_by_label(csv_text: str,
-                           labels: tuple[str, ...] = DETECTOR_LABELS) -> dict[str, int]:
+def class_indices_by_label(csv_text: str) -> dict[str, int]:
     """Map exact display names without trusting row order or recorded indices."""
     reader = csv.reader(io.StringIO(csv_text, newline=""), strict=True)
     try:
@@ -133,10 +165,16 @@ def class_indices_by_label(csv_text: str,
             by_name[row[2]] = index
     except csv.Error as error:
         raise ClassMapError(f"invalid class-map CSV: {error}") from error
-    missing = [label for label in labels if label not in by_name]
+    missing = [label for label in DETECTOR_LABELS if label not in by_name]
     if missing:
         raise ClassMapError(f"missing exact display name(s): {', '.join(missing)}")
-    return {label: by_name[label] for label in labels}
+    indices = {label: by_name[label] for label in DETECTOR_LABELS}
+    mismatches = [f"{label}={indices[label]} (expected {DETECTOR_INDICES[label]})"
+                  for label in DETECTOR_LABELS
+                  if indices[label] != DETECTOR_INDICES[label]]
+    if mismatches:
+        raise ClassMapError("detector label index mismatch: " + ", ".join(mismatches))
+    return indices
 
 
 def assert_input_details(details: list[dict]) -> None:
@@ -221,7 +259,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        expected = registered_sha256(REGISTER.read_text(encoding="utf-8"))
+        register_text = REGISTER.read_text(encoding="utf-8")
+        expected = registered_sha256(register_text)
+        expected_class_map = registered_class_map_sha256(register_text)
         model_bytes = _read_source(args.model_file, args.model_url, 64 * 1024 * 1024)
         observed = hashlib.sha256(model_bytes).hexdigest()
         print(f"model sha256 observed: {observed}")
@@ -229,6 +269,8 @@ def main(argv: list[str] | None = None) -> int:
             raise DigestMismatch(observed, expected)
         class_map_bytes = _read_source(args.class_map_file, args.class_map_url, 2 * 1024 * 1024)
         class_map_sha = hashlib.sha256(class_map_bytes).hexdigest()
+        if class_map_sha != expected_class_map:
+            raise ClassMapDigestMismatch(class_map_sha, expected_class_map)
         class_map = class_indices_by_label(class_map_bytes.decode("utf-8"))
         model_path = args.dest / "yamnet.tflite"
         install_verified(model_bytes, model_path, expected)
@@ -245,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
     except PrerequisiteMissing as error:
         print(f"NOT RUN: {error}")
         return 3
-    except (RegisterError, DigestMismatch, ClassMapError, InputShapeError,
+    except (RegisterError, DigestMismatch, ClassMapDigestMismatch, ClassMapError, InputShapeError,
             UnicodeDecodeError) as error:
         print(f"FAIL: {error}")
         return 2

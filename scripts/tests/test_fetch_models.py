@@ -28,9 +28,10 @@ import fetch_models as subject  # noqa: E402
 ROOT = Path(__file__).parents[2]
 EXPECTED = "10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de"
 LABELS = ("Screaming", "Shout", "Yell", "Glass", "Shatter", "Breaking")
+EXPECTED_INDICES = (11, 6, 9, 435, 437, 464)
 
 
-def sim_map(indices=(31, 32, 33, 34, 35, 36)):
+def sim_map(indices=EXPECTED_INDICES):
     return "index,mid,display_name\n" + "".join(
         f"{index},/sim_{name.lower()},{name}\n" for index, name in zip(indices, LABELS)
     )
@@ -58,6 +59,28 @@ class OfflineTests(unittest.TestCase):
     def test_u3_real_register_digest(self):
         actual = (ROOT / "docs" / "MODEL-LICENCES.md").read_text(encoding="utf-8")
         self.assertEqual(subject.registered_sha256(actual), EXPECTED)
+
+    def test_u24_class_map_register_row_is_separate_and_digest_is_read(self):
+        class_digest = hashlib.sha256(b"sim_class_map").hexdigest()
+        text = (f"| M1 | YAMNet TFLite | v | `{EXPECTED}` FACT | Apache-2.0 |\n"
+                f"| M7 | YAMNet class map CSV | v | `{class_digest}` `FACT` | N/A | N/A |\n")
+        self.assertEqual(subject.registered_sha256(text), EXPECTED)
+        self.assertEqual(subject.registered_class_map_sha256(text), class_digest)
+
+    def test_u25_pending_class_map_register_has_no_valid_digest(self):
+        model_row = f"| M1 | YAMNet TFLite | v | `{EXPECTED}` FACT | Apache-2.0 |\n"
+        pending = "| M7 | YAMNet class map CSV | v | PENDING — digest not registered `PROPOSED` | N/A | N/A |\n"
+        valid = f"| M7 | YAMNet class map CSV | v | `{hashlib.sha256(b'sim_map').hexdigest()}` `FACT` | N/A | N/A |\n"
+        proposed = f"| M7 | YAMNet class map CSV | v | `{hashlib.sha256(b'sim_map').hexdigest()}` PROPOSED | N/A | N/A |\n"
+        cases = (model_row + pending,
+                 model_row + proposed,
+                 model_row + pending + valid,
+                 model_row + valid + valid,
+                 model_row + "| M7 | YAMNet class map CSV | v | `not-a-digest` | N/A | N/A |\n")
+        for text in cases:
+            with self.subTest(text=text), self.assertRaisesRegex(
+                    subject.PrerequisiteMissing, "class-map digest not registered"):
+                subject.registered_class_map_sha256(text)
 
     def test_u4_u5_verify_file_and_report_observed_digest(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -92,17 +115,17 @@ class OfflineTests(unittest.TestCase):
             self.assertEqual(list(Path(directory).iterdir()), [])
 
     def test_u8_shuffled_rows_and_nonstandard_indices(self):
-        rows = sim_map((101, 203, 305, 407, 509, 611)).splitlines()
+        rows = sim_map().splitlines()
         shuffled = "\n".join([rows[0], *reversed(rows[1:])]) + "\n"
         self.assertEqual(subject.class_indices_by_label(shuffled),
-                         dict(zip(LABELS, (101, 203, 305, 407, 509, 611))))
+                         dict(zip(LABELS, EXPECTED_INDICES)))
 
     def test_u9_u10_u11_missing_duplicated_and_partial_labels(self):
         fixture = sim_map()
-        cases = (fixture.replace("33,/sim_yell,Yell\n", "")
-                 .replace("31,/sim_screaming,Screaming\n", ""),
+        cases = (fixture.replace("9,/sim_yell,Yell\n", "")
+                 .replace("11,/sim_screaming,Screaming\n", ""),
                  fixture + "50,/sim_glass_2,Glass\n",
-                 fixture.replace("34,/sim_glass,Glass\n", "34,/sim_wine,Wine glass\n")
+                 fixture.replace("435,/sim_glass,Glass\n", "435,/sim_wine,Wine glass\n")
                  + "50,/sim_glass_breaking,Glass breaking\n")
         for text in cases:
             with self.subTest(text=text), self.assertRaises(subject.ClassMapError):
@@ -111,18 +134,20 @@ class OfflineTests(unittest.TestCase):
     def test_u12_reject_bad_header_index_and_duplicate_index(self):
         fixture = sim_map()
         cases = (fixture.replace("index,mid,display_name", "mid,index,display_name"),
-                 fixture.replace("34,/sim_glass,Glass", "not_an_int,/sim_glass,Glass"),
-                 fixture.replace("34,/sim_glass,Glass", "33,/sim_glass,Glass"))
+                 fixture.replace("435,/sim_glass,Glass", "not_an_int,/sim_glass,Glass"),
+                 fixture.replace("435,/sim_glass,Glass", "9,/sim_glass,Glass"))
         for text in cases:
             with self.subTest(text=text), self.assertRaises(subject.ClassMapError):
                 subject.class_indices_by_label(text)
 
     def test_u13_predecessor_indices_are_not_hidden_constants(self):
-        actual = subject.class_indices_by_label(sim_map((427, 395, 195, 39, 708, 709)))
-        self.assertEqual(actual["Screaming"], 427)
-        self.assertEqual(actual["Glass"], 39)
-        self.assertNotEqual(actual, {"Shout": 6, "Yell": 9, "Screaming": 11,
-                                     "Glass": 435, "Shatter": 437, "Breaking": 464})
+        with self.assertRaises(subject.ClassMapError):
+            subject.class_indices_by_label(sim_map((427, 395, 195, 39, 708, 709)))
+
+    def test_u26_same_labels_at_wrong_indices_fail(self):
+        remapped = sim_map((12, 7, 10, 436, 438, 465))
+        with self.assertRaises(subject.ClassMapError):
+            subject.class_indices_by_label(remapped)
 
     def test_u14_valid_interpreter_input_details(self):
         for shape in ([15600], [1, 15600]):
@@ -159,7 +184,9 @@ class OfflineTests(unittest.TestCase):
             class_map.write_text(sim_map(), encoding="utf-8")
             dest = root / "assets"
             output = io.StringIO()
-            with contextlib.redirect_stdout(output):
+            with mock.patch.object(subject, "registered_class_map_sha256",
+                                   return_value=hashlib.sha256(class_map.read_bytes()).hexdigest()), \
+                 contextlib.redirect_stdout(output):
                 status = subject.main(["--model-file", str(model),
                                        "--class-map-file", str(class_map),
                                        "--dest", str(dest)])
@@ -176,6 +203,8 @@ class OfflineTests(unittest.TestCase):
             class_map.write_text(sim_map(), encoding="utf-8")
             output = io.StringIO()
             with mock.patch.object(subject, "registered_sha256", return_value=hashlib.sha256(b"sim_model").hexdigest()), \
+                 mock.patch.object(subject, "registered_class_map_sha256",
+                                   return_value=hashlib.sha256(class_map.read_bytes()).hexdigest()), \
                  mock.patch("importlib.import_module", side_effect=ImportError("sim_missing_interpreter")), \
                  contextlib.redirect_stdout(output):
                 status = subject.main(["--model-file", str(model),
@@ -251,6 +280,43 @@ class OfflineTests(unittest.TestCase):
             subject._read_source(None, "https://example.invalid/sim_model.tflite", maximum)
         self.assertEqual(opener.timeout, 30)
         self.assertEqual(opener.response.read_size, maximum + 1)
+
+    def test_u27_different_class_map_digest_fails_without_installing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            model = root / "sim_model.tflite"
+            class_map = root / "sim_class_map.csv"
+            model.write_bytes(b"sim_model")
+            class_map.write_text(sim_map(), encoding="utf-8")
+            dest = root / "assets"
+            output = io.StringIO()
+            with mock.patch.object(subject, "registered_sha256",
+                                   return_value=hashlib.sha256(model.read_bytes()).hexdigest()), \
+                 mock.patch.object(subject, "registered_class_map_sha256", return_value="0" * 64), \
+                 contextlib.redirect_stdout(output):
+                status = subject.main(["--model-file", str(model),
+                                       "--class-map-file", str(class_map),
+                                       "--dest", str(dest)])
+            self.assertEqual(status, 2)
+            self.assertFalse(dest.exists())
+            self.assertIn("FAIL: class-map sha256 mismatch", output.getvalue())
+
+    def test_u28_missing_class_map_digest_is_not_run_and_installs_nothing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            model = root / "sim_model.tflite"
+            class_map = root / "sim_class_map.csv"
+            model.write_bytes(b"sim_model")
+            class_map.write_text(sim_map(), encoding="utf-8")
+            dest = root / "assets"
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                status = subject.main(["--model-file", str(model),
+                                       "--class-map-file", str(class_map),
+                                       "--dest", str(dest)])
+            self.assertEqual(status, 3)
+            self.assertIn("NOT RUN: class-map digest not registered", output.getvalue())
+            self.assertFalse(dest.exists())
 
 
 if __name__ == "__main__":

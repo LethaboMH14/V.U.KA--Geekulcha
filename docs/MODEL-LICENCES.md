@@ -16,6 +16,7 @@
 | **M4** | fast-plate-ocr | `cct-s-v2-global` ONNX model (~5 MB), package `fast-plate-ocr>=0.3`, PyPI wheel sha256 `98eba340ab90a04cf5daa693320942ce7eeb5977529143df6bb41afd08239062` `FACT` | Not shipped — ONNX model auto-downloaded on first `LicensePlateRecognizer()` call `FACT` | **MIT** `FACT` | Free for any use, including commercial. MIT has no copyleft restrictions. `FACT` |
 | **M5** | ai-edge-litert | `>=2.1` — TFLite runtime for YAMNet inference on-device `FACT` | N/A — runtime library, no model weights | **Apache-2.0** `FACT` | Free for any use. No restriction. `FACT` |
 | **M6** | onnxruntime | `>=1.17` — ONNX runtime for fast-plate-ocr and InsightFace `FACT` | N/A — runtime library, no model weights | **MIT** `FACT` | Free for any use. No restriction. `FACT` |
+| **M7** | YAMNet class map CSV | AudioSet class-to-display-name mapping; source/version pending `PROPOSED` | **PENDING — digest not registered; no digest observed** `PROPOSED` | N/A — metadata, not model weights | Not applicable until source and digest are verified. `PROPOSED` |
 
 ## Deprecated / not used
 

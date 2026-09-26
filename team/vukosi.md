@@ -123,6 +123,8 @@ None assigned for the build weekend. Agree any extra contribution with the leads
 
 ## Running log
 
+- 2026-09-26 — Codex assistant / GPT-5 at Vukosi Khoza's request: implemented P2c class-map provenance gates on PR #93's `b2a778a` head. Offline tests require the six review-specified label indices and a registered class-map digest; M7 is explicitly PENDING, so the real model/class-map/runtime check remains NOT RUN and installs nothing. Repository check results are in the implementation record. No digest, model, class map, audio, network result, push, PR, comment or human approval is asserted. See `docs/workflows/vukosi/p2a-yamnet-provenance/IMPLEMENTATION.md`.
+
 - 2026-09-23 — Codex assistant at Vukosi's request: pulled the existing clean hardware branch (already up to date), inspected the pivot and related PRs, and prepared a separate local workflow branch based on PR #43 head `0c6d202`. Recorded the owner's GPT-implementation / Claude-reasoning-and-review preference. No product work, availability commitment, work-order acceptance, GitHub review, approval or merge is asserted. See `docs/VUKOSI-VIGIL-WORKFLOW.md` and `docs/reviews/VUKOSI-PR43-READINESS.md`.
 
 - 2026-09-23 — Claude Code assistant (`claude-opus-5-5`) at Vukosi's request: independent review of the Codex workflow draft. R1–R3 confirmed and R1 widened to offline-queued events. New findings C1–C4: `*.csv` gitignored, no source of record for the YAMNet digest, asset-path mismatch, stale toolchain line. Prepared packet P2a (P3.V2 provenance gate). Not implemented. No GitHub action, approval, work-order acceptance or availability asserted. See `docs/reviews/VUKOSI-WORKFLOW-CLAUDE-REVIEW.md`.
