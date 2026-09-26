@@ -43,22 +43,42 @@ cp .env.example .env
 set -a; source .env; set +a          # or export each var yourself
 ```
 
-**Two processes, not one.** The API server and the background worker are
-separate:
+**Two or three processes, not one.** The API server and the background
+worker are separate; sim_bank is a third only if you want a real bank-signal
+delivery (S1) rather than just the API and worker running alone:
 
 ```bash
 # Terminal 1 — the API
 uvicorn server.main:app --reload
 
-# Terminal 2 — escalation deadlines, contact_lost, and guardian alert delivery
+# Terminal 2 — escalation deadlines, contact_lost, guardian alert delivery,
+# bank_signal delivery to sim_bank, and one Hedera anchor-batch tick per
+# second. This is the ONE process that drives every background effect;
+# nothing else runs any of them.
 python -m server.run_workers
+
+# Terminal 3 — sim_bank, only needed if you want a duress/no_answer/
+# contact_lost incident to actually reach a bank and get a hold_ref back
+uvicorn sim_bank.main:app --port 8001
 ```
 
 If you only run terminal 1, `/healthz` will look fine and events will append
-correctly, but **no guardian alert, escalation timeout, or bank signal will
-ever fire** — `run_workers.py` is what actually drives the outbox and the
-deadline scheduler. This is the single most common "why isn't anything
-happening" surprise when running this locally.
+correctly, but **no guardian alert, escalation timeout, bank signal, or
+anchor batch will ever fire** — `run_workers.py` is what actually drives the
+outbox and the deadline scheduler. This is the single most common "why isn't
+anything happening" surprise when running this locally. If you skip terminal
+3, bank_signal rows just fail to connect and retry every second (correct
+at-least-once behaviour, not a crash) until sim_bank is up.
+
+Hedera anchoring in terminal 2 runs unconditionally, but stays honest about
+what it can prove: with no `HEDERA_OPERATOR_ID`/`HEDERA_OPERATOR_KEY`/
+`HEDERA_SUBMIT_KEY` configured (see `.env.example`) and `anchor/hedera-sidecar`'s
+`npm ci` not run, batches are created from real chain heads but never
+confirm, so `/v1/anchor/latest` keeps returning 404 — that's the same "not
+built yet" state this file described before, now narrowed to exactly "needs
+real testnet credentials," not "needs a worker." Configure those three
+variables and run `npm ci --ignore-scripts` in `anchor/hedera-sidecar` (see
+its own README) to anchor for real.
 
 The schema is created automatically on first connect
 (`PostgresDatabase.initialize()`); there is no separate migration step.
@@ -97,14 +117,21 @@ a generic browser dashboard.
 ## What is real vs. simulated
 
 - **Real:** the signed hash chain, encryption at rest, PIN-authority gating,
-  the escalation state machine, Merkle batching, all schema validation.
+  the escalation state machine, Merkle batching, all schema validation, and
+  (since 26 Sep) all three outbox effects — guardian alerts, bank signals,
+  and anchor batches — driven by the single `run_workers.py` process above.
 - **Simulated, by design:** `sim_bank` (a standalone process, in-memory
   holds — a restart forgets them); guardian FCM delivery (an adapter exists
   in `server/src/notify/`, but `run_workers.py` uses the SIMULATED notifier);
-  Hedera anchoring runs against testnet or a stub, never mainnet.
-- **Not built yet:** a process that runs the bank-signal and anchor-batch
-  workers (only guardian alerts run today, via `run_workers.py`); real FCM
-  wiring end to end.
+  Hedera anchoring only confirms against real testnet, never mainnet, and
+  needs real operator/submit keys to confirm at all (see above).
+- **Not built yet:** real FCM wiring end to end (the SIMULATED notifier is
+  what actually runs); anything that starts `run_workers.py` or `sim_bank`
+  on the live Azure deployment — today Azure only runs the API
+  (`startup.sh`), so a duress incident hit against
+  `https://vuka-anchor-server.azurewebsites.net` will sit in the outbox
+  until someone runs `run_workers.py` pointed at the same `DATABASE_URL`,
+  locally or otherwise.
 
 Do not present this as a finished, production-ready service to anyone
 outside the team without reading the `PROPOSED` flags first.

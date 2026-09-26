@@ -37,13 +37,13 @@ def complete_deploy_files() -> dict[str, bytes]:
     return {name: b"sim_test_content\n" for name in names}
 
 
-def test_package_selection_keeps_server_runtime_and_excludes_tests_and_sidecars():
+def test_package_selection_keeps_server_runtime_and_excludes_tests():
     files = complete_deploy_files()
     files.update(
         {
             "server/tests/test_only.py": b"sim_test_only",
             "anchor/tests/test_only.py": b"sim_test_only",
-            "anchor/hedera-sidecar/publish.mjs": b"sim_test_only",
+            "anchor/hedera-sidecar/publish.test.mjs": b"sim_test_only",
             "server/nested/runtime.py": b"sim_runtime",
         }
     )
@@ -65,14 +65,35 @@ def test_every_anchor_module_and_payload_schema_the_server_imports_is_included()
         "anchor/guardian_governance.py": b"sim_module",
         "contracts/payloads/checkin_result.v1.json": b"{}",
         "contracts/keys/verify-pins.json": b"{}",
-        "anchor/hedera-sidecar/cli.mjs": b"sim_sidecar",
         "anchor/tests/test_merkle.py": b"sim_test",
     })
     selected = {item.name for item in package_builder.read_safe_package_members(make_archive(files))}
     assert "anchor/guardian_governance.py" in selected
     assert "contracts/payloads/checkin_result.v1.json" in selected
-    assert "anchor/hedera-sidecar/cli.mjs" not in selected
     assert "anchor/tests/test_merkle.py" not in selected
+
+
+def test_hedera_sidecar_source_is_packaged_but_not_node_modules_or_its_tests():
+    """Regression: anchor/publish.py shells out to anchor/hedera-sidecar/cli.mjs
+    for real Hedera submission; server/run_workers.py's batch coordinator now
+    ticks unconditionally, so a deploy missing the sidecar's own source can
+    never anchor for real even once real Hedera credentials are configured.
+    node_modules is never packaged (forbidden_path_reason already refuses it
+    outright); a deploy target runs its own `npm ci --ignore-scripts`."""
+    files = complete_deploy_files()
+    files.update({
+        "anchor/hedera-sidecar/cli.mjs": b"sim_sidecar",
+        "anchor/hedera-sidecar/publish.mjs": b"sim_sidecar",
+        "anchor/hedera-sidecar/package.json": b"{}",
+        "anchor/hedera-sidecar/package-lock.json": b"{}",
+        "anchor/hedera-sidecar/publish.test.mjs": b"sim_test",
+    })
+    selected = {item.name for item in package_builder.read_safe_package_members(make_archive(files))}
+    assert "anchor/hedera-sidecar/cli.mjs" in selected
+    assert "anchor/hedera-sidecar/publish.mjs" in selected
+    assert "anchor/hedera-sidecar/package.json" in selected
+    assert "anchor/hedera-sidecar/package-lock.json" in selected
+    assert "anchor/hedera-sidecar/publish.test.mjs" not in selected
 
 
 def test_archive_path_guard_rejects_forbidden_names():

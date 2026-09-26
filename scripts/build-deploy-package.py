@@ -75,6 +75,17 @@ def should_package(name: str) -> bool:
     parts = [p.lower() for p in path.parts]
     if len(path.parts) > 1 and path.parts[0] == "server":
         return not any(part in {"tests", "__pycache__", ".pytest_cache"} for part in parts)
+    if len(path.parts) > 2 and path.parts[0] == "anchor" and path.parts[1] == "hedera-sidecar":
+        # anchor/publish.py shells out to this sidecar for real Hedera
+        # submission (server/anchoring.py's BatchCoordinator, run every
+        # second by server/run_workers.py). node_modules is never packaged —
+        # forbidden_path_reason already refuses it — so a deploy target still
+        # needs its own `npm ci --ignore-scripts` run here after unpacking.
+        if "node_modules" in parts or "tests" in parts or "__pycache__" in parts:
+            return False
+        if path.name.endswith(".test.mjs"):
+            return False
+        return path.suffix in {".mjs", ".json"}
     if len(path.parts) > 1 and path.parts[0] == "anchor":
         if path.parts[1] == "hedera-sidecar" or "tests" in parts or "__pycache__" in parts:
             return False

@@ -10,4 +10,15 @@ PY="python"
 if [ -x "antenv/bin/python" ]; then
   PY="antenv/bin/python"
 fi
+
+# run_workers.py is what actually delivers guardian alerts, bank signals and
+# anchor batches (server/README.md). Without it the API alone accepts events
+# but nothing in the outbox ever fires. Safe to run alongside N other copies
+# of this container: the outbox lease and the anchor coordinator's advisory
+# lock (server/outbox.py, server/anchoring.py) are built for concurrent
+# workers. Set VUKA_SKIP_WORKERS=1 to run the API only.
+if [ "${VUKA_SKIP_WORKERS:-0}" != "1" ]; then
+  "$PY" -m server.run_workers &
+fi
+
 exec "$PY" -m uvicorn server.main:app --host 0.0.0.0 --port "${PORT:-8000}"
