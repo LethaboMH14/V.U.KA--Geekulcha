@@ -592,6 +592,18 @@ describe('a member who is also someone else\'s guardian', () => {
     // Their own listening still starts on their own record.
     expect(await h.device.startJourney('0.0.13')).toBe(JOURNEY);
   });
+
+  test('a guardian-only phone that sets VUKA up for itself stays that member\'s guardian', async () => {
+    const h = harness({
+      request: async <T,>(_u: string, _m: string, path: string) =>
+        (path === '/v1/guardians/accept' ? {guardian_id: 'g7654321'} : path === '/v1/journeys' ? {journey_id: JOURNEY} : {}) as T,
+    });
+    await h.device.becomeGuardian('abcd1234-123456', 'Thabo');
+    expect(h.device.profile).toMatchObject({role: 'guardian', guardian: {guardianId: 'g7654321'}});
+    await onboarded(h);
+    expect(h.device.profile).toMatchObject({role: 'member', guardian: {guardianId: 'g7654321', memberName: 'Thabo'}});
+    expect(h.device.profile?.subjectId).toMatch(/^sim_subj_/);
+  });
 });
 
 test('hold-for-help sends the same detection a sound would, marked manual', async () => {

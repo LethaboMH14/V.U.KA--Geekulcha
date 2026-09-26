@@ -542,7 +542,9 @@ export function createDevice(b: Backend) {
       // sim_ prefixes: the server accepts only simulation subjects (VUKA_SIM_ONLY).
       const found = await b.discover().catch(() => null);
       const serverUrl = found ?? DEFAULT_SERVER;
-      profile = {v: 1, role: 'member', firstName, subjectId: `sim_subj_${short}`, actorId: `sim_member_${short}`, serverUrl, registeredOn: serverUrl};
+      // A guardian-only phone setting VUKA up for itself keeps its guardian slot (member and guardian on one phone).
+      const guarding = profile?.guardian ? {guardian: profile.guardian} : {};
+      profile = {v: 1, role: 'member', firstName, subjectId: `sim_subj_${short}`, actorId: `sim_member_${short}`, serverUrl, registeredOn: serverUrl, ...guarding};
       await b.setProfile(JSON.stringify(profile));
       // §18 registration: never IMEI, serial, Android ID or phone number.
       await record(

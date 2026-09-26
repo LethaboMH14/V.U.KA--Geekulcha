@@ -343,7 +343,8 @@ export function Readout({label, value, lamp}: {label: string; value: string; lam
 }
 
 /** A top bar: a back arrow in a 48 dp target and the screen title. */
-export function TopAppBar({title, onBack, tone = 'member'}: {title: string; onBack: () => void; tone?: Tone}) {
+/** `center`: the title centred across the bar (Mutarisi's Settings, 012f997). */
+export function TopAppBar({title, onBack, tone = 'member', center = false}: {title: string; onBack: () => void; tone?: Tone; center?: boolean}) {
   return (
     <View style={styles.appBar}>
       <Pressable
@@ -356,9 +357,10 @@ export function TopAppBar({title, onBack, tone = 'member'}: {title: string; onBa
           <ArrowLeft size={20} color={tone === 'guardian' ? colors.amberText : colors.textTitle} />
         </View>
       </Pressable>
-      <Text style={styles.appBarTitle} accessibilityRole="header" numberOfLines={1}>
+      <Text style={[styles.appBarTitle, center && {textAlign: 'center'}]} accessibilityRole="header" numberOfLines={1}>
         {title}
       </Text>
+      {center ? <View style={{width: TOUCH}} /> : null}
     </View>
   );
 }

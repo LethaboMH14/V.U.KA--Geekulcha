@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
@@ -33,14 +34,19 @@ class LocationModule(private val ctx: ReactApplicationContext) : ReactContextBas
 
     private val prefs get() = ctx.getSharedPreferences("vigil_ui", Context.MODE_PRIVATE)
 
-    /** Read synchronously at start-up: the app's styles are built from the chosen theme. */
-    override fun getConstants(): MutableMap<String, Any> =
-        mutableMapOf("theme" to (prefs.getString("theme", "ivory") ?: "ivory"))
+    /**
+     * Read synchronously at start-up: the app's styles are built from the chosen theme.
+     * systemDark lets "system" follow the phone's dark mode (Midnight) or light mode (Ivory).
+     */
+    override fun getConstants(): MutableMap<String, Any> = mutableMapOf(
+        "theme" to (prefs.getString("theme", "ivory") ?: "ivory"),
+        "systemDark" to ((ctx.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES),
+    )
 
-    /** Ivory, Silver or Midnight; applies the next time VIGIL opens. */
+    /** Ivory, Silver, Midnight or System; applies the next time VIGIL opens. */
     @ReactMethod
     fun setTheme(name: String) {
-        if (name in setOf("ivory", "silver", "midnight")) prefs.edit().putString("theme", name).apply()
+        if (name in setOf("ivory", "silver", "midnight", "system")) prefs.edit().putString("theme", name).apply()
     }
 
     private fun granted() =

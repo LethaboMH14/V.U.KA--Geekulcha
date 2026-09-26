@@ -16,9 +16,10 @@ import {CheckCircle, GearSix, Microphone, Phone, ShareNetwork, ShieldChevron, Us
 import PencilSimple from 'phosphor-react-native/lib/commonjs/icons/PencilSimple';
 import UserIcon from 'phosphor-react-native/lib/commonjs/icons/User';
 import {Chip, Eyebrow, GlassIcon, Key, Lamp, LevelMeter, ListeningLine, Panel, PinKeypad, QuietKey, Readout, Row, Rule, Surface, TopAppBar} from './components';
-import {colors, fonts, radii, space, THEME, THEMES, TOUCH, type, type ThemeName} from './theme';
+import {colors, fonts, radii, space, THEME_CHOICE, THEME_CHOICES, TOUCH, type, type ThemeChoice} from './theme';
 import {Onboarding} from './onboarding';
-import {GuardianHome, GuardianSetup, useGuardianWatch} from './guardian';
+import {AccountSettings, Documents, Recovery} from './account';
+import {AlertBanner, GuardianHome, GuardianSetup, useGuardianWatch} from './guardian';
 import {MyRecord} from './record';
 import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, profileContacts, type Delivery} from '../api/device';
 import {version} from '../../package.json';
@@ -42,7 +43,11 @@ type Screen =
   | 'invite'
   | 'profileEdit'
   | 'guardianSetup'
-  | 'guardianHome';
+  | 'guardianHome'
+  | 'signInPin'
+  | 'signOutPin'
+  | 'recovery'
+  | 'documents';
 type CheckSession = Awaited<ReturnType<typeof device.openCheckin>>;
 type Invite = {code: string; guardianId: string; at: number};
 
@@ -55,7 +60,22 @@ const TOP_INSET = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
 export function VigilApp() {
   const [screen, setScreen] = useState<Screen>('boot');
   // A member who is also someone's guardian hears about alerts on any screen.
-  useGuardianWatch(device.profile?.role === 'member' && Boolean(device.profile?.guardian) && screen !== 'guardianHome');
+  const guardianAlert = useGuardianWatch(device.profile?.role === 'member' && Boolean(device.profile?.guardian) && !device.signedOut && screen !== 'guardianHome');
+  // Where guardian standby's back goes: Home's "You're a guardian" card or Settings.
+  const [guardianFrom, setGuardianFrom] = useState<Screen>('settings');
+  // Mutarisi's amber banner while an alert needs this guardian. Only on the
+  // screens below; never on the check-in or any PIN screen (V5/V6).
+  const alertBanner = guardianAlert ? (
+    <View style={{paddingTop: TOP_INSET + space.sm, paddingHorizontal: 16}}>
+      <AlertBanner
+        who={device.profile?.guardian?.memberName ?? 'your member'}
+        onOpen={() => {
+          setGuardianFrom(screen === 'home' ? 'home' : 'settings');
+          setScreen('guardianHome');
+        }}
+      />
+    </View>
+  ) : null;
   // When listening began (a server-issued session is running), or null.
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [invite, setInvite] = useState<Invite | null>(null);
@@ -82,7 +102,8 @@ export function VigilApp() {
     device
       .load()
       .then(({profile, pinsSet}) =>
-        setScreen(profile?.role === 'guardian' ? 'guardianHome' : profile && pinsSet ? 'home' : 'onboarding'),
+        // Signed out: Welcome, until they sign in with this phone's account and their PIN.
+        setScreen(profile?.role === 'guardian' ? 'guardianHome' : profile && pinsSet && !profile.signedOut ? 'home' : 'onboarding'),
       )
       .catch(() => setScreen('onboarding'));
   }, []);
@@ -221,7 +242,7 @@ export function VigilApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, paused, startedAt, armError]);
 
-  const pauseListening = async () => {
+  const pauseListening = async (then: Screen = 'home') => {
     // Stop listening and let any detection already in flight finish first,
     // so nothing can open a check-in once listening has stopped.
     await detector.current?.stop().catch(() => undefined);
@@ -232,7 +253,7 @@ export function VigilApp() {
     setStartedAt(null);
     setLevel({label: null, score: 0, threshold: 0});
     setPaused(true);
-    setScreen('home');
+    setScreen(then);
   };
 
   // Android back: Settings and the guardian preview step back; the pause PIN
@@ -244,32 +265,66 @@ export function VigilApp() {
         setScreen(home);
         return true;
       }
-      if (screen === 'guardian' || screen === 'record' || screen === 'recordPin' || screen === 'invitePin' || screen === 'invite' || screen === 'profileEdit') {
+      if (screen === 'signInPin') {
+        setScreen('onboarding');
+        return true;
+      }
+      if (screen === 'guardian' || screen === 'record' || screen === 'recordPin' || screen === 'invitePin' || screen === 'invite' || screen === 'profileEdit' || screen === 'signOutPin' || screen === 'recovery' || screen === 'documents') {
         setScreen('settings');
         return true;
       }
       if ((screen === 'guardianHome' || screen === 'guardianSetup') && device.profile?.role === 'member') {
-        setScreen('settings');
+        setScreen(screen === 'guardianHome' ? guardianFrom : 'settings');
         return true;
       }
       return screen === 'check' || screen === 'checked';
     });
     return () => sub.remove();
-  }, [screen, home]);
+  }, [screen, home, guardianFrom]);
 
   if (screen === 'boot') {
     return <View style={{flex: 1, backgroundColor: colors.bgBase}} />;
   }
   if (screen === 'onboarding') {
-    return <Onboarding onDone={() => setScreen('home')} onGuardian={() => setScreen('guardianSetup')} onInvite={() => setScreen('invitePin')} />;
+    return <Onboarding onDone={() => setScreen('home')} onGuardian={() => setScreen('guardianSetup')} onInvite={() => setScreen('invitePin')} onSignIn={() => setScreen('signInPin')} />;
+  }
+  if (screen === 'signInPin') {
+    // Returning member: the normal PIN prompt. Both PINs let them in the same way.
+    const first = device.profile?.firstName?.trim();
+    return (
+      <PinGate
+        title={first ? `Welcome back, ${first}` : 'Welcome back'}
+        prompt="Enter your PIN"
+        onEnter={pin => device.signIn(pin)}
+        onDone={() => {
+          // Signed in: protection comes back on (always on, ADR-0046).
+          setPaused(false);
+          setScreen('home');
+        }}
+        onCancel={() => setScreen('onboarding')}
+      />
+    );
+  }
+  if (screen === 'signOutPin') {
+    // Signing out stops protection, so it is the pause path: the same PIN
+    // check and signed end_journey authorisation (device.signOut). Same frame for both PINs.
+    return (
+      <PinGate
+        title="Sign out"
+        prompt="Enter your PIN to sign out. VIGIL stops listening until you sign in again."
+        onEnter={pin => device.signOut(journeyId.current, pin)}
+        onDone={() => void pauseListening('onboarding')}
+        onCancel={() => setScreen('settings')}
+      />
+    );
   }
   if (screen === 'guardianSetup') {
-    const member = device.profile?.role === 'member';
+    const member = device.profile?.role === 'member' && !device.signedOut;
     return <GuardianSetup onDone={() => setScreen('guardianHome')} onBack={() => setScreen(member ? 'settings' : 'onboarding')} />;
   }
   if (screen === 'guardianHome') {
-    // A member who also guards someone comes back to their own settings.
-    return <GuardianHome onBack={device.profile?.role === 'member' ? () => setScreen('settings') : undefined} />;
+    // A member who also guards someone comes back to where they opened it (Home or Settings).
+    return <GuardianHome onBack={device.profile?.role === 'member' ? () => setScreen(guardianFrom) : undefined} onSetUpSelf={() => setScreen('onboarding')} />;
   }
   if (screen === 'invitePin') {
     return (
@@ -318,13 +373,20 @@ export function VigilApp() {
     return (
       <EndJourney
         onEnter={pin => device.endJourney(journeyId.current ?? 'sim_jny_none', pin)}
-        onDone={pauseListening}
+        onDone={() => void pauseListening()}
         onCancel={() => setScreen('home')}
       />
     );
   }
   if (screen === 'guardian') {
-    return <GuardianPreview onBack={() => setScreen('settings')} />;
+    return alertBanner ? (
+      <View style={{flex: 1, backgroundColor: colors.bgBase}}>
+        {alertBanner}
+        <GuardianPreview onBack={() => setScreen('settings')} />
+      </View>
+    ) : (
+      <GuardianPreview onBack={() => setScreen('settings')} />
+    );
   }
   if (screen === 'recordPin') {
     return (
@@ -340,21 +402,32 @@ export function VigilApp() {
   return (
     <View style={{flex: 1}}>
       <Surface />
-      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
+      {alertBanner}
+      <ScrollView contentContainerStyle={[styles.page, alertBanner ? {paddingTop: 12} : null]} keyboardShouldPersistTaps="handled">
         {screen === 'record' ? (
           <MyRecord onBack={() => setScreen('settings')} />
         ) : screen === 'profileEdit' ? (
           <EditProfile onDone={() => setScreen('settings')} />
         ) : screen === 'invite' && invite ? (
           <InviteShare invite={invite} onDone={() => setScreen('home')} />
+        ) : screen === 'recovery' ? (
+          <Recovery onDone={() => setScreen('settings')} />
+        ) : screen === 'documents' ? (
+          <Documents onBack={() => setScreen('settings')} />
         ) : screen === 'settings' ? (
           <Settings
             onBack={() => setScreen(home)}
             onGuardian={() => setScreen('guardian')}
-            onGuard={() => setScreen(device.profile?.guardian ? 'guardianHome' : 'guardianSetup')}
+            onGuard={() => {
+              setGuardianFrom('settings');
+              setScreen(device.profile?.guardian ? 'guardianHome' : 'guardianSetup');
+            }}
             onRecord={() => setScreen(device.simulated ? 'record' : 'recordPin')}
             onInvite={() => setScreen('invitePin')}
             onProfile={() => setScreen('profileEdit')}
+            onRecovery={() => setScreen('recovery')}
+            onDocuments={() => setScreen('documents')}
+            onSignOut={() => setScreen('signOutPin')}
             delivery={delivery}
             detector={startedAt ? detector.current : null}
           />
@@ -378,6 +451,14 @@ export function VigilApp() {
             onPause={() => setScreen('end')}
             onSimCheck={device.simulated ? () => openCheck('00000000-0000-4000-8000-000000000000') : undefined}
             onMenu={() => setScreen('settings')}
+            onGuardianStandby={
+              device.profile?.guardian
+                ? () => {
+                    setGuardianFrom('home');
+                    setScreen('guardianHome');
+                  }
+                : undefined
+            }
           />
         )}
         <Text style={styles.sim}>
@@ -568,6 +649,7 @@ function Home({
   onPause,
   onSimCheck,
   onMenu,
+  onGuardianStandby,
 }: {
   /** When listening began, or null while VIGIL is not active. */
   since: number | null;
@@ -588,6 +670,8 @@ function Home({
   /** Browser preview only: a check-in with no detection behind it. */
   onSimCheck?: () => void;
   onMenu: () => void;
+  /** Only when this phone is also someone's guardian: the way into standby. */
+  onGuardianStandby?: () => void;
 }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -647,6 +731,18 @@ function Home({
       {active ? <FullScreenNotice /> : null}
       <EmergencyButton onHelp={onHelp} listening={active} />
       <GuardiansCard delivery={delivery} live={active} onInvite={onInvite} />
+      {onGuardianStandby ? (
+        // Mutarisi's guardianRoleCard: urgent alerts don't wait for this; they
+        // arrive as a notification and the banner on every screen.
+        <Panel style={{padding: 0, overflow: 'hidden'}}>
+          <Row
+            leading={<ShieldChevron size={20} color={colors.textTitle} />}
+            label="You're a guardian"
+            detail="Open guardian standby"
+            onPress={onGuardianStandby}
+          />
+        </Panel>
+      ) : null}
       <View style={styles.note}>
         <Microphone size={16} color={colors.textDim} style={{marginTop: 2}} />
         <Text style={[type.caption, {flex: 1}]}>Discreet, not invisible: Android shows a microphone dot while VIGIL is active.</Text>
@@ -657,13 +753,14 @@ function Home({
 }
 
 /**
- * Ivory, Silver or Midnight (Mutarisi's design, from the prototype). The
- * choice is kept on the phone and applies the next time VIGIL opens.
+ * Ivory, Silver, Midnight or System (Mutarisi's design and ThemePrefs:
+ * System follows the phone's dark mode, Midnight or Ivory). The choice is
+ * kept on the phone and applies the next time VIGIL opens.
  */
 function AppearanceSetting() {
-  const [picked, setPicked] = useState<ThemeName>(THEME);
-  const names: Record<ThemeName, string> = {ivory: 'Ivory', silver: 'Silver', midnight: 'Midnight'};
-  const choose = (t: ThemeName) => {
+  const [picked, setPicked] = useState<ThemeChoice>(THEME_CHOICE);
+  const names: Record<ThemeChoice, string> = {ivory: 'Ivory', silver: 'Silver', midnight: 'Midnight', system: 'System'};
+  const choose = (t: ThemeChoice) => {
     setPicked(t);
     (NativeModules.VigilLocation as {setTheme?: (n: string) => void} | undefined)?.setTheme?.(t);
   };
@@ -671,7 +768,7 @@ function AppearanceSetting() {
     <Panel>
       <Eyebrow>Appearance</Eyebrow>
       <View style={[styles.segment, {marginTop: space.sm}]}>
-        {THEMES.map(t => (
+        {THEME_CHOICES.map(t => (
           <Pressable
             key={t}
             accessibilityRole="button"
@@ -683,7 +780,11 @@ function AppearanceSetting() {
         ))}
       </View>
       <Text style={[type.caption, {marginTop: space.sm}]}>
-        {picked === THEME ? 'Midnight is easier on the eyes at night.' : 'Applies the next time you open VIGIL.'}
+        {picked !== THEME_CHOICE
+          ? 'Applies the next time you open VIGIL.'
+          : picked === 'system'
+            ? "Follows your phone's light or dark mode each time VIGIL opens."
+            : 'Midnight is easier on the eyes at night.'}
       </Text>
     </Panel>
   );
@@ -731,6 +832,9 @@ function Settings({
   onRecord,
   onInvite,
   onProfile,
+  onRecovery,
+  onDocuments,
+  onSignOut,
   delivery,
   detector,
 }: {
@@ -742,12 +846,16 @@ function Settings({
   onInvite: () => void;
   /** Edit profile, after the PIN. */
   onProfile: () => void;
+  /** Mutarisi's account rows (account.tsx): Recovery, Documents and your rights, Sign out. */
+  onRecovery: () => void;
+  onDocuments: () => void;
+  onSignOut: () => void;
   delivery: Delivery;
   detector: Detector | null;
 }) {
   return (
     <View style={styles.screen}>
-      <TopAppBar title="Settings" onBack={onBack} />
+      <TopAppBar title="Settings" onBack={onBack} center />
       {device.profile?.role === 'member' ? <ProfileHeader onPress={onProfile} /> : null}
       <Panel style={{padding: 0, overflow: 'hidden'}}>
         <Row
@@ -774,6 +882,7 @@ function Settings({
         <Row label="Guardian view" detail="Preview what a guardian sees (simulated)" onPress={onGuardian} />
       </Panel>
       <AppearanceSetting />
+      {device.profile?.role === 'member' ? <AccountSettings onRecovery={onRecovery} onDocuments={onDocuments} onSignOut={onSignOut} /> : null}
       {!device.simulated ? <ServerSetting /> : null}
       {testFeedAvailable() ? <DetectorTest detector={detector} /> : null}
 

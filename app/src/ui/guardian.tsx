@@ -15,8 +15,9 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {AppState, Linking, NativeModules, PermissionsAndroid, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import Bell from 'phosphor-react-native/lib/commonjs/icons/Bell';
+import Prohibit from 'phosphor-react-native/lib/commonjs/icons/Prohibit';
 import {Chip, Dialog, Eyebrow, GlassIcon, Key, Panel, QuietKey, Readout, Rule, Surface, TopAppBar} from './components';
-import {CheckCircle, Phone, ShieldChevron, UsersThree} from './icons';
+import {CaretRight, CheckCircle, Phone, ShieldChevron, UsersThree} from './icons';
 import {colors, fonts, radii, space, type} from './theme';
 import {device, type GuardianAlert} from '../api/device';
 import {whyLine} from './whyLine';
@@ -269,18 +270,32 @@ export function notRecorded(action: Answer): string {
   return `${what} wasn't recorded yet. Check your data and try again.`;
 }
 
+/** Alerts this phone's guardian stood down from, this session: the banner stops asking. */
+const stoodDownIds = new Set<string>();
+
+/**
+ * The alert that still needs this guardian: open, and not stood down
+ * (Mutarisi's GuardianAlerts.needsAttention). Null when none does.
+ */
+export function needsAttention(alerts: readonly GuardianAlert[], stoodDown: ReadonlySet<string> = stoodDownIds): GuardianAlert | null {
+  return alerts.find(x => !x.closed_at && !stoodDown.has(x.incident_id)) ?? null;
+}
+
 /**
  * For a member who is also someone's guardian: watch for alerts app-wide,
- * so a new one pops up on any screen (and in the background).
+ * so a new one pops up on any screen (and in the background). Returns the
+ * alert that still needs them, for the banner.
  */
-export function useGuardianWatch(enabled: boolean) {
+export function useGuardianWatch(enabled: boolean): GuardianAlert | null {
   const told = useRef(new Set<string>());
+  const [open, setOpen] = useState<GuardianAlert | null>(null);
   useEffect(() => {
     if (!enabled) return;
     let live = true;
     const poll = async () => {
       const a = await device.guardianAlerts().catch(() => null);
       if (!live || !a) return;
+      setOpen(needsAttention(a));
       const fresh = a.find(x => !x.closed_at && !told.current.has(x.incident_id));
       if (fresh) {
         told.current.add(fresh.incident_id);
@@ -294,9 +309,36 @@ export function useGuardianWatch(enabled: boolean) {
       clearInterval(t);
     };
   }, [enabled]);
+  return enabled ? open : null;
 }
 
-export function GuardianHome({onBack}: {onBack?: () => void} = {}) {
+/**
+ * Mutarisi's alert banner (activity_main.xml): amber, like the alert, on
+ * every screen while an alert needs this guardian, never on the alert itself
+ * or the member's own check-in and PIN screens. Tapping it opens the alert.
+ */
+export function AlertBanner({who, onOpen}: {who: string; onOpen: () => void}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Alert: ${who}. Tap to open`}
+      accessibilityLiveRegion="assertive"
+      onPress={onOpen}
+      android_ripple={{color: colors.ripple}}
+      style={styles.banner}>
+      <Prohibit size={22} color={colors.amberText} />
+      <View style={{flex: 1}}>
+        <Text style={[type.label, {color: colors.amberText, fontFamily: fonts.semibold}]} numberOfLines={1}>
+          Alert · {who}
+        </Text>
+        <Text style={[type.caption, {color: colors.amberText}]}>tap to open</Text>
+      </View>
+      <CaretRight size={16} color={colors.amberText} />
+    </Pressable>
+  );
+}
+
+export function GuardianHome({onBack, onSetUpSelf}: {onBack?: () => void; onSetUpSelf?: () => void} = {}) {
   const g = device.profile?.guardian;
   const who = g?.memberName ?? 'your member';
   const [alerts, setAlerts] = useState<GuardianAlert[] | null>(null);
@@ -364,6 +406,7 @@ export function GuardianHome({onBack}: {onBack?: () => void} = {}) {
       setAcked(x => ({...x, [a.incident_id]: [...(x[a.incident_id] ?? []), action]}));
       setAckedAt(x => ({...x, [a.incident_id]: {...x[a.incident_id], [action]: new Date().toISOString()}}));
       if (action === 'stand_down') {
+        stoodDownIds.add(a.incident_id);
         setStoodDown(a.incident_id);
         void poll();
       }
@@ -451,6 +494,16 @@ export function GuardianHome({onBack}: {onBack?: () => void} = {}) {
                   <Readout label={`${hhmm(a.opened_at)} · ${a.trigger === 'duress_signal' ? 'second PIN' : a.trigger === 'no_answer' ? 'no answer' : 'contact lost'}`} value={a.close_reason === 'stand_down' ? 'stood down' : a.close_reason ?? 'closed'} />
                 </View>
               ))}
+            </Panel>
+          ) : null}
+
+          {onSetUpSelf && device.profile?.role === 'guardian' ? (
+            <Panel>
+              <Text style={type.label}>Want VIGIL for yourself too?</Text>
+              <Text style={[type.caption, {marginTop: space.xs}]}>Set up your own record on this phone. You stay {who}'s guardian.</Text>
+              <View style={{marginTop: space.md}}>
+                <QuietKey label="Set up VUKA for yourself" tone="guardian" onPress={onSetUpSelf} />
+              </View>
             </Panel>
           ) : null}
 
@@ -584,6 +637,19 @@ export function GuardianChoice({onGuardian}: {onGuardian: () => void}) {
 }
 
 const styles = StyleSheet.create({
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 56,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: radii.md,
+    backgroundColor: colors.amberFill,
+    borderWidth: 1,
+    borderColor: colors.amberStrong,
+    overflow: 'hidden',
+  },
   page: {flexGrow: 1, paddingHorizontal: 22, paddingBottom: 28, paddingTop: 12 + TOP, width: '100%', maxWidth: 560, alignSelf: 'center'},
   screen: {flexGrow: 1, gap: 14},
   greeting: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm, marginBottom: space.xs},

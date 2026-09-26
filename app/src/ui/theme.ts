@@ -131,24 +131,37 @@ const midnight: Palette = {
 
 export type ThemeName = 'ivory' | 'silver' | 'midnight';
 export const THEMES: ThemeName[] = ['ivory', 'silver', 'midnight'];
+/** What the member picks: a theme, or System (Mutarisi's ThemePrefs: follow the phone's dark mode). */
+export type ThemeChoice = ThemeName | 'system';
+export const THEME_CHOICES: ThemeChoice[] = ['ivory', 'silver', 'midnight', 'system'];
 
 /**
  * The theme is read once at start-up (styles are built from these tokens
  * when the app loads), from a value the native side keeps; a change applies
- * the next time VIGIL opens.
+ * the next time VIGIL opens. System resolves then: Midnight when the phone is
+ * in dark mode, otherwise Ivory.
  */
-function chosenTheme(): ThemeName {
+function chosenTheme(): {choice: ThemeChoice; name: ThemeName} {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const {NativeModules} = require('react-native');
+    const {Appearance, NativeModules} = require('react-native');
     const m = NativeModules?.VigilLocation;
-    const t = (typeof m?.getConstants === 'function' ? m.getConstants()?.theme : undefined) ?? m?.theme;
-    return THEMES.includes(t) ? t : 'ivory';
+    const k = (typeof m?.getConstants === 'function' ? m.getConstants() : undefined) ?? m;
+    const t = k?.theme;
+    if (t === 'system') {
+      const dark = typeof k?.systemDark === 'boolean' ? k.systemDark : Appearance?.getColorScheme?.() === 'dark';
+      return {choice: 'system', name: dark ? 'midnight' : 'ivory'};
+    }
+    return THEMES.includes(t) ? {choice: t, name: t} : {choice: 'ivory', name: 'ivory'};
   } catch {
-    return 'ivory';
+    return {choice: 'ivory', name: 'ivory'};
   }
 }
-export const THEME: ThemeName = chosenTheme();
+const chosen = chosenTheme();
+/** The saved choice, which may be System. */
+export const THEME_CHOICE: ThemeChoice = chosen.choice;
+/** The palette in use (System already resolved). */
+export const THEME: ThemeName = chosen.name;
 const base: Palette = THEME === 'silver' ? silver : THEME === 'midnight' ? midnight : {...ivory, ...lightGlass};
 
 /**

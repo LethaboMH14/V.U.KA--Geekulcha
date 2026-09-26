@@ -1,4 +1,4 @@
-import {answerStatus, answerTimeline, claimAnswer, notRecorded, standDownQuestion} from '../guardian';
+import {answerStatus, answerTimeline, claimAnswer, needsAttention, notRecorded, standDownQuestion} from '../guardian';
 
 describe('guardian alert answers', () => {
   it('sends Call 10111 once per alert, however often it is pressed', () => {
@@ -40,5 +40,23 @@ describe('guardian alert answers', () => {
     // Closed by someone else: the closure is the last row, not a stand-down that didn't happen.
     const closed = answerTimeline({...open, closed_at: '2026-09-26T20:10:00Z'}, ['handling'], {handling: '2026-09-26T20:00:00Z'});
     expect(closed.map(s => s.label)).toEqual(['Alert raised', "You're handling it", 'Alert closed']);
+  });
+});
+
+describe('guardian alert banner', () => {
+  const alert = (id: string, closed: string | null) => ({
+    incident_id: id,
+    trigger: 'no_answer' as const,
+    delivered_at: '2026-09-26T10:00:00Z',
+    opened_at: '2026-09-26T10:00:00Z',
+    closed_at: closed,
+    close_reason: closed ? 'stand_down' : null,
+  });
+
+  it('shows only for an open alert this guardian has not stood down from', () => {
+    expect(needsAttention([], new Set())).toBeNull();
+    expect(needsAttention([alert('inc_1', '2026-09-26T10:05:00Z')], new Set())).toBeNull();
+    expect(needsAttention([alert('inc_1', null)], new Set())?.incident_id).toBe('inc_1');
+    expect(needsAttention([alert('inc_1', null)], new Set(['inc_1']))).toBeNull();
   });
 });
