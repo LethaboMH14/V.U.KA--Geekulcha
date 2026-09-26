@@ -13,12 +13,17 @@
  * No push yet: alerts arrive while the app is open (FCM is PR #95's path).
  */
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Linking, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
+import {Linking, NativeModules, PermissionsAndroid, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Chip, Eyebrow, GlassIcon, Key, Lamp, Panel, QuietKey, Readout, Rule, Surface, TopAppBar} from './components';
 import {CheckCircle, Phone, ShieldChevron, UsersThree} from './icons';
 import {colors, fonts, radii, space, type} from './theme';
 import {device, type GuardianAlert} from '../api/device';
 import {whyLine} from './whyLine';
+import {AlertMap} from './map';
+import {keepAwake} from '../sensors/location';
+
+/** The guardian's alert notice and standby (native, Android only). */
+const notice: {showAlert?(t: string, b: string): void; clearAlert?(): void} | undefined = NativeModules.VigilLocation;
 import {version} from '../../package.json';
 
 const TOP = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
@@ -53,6 +58,10 @@ export function GuardianSetup({onDone, onBack}: {onDone: () => void; onBack: () 
     setBusy(true);
     setError(null);
     try {
+      // An alert must be able to reach you with the app closed (Android 13+ asks once).
+      if (Platform.OS === 'android' && Platform.Version >= 33) {
+        await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS).catch(() => undefined);
+      }
       await device.becomeGuardian(clean, name);
       onDone();
     } catch (e) {
@@ -131,7 +140,8 @@ export function GuardianSetup({onDone, onBack}: {onDone: () => void; onBack: () 
                 <View style={{gap: space.md, marginTop: space.md}}>
                   {[
                     ['You are told', `when VIGIL thinks ${who} may need help: a check-in not answered, their second PIN used, or their phone going quiet during an alert. With an alert, you see what VIGIL noticed in words (for example "a scream") and how strong the signs were.`],
-                    ['You are not told', `where ${who} is, any recording (VIGIL never keeps one), or anything about ordinary days.`],
+                    ['Where', `only during an alert: where ${who}'s phone is, on a map, for up to 30 minutes. It is kept until 24 hours after the alert ends. The map pictures come from OpenFreeMap, which sees the area you look at.`],
+                    ['You are not told', `where ${who} is on ordinary days, any recording (VIGIL never keeps one), or anything else about their life.`],
                     ['What is kept', 'a key made on this phone, and your answers (called 10111, handling it, stand down). Each answer is signed and joins their record.'],
                     ['You can stop', `any time: ${who} can remove you, and uninstalling ends it.`],
                   ].map(([h, b]) => (
@@ -177,11 +187,19 @@ export function GuardianHome() {
   const [acked, setAcked] = useState<Acked>({});
   const [note, setNote] = useState<string | null>(null);
   const live = useRef(true);
+  const told = useRef(new Set<string>());
 
   const poll = useCallback(async () => {
     try {
       const a = await device.guardianAlerts();
       if (!live.current) return;
+      // A new open alert pops up even when this app is in the background.
+      const fresh = a.find(x => !x.closed_at && !told.current.has(x.incident_id));
+      if (fresh) {
+        told.current.add(fresh.incident_id);
+        notice?.showAlert?.(`${device.profile?.guardian?.memberName ?? 'Your member'} may need help`, "Open VUKA. Don't call or text them: call 10111.");
+      }
+      if (!a.some(x => !x.closed_at)) notice?.clearAlert?.();
       setAlerts(a);
       setReached(new Date().toISOString());
       setOffline(false);
@@ -193,10 +211,14 @@ export function GuardianHome() {
   useEffect(() => {
     live.current = true;
     void poll();
+    // Standing by: keep checking with the screen locked (renewed every hour).
+    keepAwake(2 * 3600, true);
+    const renew = setInterval(() => keepAwake(2 * 3600, true), 3600_000);
     const t = setInterval(poll, 5000);
     return () => {
       live.current = false;
       clearInterval(t);
+      clearInterval(renew);
     };
   }, [poll]);
 
@@ -289,6 +311,7 @@ function OpenAlert({
         </Text>
         <Text style={[type.body, {marginTop: space.sm}]}>{WHY[alert.trigger](who)}</Text>
         {whyLine(alert.why) ? <Text style={[type.body, {marginTop: space.xs}]}>{whyLine(alert.why)}</Text> : null}
+        {alert.location ? <AlertMap loc={alert.location} who={who} /> : null}
         <View style={styles.g4}>
           <Text style={styles.g4Text}>Don't call or text {who}. Call 10111.</Text>
           <Text style={[type.caption, {color: colors.amberText, marginTop: 4}]}>If someone is with {who}, a ringing phone could put them at risk.</Text>

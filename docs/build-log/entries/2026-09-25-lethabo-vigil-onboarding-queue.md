@@ -276,3 +276,28 @@ Two independent post-build reviews of step (b) found these, and all are fixed:
   - exact pv2 evidence replaces an older pv1 guess.
 
 Evidence: jest 204/204; server evidence + alerts tests 15/15; the transition list is unchanged (no T1 → T0).
+
+### Addendum, 26 Sep: phone fixes and step c (location + guardian map, ADR-0048 PROPOSED)
+
+Changed:
+- **Phone fixes:**
+  - the "Checked in" screen now returns home; its timer used to restart on every audio window (seen on a phone);
+  - the app looks up a moved demo server by itself;
+  - Android 14+ full-screen check-ins: the Listening screen asks once and opens the system switch.
+- **Location:**
+  - a native `VigilLocation` module (LocationManager, no Play Services, integers only);
+  - a 30-minute location window after any check-in (same for both PINs), kept alive with the screen locked by a headless task;
+  - `POST /v1/journeys/{id}/location` on the server (PR #99 branch, 1960195): kept only while guardians are alerted, the same 202 either way, purged 24 h after close and on deletion;
+  - the listening service adds the location type only when the permission was given.
+- **Guardian:**
+  - an alert map (MapLibre GL 4.7.1 bundled, OpenFreeMap tiles) and "Open in Maps";
+  - a new alert pops up as a high-priority notification, even with the app in the background (standby keeps polling);
+  - notification permission is asked at consent;
+  - the consent says where, for how long, and names OpenFreeMap.
+
+Evidence:
+- jest 208/208, including the location window: start, the 30 s cadence, the 30-minute end, pause and no-fix.
+- Server test_locations 5/5, and alerts + evidence + locations 20 passed.
+- The map was checked in a browser with a sample fix: tiles, pin, accuracy circle, trail and "last seen" note.
+
+Not done: a real-phone run of location and standby; battery; ADR-0048 acceptance (Ipeleng, Sibusiso).

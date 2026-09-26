@@ -142,6 +142,14 @@ export type GuardianAlert = {
    * phone's evidence band and up to three reason names. Words, never a number.
    */
   why?: {band: string; reasons: string[]} | null;
+  /**
+   * PROPOSED (ADR-0048): where the member's phone was, kept only while this
+   * alert's incident is open: the last fix and a short trail (oldest first).
+   */
+  location?: {
+    last: {lat_e7: number; lon_e7: number; acc_m: number; at: string};
+    trail: {lat_e7: number; lon_e7: number; at: string}[];
+  } | null;
 };
 
 /** What the phone keeps about each received event. Never the PIN mode. */
@@ -413,6 +421,17 @@ export function createDevice(b: Backend) {
       } catch {
         // A missed heartbeat is only missed; the next one follows in 30 s.
       }
+    },
+
+    /**
+     * One location fix for the 30 minutes after a check-in (ADR-0048). The
+     * server keeps it only while guardians are alerted and answers the same
+     * either way; a failure is only a missed fix.
+     */
+    async sendLocation(journeyId: string, fix: {lat_e7: number; lon_e7: number; acc_m: number; fix_age_ms: number}): Promise<void> {
+      if (b.simulated || !profile) return;
+      const body = canonicalJson({...fix, ts: rfc3339(new Date())});
+      await b.request(profile.serverUrl, 'POST', `/v1/journeys/${encodeURIComponent(journeyId)}/location`, body);
     },
 
     /** A confirmed detection. Resolves with its event id once queued. */

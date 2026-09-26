@@ -644,3 +644,25 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 - The public demo build runs CEM-1 (every subject is `sim_`).
 - The record thresholds and the venue false-alarm curve (step d) are now the top measurement priority.
 - The concurrency and timing rules (one prompt slot, V4 first, pause settles as record-only, the ±1 s context wait) are pinned by tests (`grader.test.ts`).
+
+## ADR-0048: location for 30 minutes after a check-in, kept only while guardians are alerted, shown to them on a map
+**Status:** Proposed (2026-09-26). Decided by Lethabo (co-lead). It changes what a guardian can see about a member (a location, which is personal information), so it needs Ipeleng's privacy review and Sibusiso's contract acceptance in `docs/ADR-ACCEPTANCE-RECORD.md`. Until then it runs only for simulation subjects (the whole public demo).
+**Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (contract, server), Ipeleng Modise (privacy)
+**Context:** An alert that says "Lerato may need help" without saying where leaves a guardian able only to phone 10111 with no address. The member cannot be asked where they are during a duress (G4: don't call or text them).
+**Decision:**
+1. **When the phone sends.** After ANY check-in opens, before any answer, the phone sends a location fix every 30 s for 30 minutes (`POST /v1/journeys/{id}/location`, device-signed, integers only). It sends the same after a normal PIN as after a duress PIN (V5), because the phone never knows whether an alert was raised (T30). A pause stops it. A headless task keeps it running with the screen locked.
+2. **What the server keeps.** A fix is kept only while the member has an open incident for which a guardian alert was requested, and is dropped at once otherwise. The phone gets the same 202 either way. Kept fixes stop at incident close, are purged 24 h after it (`run_workers`), and are removed on subject deletion.
+3. **Who sees it.** Only an active guardian the alert was delivered to, through the alerts route (`location`: the last fix and a trail of up to 20). The guardian sees a map: MapLibre GL JS bundled in the app (BSD-3-Clause, no remote code), with tiles from OpenFreeMap (no key), plus "Open in Maps". The guardian's consent names OpenFreeMap as seeing the map area requested.
+4. **What the member sees.** "After a check-in, this phone sends its location until HH:MM. Your guardians see it only if they were alerted." This is the same after either PIN.
+5. **Permission is optional.** Listening works without location; a guardian then sees no map.
+
+**Costs, stated before anyone asks:**
+- **False-alarm fixes.** After a false alarm the phone still sends fixes for 30 minutes. The server drops them, but they travel. This is the price of parity.
+- **Location is special to the member.** It is shown to guardians at the moment they are needed. It is never on chain, never in `evidence_observed` and never in the export.
+- **OpenFreeMap has no service level.** If tiles fail, the map says so and "Open in Maps" still works.
+- **Battery.** GPS every 30 s for 30 minutes is **not measured**.
+
+**Rejected alternatives:**
+- sending only after an alert: the phone would have to learn about alerts, which T30 forbids;
+- a remote map script (a remote-code risk);
+- Google Maps (needs a key and Play Services).

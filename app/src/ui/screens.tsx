@@ -20,6 +20,7 @@ import {MyRecord} from './record';
 import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, type Delivery} from '../api/device';
 import {version} from '../../package.json';
 import {canFullScreen, openFullScreenSettings, runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
+import {askLocation, startWindow, stopWindow, windowUntil} from '../sensors/location';
 import type {Decision, Reason} from '../brain/detect';
 
 type Screen =
@@ -57,6 +58,7 @@ export function VigilApp() {
   const check = useRef<Promise<CheckSession> | null>(null);
   const checkIds = useRef<{signal: string; opened: string | null} | null>(null);
   const [armError, setArmError] = useState<ArmResult | null>(null);
+  const [sharingUntil, setSharingUntil] = useState(0);
   const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   // A ref, not state: the 30 s retry timer must see a start already under way,
@@ -100,6 +102,11 @@ export function VigilApp() {
   // is queued: the check-in names the signal that caused it.
   const openCheck = (signalEventId: string) => {
     detector.current?.setCheckinOpen(true);
+    // ADR-0048: location for 30 minutes after ANY check-in, before any answer,
+    // so it is the same after either PIN (V5). The server keeps it only if
+    // guardians were alerted.
+    const jid = journeyId.current;
+    if (jid) setSharingUntil(startWindow(fix => device.sendLocation(jid, fix)));
     checkIds.current = {signal: signalEventId, opened: null};
     check.current = device.openCheckin(journeyId.current ?? 'sim_jny_none', signalEventId, {
       // CEM-1: PIN behaviour counts toward later evidence only once it is signed and queued.
@@ -136,6 +143,8 @@ export function VigilApp() {
         );
         return;
       }
+      // Optional: without it, listening still works; a guardian just sees no map.
+      await askLocation();
       const {result, detector: d} = await startDetection({
         journeyId: id,
         appVersion: version,
@@ -178,6 +187,8 @@ export function VigilApp() {
     // Stop listening and let any detection already in flight finish first,
     // so nothing can open a check-in once listening has stopped.
     await detector.current?.stop().catch(() => undefined);
+    stopWindow();
+    setSharingUntil(0);
     detector.current = null;
     journeyId.current = null;
     setStartedAt(null);
@@ -305,6 +316,7 @@ export function VigilApp() {
             onInvite={() => setScreen('invitePin')}
             delivery={delivery}
             level={level}
+            sharingUntil={sharingUntil}
             onPause={() => setScreen('end')}
             onSimCheck={device.simulated ? () => openCheck('00000000-0000-4000-8000-000000000000') : undefined}
             onMenu={() => setScreen('settings')}
@@ -531,6 +543,7 @@ function Listening({
   onInvite,
   delivery,
   level,
+  sharingUntil,
   onPause,
   onSimCheck,
   onMenu,
@@ -539,6 +552,8 @@ function Listening({
   onInvite: () => void;
   delivery: Delivery;
   level: Level;
+  /** When the 30-minute location window after a check-in ends (0: none). */
+  sharingUntil: number;
   onPause: () => void;
   /** Browser preview only: a check-in with no detection behind it. */
   onSimCheck?: () => void;
@@ -572,6 +587,14 @@ function Listening({
         </Text>
         <LevelMeter score={level.score} threshold={level.threshold} label={level.label} />
       </Panel>
+      {sharingUntil > now && windowUntil() ? (
+        <View style={styles.note}>
+          <Text style={[type.caption, {flex: 1}]}>
+            After a check-in, this phone sends its location until {hhmmOf(sharingUntil)}. Your guardians see it only if they were
+            alerted.
+          </Text>
+        </View>
+      ) : null}
       <FullScreenNotice />
       <GuardiansCard delivery={delivery} live onInvite={onInvite} />
       <Key label="Pause listening" variant="ghost" onPress={onPause} accessibilityHint="Asks for your PIN" />
@@ -606,6 +629,11 @@ function FullScreenNotice() {
     </Panel>
   );
 }
+
+const hhmmOf = (ms: number) => {
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
 
 /** A send that failed for want of a network, not because the server refused it. */
 const offline = (d: Delivery) => Boolean(d.lastError && !/^\d{3} /.test(d.lastError));
