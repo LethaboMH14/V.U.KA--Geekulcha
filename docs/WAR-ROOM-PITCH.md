@@ -36,7 +36,7 @@ VUKA notices duress without a button, and proves when it happened — so a bank 
 
 ### Beat 4 — How it works
 
-They start a journey. VIGIL listens on the phone — for a scream, a shout, breaking glass. It doesn't scream back. It asks a quiet question: a Journey check. They answer with their normal PIN. Or with a duress PIN — and it looks exactly the same. Same screen, same timing. The attacker beside them sees nothing. But their guardians are alerted, and a record is created. Signed. Chained to them alone. A fingerprint of it goes to public ledgers. Not their name. Not their voice. A fingerprint anyone can check. And the record itself stays with them. They hold the key.
+They start a journey. VIGIL listens on the phone — for a scream, a shout, breaking glass. No button. No free hand. When it hears something, it doesn't sound an alarm. It quietly asks a Journey check: are you okay? They answer with their normal PIN. Or with a duress PIN — and it looks exactly the same. Same screen, same timing. Nobody watching can tell. But a duress PIN, or no answer, alerts their guardians. And it makes a record — signed, so it can't be faked, and fingerprinted publicly, so it can't be changed. The record stays private. They hold the key.
 
 ### Beat 5 — Why it works
 
