@@ -23,7 +23,7 @@ def step(store, now):
     tick(store, now)
     notifier = SimulatedGuardianNotifier(store._connection, lambda: now)
     with closing(store._connection()) as conn, conn, conn.cursor() as cur:
-        rows = [r for r in claim_due(cur, now=now) if r["kind"] == "guardian_alert"]
+        rows = claim_due(cur, now=now, kinds=("guardian_alert",))
     delivered = 0
     for row in rows:
         try:

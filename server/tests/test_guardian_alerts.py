@@ -72,3 +72,25 @@ def test_the_worker_step_delivers_and_completes_the_outbox_row(sim_api):
         cur.execute("SELECT state FROM outbox WHERE kind='guardian_alert'")
         assert cur.fetchone()[0] == "done"
     assert len(alerts(client, gkey, gkid).json()["alerts"]) == 1
+
+
+def test_the_worker_is_not_starved_by_unprocessed_anchor_requests(sim_api):
+    """Every chain event queues an anchor_request; nothing in this process handles
+    them. They must not be leased by this worker or crowd out a guardian alert."""
+    from server.outbox import enqueue
+    from server.run_workers import step
+    store, client, subject, key, event, post, now, connect = sim_api
+    _gid, gkey, gkid = add_real_guardian(sim_api)
+    with connect() as conn, conn.cursor() as cur:
+        for i in range(15):
+            enqueue(cur, idempotency_key=f"sim_anchor_backlog_{i}", kind="anchor_request",
+                    reference_id=f"sim_event_{i}", not_before=now[0])
+    assert post(signal(event)).status_code == 201
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject,))
+        cur.execute("SELECT incident_id::text FROM incidents")
+        request_alarm(cur, cur.fetchone()[0], trigger="no_answer", now=now[0])
+    assert step(store, now[0]) == 1  # delivered on the first tick despite the backlog
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM outbox WHERE kind='anchor_request' AND state='inflight'")
+        assert cur.fetchone()[0] == 0  # not leased away from their own worker
