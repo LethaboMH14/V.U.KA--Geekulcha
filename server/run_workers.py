@@ -48,6 +48,10 @@ def step(store, now, *, bank_sender=None, batches=None):
     """One tick. The notifier shares this tick's clock: delivery evidence must
     never be stamped later than the time the worker acknowledges it."""
     tick(store, now)
+    # Location fixes live 24 h past their incident's close (ADR-0048).
+    from server.locations import purge_closed
+    with closing(store._connection()) as conn, conn, conn.cursor() as cur:
+        purge_closed(cur, now)
     notifier = SimulatedGuardianNotifier(store._connection, lambda: now)
     with closing(store._connection()) as conn, conn, conn.cursor() as cur:
         rows = claim_due(cur, now=now, kinds=("guardian_alert", "bank_signal"))

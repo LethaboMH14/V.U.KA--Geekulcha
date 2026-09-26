@@ -1020,6 +1020,61 @@ def create_app(database=None) -> FastAPI:
             return _error_response(503, "database_unavailable", "database unavailable")
         return {"receipt_id": str(uuid4()), "state": "accepted", "journey_id": journey_id}
 
+    @app.post("/v1/journeys/{id}/location", status_code=202)
+    async def journey_location(id: str, request: Request):
+        """PROPOSED (ADR-0048): a location fix, kept only while guardians are alerted.
+
+        The phone sends fixes for 30 minutes after any check-in opens, after
+        either PIN alike, and gets the same 202 whether the fix was kept or
+        dropped, so it can never learn whether an alert was raised (T30)."""
+        from contextlib import closing
+        from server.locations import store_fix, valid_fix
+        body = await request.body()
+        try:
+            subject_id = store.get_journey_subject(id)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if subject_id is None:
+            return _error_response(404, "not_found", "journey was not found")
+        try:
+            principal = verify_request(request, subject_id=subject_id, database=store, body=body)
+        except RequestAuthenticationFailure as exc:
+            status_code = 404 if exc.code == "not_found" else 401
+            return _error_response(status_code, exc.code, exc.message)
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        if principal.signer_role != "device":
+            return _error_response(404, "not_found", "journey was not found")
+        try:
+            fix = json.loads(body)
+            if not valid_fix(fix):
+                raise ValueError("location shape")
+            _validate_rfc3339(fix["ts"], "ts")
+        except (ValueError, TypeError):
+            return _error_response(400, "invalid_request", "location body is invalid")
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        try:
+            store.consume_request_nonce(
+                signer_key_id=principal.signer_key_id,
+                subject_id=principal.subject_id,
+                nonce=principal.nonce,
+                request_ts=principal.request_ts,
+                now=datetime.now(timezone.utc),
+            )
+            with closing(store._connection()) as connection, connection, connection.cursor() as cur:
+                store_fix(cur, subject_id, id, fix, now)
+            store.record_heartbeat(subject_id, now)
+        except SignerKeyRevoked:
+            return _error_response(401, "key_revoked", "signer key is revoked")
+        except (RequestReplay, RequestTimestampExpired):
+            return _error_response(401, "invalid_signature", "signed request is invalid or was already used")
+        except (SignerKeyNotFound, SignerSubjectMismatch):
+            return _error_response(404, "not_found", "journey was not found")
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+        # The same answer whether the fix was kept or dropped.
+        return {"receipt_id": str(uuid4()), "state": "accepted"}
+
     @app.post("/v1/journeys/{id}/heartbeat", status_code=202)
     async def journey_heartbeat(id: str, request: Request):
         """PROPOSED contact clock input: records last contact only, never location."""
