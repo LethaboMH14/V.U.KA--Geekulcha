@@ -11,6 +11,7 @@ signed guardian_ack), why the alert was raised, and when. For an incident that
 began with a detection, `why` adds the phone's evidence band and up to three
 reason names (PROPOSED, ADR-0047): words, never a number or a probability.
 """
+from server.locations import location_for
 from server.payload_store import decrypt_payload
 
 TRIGGERS = ("duress_signal", "no_answer", "contact_lost")
@@ -89,5 +90,6 @@ def alerts_for(cur, guardian_id, limit=20, payload_key=None):
             "closed_at": closed_at.isoformat() if closed_at else None,
             "close_reason": close_reason,
             "why": why_for(cur, incident_id, trigger, payload_key),
+            "location": location_for(cur, incident_id),
         })
     return out

@@ -30,6 +30,7 @@ const v2Operations = [
   ["post", "/v1/devices/recover"],
   ["post", "/v1/journeys"],
   ["post", "/v1/journeys/{id}/heartbeat"],
+  ["post", "/v1/journeys/{id}/location"],
   ["post", "/v1/journeys/{id}/end"],
   ["post", "/v1/events"],
   ["post", "/v1/checkins/{id}/opened"],
