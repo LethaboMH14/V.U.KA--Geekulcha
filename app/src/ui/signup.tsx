@@ -1,31 +1,26 @@
 /**
- * Mutarisi's sign-up flow (feature/ui), ported into VIGIL: create your
- * account (Google, email or phone), phone number, verify code, your name,
- * permissions, and invite guardians.
+ * Mutarisi's sign-up screens (feature/ui, up to 5aa5d24), screen by screen:
+ * Create your account (terms first; Google, email or phone), Sign up with
+ * email, Phone number, Verify code, Permissions and Invite guardians. His
+ * copy is used as written except where a line wouldn't be true of VIGIL;
+ * those are noted where they differ. The order lives in signupFlow.ts.
  *
  * In a build connected to Firebase, "Continue with Google" is a real Google
  * sign-in through Firebase Authentication (src/api/google.ts): Google and
- * Firebase receive it and confirm the email. Otherwise Google is SIMULATED and
- * says so. Either way the contact detail is kept on this phone, is never sent
- * to the VIGIL server and never enters the record; the code step is
- * SIMULATED, exactly as in his build. The member's identity stays the key
- * made on this phone.
- *
- * As in his 2026-09-26 build: the Terms and Privacy notice must be accepted
- * before any option works, the number is optional on the Google and email
- * routes, and the code can go by text or by email. The email route sets a
- * password (twice, at least 8 characters), kept only as a salted hash; the
- * channel the code went to becomes the default for password-reset codes.
+ * Firebase receive it and confirm the email. Otherwise it is his SIMULATED
+ * chooser, labelled so. Either way the contact details are kept on this
+ * phone, are never sent to the VIGIL server and never enter the record; the
+ * code step is SIMULATED, exactly as in his build. The member's identity
+ * stays the key made on this phone.
  */
 import React, {useEffect, useState} from 'react';
-import {AppState, Linking, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
-import {Eyebrow, Key, Lamp, Panel, QuietKey, TopAppBar} from './components';
-import {colors, fonts, radii, space, type} from './theme';
+import {AppState, Linking, Modal, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
+import {Dialog, Eyebrow, Key, Lamp, Panel, QuietKey, TopAppBar} from './components';
+import {colors, fonts, radii, space, TOUCH, type} from './theme';
 import {canFullScreen, openFullScreenSettings} from '../sensors/detection';
 import {DocumentText, PasswordFields, passwordProblem, type DocumentId} from './account';
-import {askLocation} from '../sensors/location';
 import type {AccountDetails} from '../api/device';
-import {googleAvailable, googleSignIn, type GoogleAccount} from '../api/google';
+import {googleAvailable, googleSignIn, SIMULATED_GOOGLE_ACCOUNT, type GoogleAccount} from '../api/google';
 
 /**
  * Sign-up details, kept on this phone only. `contact` is the route's own
@@ -39,51 +34,124 @@ export type Channel = 'sms' | 'email';
 
 export const TOTAL_STEPS = 8;
 export const StepMark = ({n}: {n: number}) => <Text style={styles.stepMark}>{`STEP ${n} OF ${TOTAL_STEPS}`}</Text>;
-const Simulated = ({children}: {children: string}) => <Text style={styles.simTag}>{children}</Text>;
+export const Simulated = ({children}: {children: string}) => <Text style={styles.simTag}>{children}</Text>;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 /** South African mobile numbers: 9 digits after +27, not starting with 0. */
 const SA_MOBILE = /^[1-9][0-9]{8}$/;
 const BAD_EMAIL = 'Enter a valid email address.';
 const BAD_MOBILE = 'Enter a valid South African mobile number — 9 digits, not starting with 0.';
+const RESEND_SECONDS = 45;
+
+/** His form error box: shown only when there is something to say. */
+export const InlineError = ({children}: {children: string}) =>
+  children ? (
+    <Text style={styles.error} accessibilityLiveRegion="polite">
+      {children}
+    </Text>
+  ) : null;
+
+const Field = (p: React.ComponentProps<typeof TextInput>) => <TextInput placeholderTextColor={colors.textDim} {...p} style={[styles.field, p.style]} />;
 
 /**
- * Step 2: how to sign up. Nothing works until the Terms and Privacy notice
- * are accepted. Both are drafts (account.tsx DOCUMENTS): no terms exist yet,
- * and the privacy notice is PROPOSED. They say so; neither is invented.
+ * His SIMULATED Google chooser ("Choose an account", one fixed example
+ * account), shown only when this build has no Firebase. Nothing goes to Google.
+ */
+export function GoogleChooser({visible, onPick, onClose}: {visible: boolean; onPick: (a: GoogleAccount) => void; onClose: () => void}) {
+  const a = SIMULATED_GOOGLE_ACCOUNT;
+  return (
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
+      <View style={styles.scrim}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessible={false} />
+        <View style={styles.sheet} accessibilityViewIsModal>
+          <View style={styles.sheetHead}>
+            <Text style={[type.dialogTitle, {flex: 1}]} accessibilityRole="header">
+              Choose an account
+            </Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={onClose} hitSlop={8} style={styles.close}>
+              <Text style={[type.label, {color: colors.textSecondary}]}>✕</Text>
+            </Pressable>
+          </View>
+          <Simulated>SIMULATED CHOOSER</Simulated>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${a.name}, ${a.email}`}
+            onPress={() => onPick(a)}
+            android_ripple={{color: colors.ripple}}
+            style={styles.accountRow}>
+            <View style={styles.avatar}>
+              <Text style={[type.label, {color: colors.textInverse}]}>{(a.givenName ?? 'G').charAt(0)}</Text>
+            </View>
+            <View style={{flex: 1}}>
+              <Text style={type.label}>{a.name}</Text>
+              <Text style={[type.caption, {marginTop: 2}]}>{a.email}</Text>
+            </View>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+/**
+ * Google in a screen: the real sign-in when this build has Firebase, else
+ * the SIMULATED chooser. `onAccount` gets the account and whether Google
+ * confirmed it. Returns the button handler, its busy flag, a problem to
+ * show, and the chooser to render.
+ */
+export function useGoogle(onAccount: (a: GoogleAccount, verified: boolean) => void) {
+  const live = googleAvailable();
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState('');
+  const [choosing, setChoosing] = useState(false);
+  const start = async () => {
+    setProblem('');
+    if (!live) return setChoosing(true);
+    if (busy) return;
+    setBusy(true);
+    const r = await googleSignIn();
+    setBusy(false);
+    if (r.ok) onAccount(r.account, true);
+    else setProblem(r.message);
+  };
+  const chooser = (
+    <GoogleChooser
+      visible={choosing}
+      onClose={() => setChoosing(false)}
+      onPick={a => {
+        setChoosing(false);
+        onAccount(a, false);
+      }}
+    />
+  );
+  return {live, busy, problem, start, chooser};
+}
+
+/**
+ * Step 2, "Create your account". The Terms and Privacy notice must be ticked
+ * before any option works. Both are drafts (account.tsx DOCUMENTS): no terms
+ * exist yet, and the privacy notice is PROPOSED. They say so.
  */
 export function AccountStep({
   agreed,
   onAgree,
   onChoose,
+  onGoogle,
   onBack,
   onSignIn,
-  onGoogle,
 }: {
   agreed: boolean;
   onAgree: (agreed: boolean) => void;
-  onChoose: (k: Account['kind']) => void;
+  onChoose: (k: 'email' | 'phone') => void;
+  /** Google chose an account: real (verified) with Firebase, else the SIMULATED chooser's. */
+  onGoogle: (a: GoogleAccount, verified: boolean) => void;
   onBack: () => void;
   /** "Already have an account? Sign in". */
-  onSignIn?: () => void;
-  /** A real Google sign-in succeeded (Firebase configured). Without it, Google is the SIMULATED route via `onChoose`. */
-  onGoogle?: (a: GoogleAccount) => void;
+  onSignIn: () => void;
 }) {
   const [doc, setDoc] = useState<Extract<DocumentId, 'terms' | 'privacy'> | null>(null);
   const label = 'I agree to the Terms and the Privacy notice';
-  const live = Boolean(onGoogle) && googleAvailable();
-  const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState('');
-  const google = async () => {
-    if (!live || !onGoogle) return onChoose('google');
-    if (busy) return;
-    setBusy(true);
-    setProblem('');
-    const r = await googleSignIn();
-    setBusy(false);
-    if (r.ok) onGoogle(r.account);
-    else setProblem(r.message);
-  };
+  const google = useGoogle(onGoogle);
   return (
     <View style={styles.screen}>
       <TopAppBar title="" onBack={onBack} />
@@ -100,12 +168,17 @@ export function AccountStep({
         hitSlop={4}
         style={styles.consentRow}>
         <View style={[styles.box, agreed && styles.boxOn]}>{agreed ? <Text style={styles.tick}>✓</Text> : null}</View>
-        <Text style={[type.body, {flex: 1, color: colors.textTitle}]}>{label}</Text>
+        <Text style={[type.body, {flex: 1, color: colors.textTitle}]}>
+          I agree to the{' '}
+          <Text style={styles.link} onPress={() => setDoc(doc === 'terms' ? null : 'terms')} accessibilityRole="link">
+            Terms
+          </Text>{' '}
+          and the{' '}
+          <Text style={styles.link} onPress={() => setDoc(doc === 'privacy' ? null : 'privacy')} accessibilityRole="link">
+            Privacy notice
+          </Text>
+        </Text>
       </Pressable>
-      <View style={styles.docLinks}>
-        <QuietKey label="Terms" onPress={() => setDoc(doc === 'terms' ? null : 'terms')} />
-        <QuietKey label="Privacy notice" onPress={() => setDoc(doc === 'privacy' ? null : 'privacy')} />
-      </View>
       {doc ? (
         <Panel>
           <DocumentText id={doc} />
@@ -115,112 +188,41 @@ export function AccountStep({
         </Panel>
       ) : null}
       <View style={{gap: 10, marginTop: space.sm}}>
-        <Key label={busy ? 'Opening Google…' : 'Continue with Google'} variant="plain" arrow disabled={!agreed} onPress={() => void google()} />
-        <Key label="Sign up with email" variant="plain" arrow disabled={!agreed} onPress={() => onChoose('email')} />
-        <Key label="Use your phone number" variant="signal" arrow disabled={!agreed} onPress={() => onChoose('phone')} />
+        <Key label={google.busy ? 'Opening Google…' : 'Continue with Google'} variant="plain" disabled={!agreed} onPress={() => void google.start()} />
+        <Key label="Sign up with email" variant="plain" disabled={!agreed} onPress={() => onChoose('email')} />
+        <Key label="Use your phone number" variant="signal" disabled={!agreed} onPress={() => onChoose('phone')} />
       </View>
-      {!agreed ? <Text style={type.caption}>Tick the box above to choose.</Text> : null}
-      {problem ? (
-        <Text style={[type.body, {color: colors.textTitle}]} accessibilityLiveRegion="polite">
-          {problem}
+      <InlineError>{google.problem}</InlineError>
+      <Text style={type.caption}>With Google we use your name and email to set up your profile. We never see your Google password.</Text>
+      {google.live ? (
+        // Kept (true of VIGIL): who receives a real Google sign-in, and who doesn't.
+        <Text style={type.caption}>
+          Google and Firebase Authentication check your email and keep a sign-in record of it. VIGIL's own server never receives it, and it never enters your record.
         </Text>
-      ) : null}
-      <Text style={type.caption}>VIGIL never asks for your Google password. Whichever you choose, your identity in VIGIL is a key made on this phone.</Text>
-      {live ? (
-        <>
-          <Text style={type.caption}>
-            With Google, Google and Firebase Authentication check your email and keep a sign-in record of it. VIGIL's own server never receives it, and it never enters your record.
-          </Text>
-          <Simulated>EMAIL SIGN-UP IS NOT LIVE YET · KEPT ON THIS PHONE ONLY</Simulated>
-        </>
       ) : (
-        <Simulated>GOOGLE AND EMAIL SIGN-IN GO LIVE WITH FIREBASE · FOR NOW KEPT ON THIS PHONE ONLY</Simulated>
+        <Simulated>SIMULATED GOOGLE · GOES LIVE WITH FIREBASE · KEPT ON THIS PHONE ONLY</Simulated>
       )}
-      {onSignIn ? <QuietKey label="Already have an account? Sign in" onPress={onSignIn} /> : null}
+      <QuietKey label="Already have an account? Sign in" onPress={onSignIn} />
+      {google.chooser}
     </View>
   );
 }
 
 /**
- * Step 3: a South African mobile number, as Mutarisi validates it. Required on
- * the phone route; optional after Google or email (`optional` names the
- * route), where Skip leaves it out and the code goes by email instead.
+ * "Sign up with email": the member's own email and a password (twice, at
+ * least 8 characters). `onNext` gets the password once; the caller keeps
+ * only its salted hash, and this screen clears it as it leaves.
  */
-export function PhoneStep({
-  optional,
-  signedUpAs,
-  verified,
-  initial = '',
-  onNext,
-  onSkip,
-  onBack,
-}: {
-  optional?: 'google' | 'email';
-  signedUpAs?: string;
-  /** Google confirmed `signedUpAs` (a real sign-in), rather than the SIMULATED route. */
-  verified?: boolean;
-  initial?: string;
-  onNext: (msisdn: string) => void;
-  onSkip: () => void;
-  onBack: () => void;
-}) {
-  const [digits, setDigits] = useState(initial.replace(/^\+27/, ''));
-  const [tried, setTried] = useState(false);
-  const valid = SA_MOBILE.test(digits);
-  const intro = !optional
-    ? "We'll text a code to check it's really you."
-    : optional === 'email'
-      ? "Optional. Add your mobile number and we'll text the code there, or skip and we'll email it."
-      : "Optional. Add your mobile number and we'll text a code to check it, or skip for now.";
-  return (
-    <View style={styles.screen}>
-      <TopAppBar title="" onBack={onBack} />
-      <StepMark n={3} />
-      <Text style={type.display} accessibilityRole="header">
-        Phone number
-      </Text>
-      <Text style={type.body}>{intro}</Text>
-      {optional && signedUpAs ? (
-        <Text style={type.caption}>{optional === 'google' ? `Google · ${signedUpAs} · ${verified ? 'confirmed by Google' : 'simulated'}` : `Email · ${signedUpAs}`}</Text>
-      ) : null}
-      <Text style={type.label}>Mobile number</Text>
-      <View style={styles.phoneRow}>
-        <Text style={styles.prefix}>+27</Text>
-        <TextInput
-          value={digits}
-          onChangeText={t => setDigits(t.replace(/\D/g, '').slice(0, 9))}
-          placeholder="82 555 0101"
-          placeholderTextColor={colors.textDim}
-          keyboardType="phone-pad"
-          autoComplete="tel"
-          style={[styles.field, {flex: 1}]}
-          accessibilityLabel="Mobile number"
-        />
-      </View>
-      <Text style={type.caption}>{tried && !valid ? BAD_MOBILE : 'Kept on this phone only. Nothing is sent until live sign-in.'}</Text>
-      <View style={{flexGrow: 1}} />
-      <Key label="Send code" variant={valid ? 'signal' : 'plain'} onPress={() => (valid ? onNext(`+27${digits}`) : setTried(true))} />
-      {optional ? <QuietKey label="Skip for now" onPress={onSkip} /> : null}
-    </View>
-  );
-}
-
-/**
- * Step 3 (Google or email): the address, kept on this phone. The email route
- * also sets a password, twice; `onNext` gets it once and the caller keeps
- * only its salted hash. It is cleared from this screen as it leaves.
- */
-export function EmailStep({google, initial = '', onNext, onBack}: {google: boolean; initial?: string; onNext: (email: string, password?: string) => void; onBack: () => void}) {
+export function EmailStep({initial = '', onNext, onBack}: {initial?: string; onNext: (email: string, password: string) => void; onBack: () => void}) {
   const [email, setEmail] = useState(initial);
   const [password, setPassword] = useState('');
   const [again, setAgain] = useState('');
-  const [tried, setTried] = useState(false);
-  const emailOk = EMAIL.test(email.trim());
-  const problem = !emailOk ? BAD_EMAIL : google ? null : passwordProblem(password, again);
-  const valid = problem === null;
+  const [error, setError] = useState('');
   const next = () => {
-    if (!valid) return setTried(true);
-    const pw = google ? undefined : password;
+    const problem = !EMAIL.test(email.trim()) ? BAD_EMAIL : passwordProblem(password, again);
+    if (problem) return setError(problem);
+    setError('');
+    const pw = password;
     setPassword('');
     setAgain('');
     onNext(email.trim(), pw);
@@ -228,43 +230,106 @@ export function EmailStep({google, initial = '', onNext, onBack}: {google: boole
   return (
     <View style={styles.screen}>
       <TopAppBar title="" onBack={onBack} />
-      <StepMark n={3} />
+      <StepMark n={2} />
       <Text style={type.display} accessibilityRole="header">
-        {google ? 'Your Google account' : 'Sign up with email'}
+        Sign up with email
       </Text>
-      <Text style={type.body}>{google ? 'The Google account to sign in with.' : "We'll send a code to check it's really you."}</Text>
-      <TextInput
+      <Text style={type.label}>Email</Text>
+      <Field
         value={email}
         onChangeText={setEmail}
-        placeholder="thandi@example.com"
-        placeholderTextColor={colors.textDim}
+        placeholder="you@example.co.za"
         keyboardType="email-address"
         autoCapitalize="none"
         autoComplete="email"
-        style={styles.field}
-        accessibilityLabel="Email address"
+        accessibilityLabel="Email"
       />
-      {!google ? <PasswordFields value={password} onChange={setPassword} confirm={again} onConfirm={setAgain} /> : null}
-      <Text style={type.caption} accessibilityLiveRegion="polite">
-        {tried && problem ? problem : google ? 'Kept on this phone. Nothing is sent until live sign-in.' : 'Kept on this phone. The password is saved only as a salted hash, never as typed.'}
-      </Text>
-      <Simulated>{google ? 'SIMULATED · GOOGLE SIGN-IN GOES LIVE WITH FIREBASE' : 'SIMULATED · NO EMAIL IS SENT YET'}</Simulated>
+      <PasswordFields value={password} onChange={setPassword} confirm={again} onConfirm={setAgain} hint="At least 8 characters." />
+      <InlineError>{error}</InlineError>
+      <Simulated>SIMULATED · NO ACCOUNT SERVER YET · KEPT ON THIS PHONE</Simulated>
       <View style={{flexGrow: 1}} />
-      <Key label="Continue" variant={valid ? 'signal' : 'plain'} onPress={next} />
+      <Key label="Continue" variant="signal" onPress={next} />
     </View>
   );
 }
 
 /**
- * Step 4: verify the code (SIMULATED, as in Mutarisi's build). With `choose`,
- * the member picks text or email; a skipped number starts on email. Picking a
- * channel with nothing on file asks for it here (validated), hands it to
- * `onAdd`, and "sends" there. Nothing is sent.
+ * Step 3, "Phone number", validated as he validates it. Required on the phone
+ * route and at sign-in; optional after Google or email ("Skip for now"), when
+ * the code goes by email instead.
+ */
+export function PhoneStep({
+  optional,
+  signedUpAs,
+  initial = '',
+  onNext,
+  onSkip,
+  onBack,
+}: {
+  optional: boolean;
+  /** The account line on the optional screen: "Google · … · simulated" or "Email · …". */
+  signedUpAs?: string;
+  initial?: string;
+  onNext: (msisdn: string) => void;
+  onSkip: () => void;
+  onBack: () => void;
+}) {
+  const [digits, setDigits] = useState(initial.replace(/^\+27/, ''));
+  const [error, setError] = useState(false);
+  return (
+    <View style={styles.screen}>
+      <TopAppBar title="" onBack={onBack} />
+      <StepMark n={3} />
+      <Text style={type.display} accessibilityRole="header">
+        Phone number
+      </Text>
+      <Text style={type.body}>
+        {optional ? "Optional. Add your mobile number and we'll text the code there, or skip and we'll email it." : "We'll text a code to check it's really you."}
+      </Text>
+      {optional && signedUpAs ? <Text style={type.caption}>{signedUpAs}</Text> : null}
+      <Text style={type.label}>Mobile number</Text>
+      <View style={styles.phoneRow}>
+        <Text style={styles.prefix}>+27</Text>
+        <Field
+          value={digits}
+          onChangeText={t => setDigits(t.replace(/\D/g, '').slice(0, 9))}
+          placeholder="82 555 0101"
+          keyboardType="phone-pad"
+          autoComplete="tel"
+          style={[styles.mono, {flex: 1}]}
+          accessibilityLabel="Mobile number"
+        />
+      </View>
+      <InlineError>{error ? BAD_MOBILE : ''}</InlineError>
+      {/* Kept: his "One account per number. SIMs are RICA-registered." isn't enforced here, so this says what is true. */}
+      <Text style={type.caption}>Kept on this phone only. Nothing is sent until live sign-in.</Text>
+      <View style={{flexGrow: 1}} />
+      <Key
+        label="Send code"
+        variant="signal"
+        onPress={() => {
+          if (!SA_MOBILE.test(digits)) return setError(true);
+          setError(false);
+          onNext(`+27${digits}`);
+        }}
+      />
+      {optional ? <QuietKey label="Skip for now" onPress={onSkip} /> : null}
+    </View>
+  );
+}
+
+/**
+ * Step 4, "Verify code" (SIMULATED, as in his build: any 6 digits continue,
+ * and the sixth digit submits). With `choose`, the member picks text or
+ * email; a skipped number starts on email. Picking a channel with nothing on
+ * file opens his "Add your email" / "Add your mobile number" pop-up, checked
+ * before it closes, then "sends" there. Nothing is sent.
  */
 export function CodeStep({
   phone,
   email,
   choose,
+  busy = false,
   onAdd,
   onNext,
   onBack,
@@ -272,6 +337,8 @@ export function CodeStep({
   phone?: string;
   email?: string;
   choose: boolean;
+  /** The caller is checking the code (sign-in): digits are ignored meanwhile. */
+  busy?: boolean;
   onAdd: (channel: Channel, value: string) => void;
   /** With the channel the code went to: the default for password-reset codes. */
   onNext: (via: Channel) => void;
@@ -281,32 +348,49 @@ export function CodeStep({
   const [via, setVia] = useState<Channel>(phone ? 'sms' : 'email');
   const [asking, setAsking] = useState<Channel | null>(null);
   const [entry, setEntry] = useState('');
-  const [tried, setTried] = useState(false);
-  const valid = /^\d{6}$/.test(code);
-  const entryValid = asking === 'email' ? EMAIL.test(entry.trim()) : SA_MOBILE.test(entry);
+  const [entryError, setEntryError] = useState('');
+  const [left, setLeft] = useState(RESEND_SECONDS);
+  const [sent, setSent] = useState(0);
 
+  // "Resend in 0:45", counting down from each send.
+  useEffect(() => {
+    setLeft(RESEND_SECONDS);
+    const t = setInterval(() => setLeft(s => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [sent]);
+
+  const resend = () => {
+    // SIMULATED: nothing is sent; this only restarts the countdown.
+    setCode('');
+    setSent(n => n + 1);
+  };
   const pick = (c: Channel) => {
-    if (c === via && !asking) return;
-    setEntry('');
-    setTried(false);
+    if (c === via) return;
     if (!(c === 'sms' ? phone : email)) {
+      setEntry('');
+      setEntryError('');
       setAsking(c);
       return;
     }
-    setAsking(null);
     setVia(c);
-    setCode(''); // a new code "goes" to the newly chosen place
+    resend(); // a new code "goes" to the newly chosen place
   };
-  const send = () => {
+  const add = () => {
     if (!asking) return;
-    if (!entryValid) {
-      setTried(true);
-      return;
-    }
-    onAdd(asking, asking === 'email' ? entry.trim() : `+27${entry}`);
+    const text = entry.trim();
+    const ok = asking === 'email' ? EMAIL.test(text) : SA_MOBILE.test(text);
+    if (!ok) return setEntryError(asking === 'email' ? BAD_EMAIL : BAD_MOBILE);
+    onAdd(asking, asking === 'email' ? text : `+27${text}`);
     setVia(asking);
     setAsking(null);
+    resend();
+  };
+  const type6 = (t: string) => {
+    if (busy) return;
+    const digits = t.replace(/\D/g, '').slice(0, 6);
+    if (digits.length < 6) return setCode(digits);
     setCode('');
+    onNext(via);
   };
 
   return (
@@ -316,123 +400,123 @@ export function CodeStep({
       <Text style={type.display} accessibilityRole="header">
         Verify code
       </Text>
+      <Text style={type.body}>{via === 'email' ? `Enter the 6-digit code we sent to ${email ?? 'your email'}.` : `Enter the 6-digit code we sent by text to ${phone ?? 'your phone'}.`}</Text>
+      <Simulated>SIMULATED · NO CODE IS SENT · ANY 6 DIGITS CONTINUE</Simulated>
       {choose ? (
         <View style={styles.channels} accessibilityRole="radiogroup">
           {(['sms', 'email'] as const).map(c => {
-            const on = (asking ?? via) === c;
+            const on = via === c;
             return (
-              <Pressable
-                key={c}
-                accessibilityRole="radio"
-                accessibilityState={{selected: on}}
-                onPress={() => pick(c)}
-                style={[styles.channel, on && styles.channelOn]}>
+              <Pressable key={c} accessibilityRole="radio" accessibilityState={{selected: on}} onPress={() => pick(c)} style={[styles.channel, on && styles.channelOn]}>
                 <Text style={[type.label, {color: on ? colors.textTitle : colors.textSecondary}]}>{c === 'sms' ? 'Text message' : 'Email'}</Text>
               </Pressable>
             );
           })}
         </View>
       ) : null}
-      {asking ? (
-        <Panel>
-          <Text style={type.label}>{asking === 'email' ? 'Add your email' : 'Add your mobile number'}</Text>
-          <Text style={[type.body, {marginTop: space.xs}]}>
-            {asking === 'email' ? "We'll send the code to this address." : "We'll text the code to this number: +27, then 9 digits not starting with 0."}
-          </Text>
-          <View style={[styles.phoneRow, {marginTop: space.sm}]}>
+      <Field
+        value={code}
+        onChangeText={type6}
+        keyboardType="number-pad"
+        autoComplete="sms-otp"
+        textContentType="oneTimeCode"
+        placeholder="••••••"
+        style={styles.code}
+        accessibilityLabel={`Code, ${code.length} of 6 digits entered`}
+      />
+      {left > 0 ? (
+        <Text style={[type.caption, {textAlign: 'center', fontVariant: ['tabular-nums']}]}>{`Resend in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`}</Text>
+      ) : (
+        <QuietKey label="Didn't get it? Resend the code." onPress={resend} />
+      )}
+      <Dialog
+        visible={asking !== null}
+        title={asking === 'email' ? 'Add your email' : 'Add your mobile number'}
+        confirm="Send code"
+        onConfirm={add}
+        cancel="Cancel"
+        onCancel={() => setAsking(null)}>
+        <View style={{gap: space.sm}}>
+          <Text style={type.body}>{asking === 'email' ? "We'll send the code to this address." : "We'll text the code to this number: +27, then 9 digits not starting with 0."}</Text>
+          <Text style={type.label}>{asking === 'email' ? 'Email' : 'Mobile number'}</Text>
+          <View style={styles.phoneRow}>
             {asking === 'sms' ? <Text style={styles.prefix}>+27</Text> : null}
-            <TextInput
+            <Field
               value={entry}
               onChangeText={t => setEntry(asking === 'sms' ? t.replace(/\D/g, '').slice(0, 9) : t)}
               placeholder={asking === 'email' ? 'you@example.com' : '82 555 0101'}
-              placeholderTextColor={colors.textDim}
               keyboardType={asking === 'email' ? 'email-address' : 'phone-pad'}
               autoCapitalize="none"
               autoComplete={asking === 'email' ? 'email' : 'tel'}
               autoFocus
-              style={[styles.field, {flex: 1}]}
-              accessibilityLabel={asking === 'email' ? 'Email address' : 'Mobile number'}
+              style={{flex: 1}}
+              accessibilityLabel={asking === 'email' ? 'Email' : 'Mobile number'}
             />
           </View>
-          <Text style={[type.caption, {marginTop: space.xs}]} accessibilityLiveRegion="polite">
-            {tried && !entryValid ? (asking === 'email' ? BAD_EMAIL : BAD_MOBILE) : 'Kept on this phone only.'}
-          </Text>
-          <View style={{gap: 10, marginTop: space.sm}}>
-            <Key label="Send code" variant={entryValid ? 'signal' : 'plain'} onPress={send} />
-            <QuietKey
-              label="Cancel"
-              onPress={() => {
-                setAsking(null);
-                setTried(false);
-              }}
-            />
-          </View>
-        </Panel>
-      ) : (
-        <>
-          <Text style={type.body}>{via === 'sms' ? `Enter the 6-digit code we sent by text to ${phone ?? 'your phone'}.` : `Enter the 6-digit code we sent to ${email ?? 'your email'}.`}</Text>
-          <Simulated>SIMULATED · NO CODE IS SENT · ANY 6 DIGITS CONTINUE</Simulated>
-          <TextInput
-            value={code}
-            onChangeText={t => setCode(t.replace(/\D/g, '').slice(0, 6))}
-            keyboardType="number-pad"
-            autoComplete="sms-otp"
-            textContentType="oneTimeCode"
-            placeholder="••••••"
-            placeholderTextColor={colors.textDim}
-            style={[styles.field, styles.code]}
-            accessibilityLabel="Six-digit code"
-          />
-          <View style={{flexGrow: 1}} />
-          <Key label="Continue" variant={valid ? 'signal' : 'plain'} onPress={() => valid && onNext(via)} />
-          <QuietKey label="Resend code" onPress={() => setCode('')} />
-        </>
-      )}
+          <InlineError>{entryError}</InlineError>
+        </View>
+      </Dialog>
     </View>
   );
 }
 
-type PermState = 'granted' | 'needed' | 'unavailable';
+type PermState = 'granted' | 'denied' | 'unasked';
+/** Android's API level (0 elsewhere): notifications need asking from 33. */
+const API = typeof Platform.Version === 'number' ? Platform.Version : 0;
 
-/** Step 6: what VIGIL needs, each asked for here, each shown as it stands. */
+/**
+ * Step 6, "Permissions", as his: Continue asks for everything missing at
+ * once; after that, Continue goes on only with the microphone and
+ * notifications allowed, and otherwise becomes "Open settings".
+ */
 export function PermissionsStep({onNext, onBack}: {onNext: () => void; onBack: () => void}) {
-  const [mic, setMic] = useState<PermState>('needed');
-  const [notes, setNotes] = useState<PermState>('needed');
-  const [loc, setLoc] = useState<PermState>('needed');
-  const [full, setFull] = useState<PermState>('needed');
-  /** Permissions Android will no longer ask for ("Don't ask again"): only Settings can grant them. */
-  const [blocked, setBlocked] = useState<string[]>([]);
+  const [asked, setAsked] = useState(false);
+  const [mic, setMic] = useState(false);
+  const [notes, setNotes] = useState(false);
+  const [loc, setLoc] = useState(false);
+  const [full, setFull] = useState(true);
 
   const refresh = async () => {
-    if (Platform.OS !== 'android') {
-      [setMic, setNotes, setLoc, setFull].forEach(f => f('unavailable'));
-      return;
-    }
-    const has = (p: string) => PermissionsAndroid.check(p as never).then(ok => (ok ? 'granted' : 'needed') as PermState);
+    if (Platform.OS !== 'android') return;
+    const has = (p: string) => PermissionsAndroid.check(p as never).catch(() => false);
     setMic(await has(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO));
-    setNotes(Platform.Version >= 33 ? await has(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS) : 'granted');
-    setLoc(await has(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION));
-    setFull((await canFullScreen()) ? 'granted' : 'needed');
+    setNotes(API >= 33 ? await has(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS) : true);
+    setLoc((await has(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION)) || (await has(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION)));
+    setFull(await canFullScreen());
   };
+  // Re-checked on every return, in case the member comes back from the phone's Settings.
   useEffect(() => {
     void refresh();
     const sub = AppState.addEventListener('change', s => s === 'active' && void refresh());
     return () => sub.remove();
   }, []);
 
-  const ask = async (p: string) => {
-    const r = await PermissionsAndroid.request(p as never).catch(() => undefined);
-    if (r === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) setBlocked(b => (b.includes(p) ? b : [...b, p]));
-    await refresh();
+  const missing = () => {
+    const P = PermissionsAndroid.PERMISSIONS;
+    const out: string[] = [];
+    if (!mic) out.push(P.RECORD_AUDIO);
+    if (!notes && API >= 33) out.push(P.POST_NOTIFICATIONS);
+    if (!loc) out.push(P.ACCESS_FINE_LOCATION, P.ACCESS_COARSE_LOCATION);
+    return out;
   };
-  const settingsOnly = (p: string, state: PermState) => state === 'needed' && blocked.includes(p);
-  const rows: {title: string; why: string; state: PermState; onPress: () => void; required: boolean; settings?: boolean}[] = [
-    {title: 'Microphone', why: 'To listen for trouble. Sound is judged on this phone and discarded within three seconds.', state: mic, onPress: () => void ask(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO), required: true, settings: settingsOnly(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, mic)},
-    {title: 'Notifications', why: 'So a check-in can reach you, and VIGIL can show that it is listening.', state: notes, onPress: () => void ask(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS), required: true, settings: settingsOnly(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS, notes)},
-    {title: 'Location', why: 'Only for 30 minutes after a check-in, and your guardians see it only if they were alerted.', state: loc, onPress: () => void askLocation().then(refresh), required: false},
-    {title: 'Full-screen check-ins', why: 'So a check-in can open over other apps and the lock screen.', state: full, onPress: openFullScreenSettings, required: false},
+  const cont = async () => {
+    const ask = missing();
+    if (Platform.OS === 'android' && !asked && ask.length) {
+      await PermissionsAndroid.requestMultiple(ask as never).catch(() => undefined);
+      setAsked(true);
+      await refresh();
+      return;
+    }
+    onNext();
+  };
+  const state = (granted: boolean): PermState => (granted ? 'granted' : asked ? 'denied' : 'unasked');
+  const rows: {title: string; reason: string; denied: string; s: PermState}[] = [
+    // Kept: VIGIL listens while active, not only during an armed journey, so the reasons say so.
+    {title: 'Microphone', reason: 'To listen for distress sounds while VIGIL is active. Sound is judged on this phone and discarded within three seconds.', denied: "VIGIL can't listen without this.", s: state(mic)},
+    {title: 'Notifications', reason: 'To show a check-in and the listening notice.', denied: "VIGIL can't listen without this.", s: state(notes)},
+    {title: 'Location · optional', reason: "Optional — shares a fix with guardians if you don't answer a check-in.", denied: 'Listening still works, without a location fix.', s: state(loc)},
   ];
-  const ready = mic !== 'needed' && notes !== 'needed';
+  const blocked = asked && !(mic && notes);
   return (
     <View style={styles.screen}>
       <TopAppBar title="" onBack={onBack} />
@@ -445,35 +529,36 @@ export function PermissionsStep({onNext, onBack}: {onNext: () => void; onBack: (
         <View style={{gap: space.md}}>
           {rows.map(r => (
             <View key={r.title} style={styles.permRow}>
-              <Lamp tone={r.state === 'granted' ? 'green' : 'unlit'} />
+              <Lamp tone={r.s === 'granted' ? 'green' : 'unlit'} />
               <View style={{flex: 1}}>
-                <Text style={type.label}>
-                  {r.title}
-                  {r.required ? '' : ' (optional)'}
-                </Text>
-                <Text style={[type.caption, {marginTop: 2}]}>{r.why}</Text>
+                <Text style={type.label}>{r.title}</Text>
+                <Text style={[type.caption, {marginTop: 2}]}>{r.s === 'denied' ? r.denied : r.reason}</Text>
               </View>
-              {r.state === 'needed' ? <QuietKey label={r.settings ? 'Open settings' : 'Allow'} onPress={r.settings ? () => void Linking.openSettings() : r.onPress} /> : <Text style={type.caption}>{r.state === 'granted' ? 'Allowed' : '—'}</Text>}
+              <Text style={type.caption}>{r.s === 'granted' ? 'Allowed' : r.s === 'denied' ? 'Not allowed' : 'Not asked yet'}</Text>
             </View>
           ))}
         </View>
       </Panel>
-      {full === 'needed' ? (
-        <Text style={type.caption}>Full-screen alerts aren't allowed on this phone yet. Your check-in will arrive as a high-priority notification instead.</Text>
+      {blocked ? <InlineError>Open Settings on this phone and allow microphone and notifications to continue.</InlineError> : null}
+      {!full ? (
+        <>
+          <Text style={type.caption}>Full-screen alerts aren't allowed on this phone. Your check-in will arrive as a high-priority notification instead.</Text>
+          {/* Kept: VIGIL can open Android's full-screen setting directly. */}
+          <QuietKey label="Allow full-screen check-ins" onPress={openFullScreenSettings} />
+        </>
       ) : null}
       <View style={{flexGrow: 1}} />
-      <Key label="Continue" variant={ready ? 'signal' : 'plain'} onPress={() => ready && onNext()} />
-      {!ready ? (
-        <Text style={type.caption}>
-          {blocked.length ? 'Android won\u2019t ask again. Tap Open settings, allow it under Permissions, then come back.' : 'Allow the microphone and notifications to continue.'}
-        </Text>
-      ) : null}
+      {blocked ? <Key label="Open settings" variant="signal" onPress={() => void Linking.openSettings()} /> : <Key label="Continue" variant="signal" onPress={() => void cont()} />}
     </View>
   );
 }
 
-/** Step 8: invite guardians (the real, PIN-gated invite), then finish. */
-export function InviteStep({onInvite, onFinish}: {onInvite: () => void; onFinish: () => void}) {
+/**
+ * Step 8, "Invite guardians". Kept: the invite is the real one (a PIN, then a
+ * one-time code from the server), not his SIMULATED sheet; the list shows the
+ * invites this phone has made.
+ */
+export function InviteStep({invites, onInvite, onFinish}: {invites: number; onInvite: () => void; onFinish: () => void}) {
   return (
     <View style={styles.screen}>
       <StepMark n={8} />
@@ -483,19 +568,27 @@ export function InviteStep({onInvite, onFinish}: {onInvite: () => void; onFinish
       <Panel>
         <Eyebrow>Guardians</Eyebrow>
         <Text style={[type.body, {marginTop: space.sm}]}>We recommend at least two guardians who don't live with you.</Text>
-        <View style={{marginTop: space.md}}>
-          <Key label="Invite a guardian" variant="signal" arrow onPress={onInvite} />
-        </View>
+        {invites === 0 ? (
+          <Text style={[type.caption, {marginTop: space.sm}]}>No guardians yet. Invite someone you trust to get started.</Text>
+        ) : (
+          <View style={{marginTop: space.sm, gap: 4}}>
+            {Array.from({length: invites}, (_, i) => (
+              <Text key={i} style={type.label}>{`Invite ${i + 1}`}</Text>
+            ))}
+            <Text style={type.caption}>{`${invites} sent · accepted invites show in your guardian's app`}</Text>
+          </View>
+        )}
       </Panel>
+      <Key label="Invite a guardian" variant="plain" onPress={onInvite} />
       <Panel>
         <Text style={type.label}>What your guardians will see</Text>
         <Text style={[type.body, {marginTop: space.xs}]}>
-          A guardian only hears from VIGIL if you don't answer a check-in, or if you use your second PIN. They'll see your name, why
-          you were alerted, and where your phone is if it was shared — never your day-to-day movement.
+          A guardian only hears from VIGIL if you don't answer a check-in, or if you use your duress PIN. They'll see your name, why you were
+          alerted, and a location fix if one was shared — never your day-to-day movement.
         </Text>
       </Panel>
       <View style={{flexGrow: 1}} />
-      <Key label="Finish setup" variant="plain" onPress={onFinish} />
+      <Key label="Finish setup" variant="signal" onPress={onFinish} />
     </View>
   );
 }
@@ -504,6 +597,7 @@ const styles = StyleSheet.create({
   screen: {flexGrow: 1, gap: space.md},
   stepMark: {fontFamily: fonts.mono, fontSize: 12, letterSpacing: 1, color: colors.textDim},
   simTag: {fontFamily: fonts.mono, fontSize: 11, letterSpacing: 0.5, color: colors.amberText},
+  error: {...type.body, color: colors.textTitle, borderWidth: 1, borderColor: colors.borderEmphasis, borderRadius: radii.key, padding: space.sm},
   phoneRow: {flexDirection: 'row', alignItems: 'center', gap: space.sm},
   prefix: {fontFamily: fonts.medium, fontSize: 18, color: colors.textTitle, paddingHorizontal: 4},
   field: {
@@ -517,14 +611,21 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: colors.textTitle,
   },
+  mono: {fontFamily: fonts.mono},
   code: {fontFamily: fonts.mono, fontSize: 24, letterSpacing: 8, textAlign: 'center'},
   permRow: {flexDirection: 'row', alignItems: 'center', gap: space.md},
   consentRow: {flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 48},
   box: {width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: colors.controlEdge, alignItems: 'center', justifyContent: 'center'},
   boxOn: {backgroundColor: colors.action, borderColor: colors.action},
   tick: {fontFamily: fonts.bold, fontSize: 15, lineHeight: 18, color: colors.textInverse},
-  docLinks: {flexDirection: 'row', gap: space.lg, marginTop: -space.sm},
+  link: {color: colors.textTitle, fontFamily: fonts.semibold, textDecorationLine: 'underline'},
   channels: {flexDirection: 'row', gap: space.sm},
   channel: {flex: 1, minHeight: 48, borderRadius: radii.key, borderWidth: 1, borderColor: colors.borderEmphasis, alignItems: 'center', justifyContent: 'center'},
   channelOn: {borderColor: colors.action, borderWidth: 2, backgroundColor: colors.keyFace},
+  scrim: {flex: 1, backgroundColor: colors.scrim, justifyContent: 'flex-end'},
+  sheet: {backgroundColor: colors.dialogFill, borderTopLeftRadius: radii.dialog, borderTopRightRadius: radii.dialog, padding: space.lg, gap: space.sm},
+  sheetHead: {flexDirection: 'row', alignItems: 'center'},
+  close: {minWidth: TOUCH, minHeight: TOUCH, alignItems: 'center', justifyContent: 'center'},
+  accountRow: {flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.sm},
+  avatar: {width: 40, height: 40, borderRadius: 20, backgroundColor: colors.action, alignItems: 'center', justifyContent: 'center'},
 });

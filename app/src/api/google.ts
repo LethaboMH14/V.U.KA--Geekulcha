@@ -107,6 +107,20 @@ export async function googleSignIn(): Promise<GoogleResult> {
   }
 }
 
+/**
+ * The one account the SIMULATED chooser lists when this build has no
+ * Firebase, as in Mutarisi's GoogleAccountChooserDialog. It is an example
+ * address (example.co.za), not a real person's account, and nothing is sent
+ * to Google. `uid` is empty: no identity provider confirmed it.
+ */
+export const SIMULATED_GOOGLE_ACCOUNT: GoogleAccount = Object.freeze({
+  email: 'thandi.dlamini@example.co.za',
+  name: 'Thandi Dlamini',
+  givenName: 'Thandi',
+  familyName: 'Dlamini',
+  uid: '',
+});
+
 /** Splits a Google profile into first name and surname for the name step. */
 export function googleName(a: GoogleAccount): {first: string; last: string} {
   const parts = (a.name ?? '').trim().split(/\s+/).filter(Boolean);

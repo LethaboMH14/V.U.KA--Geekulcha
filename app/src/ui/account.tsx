@@ -1,7 +1,7 @@
 /**
  * Account screens ported from Mutarisi's Kotlin build (feature/ui, up to
- * 012f997), decided in by Lethabo: returning-member sign-in, forgot
- * password, Settings → Recovery, and Settings → Documents and your rights.
+ * 5aa5d24), decided in by Lethabo: returning-member sign-in and Welcome back,
+ * forgot password, Settings → Recovery, and the documents.
  *
  * LOCAL ONLY, as in his build: no accounts server exists. Sign-in can only
  * find the account saved on THIS phone, and a member's identity is the
@@ -13,17 +13,15 @@
  */
 import React, {useState} from 'react';
 import {Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
-import {Eyebrow, Key, Panel, QuietKey, Row, TopAppBar} from './components';
+import {Dialog, Eyebrow, Key, Panel, PinKeypad, QuietKey, Row, TopAppBar} from './components';
 import {colors, fonts, radii, space, type} from './theme';
-import {googleAvailable, googleSignIn} from '../api/google';
-import {device, EMAIL, maskEmail, maskPhone, MIN_PASSWORD, profileContacts, recoveryChannel, type RecoveryChannel, type SignInRoute} from '../api/device';
+import {InlineError, Simulated, useGoogle} from './signup';
+import {device, EMAIL, maskEmail, maskPhone, MIN_PASSWORD, profileContacts, recoveryChannel, type RecoveryChannel} from '../api/device';
 
-const Simulated = ({children}: {children: string}) => <Text style={styles.simTag}>{children}</Text>;
 
 const BAD_EMAIL = 'Enter a valid email address.';
-const BAD_MOBILE = 'Enter a valid South African mobile number — 9 digits, not starting with 0.';
-const SA_DIGITS = /^[1-9][0-9]{8}$/;
-const NO_PIN_RESET = "This resets your email password only. It never resets your PIN: PIN recovery uses a recovery code (spec §9), which isn't built yet.";
+// His line, plus what is true of this build: the recovery code isn't built (spec §9, §14).
+const NO_PIN_RESET = "Forgotten your PIN instead? It can only be recovered with your recovery code, not by email or text. Recovery codes aren't in this build yet.";
 
 // ---- documents --------------------------------------------------------------
 
@@ -122,13 +120,17 @@ export function DocumentText({id}: {id: DocumentId}) {
   );
 }
 
-/** Settings → Documents and your rights. */
-export function Documents({onBack}: {onBack: () => void}) {
-  const [open, setOpen] = useState<DocumentId | null>(null);
+/**
+ * A document page. Opened from a Settings row (`initial`, as his Settings →
+ * Documents and your rights), Back returns to Settings; without one it is a
+ * list of all four.
+ */
+export function Documents({onBack, initial}: {onBack: () => void; initial?: DocumentId}) {
+  const [open, setOpen] = useState<DocumentId | null>(initial ?? null);
   if (open) {
     return (
       <View style={styles.screen}>
-        <TopAppBar title={DOCUMENTS[open].title} onBack={() => setOpen(null)} />
+        <TopAppBar title={DOCUMENTS[open].title} onBack={initial ? onBack : () => setOpen(null)} />
         <Panel>
           <DocumentText id={open} />
         </Panel>
@@ -158,22 +160,30 @@ export function Documents({onBack}: {onBack: () => void}) {
 
 // ---- fields -----------------------------------------------------------------
 
-/** A password field with Show/Hide. `confirm` is a second field that shares the toggle. */
+/**
+ * Password fields with Show/Hide, as his: a "Password" label, an optional
+ * hint under the field, and a second "Confirm password" field sharing the
+ * toggle. The eye icon is a Show/Hide text button here.
+ */
 export function PasswordFields({
   value,
   onChange,
   confirm,
   onConfirm,
   label = 'Password',
+  confirmLabel = `Confirm ${label.toLowerCase()}`,
+  hint,
 }: {
   value: string;
   onChange: (s: string) => void;
   confirm?: string;
   onConfirm?: (s: string) => void;
   label?: string;
+  confirmLabel?: string;
+  hint?: string;
 }) {
   const [shown, setShown] = useState(false);
-  const field = (v: string, set: (s: string) => void, a11y: string, placeholder: string) => (
+  const field = (v: string, set: (s: string) => void, a11y: string) => (
     <TextInput
       value={v}
       onChangeText={set}
@@ -181,7 +191,6 @@ export function PasswordFields({
       autoCapitalize="none"
       autoCorrect={false}
       autoComplete="password"
-      placeholder={placeholder}
       placeholderTextColor={colors.textDim}
       style={styles.field}
       accessibilityLabel={a11y}
@@ -191,10 +200,16 @@ export function PasswordFields({
     <View style={{gap: space.sm}}>
       <View style={styles.labelRow}>
         <Text style={type.label}>{label}</Text>
-        <QuietKey label={shown ? 'Hide' : 'Show'} onPress={() => setShown(s => !s)} />
+        <QuietKey label={shown ? 'Hide password' : 'Show password'} onPress={() => setShown(s => !s)} />
       </View>
-      {field(value, onChange, label, `At least ${MIN_PASSWORD} characters`)}
-      {onConfirm ? field(confirm ?? '', onConfirm, `${label}, again`, 'Enter it again') : null}
+      {field(value, onChange, label)}
+      {hint ? <Text style={type.caption}>{hint}</Text> : null}
+      {onConfirm ? (
+        <>
+          <Text style={[type.label, {marginTop: space.xs}]}>{confirmLabel}</Text>
+          {field(confirm ?? '', onConfirm, confirmLabel)}
+        </>
+      ) : null}
     </View>
   );
 }
@@ -221,198 +236,153 @@ const CodeField = ({code, setCode}: {code: string; setCode: (s: string) => void}
   />
 );
 
-const Problem = ({children}: {children: string}) =>
-  children ? (
-    <Text style={[type.body, {color: colors.textTitle}]} accessibilityLiveRegion="polite">
-      {children}
-    </Text>
-  ) : null;
 
 // ---- sign-in ----------------------------------------------------------------
 
-type SignInStep = 'choose' | 'google' | 'phone' | 'code' | 'email' | 'forgot' | 'notFound';
-
 /**
- * "Already have an account? Sign in": Google (real through Firebase when
- * configured, else SIMULATED), phone (SIMULATED code) or email and password. A match with the account saved on this phone
- * calls `onFound`, and the caller asks for the PIN (the normal PIN prompt;
- * both PINs let the member in the same way). Anything else is "No account
- * found", never a hint about which part was wrong.
+ * His "Sign in" (SignInExistingFragment), one screen: Sign in with Google,
+ * Sign in with your phone number (the phone and code steps, then the PIN),
+ * or email and password here. A match with the account saved on this phone
+ * calls `onFound`, and "Welcome back" asks for the PIN. A wrong email or
+ * password gets one message that never says which part was wrong.
+ *
+ * LOCAL ONLY, as his: no accounts server exists, so only an account made on
+ * this phone can be found. Google is real through Firebase when this build
+ * is configured, and his SIMULATED chooser otherwise.
  */
-export function SignIn({onFound, onCreate, onBack}: {onFound: () => void; onCreate: () => void; onBack: () => void}) {
-  const [step, setStep] = useState<SignInStep>('choose');
+export function SignIn({onFound, onPhone, onCreate, onBack}: {onFound: () => void; onPhone: () => void; onCreate: () => void; onBack: () => void}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [digits, setDigits] = useState('');
-  const [code, setCode] = useState('');
-  const [tried, setTried] = useState(false);
+  const [wrong, setWrong] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [who, setWho] = useState('');
-  const [problem, setProblem] = useState('');
-  const googleLive = googleAvailable();
+  const [forgot, setForgot] = useState(false);
+  const [changed, setChanged] = useState(false);
+  const [notFound, setNotFound] = useState<string | null>(null);
 
-  const go = (s: SignInStep) => {
-    setTried(false);
-    setProblem('');
-    setStep(s);
-  };
-  const attempt = async (route: SignInRoute, label: string) => {
+  const google = useGoogle(async a => {
+    const found = await device.findAccount({kind: 'google', email: a.email}).catch(() => false);
+    if (found) onFound();
+    else setNotFound(a.email);
+  });
+  const signIn = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      const found = await device.findAccount(route).catch(() => false);
+      // A password alone isn't enough: findAccount also needs the finished profile that "Welcome back" signs into.
+      const ok = await device.findAccount({kind: 'email', email: email.trim(), password}).catch(() => false);
       setPassword('');
-      if (found) onFound();
-      else {
-        setWho(label);
-        go('notFound');
-      }
+      setWrong(!ok);
+      if (ok) onFound();
     } finally {
       setBusy(false);
     }
   };
-  const emailOk = EMAIL.test(email.trim());
-  /** Real Google sign-in, then the same match as any Google sign-in: the account email on this phone. */
-  const google = async () => {
-    if (!googleLive) return go('google');
-    if (busy) return;
-    setProblem('');
-    setBusy(true);
-    const r = await googleSignIn();
-    setBusy(false);
-    if (r.ok) await attempt({kind: 'google', email: r.account.email}, r.account.email);
-    else setProblem(r.message);
-  };
 
-  if (step === 'forgot') {
-    return <ForgotPassword initialEmail={email.trim()} onBack={() => go('email')} />;
+  if (forgot) {
+    return (
+      <ForgotPassword
+        initialEmail={email.trim()}
+        onBack={() => setForgot(false)}
+        onDone={() => {
+          setForgot(false);
+          setWrong(false);
+          setChanged(true);
+        }}
+      />
+    );
   }
   return (
     <View style={styles.screen}>
-      <TopAppBar title="" onBack={step === 'choose' ? onBack : () => go(step === 'code' ? 'phone' : 'choose')} />
-      {step === 'choose' ? (
-        <>
-          <Text style={type.display} accessibilityRole="header">
-            Sign in
-          </Text>
-          <Text style={type.body}>Sign in with the account you made on this phone, then your PIN.</Text>
-          <View style={{gap: 10, marginTop: space.sm}}>
-            <Key label={busy && googleLive ? 'Opening Google…' : 'Sign in with Google'} variant="plain" arrow onPress={() => void google()} />
-            <Key label="Sign in with email" variant="plain" arrow onPress={() => go('email')} />
-            <Key label="Use your phone number" variant="signal" arrow onPress={() => go('phone')} />
-          </View>
-          <Problem>{problem}</Problem>
-          <Text style={type.caption}>
-            Your account lives on this phone only: there is no accounts server yet. Your identity in VIGIL is the signing key on this phone, so a new phone can't restore it.
-            {googleLive ? " With Google, the sign-in goes to Google and Firebase Authentication; VIGIL's own server never receives your email." : ''}
-          </Text>
-          <QuietKey label="Don't have an account? Create account" onPress={onCreate} />
-        </>
-      ) : step === 'google' ? (
-        <>
-          <Text style={type.display} accessibilityRole="header">
-            Your Google account
-          </Text>
-          <Text style={type.body}>The Google account you signed up with on this phone.</Text>
-          <Field
-            value={email}
-            onChangeText={setEmail}
-            placeholder="thandi@example.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            accessibilityLabel="Email address"
-          />
-          <Text style={type.caption}>{tried && !emailOk ? BAD_EMAIL : 'Checked against this phone only. Nothing is sent.'}</Text>
-          <Simulated>SIMULATED · GOOGLE SIGN-IN GOES LIVE WITH FIREBASE</Simulated>
-          <View style={{flexGrow: 1}} />
-          <Key label={busy ? 'Checking…' : 'Continue'} variant={emailOk ? 'signal' : 'plain'} onPress={() => (emailOk ? void attempt({kind: 'google', email: email.trim()}, email.trim()) : setTried(true))} />
-        </>
-      ) : step === 'email' ? (
-        <>
-          <Text style={type.display} accessibilityRole="header">
-            Sign in with email
-          </Text>
-          <Text style={type.label}>Email</Text>
-          <Field
-            value={email}
-            onChangeText={setEmail}
-            placeholder="thandi@example.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            accessibilityLabel="Email address"
-          />
-          <PasswordFields value={password} onChange={setPassword} />
-          <Text style={type.caption}>{tried && !emailOk ? BAD_EMAIL : 'Checked against this phone only. Nothing is sent. You still need your PIN.'}</Text>
-          <QuietKey label="Forgot password?" onPress={() => go('forgot')} />
-          <View style={{flexGrow: 1}} />
-          <Key
-            label={busy ? 'Checking…' : 'Continue'}
-            variant={emailOk && password ? 'signal' : 'plain'}
-            onPress={() => (emailOk && password ? void attempt({kind: 'email', email: email.trim(), password}, email.trim()) : setTried(true))}
-          />
-        </>
-      ) : step === 'phone' ? (
-        <>
-          <Text style={type.display} accessibilityRole="header">
-            Phone number
-          </Text>
-          <Text style={type.body}>The number you signed up with on this phone. We'll text a code to check it's you.</Text>
-          <View style={styles.phoneRow}>
-            <Text style={styles.prefix}>+27</Text>
-            <Field
-              value={digits}
-              onChangeText={t => setDigits(t.replace(/\D/g, '').slice(0, 9))}
-              placeholder="82 555 0101"
-              keyboardType="phone-pad"
-              autoComplete="tel"
-              style={{flex: 1}}
-              accessibilityLabel="Mobile number"
-            />
-          </View>
-          <Text style={type.caption}>{tried && !SA_DIGITS.test(digits) ? BAD_MOBILE : 'Checked against this phone only.'}</Text>
-          <View style={{flexGrow: 1}} />
-          <Key
-            label="Send code"
-            variant={SA_DIGITS.test(digits) ? 'signal' : 'plain'}
-            onPress={() => {
-              if (!SA_DIGITS.test(digits)) return setTried(true);
-              setCode('');
-              go('code');
-            }}
-          />
-        </>
-      ) : step === 'code' ? (
-        <>
-          <Text style={type.display} accessibilityRole="header">
-            Verify code
-          </Text>
-          <Text style={type.body}>{`Enter the 6-digit code we sent by text to +27${digits}.`}</Text>
-          <Simulated>SIMULATED · NO CODE IS SENT · ANY 6 DIGITS CONTINUE</Simulated>
-          <CodeField code={code} setCode={setCode} />
-          <View style={{flexGrow: 1}} />
-          <Key
-            label={busy ? 'Checking…' : 'Continue'}
-            variant={code.length === 6 ? 'signal' : 'plain'}
-            onPress={() => code.length === 6 && void attempt({kind: 'phone', phone: `+27${digits}`}, `+27${digits}`)}
-          />
-        </>
-      ) : (
-        <>
-          <Text style={type.display} accessibilityRole="header">
-            No account found
-          </Text>
-          <Panel>
-            <Text style={type.body}>
-              {`There's no VIGIL account for ${who} on this phone that matches what you entered. An account lives on the phone that made it: a new phone can't restore one.`}
-            </Text>
-          </Panel>
-          <View style={{flexGrow: 1}} />
-          <Key label="Create account" variant="signal" onPress={onCreate} />
-          <QuietKey label="Cancel" onPress={() => go('choose')} />
-        </>
-      )}
+      <TopAppBar title="" onBack={onBack} />
+      <Eyebrow>Welcome back</Eyebrow>
+      <Text style={type.display} accessibilityRole="header">
+        Sign in
+      </Text>
+      <View style={{gap: 10}}>
+        <Key label={google.busy ? 'Opening Google…' : 'Sign in with Google'} variant="plain" onPress={() => void google.start()} />
+        <Key label="Sign in with your phone number" variant="plain" onPress={onPhone} />
+      </View>
+      <InlineError>{google.problem}</InlineError>
+      <View style={styles.orRow}>
+        <View style={styles.orRule} />
+        <Text style={type.caption}>or with email</Text>
+        <View style={styles.orRule} />
+      </View>
+      <Text style={type.label}>Email</Text>
+      <Field
+        value={email}
+        onChangeText={setEmail}
+        placeholder="you@example.co.za"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoComplete="email"
+        accessibilityLabel="Email"
+      />
+      <PasswordFields value={password} onChange={setPassword} />
+      <QuietKey label="Forgot password?" onPress={() => setForgot(true)} />
+      <InlineError>{wrong ? "That email and password don't match an account on this phone." : ''}</InlineError>
+      <Key label={busy ? 'Checking…' : 'Sign in'} variant="signal" onPress={() => void signIn()} />
+      <Simulated>LOCAL ONLY · ACCOUNTS ON OTHER PHONES CAN'T BE FOUND YET</Simulated>
+      {google.live ? (
+        <Text style={type.caption}>With Google, the sign-in goes to Google and Firebase Authentication; VIGIL's own server never receives your email.</Text>
+      ) : null}
+      <QuietKey label="New to VUKA? Create an account" onPress={onCreate} />
+      {google.chooser}
+      <Dialog
+        visible={notFound !== null}
+        title="No account found"
+        confirm="Create an account"
+        onConfirm={() => {
+          setNotFound(null);
+          onCreate();
+        }}
+        cancel="Cancel"
+        onCancel={() => setNotFound(null)}>
+        {`There's no VUKA account for ${notFound ?? ''} on this phone.`}
+      </Dialog>
+      <Dialog visible={changed} title="Password changed" confirm="OK" onConfirm={() => setChanged(false)} onCancel={() => setChanged(false)}>
+        Sign in with your new password. You'll still need your PIN.
+      </Dialog>
+    </View>
+  );
+}
+
+/**
+ * His "Welcome back": the account is on this phone, so the member signs back
+ * in with their PIN. Both PINs sign in the same way, on the same screen; a
+ * wrong PIN shows the same "Try again." every time. Nothing is sent.
+ */
+export function WelcomeBack({onSignedIn, onBack, differentNumber}: {onSignedIn: () => void; onBack: () => void; differentNumber: boolean}) {
+  const [retry, setRetry] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const first = device.profile?.firstName?.trim();
+  const submit = async (pin: string) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if ((await device.signIn(pin)) === 'ok') return onSignedIn();
+      setRetry(true);
+    } catch {
+      setRetry(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <View style={styles.screen}>
+      <TopAppBar title="" onBack={onBack} />
+      <Eyebrow>Sign in</Eyebrow>
+      <Text style={type.display} accessibilityRole="header">
+        Enter your PIN
+      </Text>
+      <Text style={type.title}>{first ? `Welcome back, ${first}` : 'Welcome back'}</Text>
+      <Text style={type.body}>Your VUKA account is on this phone. Enter your PIN to sign back in.</Text>
+      <Simulated>LOCAL ONLY · ACCOUNTS ON OTHER PHONES CAN'T BE FOUND YET</Simulated>
+      <Text style={[type.label, {textAlign: 'center', marginTop: space.sm}]} accessibilityLiveRegion="polite">
+        {retry ? 'Try again.' : 'Enter your PIN'}
+      </Text>
+      <PinKeypad onComplete={pin => void submit(pin)} />
+      {differentNumber ? <QuietKey label="Use a different number" onPress={onBack} /> : null}
     </View>
   );
 }
@@ -449,8 +419,8 @@ export function AccountOnThisPhone({onSignIn, onBack}: {onSignIn: () => void; on
  * (SIMULATED: any 6 digits), then a new password twice. Resets the email
  * password only, never the PIN.
  */
-export function ForgotPassword({initialEmail, onBack}: {initialEmail: string; onBack: () => void}) {
-  const [stage, setStage] = useState<'email' | 'reset' | 'done'>('email');
+export function ForgotPassword({initialEmail, onBack, onDone}: {initialEmail: string; onBack: () => void; onDone: () => void}) {
+  const [stage, setStage] = useState<'email' | 'reset'>('email');
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
@@ -464,7 +434,7 @@ export function ForgotPassword({initialEmail, onBack}: {initialEmail: string; on
 
   const send = () => {
     if (!EMAIL.test(email.trim())) return setProblem(BAD_EMAIL);
-    if (!device.canResetPassword(email.trim())) return setProblem("There's no VIGIL account with an email password for that address on this phone.");
+    if (!device.canResetPassword(email.trim())) return setProblem("There's no VUKA account with an email password for that address on this phone.");
     setProblem('');
     setStage('reset');
   };
@@ -478,7 +448,7 @@ export function ForgotPassword({initialEmail, onBack}: {initialEmail: string; on
       setPassword('');
       setAgain('');
       setProblem('');
-      setStage('done');
+      onDone();
     } catch (e) {
       setProblem(e instanceof Error ? e.message : String(e));
     } finally {
@@ -490,69 +460,43 @@ export function ForgotPassword({initialEmail, onBack}: {initialEmail: string; on
     <View style={styles.screen}>
       <TopAppBar title="" onBack={onBack} />
       <Text style={type.display} accessibilityRole="header">
-        {stage === 'done' ? 'Password changed' : 'Reset your password'}
+        Reset your password
       </Text>
       {stage === 'email' ? (
         <>
           <Text style={type.body}>Enter the email you sign in with. We'll send a code to the recovery contact you chose in Settings.</Text>
+          <Text style={type.label}>Email</Text>
           <Field
             value={email}
             onChangeText={setEmail}
-            placeholder="thandi@example.com"
+            placeholder="you@example.co.za"
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
-            accessibilityLabel="Email address"
+            accessibilityLabel="Email"
           />
-          <Problem>{problem}</Problem>
-          <Text style={type.caption}>{NO_PIN_RESET}</Text>
-          <View style={{flexGrow: 1}} />
-          <Key label="Send code" variant="signal" onPress={send} />
-        </>
-      ) : stage === 'reset' ? (
-        <>
-          <Text style={type.body}>{`Enter the code we sent to ${to}, then choose a new password.`}</Text>
-          <Simulated>SIMULATED · NO CODE IS SENT · ANY 6 DIGITS CONTINUE</Simulated>
-          <CodeField code={code} setCode={setCode} />
-          <PasswordFields label="New password" value={password} onChange={setPassword} confirm={again} onConfirm={setAgain} />
-          <Problem>{problem}</Problem>
-          <Text style={type.caption}>Saved on this phone only, as a salted hash. {NO_PIN_RESET}</Text>
-          <View style={{flexGrow: 1}} />
-          <Key label={busy ? 'Saving…' : 'Save new password'} variant="signal" onPress={() => void save()} />
         </>
       ) : (
         <>
-          <Panel>
-            <Text style={type.body}>Sign in with your new password. You'll still need your PIN.</Text>
-          </Panel>
-          <View style={{flexGrow: 1}} />
-          <Key label="Back to sign in" variant="signal" onPress={onBack} />
+          <Text style={type.body}>{`Enter the code we sent to ${to}, then choose a new password.`}</Text>
+          <Simulated>SIMULATED · NO CODE IS SENT · ANY 6 DIGITS CONTINUE</Simulated>
+          <Text style={type.label}>6-digit code</Text>
+          <CodeField code={code} setCode={setCode} />
+          <PasswordFields label="New password" value={password} onChange={setPassword} confirm={again} onConfirm={setAgain} />
         </>
       )}
+      <InlineError>{problem}</InlineError>
+      <Key label={stage === 'email' ? 'Send code' : busy ? 'Saving…' : 'Save new password'} variant="signal" onPress={stage === 'email' ? send : () => void save()} />
+      <Text style={type.caption}>{NO_PIN_RESET}</Text>
     </View>
   );
 }
 
 // ---- settings ---------------------------------------------------------------
 
-const recoveryDetail = (ch: RecoveryChannel | null) =>
+/** His Recovery row's detail line. */
+export const recoveryDetail = (ch: RecoveryChannel | null) =>
   ch === 'email' ? 'Password resets go to your email' : ch === 'phone' ? 'Password resets go to your mobile number' : 'Choose where password resets go';
-
-/** Settings rows: Recovery, Documents and your rights, Sign out. */
-export function AccountSettings({onRecovery, onDocuments, onSignOut}: {onRecovery: () => void; onDocuments: () => void; onSignOut: () => void}) {
-  return (
-    <>
-      <Panel style={{padding: 0, overflow: 'hidden'}}>
-        <Row label="Recovery" detail={recoveryDetail(recoveryChannel(device.profile))} onPress={onRecovery} />
-        <View style={styles.rowRule} />
-        <Row label="Documents and your rights" detail="Terms (draft), privacy notice (draft), your rights, about the record" onPress={onDocuments} />
-      </Panel>
-      <Panel style={{padding: 0, overflow: 'hidden'}}>
-        <Row label="Sign out of this phone" detail="Needs your PIN · VIGIL stops listening until you sign in again" onPress={onSignOut} />
-      </Panel>
-    </>
-  );
-}
 
 /**
  * Settings → Recovery: Email or Mobile number for password-reset codes. Only
@@ -601,7 +545,7 @@ export function Recovery({onDone}: {onDone: () => void}) {
           );
         })}
       </View>
-      <Problem>{problem}</Problem>
+      <InlineError>{problem}</InlineError>
       <Panel>
         <Eyebrow>Your PIN</Eyebrow>
         <Text style={[type.body, {marginTop: space.sm}]}>
@@ -619,6 +563,8 @@ const styles = StyleSheet.create({
   simTag: {fontFamily: fonts.mono, fontSize: 11, letterSpacing: 0.5, color: colors.amberText},
   rowRule: {height: 1, backgroundColor: colors.borderSubtle, marginHorizontal: 20},
   labelRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
+  orRow: {flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm},
+  orRule: {flex: 1, height: 1, backgroundColor: colors.borderSubtle},
   phoneRow: {flexDirection: 'row', alignItems: 'center', gap: space.sm},
   prefix: {fontFamily: fonts.medium, fontSize: 18, color: colors.textTitle, paddingHorizontal: 4},
   field: {

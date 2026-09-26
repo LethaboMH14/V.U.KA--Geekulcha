@@ -18,11 +18,11 @@ import UserIcon from 'phosphor-react-native/lib/commonjs/icons/User';
 import {Chip, Eyebrow, GlassIcon, Key, Lamp, LevelMeter, ListeningLine, Panel, PinKeypad, QuietKey, Readout, Row, Rule, Surface, TopAppBar} from './components';
 import {colors, fonts, radii, space, THEME_CHOICE, THEME_CHOICES, TOUCH, type, type ThemeChoice} from './theme';
 import {Onboarding} from './onboarding';
-import {AccountSettings, Documents, Recovery} from './account';
+import {Documents, Recovery, recoveryDetail, type DocumentId} from './account';
 import {AlertBanner, GuardianHome, GuardianSetup, useGuardianPush, useGuardianWatch} from './guardian';
 import {openedFromGuardianPush, registerGuardianPush} from '../api/push';
 import {MyRecord} from './record';
-import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, profileContacts, type Delivery} from '../api/device';
+import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, profileContacts, recoveryChannel, type Delivery} from '../api/device';
 import {version} from '../../package.json';
 import {canFullScreen, consumeHelpRequest, openFullScreenSettings, runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
 import {EmergencyButton, OutlineKey} from './help';
@@ -45,7 +45,6 @@ type Screen =
   | 'profileEdit'
   | 'guardianSetup'
   | 'guardianHome'
-  | 'signInPin'
   | 'signOutPin'
   | 'recovery'
   | 'documents';
@@ -68,7 +67,7 @@ export function VigilApp() {
   // a check-in, any PIN screen, setup or while signed out (V5/V6).
   useGuardianPush(() => {
     const p = device.profile;
-    const busy = ['boot', 'onboarding', 'check', 'checked', 'end', 'recordPin', 'invitePin', 'signInPin', 'signOutPin', 'guardianSetup'].includes(screen);
+    const busy = ['boot', 'onboarding', 'check', 'checked', 'end', 'recordPin', 'invitePin', 'signOutPin', 'guardianSetup'].includes(screen);
     if (!p?.guardian || busy || (p.role === 'member' && device.signedOut)) return;
     if (screen !== 'guardianHome') setGuardianFrom(screen === 'home' ? 'home' : 'settings');
     setScreen('guardianHome');
@@ -89,6 +88,8 @@ export function VigilApp() {
   // When listening began (a server-issued session is running), or null.
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [invite, setInvite] = useState<Invite | null>(null);
+  /** The document opened from Settings → Documents and your rights. */
+  const [docId, setDocId] = useState<DocumentId>('terms');
   const home: Screen = 'home';
   const detector = useRef<Detector | null>(null);
   const journeyId = useRef<string | null>(null);
@@ -284,10 +285,6 @@ export function VigilApp() {
         setScreen(home);
         return true;
       }
-      if (screen === 'signInPin') {
-        setScreen('onboarding');
-        return true;
-      }
       if (screen === 'guardian' || screen === 'record' || screen === 'recordPin' || screen === 'invitePin' || screen === 'invite' || screen === 'profileEdit' || screen === 'signOutPin' || screen === 'recovery' || screen === 'documents') {
         setScreen('settings');
         return true;
@@ -305,22 +302,16 @@ export function VigilApp() {
     return <View style={{flex: 1, backgroundColor: colors.bgBase}} />;
   }
   if (screen === 'onboarding') {
-    return <Onboarding onDone={() => setScreen('home')} onGuardian={() => setScreen('guardianSetup')} onInvite={() => setScreen('invitePin')} onSignIn={() => setScreen('signInPin')} />;
-  }
-  if (screen === 'signInPin') {
-    // Returning member: the normal PIN prompt. Both PINs let them in the same way.
-    const first = device.profile?.firstName?.trim();
     return (
-      <PinGate
-        title={first ? `Welcome back, ${first}` : 'Welcome back'}
-        prompt="Enter your PIN"
-        onEnter={pin => device.signIn(pin)}
-        onDone={() => {
-          // Signed in: protection comes back on (always on, ADR-0046).
+      <Onboarding
+        onDone={() => setScreen('home')}
+        onGuardian={() => setScreen('guardianSetup')}
+        onInvite={() => setScreen('invitePin')}
+        onSignedIn={() => {
+          // Signed in on "Welcome back" (both PINs alike): protection comes back on (always on, ADR-0046).
           setPaused(false);
           setScreen('home');
         }}
-        onCancel={() => setScreen('onboarding')}
       />
     );
   }
@@ -432,7 +423,7 @@ export function VigilApp() {
         ) : screen === 'recovery' ? (
           <Recovery onDone={() => setScreen('settings')} />
         ) : screen === 'documents' ? (
-          <Documents onBack={() => setScreen('settings')} />
+          <Documents key={docId} initial={docId} onBack={() => setScreen('settings')} />
         ) : screen === 'settings' ? (
           <Settings
             onBack={() => setScreen(home)}
@@ -445,7 +436,10 @@ export function VigilApp() {
             onInvite={() => setScreen('invitePin')}
             onProfile={() => setScreen('profileEdit')}
             onRecovery={() => setScreen('recovery')}
-            onDocuments={() => setScreen('documents')}
+            onDocument={id => {
+              setDocId(id);
+              setScreen('documents');
+            }}
             onSignOut={() => setScreen('signOutPin')}
             delivery={delivery}
             detector={startedAt ? detector.current : null}
@@ -784,8 +778,12 @@ function AppearanceSetting() {
     (NativeModules.VigilLocation as {setTheme?: (n: string) => void} | undefined)?.setTheme?.(t);
   };
   return (
+    <View style={{gap: space.sm}}>
+      <Text style={[type.label, {color: colors.textSecondary, paddingHorizontal: 4}]} accessibilityRole="header">
+        Appearance
+      </Text>
     <Panel>
-      <Eyebrow>Appearance</Eyebrow>
+      <Text style={type.label}>Theme</Text>
       <View style={[styles.segment, {marginTop: space.sm}]}>
         {THEME_CHOICES.map(t => (
           <Pressable
@@ -806,6 +804,7 @@ function AppearanceSetting() {
             : 'Midnight is easier on the eyes at night.'}
       </Text>
     </Panel>
+    </View>
   );
 }
 
@@ -844,6 +843,14 @@ const hhmmOf = (ms: number) => {
 /** A send that failed for want of a network, not because the server refused it. */
 const offline = (d: Delivery) => Boolean(d.lastError && !/^\d{3} /.test(d.lastError));
 
+/**
+ * Settings, in Mutarisi's order (5aa5d24): it starts with the profile circle
+ * (no title), then Guardians, Guardian for others, Appearance, Documents and
+ * your rights, Privacy and data, and Account. VIGIL's own rows sit in the
+ * section they belong to (Guardian view, My record, the scorecard) or after
+ * Account (Server, the test-build detector). Kept: a back arrow, because
+ * VIGIL has no bottom tab bar to leave Settings by.
+ */
 function Settings({
   onBack,
   onGuardian,
@@ -852,7 +859,7 @@ function Settings({
   onInvite,
   onProfile,
   onRecovery,
-  onDocuments,
+  onDocument,
   onSignOut,
   delivery,
   detector,
@@ -863,48 +870,105 @@ function Settings({
   onGuard: () => void;
   onRecord: () => void;
   onInvite: () => void;
-  /** Edit profile, after the PIN. */
+  /** Edit profile. */
   onProfile: () => void;
-  /** Mutarisi's account rows (account.tsx): Recovery, Documents and your rights, Sign out. */
   onRecovery: () => void;
-  onDocuments: () => void;
+  /** One of the documents, from "Documents and your rights". */
+  onDocument: (id: DocumentId) => void;
   onSignOut: () => void;
   delivery: Delivery;
   detector: Detector | null;
 }) {
+  const p = device.profile;
+  const member = p?.role === 'member';
+  const invites = p?.invites ?? [];
+  const docs: [DocumentId, string][] = [
+    ['terms', 'Terms and conditions'],
+    ['privacy', 'Privacy notice'],
+    ['rights', 'Your rights'],
+    ['record', 'About the record'],
+  ];
   return (
     <View style={styles.screen}>
-      <TopAppBar title="Settings" onBack={onBack} center />
-      {device.profile?.role === 'member' ? <ProfileHeader onPress={onProfile} /> : null}
-      <Panel style={{padding: 0, overflow: 'hidden'}}>
-        <Row
-          label="My record"
-          detail={delivery.queued ? `${delivery.queued} waiting on this phone` : 'Your record, checked on this phone'}
-          onPress={onRecord}
-        />
-        <View style={styles.rowRule} />
-        <View style={styles.infoRow}>
-          <Text style={type.label}>Security scorecard</Text>
-          <Text style={[type.caption, {marginTop: 2}]}>
-            Arrives with the live scorecard. No number is shown until one is computed.
-          </Text>
-        </View>
-        <View style={styles.rowRule} />
-        <Row label="Add a guardian" detail="Needs your PIN; gives a one-time code to share" onPress={onInvite} />
-        <View style={styles.rowRule} />
-        <Row
-          label={device.profile?.guardian ? `You guard ${device.profile.guardian.memberName}` : "Be someone's guardian"}
-          detail={device.profile?.guardian ? 'Open your guardian view' : 'Enter the code they sent you'}
-          onPress={onGuard}
-        />
-        <View style={styles.rowRule} />
-        <Row label="Guardian view" detail="Preview what a guardian sees (simulated)" onPress={onGuardian} />
-      </Panel>
+      <TopAppBar title="" onBack={onBack} />
+      {member ? <ProfileHeader onPress={onProfile} /> : null}
+      {member ? (
+        <SettingsSection title="Guardians">
+          {invites.length === 0 ? (
+            <View style={styles.infoRow}>
+              <Text style={type.label}>No guardians yet</Text>
+            </View>
+          ) : (
+            invites.map((inv, i) => (
+              <View key={inv.guardianId}>
+                {i ? <View style={styles.rowRule} /> : null}
+                <View style={styles.infoRow}>
+                  <Text style={type.label}>{`Invite ${i + 1}`}</Text>
+                  <Text style={[type.caption, {marginTop: 2}]}>{`Code issued ${new Date(inv.at).toLocaleDateString()}`}</Text>
+                </View>
+              </View>
+            ))
+          )}
+          <View style={styles.rowRule} />
+          <Row label="Invite a guardian" detail="Needs your PIN" onPress={onInvite} />
+          <View style={styles.rowRule} />
+          <Row label="Guardian view" detail="Preview what a guardian sees (simulated)" onPress={onGuardian} />
+        </SettingsSection>
+      ) : null}
+      <SettingsSection title="Guardian for others">
+        {p?.guardian ? (
+          <Row label="Guardian standby" detail={`You're a guardian for ${p.guardian.memberName}`} onPress={onGuard} />
+        ) : (
+          <Row label="Protect someone" detail="Join as their guardian with an invite code" onPress={onGuard} />
+        )}
+      </SettingsSection>
       <AppearanceSetting />
-      {device.profile?.role === 'member' ? <AccountSettings onRecovery={onRecovery} onDocuments={onDocuments} onSignOut={onSignOut} /> : null}
+      <SettingsSection title="Documents and your rights">
+        {docs.map(([id, label], i) => (
+          <View key={id}>
+            {i ? <View style={styles.rowRule} /> : null}
+            <Row label={label} onPress={() => onDocument(id)} />
+          </View>
+        ))}
+      </SettingsSection>
+      {member ? (
+        <SettingsSection title="Privacy and data">
+          <Row label="Recovery" detail={recoveryDetail(recoveryChannel(p))} onPress={onRecovery} />
+          <View style={styles.rowRule} />
+          <Row
+            label="My record"
+            detail={delivery.queued ? `${delivery.queued} waiting on this phone` : 'Your record, checked on this phone'}
+            onPress={onRecord}
+          />
+          <View style={styles.rowRule} />
+          <View style={styles.infoRow}>
+            <Text style={type.label}>Security scorecard</Text>
+            <Text style={[type.caption, {marginTop: 2}]}>
+              Arrives with the live scorecard. No number is shown until one is computed.
+            </Text>
+          </View>
+        </SettingsSection>
+      ) : null}
+      {member ? (
+        // Kept: no "Delete profile from this phone". Deleting a member's key and record needs the server's deletion flow (spec §9).
+        <SettingsSection title="Account">
+          <Row label="Sign out of this phone" detail="Needs your PIN" onPress={onSignOut} />
+        </SettingsSection>
+      ) : null}
       {!device.simulated ? <ServerSetting /> : null}
       {testFeedAvailable() ? <DetectorTest detector={detector} /> : null}
+    </View>
+  );
+}
 
+/** A Settings group as his: a section label, then its rows on one card. */
+function SettingsSection({title, children}: {title: string; children: React.ReactNode}) {
+  return (
+    <View style={{gap: space.sm}}>
+      <Text style={[type.label, {color: colors.textSecondary, paddingHorizontal: 4}]} accessibilityRole="header">
+        {title}
+      </Text>
+      <Panel style={{padding: 0, overflow: 'hidden'}}>{children}</Panel>
     </View>
   );
 }
@@ -941,7 +1005,6 @@ function ProfileHeader({onPress}: {onPress: () => void}) {
         </View>
       </View>
       <Text style={[type.title, {marginTop: space.md, textAlign: 'center'}]}>{name}</Text>
-      <Text style={[type.caption, {marginTop: 2}]}>Edit profile · kept on this phone</Text>
     </Pressable>
   );
 }
