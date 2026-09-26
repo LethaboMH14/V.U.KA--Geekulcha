@@ -30,6 +30,14 @@ MODEL_SHA256 = "10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de
 TARGET_LABELS = ["Shout", "Yell", "Screaming", "Gunshot, gunfire", "Machine gun", "Fusillade", "Glass", "Shatter", "Breaking"]
 RATE, WINDOW, HOP = 16000, 15600, 7800
 GUN_NEIGHBOURS = ["Explosion", "Artillery fire", "Cap gun", "Fireworks", "Firecracker"]
+# Same labels and order as app/src/brain/detect/classes.ts CONTEXT (CEM-1).
+CONTEXT_LABELS = [
+    "Laughter", "Crying, sobbing", "Whimper", "Groan", "Gasp",
+    "Cheering", "Applause", "Crowd", "Children playing",
+    "Music", "Video game music",
+    "Police car (siren)", "Ambulance (siren)", "Fire engine, fire truck (siren)", "Siren",
+    "Television", "Radio",
+]
 
 
 def to_bp(score: float) -> int:
@@ -68,6 +76,7 @@ def main() -> int:
     labels = [l for l in open(a.labels, encoding="utf-8").read().splitlines() if l]
     targets = [labels.index(t) for t in TARGET_LABELS]
     neighbours = [labels.index(t) for t in GUN_NEIGHBOURS]
+    context = [labels.index(t) for t in CONTEXT_LABELS]
 
     it = Interpreter(model_content=blob)
     it.allocate_tensors()
@@ -93,6 +102,7 @@ def main() -> int:
                     "topIndex": top,
                     "topBp": to_bp(s[top]),
                     "gunNeighbourBp": max(to_bp(s[i]) for i in neighbours),
+                    "contextBp": [to_bp(s[i]) for i in context],
                 })
                 start += HOP
             fo.write(json.dumps({"clip": r["filename"], "category": r["category"], "label": r["label"], "fold": r.get("fold", ""),
