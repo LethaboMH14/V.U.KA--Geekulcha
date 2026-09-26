@@ -30,18 +30,25 @@ def guardian_for_key(cur, signer_key_id):
 WHY_REASONS = 3
 
 
-def why_for(cur, incident_id, payload_key):
-    """The band and strongest reasons behind the incident's latest explained detection."""
-    if payload_key is None:
+# The signal outcome that raised each trigger. contact_lost and a duress PIN
+# given outside a check-in (e.g. at pause) have no detection behind them.
+TRIGGER_OUTCOME = {"no_answer": "no_answer", "duress_signal": "duress_pin"}
+
+
+def why_for(cur, incident_id, trigger, payload_key):
+    """Band and reasons of the evidence bound to the detection that raised THIS alert, or None."""
+    outcome = TRIGGER_OUTCOME.get(trigger)
+    if payload_key is None or outcome is None:
         return None
     cur.execute(
         """SELECT p.subject_id, p.event_id, p.nonce, p.ciphertext
            FROM incident_signals s
+           JOIN signal_deadlines d ON d.signal_event_id = s.signal_event_id AND d.outcome = %s
            JOIN evidence_links e ON e.signal_event_id = s.signal_event_id
            JOIN private_payloads p ON p.subject_id = e.subject_id AND p.event_id = e.event_id
            WHERE s.incident_id::text = %s
-           ORDER BY e.received_at DESC, e.event_id DESC LIMIT 1""",
-        (incident_id,),
+           ORDER BY d.fallback_due_at, s.signal_event_id LIMIT 1""",
+        (outcome, incident_id),
     )
     row = cur.fetchone()
     if row is None:
@@ -81,6 +88,6 @@ def alerts_for(cur, guardian_id, limit=20, payload_key=None):
             "opened_at": opened_at.isoformat(),
             "closed_at": closed_at.isoformat() if closed_at else None,
             "close_reason": close_reason,
-            "why": why_for(cur, incident_id, payload_key),
+            "why": why_for(cur, incident_id, trigger, payload_key),
         })
     return out

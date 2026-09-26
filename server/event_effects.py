@@ -111,6 +111,8 @@ def apply_event(cur, store, subject_id, entry, stored, now):
                         (payload["signal_event_id"], subject_id, entry["target_id"]))
             if cur.fetchone() is None:
                 raise EventRefused("signal_unknown", 409)
+            # Exact pv2 evidence wins over the older next-signal guess (pv1).
+            cur.execute("UPDATE evidence_links SET signal_event_id=NULL WHERE signal_event_id=%s AND pv=1", (payload["signal_event_id"],))
             cur.execute("SELECT 1 FROM evidence_links WHERE signal_event_id=%s", (payload["signal_event_id"],))
             if cur.fetchone() is not None:
                 raise EventRefused("invalid_request")

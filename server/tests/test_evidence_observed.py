@@ -22,6 +22,27 @@ def evidence(event, journey="sim_journey_a", **over):
     return event(payload, journey=journey)
 
 
+def deliver(sim_api):
+    _, _, _, _, _, _, now, connect = sim_api
+    with connect() as conn, conn.cursor() as cur:
+        rows = [r for r in claim_due(cur, now=now[0]) if r["kind"] == "guardian_alert"]
+    notifier = SimulatedGuardianNotifier(connect, lambda: now[0])
+    for row in rows:
+        assert deliver_guardian_alert(connect, notifier, row, now[0])
+
+
+def duress_and_deliver(sim_api, detection):
+    """The real duress path: the check-in opens, the member gives the duress PIN."""
+    from server.tests.test_slice3_events import opened as _opened
+    _, _, _, _, event, post, _, _ = sim_api
+    op = _opened(event, detection)
+    assert post(op).status_code == 201
+    assert post(event({"kind": "checkin_result", "pv": 1, "checkin_id": op["payload"]["checkin_id"],
+                       "result": "duress_pin", "attempt": 1}, journey=detection["target_id"])).status_code == 201
+    deliver(sim_api)
+    return op
+
+
 def counts(connect):
     with connect() as conn, conn.cursor() as cur:
         out = {}
@@ -60,16 +81,9 @@ def test_the_guardian_sees_the_band_and_three_reason_names_never_numbers(sim_api
     store, client, subject, _, event, post, now, connect = sim_api
     _gid, gkey, gkid = add_real_guardian(sim_api)
     assert post(evidence(event)).status_code == 201
-    assert post(signal(event)).status_code == 201
-    with connect() as conn, conn.cursor() as cur:
-        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject,))
-        cur.execute("SELECT incident_id::text FROM incidents")
-        incident = cur.fetchone()[0]
-        request_alarm(cur, incident, trigger="duress_signal", now=now[0])
-        rows = [r for r in claim_due(cur, now=now[0]) if r["kind"] == "guardian_alert"]
-    notifier = SimulatedGuardianNotifier(connect, lambda: now[0])
-    for row in rows:
-        assert deliver_guardian_alert(connect, notifier, row, now[0])
+    detection = signal(event)
+    assert post(detection).status_code == 201
+    duress_and_deliver(sim_api, detection)
     alert = alerts(client, gkey, gkid).json()["alerts"][0]
     assert alert["why"] == {"band": "strong", "reasons": ["scream_single", "snatch", "shout_or_yell"]}
 
@@ -159,17 +173,50 @@ def test_v2_why_reads_only_exactly_bound_evidence(sim_api):
     assert post(ev2(event, reasons=[{"name": "gun_like_single", "db": 8}], tally_db=8, band="some")).status_code == 201
     detection = signal(event)
     assert post(detection).status_code == 201
-    with connect() as conn, conn.cursor() as cur:
-        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject,))
-        cur.execute("SELECT incident_id::text FROM incidents")
-        incident = cur.fetchone()[0]
-        request_alarm(cur, incident, trigger="duress_signal", now=now[0])
-        rows = [r for r in claim_due(cur, now=now[0]) if r["kind"] == "guardian_alert"]
-    notifier = SimulatedGuardianNotifier(connect, lambda: now[0])
-    for row in rows:
-        assert deliver_guardian_alert(connect, notifier, row, now[0])
+    duress_and_deliver(sim_api, detection)
     assert alerts(client, gkey, gkid).json()["alerts"][0]["why"] is None
     sig = detection["details"]["event_id"]
     assert post(ev2(event, decision="prompt", signal_event_id=sig, candidate=dict(CAND, level="prompt"),
                     reasons=[{"name": "shout_or_yell", "db": 4}, {"name": "glass_or_breaking", "db": 4}], tally_db=8, band="some")).status_code == 201
     assert alerts(client, gkey, gkid).json()["alerts"][0]["why"] == {"band": "some", "reasons": ["shout_or_yell", "glass_or_breaking"]}
+
+
+def test_why_is_the_evidence_of_the_detection_that_raised_the_alert(sim_api):
+    """A no-answer alert for detection A never shows a later detection B's reasons."""
+    from datetime import timedelta
+    from server.event_effects import fire_due_for_subject
+    store, client, subject, _, event, post, now, connect = sim_api
+    _gid, gkey, gkid = add_real_guardian(sim_api)
+    a = signal(event)
+    assert post(a).status_code == 201
+    assert post(ev2(event, decision="prompt", signal_event_id=a["details"]["event_id"], candidate=dict(CAND, level="prompt"),
+                    reasons=[{"name": "shout_or_yell", "db": 4}, {"name": "glass_or_breaking", "db": 4}], tally_db=8, band="some")).status_code == 201
+    assert post(opened(event, a)).status_code == 201
+    b = signal(event)
+    assert post(b).status_code == 201
+    assert post(ev2(event, decision="prompt", signal_event_id=b["details"]["event_id"], candidate=dict(CAND, level="prompt"),
+                    reasons=[{"name": "gun_like_single", "db": 8}], tally_db=8, band="some")).status_code == 201
+    ob = opened(event, b)
+    assert post(ob).status_code == 201
+    assert post(event({"kind": "checkin_result", "pv": 1, "checkin_id": ob["payload"]["checkin_id"],
+                       "result": "normal_pin", "attempt": 1})).status_code == 201
+    now[0] += timedelta(seconds=120)
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM subject_heads WHERE subject_id=%s FOR UPDATE", (subject,))
+        fire_due_for_subject(cur, store, subject, now[0])
+    deliver(sim_api)
+    got = alerts(client, gkey, gkid).json()["alerts"]
+    assert [x["trigger"] for x in got] == ["no_answer"]
+    assert got[0]["why"] == {"band": "some", "reasons": ["shout_or_yell", "glass_or_breaking"]}
+
+
+def test_exact_v2_evidence_replaces_an_old_pv1_guess(sim_api):
+    _, _, _, _, event, post, _, connect = sim_api
+    assert post(evidence(event)).status_code == 201  # pv1, queued before its signal by an older app
+    detection = signal(event)
+    assert post(detection).status_code == 201  # pv1 guess links to it
+    sig = detection["details"]["event_id"]
+    assert post(ev2(event, decision="prompt", signal_event_id=sig, candidate=dict(CAND, level="prompt"))).status_code == 201
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT pv FROM evidence_links WHERE signal_event_id=%s", (sig,))
+        assert cur.fetchall() == [(2,)]
