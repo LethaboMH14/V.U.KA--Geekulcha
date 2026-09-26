@@ -14,7 +14,7 @@
 - "Free to users" is not said. Use: "free to the uninsured; funded through the insurer's premium for policyholders".
 - **The price becomes an output of the model, not an input.**
 
-**Working number:** a single tier at **R50** ([comment](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/43#issuecomment-5800893988)). Babatunde decides by **Fri 25 Sep** and quotes the script's output.
+**DECIDED 26 Sep 2026:** a single tier at **R20 per member, per month**. R20 is final; no other price is used. Anchors: GuardMe **R19.90** (`docs/EVIDENCE.md`) and iTOO express-kidnapping cover **R22.50** (`docs/EVIDENCE.md`). Break-even **10,973** at R20 (`ESTIMATE`, `scripts/economics_vigil_anchor.py`).
 
 ## 2 · Open points to settle here
 
@@ -26,7 +26,7 @@
 | 4 | **Tools counted twice?** `fixed_monthly` already includes R5,090 for "tools/hosting/insurance" (`scripts/economics_vigil_anchor.py:14`). Split it before adding R3,340 | [review](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/43#issuecomment-5801391858) | Babatunde |
 | 5 | **Base fixed cost.** The R160,290 figure implies a base of R156,950; the script prints R155,659.47. Commit any input change and quote the output | [review](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/43#issuecomment-5800723436) | Babatunde |
 | 6 | **Free members cost R5.72/month each.** Add a free-to-paying ratio input, or name who funds free members | [review](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/43#issuecomment-5800804685) | Babatunde |
-| 7 | **Tier structure:** a single R50 tier, or base ≈R20 + premium ≈R100 + a per-record fee. The premium tier needs a **named segment** | [Babatunde](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/43#issuecomment-5800759621) | Babatunde |
+| 7 | **Tier structure — RESOLVED 26 Sep:** a single **R20** tier. No premium tier, no range. | [Babatunde](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/43#issuecomment-5800759621) | Babatunde |
 | 8 | **Stipends:** 5 stipends for a 7-person team | [Babatunde](https://github.com/LethaboMH14/V.U.KA--Geekulcha/pull/43#issuecomment-5800598590) | Team |
 
 ## 3 · Figures to confirm before they are tagged `FACT`
