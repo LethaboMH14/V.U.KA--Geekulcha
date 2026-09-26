@@ -11,7 +11,7 @@
  */
 import React, {useEffect, useRef, useState} from 'react';
 import {AppState, BackHandler, NativeModules, Platform, Pressable, ScrollView, Share, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
-import {CheckCircle, GearSix, Microphone, Phone, ShareNetwork, ShieldChevron, UserPlus, Users, Waveform, WifiSlash} from './icons';
+import {CheckCircle, GearSix, Microphone, Phone, ShareNetwork, ShieldChevron, UserPlus, Users, WifiSlash} from './icons';
 // Deep-imported one by one, as icons.ts does (the barrel opens every icon file).
 import PencilSimple from 'phosphor-react-native/lib/commonjs/icons/PencilSimple';
 import UserIcon from 'phosphor-react-native/lib/commonjs/icons/User';
@@ -23,7 +23,7 @@ import {MyRecord} from './record';
 import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, profileContacts, type Delivery} from '../api/device';
 import {version} from '../../package.json';
 import {canFullScreen, consumeHelpRequest, openFullScreenSettings, runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
-import {HoldForHelp} from './help';
+import {EmergencyButton, OutlineKey} from './help';
 import {askLocation, startWindow, stopWindow, windowUntil} from '../sensors/location';
 import type {Decision, Reason} from '../brain/detect';
 
@@ -123,18 +123,24 @@ export function VigilApp() {
   };
 
   /**
-   * Hold-for-help or the Quick Settings tile: open a check-in now. The same
-   * screen, the same PINs and the same escalation as a detection.
+   * Home's Emergency button or the Quick Settings tile: open a check-in now.
+   * The same screen, the same PINs and the same escalation as a detection.
+   * One at a time: the grader's prompt slot, and a ref for the moment the
+   * event is being queued (the browser preview has no grader).
    */
+  const helping = useRef(false);
   const askForHelp = async () => {
     const jid = journeyId.current;
-    if (!jid || screen === 'check' || screen === 'checked') return;
+    if (!jid || helping.current || screen === 'check' || screen === 'checked') return;
     if (detector.current && !detector.current.reserveForHelp()) return;
+    helping.current = true;
     try {
       const id = await device.help(jid, version);
       openCheck(id);
     } catch {
       detector.current?.setCheckinOpen(false);
+    } finally {
+      helping.current = false;
     }
   };
   // Opened from the Quick Settings tile: ask once listening is running.
@@ -352,21 +358,13 @@ export function VigilApp() {
             delivery={delivery}
             detector={startedAt ? detector.current : null}
           />
-        ) : startedAt ? (
-          <Listening
+        ) : (
+          <Home
             since={startedAt}
             onInvite={() => setScreen('invitePin')}
             delivery={delivery}
             level={level}
             sharingUntil={sharingUntil}
-            onHelp={() => void askForHelp()}
-            onPause={() => setScreen('end')}
-            onSimCheck={device.simulated ? () => openCheck('00000000-0000-4000-8000-000000000000') : undefined}
-            onMenu={() => setScreen('settings')}
-          />
-        ) : (
-          <NotListening
-            onInvite={() => setScreen('invitePin')}
             paused={paused}
             starting={starting}
             armError={armError}
@@ -376,6 +374,9 @@ export function VigilApp() {
               setArmError(null);
               void startListening();
             }}
+            onHelp={() => void askForHelp()}
+            onPause={() => setScreen('end')}
+            onSimCheck={device.simulated ? () => openCheck('00000000-0000-4000-8000-000000000000') : undefined}
             onMenu={() => setScreen('settings')}
           />
         )}
@@ -401,15 +402,26 @@ function useDelivery(): Delivery {
 
 const greeting = (d: Date) => (d.getHours() < 12 ? 'Good morning' : d.getHours() < 18 ? 'Good afternoon' : 'Good evening');
 
-/** The prototype's greeting row: eyebrow, first name, settings in a glass circle. */
+/**
+ * The greeting: eyebrow and first name centred (Mutarisi's 012f997), with
+ * Settings in a glass circle at the right. It is the way into Settings here,
+ * so it stays (his decorative dots icon had no job and went).
+ */
 function Greeting({onMenu}: {onMenu: () => void}) {
   return (
     <View style={styles.greeting}>
-      <View>
+      <View style={{alignItems: 'center', paddingHorizontal: TOUCH}}>
         <Eyebrow style={{marginBottom: 4}}>{greeting(new Date())}</Eyebrow>
-        <Text style={styles.name}>{device.profile?.firstName ?? 'VIGIL'}</Text>
+        <Text style={[styles.name, {textAlign: 'center'}]} accessibilityRole="header">
+          {device.profile?.firstName ?? 'VIGIL'}
+        </Text>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={onMenu} hitSlop={6} style={styles.iconBtn}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Settings"
+        onPress={onMenu}
+        hitSlop={6}
+        style={[styles.iconBtn, {position: 'absolute', right: 0, top: 0, bottom: 0}]}>
         <GlassIcon>
           <GearSix size={20} color={colors.textTitle} />
         </GlassIcon>
@@ -521,85 +533,57 @@ function armMessage(e: ArmResult): string {
   if (e.ok) return '';
   switch (e.reason) {
     case 'microphone':
-      return "VIGIL needs the microphone to listen. Allow it in the app's settings, then turn listening on.";
+      return "VIGIL needs the microphone to listen. Allow it in the app's settings, then tap Activate.";
     case 'notifications':
-      return 'VIGIL needs to show its listening notification. Allow notifications, then turn listening on.';
+      return 'VIGIL needs to show its listening notification. Allow notifications, then tap Activate.';
     case 'model':
       return "The listening model on this phone didn't pass its check, so VIGIL can't listen. Reinstall the app.";
     case 'capture':
-      return "VIGIL couldn't start listening. Keep the app open, then turn listening on.";
+      return "VIGIL couldn't start listening. Keep the app open, then tap Activate.";
     default:
       return 'Listening is not available on this device.';
   }
 }
 
-function NotListening({
-  onInvite,
-  paused,
-  starting,
-  armError,
-  startError,
-  onStart,
-  onMenu,
-}: {
-  onInvite: () => void;
-  paused: boolean;
-  starting: boolean;
-  armError: ArmResult | null;
-  startError: string | null;
-  onStart: () => void;
-  onMenu: () => void;
-}) {
-  const why = armError && !armError.ok ? armMessage(armError) : startError;
-  return (
-    <View style={styles.screen}>
-      <Greeting onMenu={onMenu} />
-      <Panel hero>
-        <View style={styles.rowHeader}>
-          <GlassIcon>
-            <ShieldChevron size={20} color={colors.textTitle} />
-          </GlassIcon>
-          <Eyebrow>VIGIL</Eyebrow>
-        </View>
-        <Text style={[type.display, {marginTop: space.md}]} accessibilityRole="header">
-          {starting ? 'Starting…' : paused ? 'Paused' : 'Not listening'}
-        </Text>
-        <Text style={[type.body, {marginTop: 10, marginBottom: 20}]} accessibilityLiveRegion="polite">
-          {why ??
-            (paused
-              ? 'You paused listening with your PIN. Nothing is heard until you turn it back on.'
-              : 'VIGIL listens on this phone all the time. If it hears trouble, it asks for your PIN.')}
-        </Text>
-        <Key label={starting ? 'Starting…' : 'Turn on listening'} variant="signal" arrow onPress={onStart} disabled={starting} />
-      </Panel>
-      <GuardiansCard delivery={device.delivery()} live={false} onInvite={onInvite} />
-      <View style={styles.note}>
-        <Microphone size={16} color={colors.textDim} style={{marginTop: 2}} />
-        <Text style={[type.caption, {flex: 1}]}>Discreet, not invisible: Android shows a microphone dot while VIGIL is listening.</Text>
-      </View>
-    </View>
-  );
-}
-
-function Listening({
+/**
+ * Home: one layout for both states (Mutarisi's design). The hero card's
+ * button toggles in place: "Activate" starts listening; while active it is an
+ * outlined "Deactivate", which opens the same pause PIN as before (ADR-0041:
+ * one frame for both PINs). The Emergency button and Guardians stay put.
+ * Unlike his simulated build, "Active" here means the microphone really is
+ * listening (ADR-0046), so the card says so.
+ */
+function Home({
   since,
   onInvite,
   delivery,
   level,
   sharingUntil,
+  paused,
+  starting,
+  armError,
+  startError,
+  onStart,
   onHelp,
   onPause,
   onSimCheck,
   onMenu,
 }: {
-  since: number;
+  /** When listening began, or null while VIGIL is not active. */
+  since: number | null;
   onInvite: () => void;
   delivery: Delivery;
   level: Level;
   /** When the 30-minute location window after a check-in ends (0: none). */
   sharingUntil: number;
-  /** Hold-for-help: the member asks themselves. */
+  paused: boolean;
+  starting: boolean;
+  armError: ArmResult | null;
+  startError: string | null;
+  onStart: () => void;
+  /** Emergency: the member asks themselves (a check-in, while active). */
   onHelp: () => void;
+  /** Deactivate: the pause PIN. */
   onPause: () => void;
   /** Browser preview only: a check-in with no detection behind it. */
   onSimCheck?: () => void;
@@ -610,30 +594,49 @@ function Listening({
     const t = setInterval(() => setNow(Date.now()), 30000);
     return () => clearInterval(t);
   }, []);
-  const mins = Math.floor((now - since) / 60000);
+  const active = since !== null;
+  const mins = since !== null ? Math.floor((now - since) / 60000) : 0;
+  const why = armError && !armError.ok ? armMessage(armError) : startError;
+  const title = active ? 'Active' : starting ? 'Starting…' : why ? 'Not listening' : 'Ready';
+  const body = active
+    ? `Listening on this phone, all the time${mins >= 1 ? ` · for ${mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} h ${mins % 60} min`}` : ''}. If it hears trouble, it asks for your PIN.`
+    : why ??
+      (paused
+        ? 'You deactivated VIGIL with your PIN. Nothing is heard until you activate it again.'
+        : "VIGIL isn't listening yet. Activate it and it listens on this phone until you deactivate it with your PIN.");
   return (
     <View style={styles.screen}>
       <Greeting onMenu={onMenu} />
       <Panel hero>
         <View style={styles.rowHeader}>
           <GlassIcon>
-            <Waveform size={20} color={colors.textTitle} />
+            <ShieldChevron size={20} color={colors.textTitle} />
           </GlassIcon>
-          <Eyebrow>VIGIL · listening</Eyebrow>
+          <Eyebrow>{active ? 'VIGIL · listening' : 'VIGIL'}</Eyebrow>
         </View>
-        <Text style={[type.display, {marginTop: space.md}]} accessibilityRole="header">
-          Listening
+        <Text style={[type.display, {marginTop: space.md}]} accessibilityRole="header" accessibilityLiveRegion="polite">
+          {title}
         </Text>
-        <View style={{marginTop: space.md, marginBottom: space.xs}}>
-          <ListeningLine />
-        </View>
-        <Text style={[type.body, {marginBottom: space.lg}]}>
-          On this phone, all the time{mins >= 1 ? ` · for ${mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} h ${mins % 60} min`}` : ''}. If it hears
-          trouble, it asks for your PIN.
+        {active ? (
+          <View style={{marginTop: space.md, marginBottom: space.xs}}>
+            <ListeningLine />
+          </View>
+        ) : null}
+        <Text style={[type.body, {marginTop: 10, marginBottom: 20}]} accessibilityLiveRegion="polite">
+          {body}
         </Text>
-        <LevelMeter score={level.score} threshold={level.threshold} label={level.label} />
+        {active ? (
+          <View style={{marginBottom: 20}}>
+            <LevelMeter score={level.score} threshold={level.threshold} label={level.label} />
+          </View>
+        ) : null}
+        {active ? (
+          <OutlineKey label="Deactivate" onPress={onPause} accessibilityHint="Asks for your PIN" />
+        ) : (
+          <Key label={starting ? 'Starting…' : 'Activate'} variant="signal" onPress={onStart} disabled={starting} />
+        )}
       </Panel>
-      {sharingUntil > now && windowUntil() ? (
+      {active && sharingUntil > now && windowUntil() ? (
         <View style={styles.note}>
           <Text style={[type.caption, {flex: 1}]}>
             After a check-in, this phone sends its location until {hhmmOf(sharingUntil)}. Your guardians see it only if they were
@@ -641,11 +644,14 @@ function Listening({
           </Text>
         </View>
       ) : null}
-      <FullScreenNotice />
-      <HoldForHelp onHelp={onHelp} />
-      <GuardiansCard delivery={delivery} live onInvite={onInvite} />
-      <Key label="Pause listening" variant="ghost" onPress={onPause} accessibilityHint="Asks for your PIN" />
-      {onSimCheck ? <QuietKey label="Preview: show a check-in" onPress={onSimCheck} /> : null}
+      {active ? <FullScreenNotice /> : null}
+      <EmergencyButton onHelp={onHelp} listening={active} />
+      <GuardiansCard delivery={delivery} live={active} onInvite={onInvite} />
+      <View style={styles.note}>
+        <Microphone size={16} color={colors.textDim} style={{marginTop: 2}} />
+        <Text style={[type.caption, {flex: 1}]}>Discreet, not invisible: Android shows a microphone dot while VIGIL is active.</Text>
+      </View>
+      {active && onSimCheck ? <QuietKey label="Preview: show a check-in" onPress={onSimCheck} /> : null}
     </View>
   );
 }
@@ -1162,7 +1168,7 @@ function PinGate({
   );
 }
 
-/** Pausing listening needs the PIN (ADR-0041, G35). Same frame for both PINs. */
+/** Deactivate (pausing listening) needs the PIN (ADR-0041, G35). Same frame for both PINs. */
 function EndJourney({
   onEnter,
   onDone,
@@ -1190,15 +1196,15 @@ function EndJourney({
   return (
     <ScrollView style={{backgroundColor: colors.bgBase}} contentContainerStyle={styles.flat}>
       <Text style={[type.title, {textAlign: 'center'}]} accessibilityRole="header">
-        Pause listening
+        Deactivate
       </Text>
-      <Text style={[type.body, {textAlign: 'center', marginTop: space.sm}]}>Enter your PIN to pause listening</Text>
+      <Text style={[type.body, {textAlign: 'center', marginTop: space.sm}]}>Enter your PIN to stop VIGIL listening</Text>
       <Text style={styles.pinNote} accessibilityLiveRegion="polite">
         {retry ? 'Try again' : ''}
       </Text>
       <PinKeypad onComplete={submit} />
       <View style={{marginTop: space.lg}}>
-        <QuietKey label="Keep listening" onPress={onCancel} />
+        <QuietKey label="Keep VIGIL active" onPress={onCancel} />
       </View>
     </ScrollView>
   );
@@ -1347,7 +1353,7 @@ const TOP = TOP_INSET;
 const styles = StyleSheet.create({
   page: {flexGrow: 1, paddingHorizontal: 22, paddingBottom: 28, paddingTop: 12 + TOP, width: '100%', maxWidth: 560, alignSelf: 'center'},
   screen: {flexGrow: 1, gap: 14},
-  greeting: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm, marginBottom: space.xs},
+  greeting: {alignItems: 'center', justifyContent: 'center', minHeight: TOUCH, marginTop: space.sm, marginBottom: space.xs},
   name: {fontFamily: fonts.semibold, fontSize: 26, lineHeight: 32, letterSpacing: -0.3, color: colors.textTitle},
   iconBtn: {minHeight: TOUCH, minWidth: TOUCH, justifyContent: 'center', alignItems: 'flex-end'},
   rowHeader: {flexDirection: 'row', alignItems: 'center', gap: 10},

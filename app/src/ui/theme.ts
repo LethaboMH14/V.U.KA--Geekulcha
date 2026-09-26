@@ -185,6 +185,10 @@ export const colors = {
   amberInk: ivory.amberText,
   onAmber: ivory.textInverse,
   rippleOnSignal: ivory.rippleOnAction,
+  /** Behind a pop-up: dims the screen so the card reads as on top. */
+  scrim: base.dark ? 'rgba(0,0,0,0.62)' : 'rgba(31,35,40,0.42)',
+  /** The pop-up card: an opaque surface, never glass, so its words never sit on a blur. */
+  dialogFill: base.bgSurface,
 } as const;
 
 export const radii = {
@@ -192,6 +196,8 @@ export const radii = {
   sm: 12,
   md: 20,
   panel: 28,
+  /** Pop-ups (Mutarisi's ThemeOverlay.Vuka.Dialog: 28 dp corners). */
+  dialog: 28,
   bezel: 34,
   round: 999,
 } as const;
@@ -219,6 +225,8 @@ export const type = {
   /** The big state word: Plex SemiBold 32. */
   display: {fontFamily: fonts.semibold, fontSize: 32, lineHeight: 36, letterSpacing: -0.3, color: colors.textTitle},
   title: {fontFamily: fonts.semibold, fontSize: 22, lineHeight: 28, color: colors.textTitle},
+  /** A pop-up's title: ink, bold, one step under a screen title. */
+  dialogTitle: {fontFamily: fonts.semibold, fontSize: 20, lineHeight: 26, color: colors.textTitle},
   /** Plex Medium 11, uppercase, +10% tracking. */
   eyebrow: {
     fontFamily: fonts.medium,

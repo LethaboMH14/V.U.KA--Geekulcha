@@ -1,4 +1,4 @@
-import {answerStatus, claimAnswer, notRecorded, standDownQuestion} from '../guardian';
+import {answerStatus, answerTimeline, claimAnswer, notRecorded, standDownQuestion} from '../guardian';
 
 describe('guardian alert answers', () => {
   it('sends Call 10111 once per alert, however often it is pressed', () => {
@@ -27,5 +27,18 @@ describe('guardian alert answers', () => {
     for (const a of ['called_10111', 'handling', 'stand_down'] as const) {
       expect(notRecorded(a)).toMatch(/wasn't recorded yet\. Check your data and try again\.$/);
     }
+  });
+
+  it('the response timeline shows only what happened, in order', () => {
+    const open = {opened_at: '2026-09-26T19:58:00Z', closed_at: null};
+    expect(answerTimeline(open, [], {})).toEqual([
+      {label: 'Alert raised', at: open.opened_at},
+      {label: 'Waiting on stand-down or closure', at: null},
+    ]);
+    const t = answerTimeline(open, ['called_10111', 'stand_down'], {called_10111: '2026-09-26T19:59:00Z', stand_down: '2026-09-26T20:07:00Z'});
+    expect(t.map(s => s.label)).toEqual(['Alert raised', 'You pressed Call 10111', 'You stood down']);
+    // Closed by someone else: the closure is the last row, not a stand-down that didn't happen.
+    const closed = answerTimeline({...open, closed_at: '2026-09-26T20:10:00Z'}, ['handling'], {handling: '2026-09-26T20:00:00Z'});
+    expect(closed.map(s => s.label)).toEqual(['Alert raised', "You're handling it", 'Alert closed']);
   });
 });

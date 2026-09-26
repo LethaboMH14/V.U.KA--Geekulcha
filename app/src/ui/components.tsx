@@ -8,7 +8,7 @@
  * its keypad stay flat and plain: no glass, no motion (V5, T15).
  */
 import React, {useEffect, useRef, useState} from 'react';
-import {AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View, type ViewStyle} from 'react-native';
+import {AccessibilityInfo, Animated, Easing, Modal, Pressable, StyleSheet, Text, View, type ViewStyle} from 'react-native';
 import {BlurView} from '@react-native-community/blur';
 import Svg, {Defs, LinearGradient, Path, RadialGradient, Rect, Stop} from 'react-native-svg';
 import {ArrowLeft, ArrowRight, Backspace, CaretRight} from './icons';
@@ -363,6 +363,64 @@ export function TopAppBar({title, onBack, tone = 'member'}: {title: string; onBa
   );
 }
 
+/**
+ * A pop-up in Mutarisi's style (ThemeOverlay.Vuka.Dialog): an opaque surface
+ * card with 28 dp corners over a dimmed screen, an ink bold title, secondary
+ * body text, the main action as a pill and the other as a quiet text button.
+ * Android back and a tap outside the card both mean the quiet choice.
+ */
+export function Dialog({
+  visible,
+  title,
+  icon,
+  children,
+  confirm,
+  onConfirm,
+  cancel,
+  onCancel,
+  tone = 'member',
+}: {
+  visible: boolean;
+  title: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+  confirm: string;
+  onConfirm: () => void;
+  cancel: string;
+  onCancel: () => void;
+  tone?: Tone;
+}) {
+  const guardian = tone === 'guardian';
+  return (
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onCancel}>
+      <View style={styles.scrim}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessible={false} />
+        <View style={styles.dialog} accessibilityViewIsModal>
+          {icon ? <View style={[styles.dialogIcon, guardian && {backgroundColor: colors.amberFill}]}>{icon}</View> : null}
+          <Text style={type.dialogTitle} accessibilityRole="header">
+            {title}
+          </Text>
+          <View style={{marginTop: space.sm}}>{typeof children === 'string' ? <Text style={type.body}>{children}</Text> : children}</View>
+          <View style={styles.dialogActions}>
+            <Pressable accessibilityRole="button" onPress={onCancel} hitSlop={4} style={({pressed}) => [styles.dialogQuiet, pressed && {opacity: 0.6}]}>
+              <Text style={[type.label, {color: colors.textSecondary}]}>{cancel}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={onConfirm}
+              android_ripple={{color: colors.rippleOnAction, foreground: true}}
+              style={[styles.dialogPill, {backgroundColor: guardian ? colors.amberBottom : colors.action}]}>
+              <Text style={[styles.pillText, {fontSize: 15, color: colors.textInverse}]} maxFontSizeMultiplier={1.6}>
+                {confirm}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export function Rule() {
   return <View style={styles.rule} />;
 }
@@ -609,6 +667,33 @@ const styles = StyleSheet.create({
   },
   inkHighlight: {position: 'absolute', top: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.25)'},
   quiet: {minHeight: TOUCH, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space.md},
+  scrim: {flex: 1, backgroundColor: colors.scrim, justifyContent: 'center', padding: space.lg},
+  dialog: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+    borderRadius: radii.dialog,
+    backgroundColor: colors.dialogFill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: space.lg,
+    ...shadow,
+    shadowOpacity: 0.28,
+    shadowRadius: 28,
+    elevation: 12,
+  },
+  dialogIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.actionDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: space.md,
+  },
+  dialogActions: {flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: space.sm, marginTop: space.lg},
+  dialogQuiet: {minHeight: TOUCH, justifyContent: 'center', paddingHorizontal: space.md},
+  dialogPill: {minHeight: TOUCH, borderRadius: radii.round, paddingHorizontal: 22, justifyContent: 'center', alignItems: 'center', overflow: 'hidden'},
   lamp: {width: 7, height: 7, borderRadius: 4},
   chip: {
     flexDirection: 'row',
