@@ -13,10 +13,10 @@
 | 3 · Solution | What VUKA is | I | 32 |
 | 4 · How it works | The mechanism | T, U | 100 |
 | 5 · Why it works | The sale | I, T | 77 |
-| 6 · Business | There is a business | B | 50 |
-| 7 · Compliance | Neutralise the four objections | S | 39 |
+| 6 · Business | There is a business | B | 51 |
+| 7 · Compliance | Neutralise the four objections | S | 40 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **543** |
+| | | **Total** | **545** |
 
 ---
 
@@ -24,31 +24,31 @@
 
 ### Beat 1 — Hook
 
-People are forced to move their own money under threat. It happens in many scenarios — in cars, in homes, at ATMs, on the street, in taxis. The attacker doesn't need a weapon. He needs her thumb and her phone. She makes the transfer. Her face. Her fingerprint. Her phone. And when she tries to prove she was forced — there is nothing. No record of the threat. Just a payment that says she did it. This is coerced transfer. It can happen to anyone whose phone is their bank. And it leaves the same hole every time.
+People are forced to move their own money under threat. It happens in many scenarios — in cars, in homes, at ATMs, on the street, in taxis. The attacker doesn't need a weapon. Just a thumb and a phone. The victim makes the transfer. Their face. Their fingerprint. Their phone. And when they try to prove they were forced — there is nothing. No record of the threat. Just a payment that says they did it. This is coerced transfer. It can happen to anyone whose phone is their bank. And it leaves the same hole every time.
 
 ### Beat 2 — Problem
 
-That's coercion — and at its worst, express kidnapping. Nothing today fixes it. The bank holds the transaction, not the duress, so it cannot resolve what it cannot see. The insurer pays first, and a forced transfer looks exactly like a normal one — so it pays a fraudster or fights a real victim. Every tool fails the same way. A panic button needs a free hand. A duress PIN, you must type. A fraud score is a guess, after the fact. An affidavit is just her word. She did everything right, and she still loses.
+That's coercion — and at its worst, express kidnapping. Nothing today fixes it. The bank holds the transaction, not the duress, so it cannot resolve what it cannot see. The insurer pays first, and a forced transfer looks exactly like a normal one — so it pays a fraudster or fights a real victim. Every tool fails the same way. A panic button needs a free hand. A duress PIN, you must type. A fraud score is a guess, after the fact. An affidavit is just their word. They did everything right, and they still lose.
 
 ### Beat 3 — Solution
 
-VUKA notices duress without a button, and proves when it happened — so a bank or an insurer can check the record without trusting us. She gets what she never had: proof.
+VUKA notices duress without a button, and proves when it happened — so a bank or an insurer can check the record without trusting us. They get what they never had: proof.
 
 ### Beat 4 — How it works
 
-She starts a journey. VIGIL listens on the phone — for a scream, a shout, breaking glass. It doesn't scream back. It asks a quiet question: a Journey check. She answers with her normal PIN. Or with a duress PIN — and it looks exactly the same. Same screen, same timing. The man beside her sees nothing. But her guardians are alerted, and a record is created. Signed. Chained to her alone. A fingerprint of it goes to public ledgers. Not her name. Not her voice. A fingerprint anyone can check. And the record itself stays with her. She holds the key.
+They start a journey. VIGIL listens on the phone — for a scream, a shout, breaking glass. It doesn't scream back. It asks a quiet question: a Journey check. They answer with their normal PIN. Or with a duress PIN — and it looks exactly the same. Same screen, same timing. The attacker beside them sees nothing. But their guardians are alerted, and a record is created. Signed. Chained to them alone. A fingerprint of it goes to public ledgers. Not their name. Not their voice. A fingerprint anyone can check. And the record itself stays with them. They hold the key.
 
 ### Beat 5 — Why it works
 
-Here's why it wins. Look at everyone else. Half the market detects, but gives you no proof. The other half proves, but detects nothing. A bank's duress PIN works only if you can type, inside one bank. Everybody owns one half. Nobody owns both. VUKA is the only design that notices without her lifting a finger, and hands back a record a stranger can check. For the first time, she holds evidence someone else can verify.
+Here's why it wins. Look at everyone else. Half the market detects, but gives you no proof. The other half proves, but detects nothing. A bank's duress PIN works only if you can type, inside one bank. Everybody owns one half. Nobody owns both. VUKA is the only design that notices without them lifting a finger, and hands back a record a stranger can check. For the first time, they hold evidence someone else can verify.
 
 ### Beat 6 — Business
 
-Two people pay. The insurer pays per member, per month — about fifty rand. The bank pays per case — fifteen rand — when it pulls a verified record. She pays nothing. Break-even is three thousand seven hundred and seventy-four members. The model carries the infrastructure cost from the first rand.
+Two people pay. The insurer pays per member, per month — about fifty rand. The bank pays per case — fifteen rand — when it pulls a verified record. The victim pays nothing. Break-even is three thousand seven hundred and seventy-four members. The model carries the infrastructure cost from the first rand.
 
 ### Beat 7 — Compliance
 
-Nothing personal ever touches the ledger — only a fingerprint, and she holds the key. Blockchain is legal here; we are not a financial service and we hold no crypto. No tokens, no coin. Built for the ECT Act.
+Nothing personal ever touches the ledger — only a fingerprint, and they hold the key. Blockchain is legal here; we are not a financial service and we hold no crypto. No tokens, no coin. Built for the ECT Act.
 
 ### Beat 8 — Ask
 
