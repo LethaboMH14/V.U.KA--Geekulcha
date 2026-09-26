@@ -19,10 +19,11 @@ const mockMessaging = {
   onNotificationOpenedApp: jest.fn(() => () => undefined),
   getInitialNotification: jest.fn(async () => null),
   setBackgroundMessageHandler: jest.fn(),
+  deleteToken: jest.fn(async () => undefined),
 };
 jest.mock('@react-native-firebase/messaging', () => ({__esModule: true, default: () => mockMessaging}));
 
-import {pushAvailable, registerGuardianPush, registerGuardianBackgroundHandler, startGuardianPush} from '../push';
+import {dropGuardianPush, pushAvailable, registerGuardianPush, registerGuardianBackgroundHandler, startGuardianPush} from '../push';
 
 type Req = {method: string; path: string; body: string; keyId?: string};
 
@@ -124,4 +125,17 @@ test('a foreground guardian push calls onAlert; a tap calls onOpen; other messag
   opened({data: {outbox_idempotency_key: 'k1'}});
   expect(onAlert).toHaveBeenCalledTimes(1);
   expect(onOpen).toHaveBeenCalledTimes(1);
+});
+
+test('stopping being a guardian deletes this phone\'s push token; without Firebase there is none', async () => {
+  mockMessaging.deleteToken.mockClear();
+  expect(await dropGuardianPush()).toBe('not_configured');
+  expect(mockMessaging.deleteToken).not.toHaveBeenCalled();
+  mockApps.push({name: '[DEFAULT]'});
+  expect(await dropGuardianPush()).toBe('dropped');
+  expect(mockMessaging.deleteToken).toHaveBeenCalledTimes(1);
+  mockMessaging.deleteToken.mockImplementationOnce(async () => {
+    throw new Error('SERVICE_NOT_AVAILABLE');
+  });
+  expect(await dropGuardianPush()).toBe('failed');
 });

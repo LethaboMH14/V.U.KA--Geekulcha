@@ -111,6 +111,40 @@ class LocationModule(private val ctx: ReactApplicationContext) : ReactContextBas
     fun clearAlert() = GuardianNotice.clear(ctx)
 
     /**
+     * True once when VIGIL was opened by tapping the guardian alert notice
+     * (Mutarisi's EXTRA_OPEN_ALERT): JS then opens the alert, whatever screen
+     * the app was on. Read once, like HelpRequest.
+     */
+    @ReactMethod
+    fun consumeAlertOpen(promise: Promise) {
+        val v = GuardianNotice.openPending
+        GuardianNotice.openPending = false
+        promise.resolve(v)
+    }
+
+    /** Whether VUKA's notifications are on (any Android version; the user can turn them off in settings). */
+    @ReactMethod
+    fun notificationsEnabled(promise: Promise) {
+        promise.resolve(androidx.core.app.NotificationManagerCompat.from(ctx).areNotificationsEnabled())
+    }
+
+    /** "Turn on notifications": VUKA's notification page (Android 8+), else its app details page. */
+    @ReactMethod
+    fun openNotificationSettings() {
+        val i = if (Build.VERSION.SDK_INT >= 26) {
+            Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, ctx.packageName)
+        } else {
+            Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.fromParts("package", ctx.packageName, null))
+        }
+        try {
+            ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Exception) {
+            // No settings page to open: the notice stays on standby.
+        }
+    }
+
+    /**
      * Keeps JavaScript timers running while the app is in the background, for
      * `seconds` (a headless task). Used for the 30-minute location window and
      * for a guardian's standby, so neither stops when the screen locks.
@@ -122,7 +156,8 @@ class LocationModule(private val ctx: ReactApplicationContext) : ReactContextBas
         try {
             // A member's listening service already keeps the app in the
             // foreground; a guardian's standby needs its own (with a notice).
-            if (standby) ctx.startForegroundService(i) else ctx.startService(i)
+            // ContextCompat: startForegroundService only exists from Android 8 (minSdk is 23).
+            if (standby) androidx.core.content.ContextCompat.startForegroundService(ctx, i) else ctx.startService(i)
         } catch (_: Exception) {
             // Not allowed from here: timers then run while the app is open.
         }
@@ -133,8 +168,11 @@ class LocationModule(private val ctx: ReactApplicationContext) : ReactContextBas
 class KeepAliveTaskService : HeadlessJsTaskService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.getBooleanExtra("standby", false) == true) {
-            val nm = getSystemService(android.app.NotificationManager::class.java)
-            nm.createNotificationChannel(android.app.NotificationChannel("standby", "Guardian standby", android.app.NotificationManager.IMPORTANCE_LOW))
+            // Channels exist from Android 8; before that the builder ignores the id.
+            if (Build.VERSION.SDK_INT >= 26) {
+                val nm = getSystemService(android.app.NotificationManager::class.java)
+                nm.createNotificationChannel(android.app.NotificationChannel("standby", "Guardian standby", android.app.NotificationManager.IMPORTANCE_LOW))
+            }
             val n = androidx.core.app.NotificationCompat.Builder(this, "standby")
                 .setContentTitle("VUKA guardian")
                 .setContentText("Standing by for alerts")
@@ -155,17 +193,32 @@ class KeepAliveTaskService : HeadlessJsTaskService() {
     }
 }
 
-/** The guardian's alert notice (Mutarisi's design, wired to real alerts). */
+/**
+ * The guardian's alert notice (Mutarisi's GuardianAlerts.postNotification,
+ * wired to real alerts found by polling): channel "Guardian alerts" at high
+ * importance, category alarm. Tapping it opens VIGIL straight onto the alert
+ * ([EXTRA] → MainActivity → [openPending] → JS), over the lock screen.
+ * Without notification permission (Android 13+) Android drops it silently
+ * and the in-app banner and standby still show the alert.
+ */
 object GuardianNotice {
     private const val CHANNEL = "alerts"
     private const val ID = 7004
+    const val EXTRA = "vigil_guardian_alert"
+
+    /** Set when the notice was tapped; read once by JS (consumeAlertOpen). */
+    @Volatile var openPending = false
 
     fun show(context: Context, title: String, text: String) {
         val nm = context.getSystemService(android.app.NotificationManager::class.java)
-        nm.createNotificationChannel(android.app.NotificationChannel(CHANNEL, "Guardian alerts", android.app.NotificationManager.IMPORTANCE_HIGH))
+        if (Build.VERSION.SDK_INT >= 26) {
+            nm.createNotificationChannel(android.app.NotificationChannel(CHANNEL, "Guardian alerts", android.app.NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "When someone you protect needs help"
+            })
+        }
         val open = Intent(context, com.teamsonar.vuka.MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            .putExtra(CheckinNotice.EXTRA, true)
+            .putExtra(EXTRA, true)
         val pi = android.app.PendingIntent.getActivity(context, ID, open,
             android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT)
         val b = androidx.core.app.NotificationCompat.Builder(context, CHANNEL)

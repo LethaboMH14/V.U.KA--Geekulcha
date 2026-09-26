@@ -647,6 +647,53 @@ test('hold-for-help sends the same detection a sound would, marked manual', asyn
   expect(sig.target_type).toBe('journey');
 });
 
+describe('stopping being a guardian (Mutarisi\'s LeaveGuardianSheet)', () => {
+  const guardianServer = (requests: string[]) => ({
+    request: async <T,>(_u: string, method: string, path: string) => {
+      requests.push(`${method} ${path}`);
+      return (path === '/v1/guardians/accept' ? {guardian_id: 'g1234567'} : path === '/v1/journeys' ? {journey_id: JOURNEY} : {}) as T;
+    },
+  });
+
+  test('a member keeps their own account; only the guardian slot goes, and nothing is sent', async () => {
+    const requests: string[] = [];
+    const h = harness(guardianServer(requests));
+    await onboarded(h);
+    const own = h.device.profile!.subjectId;
+    await h.device.becomeGuardian('abcd1234-123456', 'Thabo');
+    requests.length = 0;
+    const sent = h.sent.length;
+    expect(await h.device.leaveGuardian()).toBe('member');
+    expect(h.device.profile?.guardian).toBeUndefined();
+    expect(h.device.profile).toMatchObject({role: 'member', subjectId: own});
+    // The server has no guardian-side removal: nothing is requested or queued.
+    expect(requests).toEqual([]);
+    expect(h.sent.length).toBe(sent);
+    // No longer asks for alerts, and it stays that way after a restart.
+    expect(await h.device.guardianAlerts()).toEqual([]);
+    const again = createDevice(h.b);
+    const {profile} = await again.load();
+    expect(profile?.guardian).toBeUndefined();
+    expect(profile?.subjectId).toBe(own);
+  });
+
+  test('a guardian-only phone has nothing left and goes back to the start', async () => {
+    const requests: string[] = [];
+    const h = harness(guardianServer(requests));
+    await h.device.becomeGuardian('abcd1234-123456', 'Thabo');
+    expect(h.device.profile?.role).toBe('guardian');
+    requests.length = 0;
+    expect(await h.device.leaveGuardian()).toBe('none');
+    expect(h.device.profile).toBeNull();
+    expect(requests).toEqual([]);
+    const again = createDevice(h.b);
+    expect((await again.load()).profile).toBeNull();
+    // A new invite makes it a guardian again.
+    await again.becomeGuardian('abcd1234-654321', 'Thabo');
+    expect(again.profile).toMatchObject({role: 'guardian', guardian: {guardianId: 'g1234567'}});
+  });
+});
+
 describe('account on this phone (Mutarisi’s sign-in, password and recovery)', () => {
   /** A real salted SHA-256, as the phone's signer computes it (the simulated one hashes to zeros). */
   const realHash = (h: ReturnType<typeof harness>) => {

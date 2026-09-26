@@ -18,17 +18,46 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {AppState, Linking, NativeModules, PermissionsAndroid, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import Bell from 'phosphor-react-native/lib/commonjs/icons/Bell';
 import Prohibit from 'phosphor-react-native/lib/commonjs/icons/Prohibit';
-import {Chip, Dialog, Eyebrow, GlassIcon, Key, Panel, QuietKey, Readout, Rule, Surface, TopAppBar} from './components';
+import {Chip, Dialog, Eyebrow, GlassIcon, Key, Panel, QuietKey, Readout, Row, Rule, Surface, TopAppBar} from './components';
 import {CaretRight, CheckCircle, Phone, ShieldChevron, UsersThree} from './icons';
 import {colors, fonts, radii, space, type} from './theme';
 import {device, type GuardianAlert} from '../api/device';
 import {whyLine} from './whyLine';
 import {AlertMap} from './map';
 import {keepAwake} from '../sensors/location';
-import {registerGuardianPush, startGuardianPush} from '../api/push';
+import {dropGuardianPush, registerGuardianPush, startGuardianPush} from '../api/push';
 
 /** The guardian's alert notice and standby (native, Android only). */
-const notice: {showAlert?(t: string, b: string): void; clearAlert?(): void} | undefined = NativeModules.VigilLocation;
+type Notice = {
+  showAlert?(t: string, b: string): void;
+  clearAlert?(): void;
+  consumeAlertOpen?(): Promise<boolean>;
+  notificationsEnabled?(): Promise<boolean>;
+  openNotificationSettings?(): void;
+};
+const notice: Notice | undefined = NativeModules.VigilLocation;
+
+/**
+ * True once when VIGIL was opened by tapping the alert notice (a poll found
+ * the alert): the app then opens the alert, like Mutarisi's EXTRA_OPEN_ALERT.
+ * A pushed alert's own notification is handled by push.ts instead.
+ */
+export async function consumeGuardianOpen(n: Notice | undefined = notice): Promise<boolean> {
+  return Boolean(await n?.consumeAlertOpen?.().catch(() => false));
+}
+
+/**
+ * "Stop being a guardian" (Mutarisi's LeaveGuardianSheet), on this phone:
+ * the FCM token is deleted so pushes stop reaching it, any alert notice is
+ * cleared and the guardian slot is forgotten. VIGIL's server isn't told (it
+ * has no guardian-side removal), so the member should remove this guardian too.
+ */
+export async function leaveGuardian(): Promise<'member' | 'none'> {
+  await dropGuardianPush().catch(() => undefined);
+  notice?.clearAlert?.();
+  stoodDownIds.clear();
+  return device.leaveGuardian();
+}
 
 /** When a pushed alert last showed the notice (ms). */
 let pushNoticeAt = 0;
@@ -87,8 +116,17 @@ const WHY: Record<GuardianAlert['trigger'], (n: string) => string> = {
  * so it says nothing rather than guess.
  */
 const ASKS_FOR_NOTIFICATIONS = Platform.OS === 'android' && Number(Platform.Version) >= 33;
-const notificationsOff = async (): Promise<boolean> =>
-  ASKS_FOR_NOTIFICATIONS ? !(await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS).catch(() => true)) : false;
+export async function notificationsOff(n: Notice | undefined = notice): Promise<boolean> {
+  // Mutarisi's areNotificationsEnabled(): also sees notifications turned off in settings, on any version.
+  if (n?.notificationsEnabled) {
+    const on = await n.notificationsEnabled().catch(() => null);
+    if (on !== null) return !on;
+  }
+  return ASKS_FOR_NOTIFICATIONS ? !(await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS).catch(() => true)) : false;
+}
+
+/** "Turn on notifications": VUKA's notification settings (Android 8+), else the app's settings page. */
+const openNotificationSettings = () => (notice?.openNotificationSettings ? notice.openNotificationSettings() : void Linking.openSettings());
 
 /* ── Setup ───────────────────────────────────────────────────── */
 
@@ -114,10 +152,15 @@ export function GuardianSetup({onDone, onBack}: {onDone: () => void; onBack: () 
     // Only when it is missing: Android never asks again for a permission already given.
     void notificationsOff().then(off => off && setAskAlerts(true));
   };
-  const allowAlerts = () => {
+  const allowAlerts = async () => {
     setAskAlerts(false);
     // The answer doesn't block enrolment: standby shows how to turn them on later.
-    void PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS).catch(() => undefined);
+    // Android can't ask again (before 13 there is no prompt; after "Don't allow"
+    // twice it stops asking; or they were turned off in settings): open VUKA's
+    // notification settings instead, as Mutarisi's standby does.
+    const r = ASKS_FOR_NOTIFICATIONS ? await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS).catch(() => null) : null;
+    if (r === PermissionsAndroid.RESULTS.DENIED) return;
+    if (await notificationsOff()) openNotificationSettings();
   };
 
   const accept = async () => {
@@ -242,7 +285,7 @@ export function GuardianSetup({onDone, onBack}: {onDone: () => void; onBack: () 
         title="Turn on alerts?"
         icon={<Bell size={22} weight="bold" color={colors.amberText} />}
         confirm="Allow"
-        onConfirm={allowAlerts}
+        onConfirm={() => void allowAlerts()}
         cancel="Not now"
         onCancel={() => {
           alertsDeclined.current = true;
@@ -386,7 +429,7 @@ export function AlertBanner({who, onOpen}: {who: string; onOpen: () => void}) {
   );
 }
 
-export function GuardianHome({onBack, onSetUpSelf}: {onBack?: () => void; onSetUpSelf?: () => void} = {}) {
+export function GuardianHome({onBack, onSetUpSelf, onLeft}: {onBack?: () => void; onSetUpSelf?: () => void; onLeft?: (left: 'member' | 'none') => void} = {}) {
   const g = device.profile?.guardian;
   const who = g?.memberName ?? 'your member';
   const [alerts, setAlerts] = useState<GuardianAlert[] | null>(null);
@@ -397,6 +440,7 @@ export function GuardianHome({onBack, onSetUpSelf}: {onBack?: () => void; onSetU
   const [notifOff, setNotifOff] = useState(false);
   const [failed, setFailed] = useState<{id: string; action: Answer} | null>(null);
   const [stoodDown, setStoodDown] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState(false);
   const claimed = useRef(new Set<string>());
   const live = useRef(true);
   const told = useRef(new Set<string>());
@@ -485,7 +529,7 @@ export function GuardianHome({onBack, onSetUpSelf}: {onBack?: () => void; onSetU
             <View style={styles.notice} accessibilityLiveRegion="polite">
               <Text style={[type.body, {color: colors.amberText}]}>Notifications are off for VIGIL, so an alert can't reach you until you open the app.</Text>
               <View style={{marginTop: space.md}}>
-                <Key label="Turn on notifications" variant="guardianPlain" icon={<Bell size={18} weight="bold" color={colors.amberText} />} onPress={() => void Linking.openSettings()} />
+                <Key label="Turn on notifications" variant="guardianPlain" icon={<Bell size={18} weight="bold" color={colors.amberText} />} onPress={openNotificationSettings} />
               </View>
             </View>
           ) : null}
@@ -548,23 +592,57 @@ export function GuardianHome({onBack, onSetUpSelf}: {onBack?: () => void; onSetU
             </Panel>
           ) : null}
 
-          {onSetUpSelf && device.profile?.role === 'guardian' ? (
-            <Panel>
-              <Text style={type.label}>Want VIGIL for yourself too?</Text>
-              <Text style={[type.caption, {marginTop: space.xs}]}>Set up your own record on this phone. You stay {who}'s guardian.</Text>
-              <View style={{marginTop: space.md}}>
-                <QuietKey label="Set up VUKA for yourself" tone="guardian" onPress={onSetUpSelf} />
-              </View>
-            </Panel>
-          ) : null}
+          <Panel tone="guardian">
+            <Text style={type.label}>Alerts to this phone</Text>
+            <Readout label="How" value={alertsDelivery(g)} />
+            <Rule />
+            <Readout label="Last alert" value={alerts?.length ? hhmm(alerts[0].opened_at) : alerts ? 'None yet' : '—'} />
+          </Panel>
+
+          {/* Mutarisi's "Your guardian role" (Standby.tsx). */}
+          <Panel>
+            <Text style={type.label}>Your guardian role</Text>
+            {onSetUpSelf && device.profile?.role === 'guardian' ? (
+              <Row label="Set up VUKA for yourself" detail={`Be protected too. You stay ${who}'s guardian.`} onPress={onSetUpSelf} leading={<ShieldChevron size={20} color={colors.textLabel} />} />
+            ) : null}
+            {onLeft ? (
+              <Row label="Stop being a guardian" detail="You won't get their alerts any more" onPress={() => setLeaving(true)} leading={<UsersThree size={20} color={colors.textLabel} />} />
+            ) : null}
+          </Panel>
 
           <Text style={styles.sim}>
             Demo server · guardian key <Text style={styles.simId}>{g?.keyId ?? '—'}</Text> · build <Text style={styles.simId}>{version}</Text>
           </Text>
         </View>
       </ScrollView>
+      <Dialog
+        visible={leaving}
+        tone="guardian"
+        title="Stop being a guardian?"
+        confirm="Stop being a guardian"
+        onConfirm={() => {
+          setLeaving(false);
+          void leaveGuardian().then(left => onLeft?.(left));
+        }}
+        cancel="Keep being a guardian"
+        onCancel={() => setLeaving(false)}>
+        {leaveBody(who, device.profile?.role !== 'guardian')}
+      </Dialog>
     </View>
   );
+}
+
+/** How alerts reach this phone: push only when the server has this phone's FCM token. */
+export function alertsDelivery(g: {push?: {server: string}} | undefined, server = device.profile?.serverUrl): string {
+  return g?.push && g.push.server === server ? 'Push, and checked every 5 s' : 'Checked every 5 s while VIGIL runs';
+}
+
+/** The "Stop being a guardian?" body (Mutarisi's dialog_leave_guardian), honest that the server isn't told. */
+export function leaveBody(who: string, member: boolean): string {
+  const after = member
+    ? "Your own VIGIL account and guardians aren't affected."
+    : 'This phone goes back to the start screen.';
+  return `You'll stop getting ${who}'s alerts on this phone. ${after} VIGIL's server isn't told, so ask ${who} to remove you in their Settings too. To be their guardian again, they'll need to send you a new invite.`;
 }
 
 function OpenAlert({

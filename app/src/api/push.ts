@@ -90,6 +90,27 @@ async function register({ask = false, token, dev = device}: {ask?: boolean; toke
 }
 
 /**
+ * "Stop being a guardian": delete this phone's FCM token, so a push the
+ * server still sends to the old token can no longer reach it (the server
+ * isn't told: it has no guardian-side removal). Waits for any registration
+ * in flight. Without Firebase there is nothing to delete.
+ */
+export function dropGuardianPush(): Promise<'not_configured' | 'dropped' | 'failed'> {
+  const run = chain.then(async () => {
+    const m = messaging();
+    if (!m) return 'not_configured' as const;
+    try {
+      await m.deleteToken();
+      return 'dropped' as const;
+    } catch {
+      return 'failed' as const;
+    }
+  });
+  chain = run.catch(() => undefined);
+  return run;
+}
+
+/**
  * While the app runs: re-send the token when FCM refreshes it; a foreground
  * alert calls onAlert (FCM shows nothing itself while the app is in front);
  * tapping an alert's notification calls onOpen. Returns the unsubscribe.

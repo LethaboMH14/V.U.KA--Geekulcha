@@ -23,7 +23,10 @@ object CheckinNotice {
 
     fun show(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL, "Check-in", NotificationManager.IMPORTANCE_HIGH))
+        // Channels exist from Android 8 (minSdk is 23).
+        if (Build.VERSION.SDK_INT >= 26) {
+            nm.createNotificationChannel(NotificationChannel(CHANNEL, "Check-in", NotificationManager.IMPORTANCE_HIGH))
+        }
         val open = Intent(context, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             .putExtra(EXTRA, true)

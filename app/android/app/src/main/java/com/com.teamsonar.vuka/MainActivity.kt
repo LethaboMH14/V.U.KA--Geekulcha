@@ -1,6 +1,8 @@
 package com.teamsonar.vuka
 
 import android.content.Intent
+import android.os.Build
+import android.view.WindowManager
 import android.os.Bundle
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -32,14 +34,26 @@ class MainActivity : ReactActivity() {
     showOverLockIfCheckin(intent)
   }
 
-  /** Opened by the journey-check notice (spec V4): show over the lock screen and wake the display. */
+  /**
+   * Opened by the journey-check notice (spec V4) or a guardian's alert notice:
+   * show over the lock screen and wake the display. The alert notice also
+   * tells JS to open the alert (Mutarisi's EXTRA_OPEN_ALERT).
+   */
   private fun showOverLockIfCheckin(i: Intent?) {
     if (i?.getBooleanExtra(com.teamsonar.vuka.detect.HelpRequest.EXTRA, false) == true) {
       com.teamsonar.vuka.detect.HelpRequest.pending = true
     }
-    if (i?.getBooleanExtra(com.teamsonar.vuka.detect.CheckinNotice.EXTRA, false) == true) {
-      setShowWhenLocked(true)
-      setTurnScreenOn(true)
+    val alert = i?.getBooleanExtra(com.teamsonar.vuka.detect.GuardianNotice.EXTRA, false) == true
+    if (alert) com.teamsonar.vuka.detect.GuardianNotice.openPending = true
+    if (alert || i?.getBooleanExtra(com.teamsonar.vuka.detect.CheckinNotice.EXTRA, false) == true) {
+      if (Build.VERSION.SDK_INT >= 27) {
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
+      } else {
+        // setShowWhenLocked/setTurnScreenOn arrive in Android 8.1 (minSdk is 23).
+        @Suppress("DEPRECATION")
+        window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
+      }
     }
   }
 }

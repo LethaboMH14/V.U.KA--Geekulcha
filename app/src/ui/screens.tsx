@@ -19,7 +19,7 @@ import {Chip, Eyebrow, GlassIcon, Key, Lamp, LevelMeter, ListeningLine, Panel, P
 import {colors, fonts, radii, space, THEME_CHOICE, THEME_CHOICES, TOUCH, type, type ThemeChoice} from './theme';
 import {Onboarding} from './onboarding';
 import {Documents, Recovery, recoveryDetail, type DocumentId} from './account';
-import {AlertBanner, GuardianHome, GuardianSetup, useGuardianPush, useGuardianWatch} from './guardian';
+import {AlertBanner, consumeGuardianOpen, GuardianHome, GuardianSetup, useGuardianPush, useGuardianWatch} from './guardian';
 import {openedFromGuardianPush, registerGuardianPush} from '../api/push';
 import {MyRecord} from './record';
 import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, profileContacts, recoveryChannel, type Delivery} from '../api/device';
@@ -63,15 +63,24 @@ export function VigilApp() {
   const guardianAlert = useGuardianWatch(device.profile?.role === 'member' && Boolean(device.profile?.guardian) && !device.signedOut && screen !== 'guardianHome');
   // Where guardian standby's back goes: Home's "You're a guardian" card or Settings.
   const [guardianFrom, setGuardianFrom] = useState<Screen>('settings');
-  // Tapping a pushed guardian alert opens standby, like the banner: never from
-  // a check-in, any PIN screen, setup or while signed out (V5/V6).
-  useGuardianPush(() => {
+  // Tapping a guardian alert's notification (pushed, or the notice a poll
+  // raised) opens standby, like the banner: never from a check-in, any PIN
+  // screen, setup or while signed out (V5/V6).
+  const openGuardianAlert = () => {
     const p = device.profile;
     const busy = ['boot', 'onboarding', 'check', 'checked', 'end', 'recordPin', 'invitePin', 'signOutPin', 'guardianSetup'].includes(screen);
     if (!p?.guardian || busy || (p.role === 'member' && device.signedOut)) return;
     if (screen !== 'guardianHome') setGuardianFrom(screen === 'home' ? 'home' : 'settings');
     setScreen('guardianHome');
-  });
+  };
+  useGuardianPush(openGuardianAlert);
+  // The polled alert's notice (GuardianNotice) was tapped with the app already running.
+  useEffect(() => {
+    if (screen === 'boot') return;
+    const sub = AppState.addEventListener('change', s => s === 'active' && void consumeGuardianOpen().then(tapped => tapped && openGuardianAlert()));
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
   // Mutarisi's amber banner while an alert needs this guardian. Only on the
   // screens below; never on the check-in or any PIN screen (V5/V6).
   const alertBanner = guardianAlert ? (
@@ -117,8 +126,9 @@ export function VigilApp() {
         // Guardian push when the build has Firebase (else nothing is sent; polling as before).
         const guarding = Boolean(profile?.guardian && (profile.role === 'guardian' || member));
         if (guarding) void registerGuardianPush();
-        // Launched by tapping a pushed alert: straight to standby.
-        if (guarding && profile?.role === 'member' && (await openedFromGuardianPush())) {
+        // Launched by tapping an alert (pushed, or the notice a poll raised): straight to standby.
+        const tapped = (await consumeGuardianOpen()) || (await openedFromGuardianPush());
+        if (guarding && profile?.role === 'member' && tapped) {
           setGuardianFrom('home');
           return setScreen('guardianHome');
         }
@@ -334,7 +344,14 @@ export function VigilApp() {
   }
   if (screen === 'guardianHome') {
     // A member who also guards someone comes back to where they opened it (Home or Settings).
-    return <GuardianHome onBack={device.profile?.role === 'member' ? () => setScreen(guardianFrom) : undefined} onSetUpSelf={() => setScreen('onboarding')} />;
+    return (
+      <GuardianHome
+        onBack={device.profile?.role === 'member' ? () => setScreen(guardianFrom) : undefined}
+        onSetUpSelf={() => setScreen('onboarding')}
+        // Stopping only ends the guardian role: a member goes back to their own Home, a guardian-only phone to the start.
+        onLeft={left => setScreen(left === 'member' ? 'home' : 'onboarding')}
+      />
+    );
   }
   if (screen === 'invitePin') {
     return (
