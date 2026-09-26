@@ -116,3 +116,15 @@ export function corroborate(
   }
   return found.slice(-r.maxCorroboration);
 }
+
+/**
+ * Liu et al. (ICISS 2018) snatch rule, logged only (weight 0 until Experiment
+ * 2): a frame whose peak acceleration reaches 40 m/s² (≈ 4079 mg) in the
+ * look-back window. Independent of the impact branch above, which already
+ * claims every peak from 3000 mg. At our 200 ms frame resolution this
+ * approximates Liu's raw-sample feature; it never enters a tally.
+ */
+export function liuSnatch(frames: readonly MotionFrame[], detectionEndMs: number, r: Ruleset): boolean {
+  const lo = detectionEndMs - r.motionLookbackMs;
+  return frames.some(f => f.endMs > lo && f.endMs <= detectionEndMs && f.peakMg >= r.motion.liuSnatchPeakMg);
+}

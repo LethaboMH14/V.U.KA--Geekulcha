@@ -1,6 +1,6 @@
 {
   "name": "vuka-vigil",
-  "version": "0.0.5",
+  "version": "0.0.14",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -10,10 +10,12 @@
     "release:android": "cd android && gradlew.bat assembleRelease"
   },
   "dependencies": {
+    "@react-native-community/blur": "4.4.1",
     "phosphor-react-native": "^2.1.0",
     "react": "18.2.0",
     "react-native": "0.74.5",
-    "react-native-svg": "^15.2.0"
+    "react-native-svg": "^15.2.0",
+    "react-native-webview": "13.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

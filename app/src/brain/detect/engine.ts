@@ -14,7 +14,7 @@
  * up). Every comparison here is on those integers, so native, host and tests
  * agree exactly.
  */
-import {TARGETS, type Family, type TargetClass} from './classes';
+import {CONTEXT, TARGETS, type Family, type TargetClass} from './classes';
 import {corroborate, type Corroboration, type MotionFrame} from './motion';
 import type {Ruleset} from './ruleset';
 
@@ -34,12 +34,15 @@ export type AudioWindow = {
   readonly topBp: number;
   /** Highest score among the gun-like classes' excluded neighbours (GUN_NEIGHBOURS). */
   readonly gunNeighbourBp: number;
+  /** Scores for CONTEXT, in CONTEXT order; absent when context is off. */
+  readonly contextBp?: readonly number[];
 };
 
 export type Reason =
   | {rule: 'top'; top_index: number; top_bp: number}
   | {rule: 'gun_neighbour'; class_label: string; score_bp: number; neighbour_bp: number; pass: boolean}
   | {rule: 'threshold'; class_label: string; score_bp: number; threshold_bp: number; pass: boolean}
+  | {rule: 'record_threshold'; class_label: string; score_bp: number; threshold_bp: number; pass: boolean}
   | {rule: 'winner'; class_label: string; class_index: number; score_bp: number; qualifying: number}
   | {rule: 'confirm'; family: Family; window_seqs: number[]; separation: number; pass: boolean}
   | {rule: 'duplicate'; family: Family; since_ms: number; record_gap_ms: number; pass: boolean}
@@ -56,6 +59,12 @@ export type Candidate = {
 };
 
 export type Decision = {
+  /**
+   * Which threshold the candidate cleared: 'prompt' is V4 (unchanged);
+   * 'record' is the lower CEM-1 record threshold, record-only evidence that
+   * never prompts by itself (a lift is decided outside the engine).
+   */
+  readonly level: 'prompt' | 'record';
   /** Record a `signal_detected` event (evidence), even if no prompt follows. */
   readonly record: boolean;
   /** Open the journey check. Only ever true when `record` is. */
@@ -67,15 +76,17 @@ export type Decision = {
 
 export type EngineState = {
   /** Recent windows: seq and the family that confirmed-eligible hit (or null). */
-  readonly history: readonly {seq: number; family: Family | null}[];
+  readonly history: readonly {seq: number; family: Family | null; recordFamily: Family | null}[];
   readonly lastRecordMs: Readonly<Partial<Record<Family, number>>>;
+  /** Record-level dedupe, kept apart so it can never delay a V4 record. */
+  readonly lastRecordLevelMs: Readonly<Partial<Record<Family, number>>>;
   readonly lastPromptMs: number | null;
   readonly checkinOpen: boolean;
   /** Motion frames covering at least the look-back plus the activity context. */
   readonly motion: readonly MotionFrame[];
 };
 
-export const initialState = (): EngineState => ({history: [], lastRecordMs: {}, lastPromptMs: null, checkinOpen: false, motion: []});
+export const initialState = (): EngineState => ({history: [], lastRecordMs: {}, lastRecordLevelMs: {}, lastPromptMs: null, checkinOpen: false, motion: []});
 
 export type Input =
   | {type: 'audio'; window: AudioWindow}
@@ -94,11 +105,12 @@ function validWindow(w: AudioWindow): boolean {
     w.topIndex >= 0 &&
     w.topIndex < 521 &&
     bp(w.topBp) &&
-    bp(w.gunNeighbourBp)
+    bp(w.gunNeighbourBp) &&
+    (w.contextBp === undefined || (w.contextBp.length === CONTEXT.length && w.contextBp.every(bp)))
   );
 }
 
-const NO: (reasons: Reason[]) => Decision = reasons => ({record: false, prompt: false, reasons, candidate: null, corroboration: []});
+const NO: (reasons: Reason[]) => Decision = reasons => ({level: 'prompt', record: false, prompt: false, reasons, candidate: null, corroboration: []});
 
 /**
  * Advance the engine by one input. Returns the new state and, for audio
@@ -145,8 +157,7 @@ export function step(state: EngineState, input: Input, r: Ruleset): {state: Engi
     // State the comparison truthfully: a gun-like score can clear its bar and
     // still be excluded by the neighbour rule (that reason is already listed).
     reasons.push({rule: 'threshold', class_label: t.label, score_bp: w.targetBp[best], threshold_bp: r.thresholdBp[t.label], pass: w.targetBp[best] >= r.thresholdBp[t.label]});
-    const history = [...state.history.filter(h => h.seq > w.seq - 3 && h.seq < w.seq), {seq: w.seq, family: null}];
-    return {state: {...state, history}, decision: NO(reasons)};
+    return recordLevel(state, w, r, reasons);
   }
 
   // One class per window (ADR-0039(3)): the highest qualifying score, ties to
@@ -157,7 +168,7 @@ export function step(state: EngineState, input: Input, r: Ruleset): {state: Engi
   reasons.push({rule: 'threshold', class_label: win.t.label, score_bp: win.bp, threshold_bp: threshold, pass: true});
   reasons.push({rule: 'winner', class_label: win.t.label, class_index: win.t.index, score_bp: win.bp, qualifying: qualifying.length});
 
-  const history = [...state.history.filter(h => h.seq > w.seq - 3 && h.seq < w.seq), {seq: w.seq, family: win.t.family}];
+  const history = [...state.history.filter(h => h.seq > w.seq - 3 && h.seq < w.seq), {seq: w.seq, family: win.t.family, recordFamily: win.t.family}];
   let next: EngineState = {...state, history};
 
   // Confirmation: impulses in one window; voices in this window and the one
@@ -202,8 +213,62 @@ export function step(state: EngineState, input: Input, r: Ruleset): {state: Engi
   return {
     state: next,
     decision: {
+      level: 'prompt',
       record: true,
       prompt,
+      reasons,
+      candidate: {class_label: win.t.label, class_index: win.t.index, score_bp: win.bp, threshold_bp: threshold, window_end_ms: w.endMs},
+      corroboration,
+    },
+  };
+}
+
+/**
+ * CEM-1 record level (PROPOSED). Reached only when no class clears its V4
+ * prompt threshold, so it can never displace or delay a V4 candidate. The
+ * winner among classes at or above their record threshold (gun-like ones must
+ * still beat their neighbours) is confirmed by the same family rule on the
+ * record-level history, deduped on its own clock and against V4 records, and
+ * recorded with prompt=false. The engine never prompts at this level.
+ */
+function recordLevel(state: EngineState, w: AudioWindow, r: Ruleset, reasons: Reason[]): {state: EngineState; decision: Decision} {
+  const keep = state.history.filter(h => h.seq > w.seq - 3 && h.seq < w.seq);
+  const qualifying: {t: TargetClass; bp: number}[] = [];
+  TARGETS.forEach((t, i) => {
+    const bp = w.targetBp[i];
+    if (bp < r.recordThresholdBp[t.label]) return;
+    if (t.family === 'gun' && !(bp > w.gunNeighbourBp)) return;
+    qualifying.push({t, bp});
+  });
+  if (qualifying.length === 0) {
+    return {state: {...state, history: [...keep, {seq: w.seq, family: null, recordFamily: null}]}, decision: NO(reasons)};
+  }
+  let win = qualifying[0];
+  for (const q of qualifying) if (q.bp > win.bp) win = q;
+  const threshold = r.recordThresholdBp[win.t.label];
+  const history = [...keep, {seq: w.seq, family: null, recordFamily: win.t.family}];
+  const next: EngineState = {...state, history};
+  reasons.push({rule: 'record_threshold', class_label: win.t.label, score_bp: win.bp, threshold_bp: threshold, pass: true});
+  reasons.push({rule: 'winner', class_label: win.t.label, class_index: win.t.index, score_bp: win.bp, qualifying: qualifying.length});
+  const {separation} = r.confirm[win.t.family];
+  const seqs = separation === 0 ? [w.seq] : [w.seq - separation, w.seq];
+  const confirmed = seqs.every(s => history.some(h => h.seq === s && h.recordFamily === win.t.family));
+  reasons.push({rule: 'confirm', family: win.t.family, window_seqs: seqs, separation, pass: confirmed});
+  if (!confirmed) return {state: next, decision: NO(reasons)};
+  for (const last of [state.lastRecordMs[win.t.family], state.lastRecordLevelMs[win.t.family]]) {
+    if (last !== undefined && w.endMs - last < r.recordGapMs) {
+      reasons.push({rule: 'duplicate', family: win.t.family, since_ms: w.endMs - last, record_gap_ms: r.recordGapMs, pass: false});
+      return {state: next, decision: NO(reasons)};
+    }
+  }
+  const corroboration = corroborate(state.motion, w.endMs, r);
+  reasons.push({rule: 'motion', items: corroboration.length, lookback_ms: r.motionLookbackMs});
+  return {
+    state: {...next, lastRecordLevelMs: {...next.lastRecordLevelMs, [win.t.family]: w.endMs}},
+    decision: {
+      level: 'record',
+      record: true,
+      prompt: false,
       reasons,
       candidate: {class_label: win.t.label, class_index: win.t.index, score_bp: win.bp, threshold_bp: threshold, window_end_ms: w.endMs},
       corroboration,

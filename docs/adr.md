@@ -459,6 +459,39 @@ Generative super-resolution was considered as a fix and **rejected**: PULSE-styl
 **Context:** ADR-0036's acceptance carried the condition that the PIN-verification mechanism (B5) is a pre-condition for implementing `docs/VUKA-2-SPEC.md` §9, tracked as P3.L8 (Lethabo + Ipeleng, due Thu 24 Sep 12:00). The rules already exist in the spec (§8, §9) but are spread across two sections and an ADR; the Thursday check needs one page the team can agree line by line, and Vukosi needs the discard boundary stated without reading the whole spec.
 **Decision:** (1) The rules are agreed **as written in `docs/PIN-AUTHORITY-RULES.md`**, which restates and does not change §8, §9 or ADR-0036. (2) The one-sentence rule: a normal PIN is authority to do things; a duress PIN is authority to pretend things happened while raising the alarm; neither a normal PIN nor a coercer holding the phone can close an incident, delete evidence immediately, or leave the user with zero guardians. (3) Under duress, every destructive or trust-changing action (remove guardian, delete evidence, recover to a new device) is a **hard no-op dressed as success**; guardian addition creates a decoy and notifies the real guardians. (4) Incidents close only on guardian `stand_down` or automatic 6 h closure — never on a normal PIN. (5) Guardian removal stays silent, scheduled, effective after 24 h, deferred during an open incident, and refused for the last guardian. (6) Any future change to these rules goes through a fresh ADR, never a config change — the contract-freeze discipline applies.
 **Consequences:** Tests T12, T13, T16 and T24 are the executable form of this agreement. Vukosi and Mutarisi build the settings surfaces against `docs/PIN-AUTHORITY-RULES.md` from the moment this ADR is accepted. If the Thursday check amends a rule, the spec section and this page change in the same PR that records the acceptance.
+## ADR-0039: Detection and response details live in the committed payload; the evidence assessment is saved, uncalibrated and reproducible; third-party access is designed, not built
+**Status:** Proposed (2026-09-24). Binds on acceptance by Sibusiso (contract v2) and Ipeleng (security). On acceptance, it extends ADR-0038(2)'s class list.
+**Owner:** Lethabo Hoaeane (decision). Sibusiso Khumalo (contract and server). Ipeleng Constance Modise (security and privacy). Vukosi Khoza (sensing).
+**Context:** On 23 Sep, Lethabo asked for the evidence chain to record detection, time, device, the kind of sound and motion, cancellations, guardian behaviour, and a coercion "confidence" that depends on its cause. Anomaly flags come later. The coercion scenario catalogue (`docs/COERCION-SCENARIOS.md`, CEM-0, 133 scenarios) supplies the model. The plan went through three review rounds: an independent critic, then two rounds with a different model family. Three questions stayed open. They are recorded below as gates.
+**Decision:**
+(1) **Everything is private.** Every new field lives in the salted, committed, deletable payload. Public `action` classes and the 33-byte on-chain messages are unchanged.
+(2) **Payloads are versioned.** Each payload carries an integer `pv`. Contract v2 freezes the envelope `payload:{kind, pv, …}`, and per-kind schemas live in `contracts/payloads/`.
+(3) **Sound.** The existing six classes, plus "Gunshot, gunfire" (421), "Machine gun" (422) and "Fusillade" (423), all mapped by label. Excluded: 420 and 424–427. One class per window: the argmax, with ties going to the lowest index. Rendered as "gun-like sound (uncalibrated)". Applies from D2 onward.
+(4) **Motion** is a stretch detector: accelerometer rules only, no model (`impact`, `shake`, `snatch`; `surge` is parked). It is recorded only as corroboration, looking back over [−10 s, 0] and only while stationary or walking. It never opens a check-in.
+(5) **Device fields** are app version, model hash, Android API level and device model. Never IMEI, serial, Android ID or phone number.
+(6) **Guardian facts.**
+- `guardian_alert_opened` requires an explicit tap and never raises the E-level.
+- "No acknowledgement recorded by <time>" is derived at read time, together with the delivery state.
+- Acknowledgements are self-reported.
+(7) **Cancellations** use the existing kinds.
+(8) **A saved `evidence_assessment`** (server-signed, pv 1) is written once per incident transition, in the same head transaction.
+- It cites the entry IDs it used, a `ruleset_digest` and server-receipt `basis_time`, and carries `calibrated:false` plus a fixed statement.
+- It **never** holds a band, a probability, a likelihood or a verdict.
+- Decay freezes when the check-in is shown.
+- Conflict is shown to member and guardian as a display flag only, and is not stored.
+- **Third parties (banks, insurers) see the tier, the E-level and the reasons in plain words, never the numeric total.** The total is kept for replay and calibration only (decision of 24 Sep, 00:50).
+(9) **Access for insurers and banks is designed but not built this weekend.** It stays unbuilt until three gates close:
+- G-A: verifiable selective disclosure (Sibusiso, Ipeleng).
+- G-B: an independently checked safe-release condition (Lethabo, Ipeleng).
+- G-C: a reviewed partner-use rule — human review only, no automated eligibility or pricing, no adverse inference from a low or missing tally, and a way to contest (Babatunde, Ipeleng).
+(10) **No early guardian alert** in this build.
+**Rejected alternatives:**
+- a fused "coercion %" (uncalibrated, and it could be turned against a victim);
+- storing bands or odds;
+- motion alone opening a check-in (false alarms from phone drops and driving);
+- trigger-word detection (a second model, and a RICA/POPIA question; parked);
+- building third-party grants before the gates close.
+**Consequences:** `docs/VUKA-2-SPEC.md` §18. Tests T25–T29, T54 and T56 (T53 and T55 are designed only). Measurement M8. Contract v2 carries `pv`, `evidence_assessment` and `/alerts/{id}/opened`, with the grant routes marked `x-status: designed`. Gaps G36–G38.
 
 ---
 
@@ -541,3 +574,118 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 3. When no class qualifies, the reason record names the closest miss and states its threshold comparison truthfully.
 **Rejected alternative:** the literal argmax. It is simplest, but it misses a clearing class whenever a louder one fails its bar.
 **Consequences:** `app/src/brain/detect/engine.ts` and its tests (PR #86). The ESC-50 figures in `docs/EVIDENCE.md` were produced under this rule.
+
+## ADR-0046: VIGIL is always on: it listens from set-up until the member pauses it with a PIN (supersedes V1's member-started journey)
+**Status:** Proposed (2026-09-25). Decided by Lethabo (co-lead). It binds when Sibusiso (contract) and Ipeleng (privacy) accept it, recorded in `docs/ADR-ACCEPTANCE-RECORD.md`. Until then V1 as written stays the accepted rule.
+**Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (contract), Ipeleng Modise (privacy), Vukosi Khoza (sensing)
+**Context:** V1 has the member start a journey before VIGIL listens. The product position is "you don't have to ask". A member who is attacked on the way home did not necessarily start a journey first, and the start button is itself an ask.
+**Decision:**
+1. **Listening starts by itself once set-up finishes,** and again whenever the app is opened while not paused. It needs the microphone and notification permissions (V1's refusal-and-explain rule still applies). It retries every 30 s while the server can't be reached. It never starts without a server-issued session id, because a check-in that can't reach a guardian would be a false promise.
+2. **The contract is unchanged.** One listening session is one journey on the server: `POST /v1/journeys` issues the id, heartbeats go every 30 s (V9), and every event targets it.
+3. **Pausing listening is the PIN-gated journey end** (G35, ADR-0041): `pin_authorised` for `end_journey`, then `journey_ended`. A duress PIN looks exactly like a normal pause on the phone and raises the full alarm on the server. Only a pause stops listening.
+4. **The persistent notification stays neutral (V2):** "VUKA active" replaces "VUKA journey active". The check-in notification reads "Check-in".
+5. **The live meter** shows, per audio window, the target sound closest to its own threshold. It shows the model score (0–100) against that threshold, labelled "not a probability". No percentage confidence is shown anywhere (D14, ADR-0039).
+**Costs, stated before anyone asks:**
+- **False checks.** On the held-out ESC-50 folds (a lab proxy, not street audio), the engine gave about 5.5 prompts and 7.3 false records per hour of replayed clips (`docs/EVIDENCE.md`). Always on for a 16-hour day would be on the order of 90 PIN checks a day, until the thresholds are tuned on real-world audio. That is **not measured in the field**.
+- **Battery.** Continuous YAMNet inference plus the microphone service is **not measured**. Android also shows the microphone indicator whenever VIGIL listens.
+- **Privacy.** Nothing changes on storage: audio stays in a 3 s ring buffer on the phone and is never stored or sent (D7). The member hears nothing different; the exposure is duration.
+- **A long session.** A session can last days. Heartbeats every 30 s keep the `contact_lost` clock (§8) meaningful for that long.
+**Rejected alternatives:**
+- keep the member-started journey (V1), which is the ask we set out to remove;
+- always on, but only asking for the PIN above a stricter threshold. That was offered, and the co-lead chose full alerts.
+**Consequences:**
+- the app's home becomes "Listening" and "Pause listening";
+- the spec's V1 and the "journey" wording in member-facing copy need a follow-up edit once this is accepted;
+- the false-check rate becomes the top measurement priority (M1–M3, Vukosi's P3.V6 instrument).
+
+## ADR-0047: graded check-ins on the phone (CEM-1): V4 unchanged, below-threshold evidence can lift, and every decision says why
+**Status:** Proposed (2026-09-26). Decided by Lethabo (co-lead). Active only for simulation subjects (`sim_`, the whole public demo) until Sibusiso (contract) and Ipeleng (privacy) accept it in `docs/ADR-ACCEPTANCE-RECORD.md` and two leads sign off the ruleset digest (D10). Extends V4 and ADR-0039; does not supersede either.
+**Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (contract, server), Ipeleng Modise (privacy), Vukosi Khoza (measurement)
+**Context:** Under V4 every confirmed detection above its class threshold opens a check-in, and nothing below the threshold is recorded at all. A real attack is often quieter than the threshold, and a single sound says less than two different ones together. The team's own coercion evidence model (CEM-0, `docs/COERCION-SCENARIOS.md`) already scores reasons in integer decibans; it had never run on the phone.
+**Decision:**
+1. **CEM-1 on the phone** (`app/src/brain/cem/`, pure). It ports CEM-0 for the reasons the phone can observe (sounds, sound context, motion), with the same exact integer decay and bands. It reproduces the 32 phone-observable catalogue scenarios exactly (`golden.json`, generated from `scripts/coercion_scenarios.py`). It adds two PROPOSED reasons: `pin_retry` (+2, a wrong PIN before the accepted one) and `pin_slow` (+2, slower than the member's own median + 3·MAD, after at least 8 entries). The tally is an uncalibrated sum of reasons, never a probability (ADR-0039).
+2. **Two thresholds per class.** The V4 prompt thresholds are unchanged, and every detection that prompts under V4 still prompts: K never suppresses it. A new record threshold (half the prompt threshold, **UNCALIBRATED**) produces record-only evidence (T0).
+3. **Lift.** A record-level detection opens a check-in only when:
+   - the positive evidence is P ≥ 5 db;
+   - it is not true that K ≥ 50 % and P < 12 db;
+   - the one prompt slot is free;
+   - there has been no prompt in the last 30 s.
+
+   The lift has its own cooldown and never touches V4's. The decision waits until the audio has run 1 s past the candidate, so context such as TV in the next windows is heard. V4 decisions never wait. Pausing settles anything pending as record-only.
+4. **`signal_detected` only when the phone commits.** It is sent for a check-in, and for a V4-level record as before. A record-only detection sends only `evidence_observed`, so it never starts a server deadline, incident or alert.
+   - **Covered by the open check-in (CEM-1 only).** A V4-level detection while a check-in is pending or open becomes evidence only. That check-in's own outcome covers it. This stops a normal answer being followed 90 s later by a no-answer alarm for a detection the member was never asked about.
+   - **Other rule changes:**
+     - a prompt that cannot be carried out (a failed write, or listening already paused) frees the slot and records only;
+     - under the `v4` rule nothing changes.
+5. **`evidence_observed` pv 2** (`contracts/payloads/evidence_observed.v2.json`, rules in `server/evidence.py`). There is one shape per decision:
+   - **`record`:** candidate facts, and no signal.
+   - **`prompt`:** names exactly its own `signal_event_id`. It is sent after the signal and never gates the check-in.
+   - **`pin`:** follows every accepted check-in answer for both PINs, in one fixed shape: `[pin_retry, pin_slow]` with weights 0 or 2 and no aggregate fields. It goes in the same flush as the answer, and the answer never waits on the network (V5).
+
+   Every record carries `ruleset_digest` (CI-checked), `context: on|off` and weight-0 `observations` (the Liu et al. 2018 snatch rule, 40 m/s², logged for Experiment 2 only).
+6. **Guardians see why, in words.** The alerts route returns `why` = the band plus up to 3 reason names. It is read only from the evidence bound to that alert's signal, from the encrypted payload, so deleting the member's data removes it.
+   - **This changes what a guardian can see (privacy, needs Ipeleng's review).** Until now an alert carried no member-derived content: incident id, trigger and times only. `why` decrypts the member's private payload server-side and shows the guardian the band and up to three reason names (for example `scream_single`, shown as "a scream"). It never shows a number, a probability, audio or the PIN mode. It is derived from special personal information about the member (a sign of possible duress), shown only to a guardian the member invited and only for an alert delivered to them. ADR-0048 adds location on the same terms.
+   - **pv 1 `why` is best-effort.** Older apps (pv 1) queued the evidence before its signal, and the server links it to the next signal on that journey within 120 s. With two close detections, that can attach the wrong reasons to an alert. pv 2 names its signal exactly and replaces a pv 1 link for the same signal; the phone has sent pv 2 since 0.0.9.
+7. **Countdown.** The check-in shows "Answer when you can" until the server has acknowledged `checkin_opened`. It then counts down using a bound that can never overstate the server's time: min(created-at + 70 s, signal created-at + 90 s) − 5 s. At zero it says "Time's up. You can still answer". It is the same for both PINs and never shows reasons.
+8. **Context sounds are optional.** A label mismatch turns them off, and the record says `context: off`. It never disables V4.
+
+**Costs, stated before anyone asks:**
+- **More check-ins.** The transition list (`docs/eval/cem1-transitions.md`) shows that with the record threshold at half the prompt threshold, most single quieter sounds lift: a scream (7 db), glass (5) or a gunshot (8) alone reaches P ≥ 5. Only a lone shout (4) and conflicting context (the gym case) stay record-only. In effect CEM-1 roughly halves the prompt bar for screams, glass and gun-like sounds until the step-d measurements replace the record thresholds. The false-check rate at these thresholds is **not measured**. V4 already gave about 5.5 prompts per hour on replayed ESC-50 clips (ADR-0046, a lab proxy).
+- **Novel scheme.** No published graded duress scheme exists to copy (research R1). The weights are CEM-0's plus two provisional PIN weights.
+- **Pre-existing V4 behaviour kept, only in the cooldown.** Under CEM-1 a detection during an open check-in is now covered by it (decision 4). A V4-level detection in the 30 s cooldown **after** the check-in has closed still sends `signal_detected`. The server gives it its own no-answer fallback (+90 s, the G34 safeguard for a check-in that never renders), so it can alert guardians even after the member answered the first check-in normally. This ADR keeps V4 exactly as it is; whether a normal answer to the open check-in should cover later detections is a separate decision (G39).
+- **Pin baseline.** `pin_slow` needs 8 accepted entries on this phone, so it rarely fires in a short demo.
+
+**Rejected alternatives:**
+- a single fused tally that can make V4 quieter;
+- K suppressing V4-level detections;
+- sending `signal_detected` for record-only detections, which creates server deadlines for check-ins the phone never shows;
+- a variable-length PIN evidence event (length leaks);
+- a server-supplied countdown deadline (a contract change the send-time bound makes unnecessary).
+
+**Consequences:**
+- The public demo build runs CEM-1 (every subject is `sim_`).
+- The record thresholds and the venue false-alarm curve (step d) are now the top measurement priority.
+- The concurrency and timing rules (one prompt slot, V4 first, pause settles as record-only, the ±1 s context wait) are pinned by tests (`grader.test.ts`).
+
+## ADR-0048: location for 30 minutes after a check-in, kept only while guardians are alerted, shown to them on a map
+**Status:** Proposed (2026-09-26). Decided by Lethabo (co-lead). It changes what a guardian can see about a member (a location, which is personal information), so it needs Ipeleng's privacy review and Sibusiso's contract acceptance in `docs/ADR-ACCEPTANCE-RECORD.md`. Until then it runs only for simulation subjects (the whole public demo).
+**Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (contract, server), Ipeleng Modise (privacy)
+**Context:** An alert that says "Lerato may need help" without saying where leaves a guardian able only to phone 10111 with no address. The member cannot be asked where they are during a duress (G4: don't call or text them).
+**Decision:**
+1. **When the phone sends.** After ANY check-in opens, before any answer, the phone sends a location fix every 30 s for 30 minutes (`POST /v1/journeys/{id}/location`, device-signed, integers only). It sends the same after a normal PIN as after a duress PIN (V5), because the phone never knows whether an alert was raised (T30). A pause stops it. A headless task keeps it running with the screen locked.
+2. **What the server keeps.** A fix is kept only while the member has an open incident for which a guardian alert was requested, and is dropped at once otherwise. The phone gets the same 202 either way. Kept fixes stop at incident close, are purged 24 h after it (`run_workers`), and are removed on subject deletion.
+3. **Who sees it.** Only an active guardian the alert was delivered to, through the alerts route (`location`: the last fix and a trail of up to 20). The guardian sees a map: MapLibre GL JS bundled in the app (BSD-3-Clause, no remote code), with tiles from OpenFreeMap (no key), plus "Open in Maps". The guardian's consent names OpenFreeMap as seeing the map area requested.
+4. **What the member sees.** "After a check-in, this phone sends its location until HH:MM. Your guardians see it only if they were alerted." This is the same after either PIN.
+5. **Permission is optional.** Listening works without location; a guardian then sees no map.
+
+**Costs, stated before anyone asks:**
+- **False-alarm fixes.** After a false alarm the phone still sends fixes for 30 minutes. The server drops them, but they travel. This is the price of parity.
+- **Location is special to the member.** It is shown to guardians at the moment they are needed. It is never on chain, never in `evidence_observed` and never in the export.
+- **OpenFreeMap has no service level.** If tiles fail, the map says so and "Open in Maps" still works.
+- **Battery.** GPS every 30 s for 30 minutes is **not measured**.
+
+**Rejected alternatives:**
+- sending only after an alert: the phone would have to learn about alerts, which T30 forbids;
+- a remote map script (a remote-code risk);
+- Google Maps (needs a key and Play Services).
+
+## ADR-0049: hold-for-help, from the app or a Quick Settings tile, opens the same check-in a detection does
+**Status:** Proposed (2026-09-26). Decided by Lethabo (co-lead), from Mutarisi's design. It needs Sibusiso's contract acceptance (a new `sense` value) and Ipeleng's review.
+**Owner:** Lethabo Hoaeane (decision), Mutarisi Chibaya (design), Sibusiso Khumalo (contract)
+**Context:** VIGIL's position is "you don't have to ask". But a member who can ask, and wants to, had no way to. Mutarisi's design has a hold-for-help button and a Quick Settings tile.
+**Decision:**
+1. **How it is raised.** Holding the "Hold for help" control for 2 s on the Listening screen, or tapping the "VUKA" Quick Settings tile, opens a check-in at once. A tap on the button does nothing, and letting go early cancels.
+2. **One event, no new server path.** It is recorded as `signal_detected` pv 1 with `sense: "manual"` (`{kind, pv, journey_id, sense, app_version}`). The server already starts the same check-in deadlines for any `signal_detected`, so the same things follow:
+   - the check-in screen;
+   - the normal PIN closes it;
+   - the duress PIN raises the silent alarm (V5 parity holds: the same screens);
+   - no answer escalates to guardians.
+3. **One check-in at a time.** It takes the grader's single prompt slot, so no detection can open a second check-in over it. If a check-in is already open, it does nothing.
+4. **The tile is labelled only "VUKA"** and opens the app; nothing on it says "help" or "panic".
+
+**Costs, stated before anyone asks:**
+- **A coercer can see the button.** It is not covert, unlike detection plus the duress PIN; the duress PIN at its check-in stays silent.
+- **It asks.** It cuts against the product's thesis, so the pitch leads with detection, and hold-for-help is the fallback.
+- **The server does not validate `signal_detected` payloads** (the §18 sound fields are the phone's). Tightening that is a separate contract change.
+
+**Verified:** in journey-e2e, a duress PIN at a hold-for-help check-in marks the incident duress on the real server.

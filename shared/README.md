@@ -1,8 +1,10 @@
-# shared/ — code both the app and the verify page use
+﻿# shared/ — code both the app and the verify page use
 
 - `canonical.js` — the canonical JSON form (`docs/VUKA-2-SPEC.md` §5), identical byte for byte to the Python reference. Exports `canonicalJson`, `canonicalize` (bytes), `canonicalizeJson` (strict text parse: duplicate keys, floats and unsafe integers refused) and `CanonicalisationError`.
 - `der.js` — converts Android Keystore DER signatures to raw r‖s for WebCrypto. Exports `derToRaw`, `rawToDer` (test/vector helper) and `DerError`.
 - `merkle.js` — RFC 6962 trees and audit paths (§6). Exports `merkleRoot`, `auditPath`, `recomputeRoot`, `leafHash`, `nodeHash`, `splitPoint`, `bytesToHex`, `hexToBytes` and `MerkleError`. Leaves are raw 32-byte chain heads in ascending byte order; an empty tree is refused (§6).
+- `keys.js` — key-manifest bootstrap (§10). Exports `canonicalManifestBytes` (the hashed representation: canonical JSON bytes per §5 — the serialization pin that closes the open note in `contracts/keys/README.md`), `manifestMessage` (`0x02 ‖ SHA-256(manifest bytes)`, 33 bytes, published before the first `0x01` root), `decodeAnchorMessage`, `sha256`, `importSpkiVerifyKey` (Ed25519 for the server key, `{name: "ECDSA", namedCurve: "P-256"}` for device/guardian keys) and `validateManifest` (mirrors the contract-v2 `KeyManifest` schema). Re-exports `bytesToHex`/`hexToBytes
+- `verify.js` — verify-min (P3.S7): v2 subject-export hash, link, commitment, signature and counter checks. Device/guardian keys are rebuilt from the chain (registration `signer_pubkey`); a re-registration with a different key or actor is `key_conflict` and every entry must claim its key's registered actor (`actor_mismatch`). With `pins` (verify-pins.json + manifest.json) server signatures verify against the PINNED Ed25519 key only (T05) and receipts must name the pinned topic. Exports `verifyExport`, `normaliseExport`, `chainHeadHex` and `ExportError`. **`ok: true` means internal consistency only** (`assurance: "internal_consistency_only"`); it does not prove the record came from VUKA until the anchor and mirror checks run.
 
 ## Cross-language checks (before Thursday's vectors)
 
@@ -17,6 +19,10 @@ cd shared && npm install && npm test
 ```
 
 `npm test` runs `vitest run` (Node 22+; spec §15 T01/T02 and `team/START-HERE.md`). No dependencies beyond vitest ship in the modules themselves.
+
+## Verify an export
+
+Run `node shared/scripts/verify-export.mjs <export.json>` to print the first-failure verification result for a v2 subject export. Mirror receipts, Merkle proofs, key revocation and server signatures are reported as not checked.
 
 ## Vector files (T01/T02)
 

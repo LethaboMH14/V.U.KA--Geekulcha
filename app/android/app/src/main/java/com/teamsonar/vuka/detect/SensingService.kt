@@ -42,14 +42,20 @@ class SensingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL, "Journey", NotificationManager.IMPORTANCE_LOW))
+        nm.createNotificationChannel(NotificationChannel(CHANNEL, "VUKA", NotificationManager.IMPORTANCE_LOW))
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL)
-            .setContentTitle("VUKA journey active")
+            .setContentTitle("VUKA active")
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setOngoing(true)
             .setSilent(true)
             .build()
-        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0
+        // Location joins the microphone only when the member allowed it (Android
+        // 14 refuses a location service type without the permission).
+        val located = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+            checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or (if (located) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
+        } else 0
         ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, type)
 
         if (audio == null) {

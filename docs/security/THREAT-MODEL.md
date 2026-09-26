@@ -1,6 +1,6 @@
 # VUKA threat model — VIGIL + ANCHOR (STRIDE plus coercion)
 
-> **Owner:** Ipeleng Constance Modise. **Issued** 23 Sep 2026 by Lethabo (co-lead) as the starting model for P3.S3. **Status:** `PROPOSED` until Ipeleng accepts it. Supersedes the path `docs/THREAT-MODEL-VIGIL-ANCHOR.md` in `team/ipeleng.md`.
+> **Owner:** Ipeleng Constance Modise. **Issued** 23 Sep 2026 by Lethabo (co-lead) as the starting model for P3.S3. **Status:** `ACCEPTED` — 24 Sep 2026, Ipeleng Constance Modise (owner), via the owner review in `docs/build-log/entries/2026-09-24-ipeleng-p3s2-s3-owner-review.md`. Accepted with §9 recorded: 55 of 63 rows map to a spec control and a test whose oracle would fail if the threat succeeded; the 8 rows marked "none yet — see §9" stand as recorded observations with named owners per the rule below. Nothing is treated as mitigated until its test passes. Supersedes the path `docs/THREAT-MODEL-VIGIL-ANCHOR.md` in `team/ipeleng.md`.
 > **Serves:** S, T. Every threat maps to a spec control (`docs/VUKA-2-SPEC.md` IDs) and a test (T01–T24 from spec §15, T30–T49 new, defined in §6). Not legal advice.
 > **Rule:** a threat with no test gets a recorded observation or "not measured". Nothing is marked mitigated because the spec says so; it is mitigated when its test passes.
 
@@ -72,7 +72,7 @@ Columns: threat · spec control · test · residual. **S**poofing, **T**ampering
 |---|---|---|---|---|---|
 | SV-1 | S | Request replayed or forged | §7 request signing, nonces, counters | T06 | Undelivered bytes replayed later → at most a late escalation (PR #43 review, finding 2) |
 | SV-2 | S | Revoked key keeps signing after recovery; skew-exempt kinds bypass auth | §9 revocation; §7 exemption is skew only | T35 | — |
-| SV-3 | T | Server rewrites a subject's history | per-subject chain; roots anchored; subject keeps export | T04, T22 | Server can still **omit or fabricate server events** (B2) |
+| SV-3 | T | Server rewrites a subject's history | per-subject chain; roots anchored; subject keeps export (A1, §4, §6, §10) | T04, T22 | Server can still **omit or fabricate server events** (B2) |
 | SV-4 | T | Two outcomes for one check-in (race) | §8 row lock, first terminal outcome wins | T23 | — |
 | SV-5 | R | Operator deletes or changes thresholds alone | two-signature rule, ADR-0036(8) | T48 | — |
 | SV-6 | I | Subject A reads subject B's export (BOLA, API1) | A5 subject auth | T19, T49 | — |
@@ -90,10 +90,10 @@ Columns: threat · spec control · test · residual. **S**poofing, **T**ampering
 |---|---|---|---|---|---|
 | GD-1 | S | Attacker re-points a guardian's FCM token to his device | G5 token updates signed by guardian key | T34 | — |
 | GD-2 | S | Forged `stand_down` stops the bank signal | G5 guardian-key signature | T21 (guardian vectors), T34 | A guardian who lies becomes a co-accused (duress doc layer 2) |
-| GD-3 | T | Duplicate or lost alert after a crash | outbox idempotency key; FCM collapse key | T08 | — |
-| GD-4 | I | Alert text on a guardian's lock screen reveals location to a bystander | G3 visible notification | Observation (Mutarisi) | **Accepted** for the demo; revisit copy |
-| GD-5 | I | Alerts readable by Google or the SMS gateway | TLS + at-rest only | — | **Open:** not end-to-end (G28) |
-| GD-6 | D | Guardian phone offline; data off | SMS fallback (G3); M6 | M6 | Delivery needs data (§17) |
+| GD-3 | T | Duplicate or lost alert after a crash | outbox idempotency key; FCM collapse key (§8) | T08 | — |
+| GD-4 | I | Alert text on a guardian's lock screen reveals location to a bystander | G3 visible notification; none yet — see §9 | none yet — see §9 | **Accepted** for the demo; revisit copy |
+| GD-5 | I | Alerts readable by Google or the SMS gateway | TLS + at-rest only; none yet — see §9 | none yet — see §9 | **Open:** not end-to-end (G28) |
+| GD-6 | D | Guardian phone offline; data off | SMS fallback (G3); M6 | none yet — see §9 | Delivery needs data (§17) |
 | GD-7 | E | Abusive guardian keeps receiving alerts after removal | §9: 24 h delay, silent | T24 | 24 h exposure, stated in §9 |
 
 ### 3.4 Browser verify page
@@ -102,41 +102,41 @@ Columns: threat · spec control · test · residual. **S**poofing, **T**ampering
 |---|---|---|---|---|---|
 | VP-1 | S | Genuine receipt from another batch or topic accepted | §6 B2: decode message, compare root, pin network/topic/manifest | T22 | — |
 | VP-2 | S | Forged server chain with a substituted key | pinned key manifest (§10) | T05 | — |
-| VP-3 | T | Altered export passes | recompute hashes, links, signatures | T04, T21 | — |
+| VP-3 | T | Altered export passes | recompute hashes, links, signatures (§4, §6) | T04, T21 | — |
 | VP-4 | I | Export uploaded to our server or a third party | C-50 no upload; CSP `connect-src` | T32 | — |
 | VP-5 | E | Script injection from export strings | C-52 `textContent`; CSP | T33 | — |
 | VP-6 | S | Archived mirror response presented as live | three states (§10) | T22 | Testnet resets (G31) |
-| VP-7 | T | Page itself altered in transit or on host | HTTPS; SRI not needed (no third-party script) | ZAP baseline | Host compromise out of scope |
+| VP-7 | T | Page itself altered in transit or on host | HTTPS; SRI not needed (no third-party script); none yet — see §9 | none yet — see §9 | Host compromise out of scope |
 
 ### 3.5 Hedera (HCS and mirror)
 
 | ID | S T R I D E | Threat | Control | Test | Residual |
 |---|---|---|---|---|---|
 | HD-1 | S | Third party posts roots to our topic | topic created with `submitKey` (ADR-0035) | T43 | `submitKey` theft = our server compromise |
-| HD-2 | T | Root substituted in our receipt store | verify page reads the mirror, not our copy | T22 | — |
+| HD-2 | T | Root substituted in our receipt store | verify page reads the mirror, not our copy (§6) | T22 | — |
 | HD-3 | I | Personal data on chain | only 33-byte typed messages (§10) | T19, code review | — |
-| HD-4 | I | Anchor timing reveals duress | every PIN-gated outcome anchored; coalesced to 1 per 60 s | T31 (topic timing check) | Minute-level activity visible (§10) |
-| HD-5 | D | Testnet reset or outage | epochs; archived state; recording fallback | Observation | G31 |
+| HD-4 | I | Anchor timing reveals duress | every PIN-gated outcome anchored; coalesced to 1 per 60 s (§10) | PT-29 (topic timing check) | Minute-level activity visible (§10) |
+| HD-5 | D | Testnet reset or outage | epochs; archived state; recording fallback (§10) | none yet — see §9 | G31 |
 
 ### 3.6 `sim_bank` and the future bank
 
 | ID | S T R I D E | Threat | Control | Test | Residual |
 |---|---|---|---|---|---|
-| BK-1 | S | Forged risk signal places a hold | ANCHOR-signed request | T40 | — |
-| BK-2 | T | Duplicate hold after retry | `Idempotency-Key` | T11, T40 | — |
+| BK-1 | S | Forged risk signal places a hold | ANCHOR-signed request (S1, §12) | T40 | — |
+| BK-2 | T | Duplicate hold after retry | `Idempotency-Key` (§8) | T11, T40 | — |
 | BK-3 | E | Detection alone triggers a hold | S1, ADR-0037 | T11 | — |
 | BK-4 | R | Bank cannot tell a duress PIN from a timeout | S1 provenance (PR #43 S1) | T38 | Both are one principal (E1) |
-| BK-5 | I | Bank's UI names duress during the event | ADR-0037(4) | Observation of `sim_bank` copy | Real banks: partner contract (G30) |
+| BK-5 | I | Bank's UI names duress during the event | ADR-0037(4) | none yet — see §9 | Real banks: partner contract (G30) |
 
 ### 3.7 Repository, CI and release
 
 | ID | S T R I D E | Threat | Control | Test | Residual |
 |---|---|---|---|---|---|
-| CI-1 | I | Secret committed | gitleaks hook + CI (C-80–C-82) | CI `secret-scan` | Detects patterns only (`SECURITY.md`) |
-| CI-2 | T | Direct push to `main` with failing checks | review rules; CODEOWNERS | — | **Open:** no branch protection (G17) |
-| CI-3 | T | Malicious or vulnerable dependency | lockfiles, SCA (C-70, C-71) | T45 | — |
-| CI-4 | T | Swapped model weights | sha256 manifest (C-73) | T41 digest check | — |
-| CI-5 | S | APK replaced on the release page | APK sha256 published; signer cert recorded | T20 | — |
+| CI-1 | I | Secret committed | gitleaks hook + CI (C-80–C-82) | `scripts/test-security.mjs` in the CI secret-scan job — no T/PT ID yet, see §9 | Detects patterns only (`SECURITY.md`) |
+| CI-2 | T | Direct push to `main` with failing checks | review rules; CODEOWNERS; none yet — see §9 | none yet — see §9 | **Open:** no branch protection (G17) |
+| CI-3 | T | Malicious or vulnerable dependency | lockfiles, SCA (C-70, C-71) | T45 | **Partial:** T45 covers known vulnerabilities (C-71) only. Nothing yet tests hash-pinned lockfile enforcement (C-70), the defence against a malicious package with no CVE — see §9 |
+| CI-4 | T | Swapped model weights | sha256 manifest (C-73) | T41 digest check; PT-49 (swapped file refused) | — |
+| CI-5 | S | APK replaced on the release page | APK sha256 published; signer cert recorded (D1) | T20, PT-50 | — |
 
 ## 4 · Coercion-specific threats
 
@@ -193,14 +193,14 @@ Each needs a fixture, an oracle and prerequisites before Thu 20:00 (P3.S3). Owne
 | T44 | Burst of 200 requests to public endpoints | Rate limited (429); service stays up | Sibusiso |
 | T45 | SCA over lockfiles | No unwaived critical or high | Sibusiso |
 | T46 | Server logs and release logcat during a full scenario | No PIN, salt, payload, token or location | Khutso, Vukosi |
-| T47 | Wrong PIN at the check-in; repeated guesses | Oracle pending the Thu §8/§9 decision | Vukosi |
+| T47 | Wrong PIN at the check-in; repeated guesses | Decided by ADR-0041 (spec §8, §15): identical "Try again" ×3, then `no_answer` at the deadline; a later entry shows "Checked in"; duress still counts. Oracle in `TEST-SPECS.md` | Vukosi |
 | T48 | Operator deletion, threshold change or key rotation with one operator | Rejected; the attempt is chained | Sibusiso |
-| T49 | Subject A's key calls subject B's export, record and delete | 403, same body as not-found | Sibusiso |
+| T49 | Subject A's key calls subject B's export, record and delete | 404, body byte-identical to a subject that doesn't exist (corrected 24 Sep: a 403 leaks existence) | Sibusiso |
 
 ## 7 · Gaps this model raises
 
 1. **TM-C9, export during an open incident (largest).** A coercer holding the unlocked phone can open the export (or a share button built on it) and read `duress_pin` in the current payload. V8 hides it in My Record, but not in the export. **Proposed fix** for Lethabo and Sibusiso (spec change, both leads): export needs a fresh `pin_authorised` for action `export`; while an incident is open, or under a duress authorisation, the export ends at the last head before the incident. A chain prefix still verifies, so the no-op stays convincing. Test T30.
-2. **TM-C10, PIN guessing and wrong-PIN behaviour** are not specified. Decide Thursday; T47.
+2. **TM-C10, PIN guessing and wrong-PIN behaviour**: decided 24 Sep by ADR-0041; T47. Open only until T47 passes.
 3. **B1–B3** from the PR #43 review remain open until the spec text lands (`docs/security/SSDLC.md` §13).
 4. **No branch protection** (G17): a reviewed control can still be bypassed by a direct push.
 5. **Contract tests are not in CI** (`SSDLC.md` C-62).
@@ -210,3 +210,20 @@ Each needs a fixture, an oracle and prerequisites before Thu 20:00 (P3.S3). Owne
 - Written against the spec and ADRs; there is no product code to inspect yet.
 - Physical attacks beyond TB0 (forensic extraction of a rooted phone) are out of scope.
 - STRIDE coverage of the SMS gateway depends on the provider Khutso chooses; to be added when named.
+
+## 9 · Unmapped threats
+
+The `none yet` cells identify references not found in the current spec or test set. A control reference may be a spec section or requirement ID, an ADR, or an SSDLC control (`C-nn` in `docs/security/SSDLC.md`, which carries its own status and evidence). `scripts/check-threat-map.mjs` applies the same rule. Owners below are proposed for closing the remaining gaps. Reviewed 24 Sep by an independent mapping audit: every added reference was checked against its source, and a test counts only if its oracle would fail when the threat succeeds.
+
+| ID | What's missing | Proposed owner |
+|---|---|---|
+| GD-4 | Spec control for lock-screen location disclosure; test | Mutarisi (guardian UI) |
+| GD-5 | Spec control and test for exposure to FCM and SMS providers | Khutso (guardian delivery) |
+| GD-6 | Test for offline guardian delivery and SMS fallback | Khutso (guardian delivery) |
+| VP-7 | Spec control and test for integrity of the hosted verify page | Ipeleng (verify page) |
+| HD-5 | Test for testnet reset handling and re-anchoring under a new epoch | Sibusiso (anchoring) |
+| BK-5 | Test that the bank-facing copy does not name duress during an event | Khutso (`sim_bank`) |
+| CI-1 | A T/PT ID for the existing fixture test `scripts/test-security.mjs` (C-82), which already runs in CI | Sibusiso and Ipeleng (security/CI) |
+| CI-2 | Spec control and T/PT test for rejecting direct pushes with failing checks | Sibusiso (repository controls) |
+| SV-3 | A direct fixture for the server rewriting already-anchored history in place. Today coverage is inferred from T22's root mismatch | Sibusiso (anchoring) |
+| CI-3 | A test that CI refuses a lockfile whose integrity hash doesn't match (C-70); T45 covers known CVEs only | Sibusiso (server dependencies) |

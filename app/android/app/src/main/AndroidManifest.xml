@@ -9,6 +9,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Location for 30 min after a check-in (ADR-0048, PROPOSED), and a guardian's standby. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
       android:name=".MainApplication"
@@ -19,6 +24,7 @@
       android:fullBackupContent="@xml/backup_rules"
       android:dataExtractionRules="@xml/data_extraction_rules"
       android:usesCleartextTraffic="false"
+      android:networkSecurityConfig="${netConfig}"
       tools:targetApi="31"
       android:theme="@style/AppTheme">
       <activity
@@ -36,6 +42,20 @@
       <service
         android:name=".detect.SensingService"
         android:exported="false"
-        android:foregroundServiceType="microphone" />
+        android:foregroundServiceType="microphone|location" />
+      <service
+        android:name=".detect.HelpTileService"
+        android:exported="true"
+        android:icon="@drawable/ic_launcher_monochrome"
+        android:label="VUKA"
+        android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+        <intent-filter>
+          <action android:name="android.service.quicksettings.action.QS_TILE" />
+        </intent-filter>
+      </service>
+      <service
+        android:name=".detect.KeepAliveTaskService"
+        android:exported="false"
+        android:foregroundServiceType="dataSync" />
     </application>
 </manifest>

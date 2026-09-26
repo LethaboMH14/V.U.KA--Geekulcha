@@ -36,6 +36,7 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
         putInt("topIndex", w.topIndex)
         putInt("topBp", w.topBp)
         putInt("gunNeighbourBp", w.gunNeighbourBp)
+        if (w.contextBp.isNotEmpty()) putArray("contextBp", Arguments.fromArray(w.contextBp))
     })
 
     override fun onMotion(f: MotionFrame) = emit("vigil.motion", Arguments.createMap().apply {
@@ -97,6 +98,38 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
     @ReactMethod
     fun clearCheckin() = CheckinNotice.clear(ctx)
 
+    /**
+     * Whether a check-in can open over other apps and the lock screen
+     * (Android 14+ lets the user switch full-screen notifications off, and
+     * apps installed outside the Play Store often start with it off).
+     */
+    @ReactMethod
+    fun canFullScreen(promise: Promise) {
+        val nm = ctx.getSystemService(android.app.NotificationManager::class.java)
+        promise.resolve(android.os.Build.VERSION.SDK_INT < 34 || nm.canUseFullScreenIntent())
+    }
+
+    /** True once when VIGIL was opened from its Quick Settings tile (hold-for-help). */
+    @ReactMethod
+    fun consumeHelp(promise: Promise) {
+        val asked = HelpRequest.pending
+        HelpRequest.pending = false
+        promise.resolve(asked)
+    }
+
+    /** Opens the system page where the member can allow full-screen check-ins. */
+    @ReactMethod
+    fun openFullScreenSettings() {
+        val intent = if (android.os.Build.VERSION.SDK_INT >= 34) {
+            android.content.Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT)
+                .setData(android.net.Uri.parse("package:" + ctx.packageName))
+        } else {
+            android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, ctx.packageName)
+        }
+        ctx.startActivity(intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
     /** The JS runtime is going away: stop sending to it, so output waits for the next one. */
     override fun invalidate() {
         if (DetectionBus.listener === this) DetectionBus.listener = null
@@ -140,6 +173,7 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
                         putInt("topIndex", w.topIndex)
                         putInt("topBp", w.topBp)
                         putInt("gunNeighbourBp", w.gunNeighbourBp)
+                        if (w.contextBp.isNotEmpty()) putArray("contextBp", Arguments.fromArray(w.contextBp))
                     })
                     start += AudioPipeline.HOP
                 }
@@ -176,6 +210,6 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
 }
 
 class DetectionPackage : ReactPackage {
-    override fun createNativeModules(ctx: ReactApplicationContext): List<NativeModule> = listOf(DetectionModule(ctx))
+    override fun createNativeModules(ctx: ReactApplicationContext): List<NativeModule> = listOf(DetectionModule(ctx), SignerModule(ctx), QueueModule(ctx), PinModule(ctx), LocationModule(ctx))
     override fun createViewManagers(ctx: ReactApplicationContext): List<ViewManager<*, *>> = emptyList()
 }

@@ -25,12 +25,27 @@ class YamnetClassifier(context: Context) : Closeable {
             "Gunshot, gunfire", "Machine gun", "Fusillade",
             "Glass", "Shatter", "Breaking",
         )
+
+        /**
+         * Context classes, same labels and order as app/src/brain/detect/classes.ts
+         * CONTEXT (CEM-1, PROPOSED). Optional: a mismatch turns context off,
+         * never V4 detection.
+         */
+        val CONTEXT_LABELS = listOf(
+            "Laughter", "Crying, sobbing", "Whimper", "Groan", "Gasp",
+            "Cheering", "Applause", "Crowd", "Children playing",
+            "Music", "Video game music",
+            "Police car (siren)", "Ambulance (siren)", "Fire engine, fire truck (siren)", "Siren",
+            "Television", "Radio",
+        )
     }
 
     val labels: List<String>
     val targetIndices: IntArray
     /** The gun-like classes' excluded neighbours (ADR-0039(3)), by label. */
     val neighbourIndices: IntArray
+    /** Context class indices, or empty when any label is missing or repeated (context off). */
+    val contextIndices: IntArray
     private val interpreter: Interpreter
     private val output = Array(1) { FloatArray(CLASSES) }
 
@@ -57,6 +72,10 @@ class YamnetClassifier(context: Context) : Closeable {
         }
         targetIndices = resolve(TARGET_LABELS)
         neighbourIndices = resolve(listOf("Explosion", "Artillery fire", "Cap gun", "Fireworks", "Firecracker"))
+        contextIndices = CONTEXT_LABELS.map { name ->
+            val at = labels.indexOf(name)
+            if (at >= 0 && labels.lastIndexOf(name) == at) at else -1
+        }.let { found -> if (found.any { it < 0 }) IntArray(0) else found.toIntArray() }
     }
 
     /** Scores for one 15 600-sample window at 16 kHz, one per class, 0..1. */
@@ -76,7 +95,10 @@ fun summarise(c: YamnetClassifier, scores: FloatArray, seq: Int, endMs: Long): W
     for (i in 1 until scores.size) if (scores[i] > scores[top]) top = i
     var neighbour = 0
     for (i in c.neighbourIndices) neighbour = maxOf(neighbour, toBp(scores[i]))
-    return WindowResult(seq, endMs, IntArray(c.targetIndices.size) { toBp(scores[c.targetIndices[it]]) }, top, toBp(scores[top]), neighbour)
+    return WindowResult(
+        seq, endMs, IntArray(c.targetIndices.size) { toBp(scores[c.targetIndices[it]]) }, top, toBp(scores[top]), neighbour,
+        IntArray(c.contextIndices.size) { toBp(scores[c.contextIndices[it]]) },
+    )
 }
 
 /** Score 0..1 to integer basis points 0..10000, rounding half up (no float leaves native). */

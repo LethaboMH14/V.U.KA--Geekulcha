@@ -1,193 +1,22 @@
 /**
- * VIGIL UI primitives, Functional Industrial: a graphite body lit from above,
- * keys that depress when pressed, 8 dp lamps, and readouts set in mono.
- * Colour follows the rules in theme.ts: one cobalt signal, green only for
- * received or verified, amber only in guardian mode.
+ * VIGIL UI primitives in the prototype's Ivory glass (vuka-ui-proto): a warm
+ * ivory field with three soft colour orbs, calm white glass cards, the hero
+ * card in a thin tray, deep-ink pill buttons, IBM Plex.
+ *
+ * Colour follows theme.ts: one deep-ink action colour, green only for
+ * received or verified, amber only in guardian mode. The Journey check and
+ * its keypad stay flat and plain: no glass, no motion (V5, T15).
  */
 import React, {useEffect, useRef, useState} from 'react';
 import {AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View, type ViewStyle} from 'react-native';
-import Svg, {Circle, Defs, Line, LinearGradient, Rect, Stop} from 'react-native-svg';
-import {ArrowLeft, Backspace, CaretRight} from './icons';
+import {BlurView} from '@react-native-community/blur';
+import Svg, {Defs, LinearGradient, Path, RadialGradient, Rect, Stop} from 'react-native-svg';
+import {ArrowLeft, ArrowRight, Backspace, CaretRight} from './icons';
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
 
 type Tone = 'member' | 'guardian';
 
-/** The body: a flat graphite field with one soft top light. */
-export function Surface({tone = 'member'}: {tone?: Tone}) {
-  const base = tone === 'guardian' ? colors.guardianBase : colors.bgBase;
-  return (
-    <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">
-      <Defs>
-        <LinearGradient id="toplight" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0.035" />
-          <Stop offset="0.45" stopColor="#FFFFFF" stopOpacity="0" />
-        </LinearGradient>
-      </Defs>
-      <Rect width="100%" height="100%" fill={base} />
-      <Rect width="100%" height="100%" fill="url(#toplight)" />
-    </Svg>
-  );
-}
-
-/** A raised graphite panel. Tonal elevation only: no drop shadow. */
-export function Panel({tone = 'member', style, children}: {tone?: Tone; style?: ViewStyle; children: React.ReactNode}) {
-  return (
-    <View style={[styles.panel, tone === 'guardian' && {backgroundColor: colors.guardianRaised}, style]}>{children}</View>
-  );
-}
-
-type KeyVariant = 'signal' | 'plain' | 'guardian' | 'guardianPlain';
-
-const FACE: Record<KeyVariant, {top: string; bottom: string; text: string; ripple: string}> = {
-  signal: {top: colors.cobaltTop, bottom: colors.cobaltBottom, text: colors.cobaltText, ripple: colors.rippleOnSignal},
-  plain: {top: colors.keyFaceTop, bottom: colors.keyFace, text: colors.textTitle, ripple: colors.ripple},
-  guardian: {top: colors.amberTop, bottom: colors.amberBottom, text: colors.onAmber, ripple: colors.ripple},
-  guardianPlain: {top: colors.guardianKeyTop, bottom: colors.guardianRaised, text: colors.textTitle, ripple: colors.ripple},
-};
-
-/**
- * The machined face of a key. Pressed, the light flips (bottom edge lit) and
- * the key sinks 3%: the same for every key, on every screen, for both PINs.
- */
-function KeyFace({variant, pressed, radius}: {variant: KeyVariant; pressed: boolean; radius: number}) {
-  const f = FACE[variant];
-  const id = `face-${variant}-${pressed ? 'p' : 'r'}`;
-  // Measured, not percentage-sized: on Android an SVG sized "100%" inside a
-  // Pressable can lay out narrower than the key (seen on the emulator).
-  const [size, setSize] = useState({w: 0, h: 0});
-  return (
-    <View
-      style={[StyleSheet.absoluteFill, {backgroundColor: pressed ? f.top : f.bottom, borderRadius: radius}]}
-      pointerEvents="none"
-      onLayout={e => setSize({w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height})}>
-      {size.w > 0 ? (
-        <Svg width={size.w} height={size.h}>
-          <Defs>
-            <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={pressed ? f.bottom : f.top} />
-              <Stop offset="1" stopColor={pressed ? f.top : f.bottom} />
-            </LinearGradient>
-          </Defs>
-          <Rect width={size.w} height={size.h} rx={radius} ry={radius} fill={`url(#${id})`} />
-        </Svg>
-      ) : null}
-      {variant === 'plain' || variant === 'guardianPlain' ? (
-        <View style={[styles.highlight, {left: radius, right: radius}]} />
-      ) : null}
-    </View>
-  );
-}
-
-export function Key({
-  label,
-  onPress,
-  variant = 'plain',
-  icon,
-  accessibilityHint,
-}: {
-  label: string;
-  onPress: () => void;
-  variant?: KeyVariant;
-  icon?: React.ReactNode;
-  accessibilityHint?: string;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityHint={accessibilityHint}
-      onPress={onPress}
-      android_ripple={{color: FACE[variant].ripple, foreground: true}}
-      style={({pressed}) => [styles.key, (variant === 'plain' || variant === 'guardianPlain') && styles.keyEdge, pressed && styles.sunk]}>
-      {({pressed}) => (
-        <>
-          <KeyFace variant={variant} pressed={pressed} radius={radii.key} />
-          {icon ? <View>{icon}</View> : null}
-          <Text style={[styles.keyText, {color: FACE[variant].text}]} maxFontSizeMultiplier={1.6}>
-            {label}
-          </Text>
-        </>
-      )}
-    </Pressable>
-  );
-}
-
-/** A text-only action for the least important choice on a screen. */
-export function QuietKey({label, onPress, tone = 'member'}: {label: string; onPress: () => void; tone?: Tone}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      hitSlop={4}
-      style={({pressed}) => [styles.quiet, pressed && {opacity: 0.6}]}>
-      <Text style={[type.label, {color: tone === 'guardian' ? colors.amberInk : colors.textTitle}]}>{label}</Text>
-    </Pressable>
-  );
-}
-
-/** The round signal key on its plinth: the one primary action on Home. */
-export function RoundKey({label, onPress}: {label: string; onPress: () => void}) {
-  return (
-    <View style={styles.plinth}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        onPress={onPress}
-        android_ripple={{color: colors.rippleOnSignal, borderless: true, radius: 68}}
-        style={({pressed}) => [styles.round, pressed && styles.sunk]}>
-        {({pressed}) => (
-          <>
-            <KeyFace variant="signal" pressed={pressed} radius={68} />
-            <Text style={styles.roundText} maxFontSizeMultiplier={1.3}>
-              {label}
-            </Text>
-          </>
-        )}
-      </Pressable>
-    </View>
-  );
-}
-
-/** A dial on the same plinth, holding a readout (the journey clock). */
-export function Dial({children}: {children: React.ReactNode}) {
-  // 60 static graduations on the plinth, every fifth one longer: an
-  // instrument's bezel. Decorative and still.
-  const ticks = Array.from({length: 60}, (_, i) => {
-    const a = (i / 60) * 2 * Math.PI;
-    const r1 = 84;
-    const r2 = i % 5 === 0 ? 76 : 80;
-    return {x1: 88 + r1 * Math.sin(a), y1: 88 - r1 * Math.cos(a), x2: 88 + r2 * Math.sin(a), y2: 88 - r2 * Math.cos(a), major: i % 5 === 0};
-  });
-  return (
-    <View style={styles.plinth}>
-      <Svg width={176} height={176} style={StyleSheet.absoluteFill} pointerEvents="none">
-        {ticks.map((t, i) => (
-          <Line
-            key={i}
-            x1={t.x1}
-            y1={t.y1}
-            x2={t.x2}
-            y2={t.y2}
-            stroke={t.major ? colors.textDim : colors.unlit}
-            strokeWidth={t.major ? 1.5 : 1}
-          />
-        ))}
-        <Circle cx={88} cy={88} r={87} stroke={colors.hairline} strokeWidth={1} fill="none" />
-      </Svg>
-      <View style={styles.dial}>{children}</View>
-    </View>
-  );
-}
-
-type LampTone = 'signal' | 'green' | 'bone' | 'amber' | 'unlit';
-const LAMP: Record<LampTone, string> = {
-  signal: colors.cobalt,
-  green: colors.green,
-  bone: colors.bone,
-  amber: colors.amber,
-  unlit: colors.unlit,
-};
-
-function useReduceMotion() {
+export function useReduceMotion() {
   const [reduce, setReduce] = useState(false);
   useEffect(() => {
     let alive = true;
@@ -204,9 +33,261 @@ function useReduceMotion() {
 }
 
 /**
- * An 8 dp lamp. `breathing` is used for the listening lamp alone: a slow
- * 4.8 s cycle, off when the system asks for reduced motion. Decorative; the
- * words beside it carry the state.
+ * The field behind every screen: ivory with three soft colour orbs (sage, sky,
+ * peach). Still, not drifting: VIGIL runs all day, so the only motion it
+ * spends battery on is the listening line.
+ */
+export function Surface({tone = 'member'}: {tone?: Tone}) {
+  const base = tone === 'guardian' ? colors.guardianBase : colors.bgBase;
+  const orbs = tone === 'guardian' ? [colors.amberFill, '#F3E4CC', colors.orb1] : [colors.orb1, colors.orb2, colors.orb3];
+  return (
+    <View style={[StyleSheet.absoluteFill, {backgroundColor: base, overflow: 'hidden'}]} pointerEvents="none">
+      <View style={[styles.orb, {top: -120, left: -140}]}>
+        <Orb color={orbs[0]} opacity={0.65} id="o1" />
+      </View>
+      <View style={[styles.orb, {top: 180, right: -180}]}>
+        <Orb color={orbs[1]} opacity={0.6} id="o2" />
+      </View>
+      <View style={[styles.orb, {bottom: -160, left: -60}]}>
+        <Orb color={orbs[2]} opacity={0.55} id="o3" />
+      </View>
+    </View>
+  );
+}
+
+function Orb({color, opacity, id}: {color: string; opacity: number; id: string}) {
+  return (
+    <Svg width={420} height={420}>
+      <Defs>
+        <RadialGradient id={id} cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor={color} stopOpacity={opacity} />
+          <Stop offset="0.6" stopColor={color} stopOpacity={opacity * 0.45} />
+          <Stop offset="1" stopColor={color} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Rect width={420} height={420} fill={`url(#${id})`} />
+    </Svg>
+  );
+}
+
+/** A soft white sheen along the top of a glass surface: light from above. */
+function Sheen({radius}: {radius: number}) {
+  const [w, setW] = useState(0);
+  return (
+    <View
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, {borderRadius: radius, overflow: 'hidden'}]}
+      onLayout={e => setW(e.nativeEvent.layout.width)}>
+      {w > 0 ? (
+        <Svg width={w} height={90}>
+          <Defs>
+            <LinearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={colors.sheen} stopOpacity={colors.dark ? 0.1 : 0.55} />
+              <Stop offset="1" stopColor={colors.sheen} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Rect width={w} height={90} fill="url(#sheen)" />
+        </Svg>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * A frosted glass card: the orbs behind it are blurred for real, a white
+ * wash and a top sheen sit over the blur, a white hairline edge catches the
+ * light, and one soft ink shadow lifts it. `hero` sets it in the thin
+ * machined tray (the double bezel). Blur falls back to warm white where the
+ * phone can't blur.
+ */
+export function Panel({
+  tone = 'member',
+  hero,
+  style,
+  children,
+}: {
+  tone?: Tone;
+  hero?: boolean;
+  style?: ViewStyle;
+  children: React.ReactNode;
+}) {
+  const card = (
+    <View style={[styles.card, hero && styles.cardHero, tone === 'guardian' && styles.cardGuardian, style]}>
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.glassClip]}>
+        <BlurView
+          style={StyleSheet.absoluteFill}
+          blurType={colors.blurType}
+          blurAmount={18}
+          overlayColor="transparent"
+          reducedTransparencyFallbackColor={colors.pillFill}
+        />
+        <View style={[StyleSheet.absoluteFill, {backgroundColor: hero ? colors.washHero : colors.wash}]} />
+      </View>
+      <Sheen radius={radii.panel} />
+      {children}
+    </View>
+  );
+  return hero ? <View style={styles.bezel}>{card}</View> : card;
+}
+
+/**
+ * Press depth: a surface sinks a little and its shadow tightens while it is
+ * pressed, then springs back. Every key and row uses it; the PIN keypad does
+ * not (it stays still for both PINs, V5).
+ */
+export function usePressDepth() {
+  const reduce = useReduceMotion();
+  const v = useRef(new Animated.Value(0)).current;
+  const to = (x: number) => {
+    if (reduce) return v.setValue(0);
+    Animated.spring(v, {toValue: x, useNativeDriver: true, speed: 40, bounciness: x ? 0 : 8}).start();
+  };
+  return {
+    style: {
+      transform: [
+        {scale: v.interpolate({inputRange: [0, 1], outputRange: [1, 0.965]})},
+        {translateY: v.interpolate({inputRange: [0, 1], outputRange: [0, 1.5]})},
+      ],
+    },
+    onPressIn: () => to(1),
+    onPressOut: () => to(0),
+  };
+}
+
+/** An icon in a 40 dp glass circle. */
+export function GlassIcon({children}: {children: React.ReactNode}) {
+  return <View style={styles.glassCircle}>{children}</View>;
+}
+
+/** Plex Medium 11, uppercase, tracked: the small label above a state word. */
+export function Eyebrow({children, style}: {children: React.ReactNode; style?: object}) {
+  return <Text style={[type.eyebrow, style]}>{children}</Text>;
+}
+
+type KeyVariant = 'signal' | 'plain' | 'ghost' | 'guardian' | 'guardianPlain';
+
+/** The deep-ink pill's face: a top-to-bottom ink gradient, measured to its size. */
+function InkFace({top, bottom, radius}: {top: string; bottom: string; radius: number}) {
+  const [size, setSize] = useState({w: 0, h: 0});
+  const id = `ink-${top.slice(1)}`;
+  return (
+    <View
+      style={StyleSheet.absoluteFill}
+      pointerEvents="none"
+      onLayout={e => setSize({w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height})}>
+      {size.w > 0 ? (
+        <Svg width={size.w} height={size.h}>
+          <Defs>
+            <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={top} />
+              <Stop offset="1" stopColor={bottom} />
+            </LinearGradient>
+          </Defs>
+          <Rect width={size.w} height={size.h} rx={radius} ry={radius} fill={`url(#${id})`} />
+        </Svg>
+      ) : null}
+      <View style={[styles.inkHighlight, {left: radius * 0.6, right: radius * 0.6}]} />
+    </View>
+  );
+}
+
+/**
+ * A pill button, 54 dp tall. `signal` is the deep-ink primary with its arrow
+ * orb; `plain` is a glass pill; `ghost` is an outline for the quiet choice.
+ */
+export function Key({
+  label,
+  onPress,
+  variant = 'plain',
+  icon,
+  arrow,
+  accessibilityHint,
+  disabled,
+}: {
+  label: string;
+  onPress: () => void;
+  variant?: KeyVariant;
+  icon?: React.ReactNode;
+  /** Trailing arrow in its own small orb (primary actions that move forward). */
+  arrow?: boolean;
+  accessibilityHint?: string;
+  disabled?: boolean;
+}) {
+  const ink = variant === 'signal' || variant === 'guardian';
+  const textColor = ink ? colors.textInverse : variant === 'ghost' ? colors.textSecondary : variant === 'guardianPlain' ? colors.amberText : colors.textTitle;
+  const depth = usePressDepth();
+  return (
+    <Animated.View style={depth.style}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{disabled: Boolean(disabled)}}
+      disabled={disabled}
+      onPress={onPress}
+      onPressIn={depth.onPressIn}
+      onPressOut={depth.onPressOut}
+      android_ripple={{color: ink ? colors.rippleOnAction : colors.ripple, foreground: true}}
+      style={[
+        styles.pill,
+        ink && styles.pillInk,
+        variant === 'guardian' && {backgroundColor: colors.amberBottom, shadowColor: colors.amberStrong},
+        variant === 'plain' && styles.pillGlass,
+        variant === 'ghost' && styles.pillGhost,
+        variant === 'guardianPlain' && styles.pillGuardianPlain,
+        disabled && {opacity: 0.4},
+      ]}>
+      {ink ? (
+        <InkFace
+          top={variant === 'guardian' ? colors.amberTop : colors.actionTop}
+          bottom={variant === 'guardian' ? colors.amberBottom : colors.actionBottom}
+          radius={27}
+        />
+      ) : null}
+      {icon ? <View>{icon}</View> : null}
+      <Text style={[styles.pillText, {color: textColor}]} maxFontSizeMultiplier={1.6}>
+        {label}
+      </Text>
+      {arrow ? (
+        <View style={[styles.arrowOrb, !ink && {backgroundColor: colors.actionDim}]}>
+          <ArrowRight size={16} weight="bold" color={ink ? colors.textInverse : colors.action} />
+        </View>
+      ) : null}
+    </Pressable>
+    </Animated.View>
+  );
+}
+
+/** A text-only action for the least important choice on a screen. */
+export function QuietKey({label, onPress, tone = 'member'}: {label: string; onPress: () => void; tone?: Tone}) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} hitSlop={4} style={({pressed}) => [styles.quiet, pressed && {opacity: 0.6}]}>
+      <Text style={[type.label, {color: tone === 'guardian' ? colors.amberText : colors.action}]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+/** Kept for older screens: the primary action as a full-width pill with its arrow. */
+export function RoundKey({label, onPress}: {label: string; onPress: () => void}) {
+  return <Key label={label} onPress={onPress} variant="signal" arrow />;
+}
+
+/** Kept for older screens: a centred readout block. */
+export function Dial({children}: {children: React.ReactNode}) {
+  return <View style={{alignItems: 'center', gap: space.xs}}>{children}</View>;
+}
+
+type LampTone = 'signal' | 'green' | 'bone' | 'amber' | 'unlit';
+const LAMP: Record<LampTone, string> = {
+  signal: colors.action,
+  green: colors.greenText,
+  bone: colors.textLabel,
+  amber: colors.amberStrong,
+  unlit: colors.borderEmphasis,
+};
+
+/**
+ * A 7 dp status dot. `breathing` is for the listening dot alone: a slow
+ * 4.8 s cycle, off under reduced motion. The words beside it carry the state.
  */
 export function Lamp({tone, breathing, hollow}: {tone: LampTone; breathing?: boolean; hollow?: boolean}) {
   const reduce = useReduceMotion();
@@ -229,22 +310,30 @@ export function Lamp({tone, breathing, hollow}: {tone: LampTone; breathing?: boo
     <Animated.View
       accessibilityElementsHidden
       importantForAccessibility="no"
-      style={[
-        styles.lamp,
-        hollow ? {borderWidth: 1.5, borderColor: colors.controlEdge} : {backgroundColor: LAMP[tone]},
-        {opacity: level},
-      ]}
+      style={[styles.lamp, hollow ? {borderWidth: 1.5, borderColor: colors.controlEdge} : {backgroundColor: LAMP[tone]}, {opacity: level}]}
     />
+  );
+}
+
+type ChipStatus = 'received' | 'verified' | 'queued' | 'neutral' | 'simulated';
+/** A small glass pill with a dot and a word. Green only for a real receipt or verification. */
+export function Chip({status, label}: {status: ChipStatus; label: string}) {
+  const dot = status === 'received' || status === 'verified' ? colors.greenText : colors.textDim;
+  const mono = status === 'simulated';
+  return (
+    <View style={styles.chip} accessible accessibilityLabel={label}>
+      <View style={[styles.chipDot, {backgroundColor: dot}]} />
+      <Text style={[styles.chipText, mono && styles.chipMono]}>{label}</Text>
+    </View>
   );
 }
 
 /** One readout line: a word on the left, a measured value on the right. */
 export function Readout({label, value, lamp}: {label: string; value: string; lamp?: React.ReactNode}) {
-  // Mono is for measurements: digits get JetBrains Mono, words stay in Hanken.
   const measured = /\d/.test(value);
   return (
     <View style={styles.readout} accessible accessibilityLabel={`${label}: ${value}`}>
-      <Text style={[type.body, {color: colors.textBody, flexShrink: 1}]}>{label}</Text>
+      <Text style={[type.body, {flexShrink: 1}]}>{label}</Text>
       <View style={styles.readoutValue}>
         {lamp}
         <Text style={[measured ? type.readout : type.body, {color: colors.textTitle}]}>{value}</Text>
@@ -253,7 +342,7 @@ export function Readout({label, value, lamp}: {label: string; value: string; lam
   );
 }
 
-/** Material top app bar: a back arrow in a 48 dp target and the screen title. */
+/** A top bar: a back arrow in a 48 dp target and the screen title. */
 export function TopAppBar({title, onBack, tone = 'member'}: {title: string; onBack: () => void; tone?: Tone}) {
   return (
     <View style={styles.appBar}>
@@ -263,7 +352,9 @@ export function TopAppBar({title, onBack, tone = 'member'}: {title: string; onBa
         onPress={onBack}
         android_ripple={{color: colors.ripple, borderless: true, radius: 24}}
         style={styles.appBarBack}>
-        <ArrowLeft size={24} color={tone === 'guardian' ? colors.amberInk : colors.textTitle} />
+        <View style={[styles.glassCircle, {width: 40, height: 40}]}>
+          <ArrowLeft size={20} color={tone === 'guardian' ? colors.amberText : colors.textTitle} />
+        </View>
       </Pressable>
       <Text style={styles.appBarTitle} accessibilityRole="header" numberOfLines={1}>
         {title}
@@ -276,33 +367,118 @@ export function Rule() {
   return <View style={styles.rule} />;
 }
 
-/** A settings row: label, optional detail, and a caret. */
-export function Row({label, detail, onPress}: {label: string; detail?: string; onPress: () => void}) {
+/** A list row: label, optional detail, and a caret. 52 dp minimum. */
+export function Row({label, detail, onPress, leading}: {label: string; detail?: string; onPress: () => void; leading?: React.ReactNode}) {
+  const depth = usePressDepth();
   return (
+    <Animated.View style={depth.style}>
     <Pressable
       accessibilityRole="button"
       accessibilityHint={detail}
       onPress={onPress}
+      onPressIn={depth.onPressIn}
+      onPressOut={depth.onPressOut}
       android_ripple={{color: colors.ripple}}
-      style={({pressed}) => [styles.row, pressed && {backgroundColor: colors.keyFacePressed}]}>
+      style={({pressed}) => [styles.row, pressed && {backgroundColor: colors.actionDim}]}>
+      {leading ? <View style={styles.rowLeading}>{leading}</View> : null}
       <View style={{flex: 1}}>
-        <Text style={type.label}>{label}</Text>
-        {detail ? <Text style={[type.caption, {marginTop: 2}]}>{detail}</Text> : null}
+        <Text style={[type.label, {fontFamily: fonts.medium}]}>{label}</Text>
+        {detail ? <Text style={[type.caption, {marginTop: 2, color: colors.textSecondary}]}>{detail}</Text> : null}
       </View>
-      <CaretRight size={18} color={colors.textDim} />
+      <CaretRight size={14} color={colors.textDim} />
     </Pressable>
+    </Animated.View>
+  );
+}
+
+/**
+ * The listening line: VUKA's signature. A calm waveform in ink at 40% that
+ * drifts slowly sideways; nothing flashes or pulses in colour. Never on the
+ * Journey check. Still under reduced motion.
+ */
+export function ListeningLine() {
+  const reduce = useReduceMotion();
+  const x = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduce) return;
+    const loop = Animated.loop(Animated.timing(x, {toValue: -120, duration: 6000, easing: Easing.linear, useNativeDriver: true}));
+    loop.start();
+    return () => loop.stop();
+  }, [reduce, x]);
+  const d = 'M0,12 Q15,3 30,12 ' + Array.from({length: 15}, (_, i) => `T${60 + i * 30},12`).join(' ');
+  return (
+    <View style={styles.line} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Animated.View style={{position: 'absolute', left: 0, top: 0, width: 480, transform: [{translateX: x}]}}>
+        <Svg width={480} height={24}>
+          <Path d={d} stroke={colors.action} strokeOpacity={0.4} strokeWidth={2} strokeLinecap="round" fill="none" />
+        </Svg>
+      </Animated.View>
+      <Svg width="100%" height={24} style={StyleSheet.absoluteFill}>
+        <Defs>
+          <LinearGradient id="lineFade" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor={colors.bgBase} stopOpacity={1} />
+            <Stop offset="0.12" stopColor={colors.bgBase} stopOpacity={0} />
+            <Stop offset="0.88" stopColor={colors.bgBase} stopOpacity={0} />
+            <Stop offset="1" stopColor={colors.bgBase} stopOpacity={1} />
+          </LinearGradient>
+        </Defs>
+        <Rect width="100%" height={24} fill="url(#lineFade)" />
+      </Svg>
+    </View>
+  );
+}
+
+/**
+ * The live meter: the model's current score for the loudest of the nine
+ * target sounds, against that sound's own threshold. It is a model score, not
+ * a probability (uncalibrated; ADR-0039, D14), and the label says so.
+ */
+export function LevelMeter({score, threshold, label}: {score: number; threshold: number; label: string | null}) {
+  const w = useRef(new Animated.Value(0)).current;
+  const [track, setTrack] = useState(0);
+  useEffect(() => {
+    Animated.spring(w, {toValue: Math.max(0, Math.min(1, score / 10000)), useNativeDriver: false, speed: 18, bounciness: 0}).start();
+  }, [score, w]);
+  const pct = (n: number) => Math.round(n / 100);
+  return (
+    <View
+      accessible
+      accessibilityLabel={label ? `Loudest target sound ${label}, model score ${pct(score)}, threshold ${pct(threshold)}` : 'No target sound heard'}>
+      <View style={styles.meterHead}>
+        <Text style={[type.caption, {color: colors.textSecondary, flexShrink: 1}]}>{label ? `Loudest: ${label}` : 'Quiet: no target sound'}</Text>
+        {label ? (
+          <Text style={type.readout}>
+            {pct(score)}
+            <Text style={{color: colors.textDim}}> / {pct(threshold)}</Text>
+          </Text>
+        ) : (
+          <Text style={[type.readout, {color: colors.textDim}]}>—</Text>
+        )}
+      </View>
+      <View style={styles.meterTrack} onLayout={e => setTrack(e.nativeEvent.layout.width)}>
+        <Animated.View
+          style={[styles.meterFill, {width: w.interpolate({inputRange: [0, 1], outputRange: [0, track]})}, score >= threshold && {backgroundColor: colors.action}]}
+        />
+        {threshold > 0 && track > 0 ? <View style={[styles.meterTick, {left: (track * threshold) / 10000 - 1}]} /> : null}
+      </View>
+      <Text style={[type.caption, {fontSize: 12, marginTop: space.xs}]}>
+        Model score 0–100 against the sound's own threshold (the tick). Not a probability.
+      </Text>
+    </View>
   );
 }
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
 
 /**
- * PIN keypad. Deliberately knows nothing about which PIN is which: it hands
- * the digits up and resets. Every entry looks and animates the same, so the
- * screen can never reveal a duress PIN (spec V5, test T15). It is still: no
- * ripple and no scale, only an instant pressed face, on every screen it's on.
+ * PIN keypad: flat and plain, the prototype's Journey check keypad. It knows
+ * nothing about which PIN is which: it hands the digits up and resets. Every
+ * entry looks the same, so the screen can never reveal a duress PIN (V5, T15).
+ * `onComplete` also gets how long the entry took, first key to last (ms): it
+ * stays on the phone; only "slower than usual" is ever recorded (CEM-1).
  */
-export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete: (pin: string) => void}) {
+export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete: (pin: string, entryMs: number) => void}) {
+  const startedAt = useRef<number | null>(null);
   const [pin, setPin] = useState('');
   const press = (k: string) => {
     if (k === 'del') {
@@ -310,20 +486,19 @@ export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete
       return;
     }
     const next = (pin + k).slice(0, length);
+    if (startedAt.current === null) startedAt.current = Date.now();
     if (next.length === length) {
+      const entryMs = Date.now() - startedAt.current;
+      startedAt.current = null;
       setPin('');
-      onComplete(next);
+      onComplete(next, entryMs);
     } else {
       setPin(next);
     }
   };
   return (
-    <View>
-      <View
-        style={styles.dots}
-        accessible
-        accessibilityLabel={`${pin.length} of ${length} digits entered`}
-        accessibilityLiveRegion="polite">
+    <View style={{width: '100%', maxWidth: 340, alignSelf: 'center'}}>
+      <View style={styles.dots} accessible accessibilityLabel={`${pin.length} of ${length} digits entered`} accessibilityLiveRegion="polite">
         {Array.from({length}).map((_, i) => (
           <View key={i} style={[styles.dot, i < pin.length && styles.dotFilled]} />
         ))}
@@ -336,20 +511,13 @@ export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete
               accessibilityRole="button"
               accessibilityLabel={k === 'del' ? 'Delete' : k}
               onPress={() => press(k)}
-              style={styles.pinKey}>
-              {({pressed}) => (
-                <>
-                  <KeyFace variant="plain" pressed={pressed} radius={radii.key} />
-                  {k === 'del' ? (
-                    <View>
-                      <Backspace size={24} color={colors.textTitle} />
-                    </View>
-                  ) : (
-                    <Text style={styles.pinText} maxFontSizeMultiplier={1.4}>
-                      {k}
-                    </Text>
-                  )}
-                </>
+              style={({pressed}) => [styles.pinKey, pressed && styles.pinKeyPressed]}>
+              {k === 'del' ? (
+                <Backspace size={22} color={colors.textSecondary} />
+              ) : (
+                <Text style={styles.pinText} maxFontSizeMultiplier={1.4}>
+                  {k}
+                </Text>
               )}
             </Pressable>
           ) : (
@@ -361,109 +529,140 @@ export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete
   );
 }
 
+const shadow = {
+  shadowColor: colors.shadow,
+  shadowOpacity: 0.16,
+  shadowRadius: 18,
+  shadowOffset: {width: 0, height: 10},
+  elevation: 4,
+};
+
 const styles = StyleSheet.create({
-  panel: {
-    backgroundColor: colors.bgRaised,
+  orb: {position: 'absolute', width: 420, height: 420},
+  card: {
+    // The blurred backdrop (BlurView) makes the card opaque, so its elevation
+    // shadow never shows through it.
+    backgroundColor: 'transparent',
     borderRadius: radii.panel,
     borderWidth: 1,
-    borderColor: colors.hairline,
-    borderTopColor: colors.topLight,
-    padding: space.md,
+    borderColor: colors.cardEdge,
+    padding: 20,
+    ...shadow,
   },
-  key: {
-    minHeight: TOUCH + 8,
-    borderRadius: radii.key,
-    paddingHorizontal: space.lg,
+  cardHero: {shadowOpacity: 0.22, shadowRadius: 26, elevation: 6},
+  glassClip: {borderRadius: radii.panel, overflow: 'hidden'},
+  cardGuardian: {borderColor: colors.edgeLight},
+  bezel: {
+    padding: 6,
+    borderRadius: radii.bezel,
+    backgroundColor: colors.dark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.32)',
+    borderWidth: 1,
+    borderColor: 'rgba(30,44,70,0.06)',
+  },
+  glassCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.pillFill,
+    borderWidth: 1,
+    borderColor: colors.edgeLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    shadowOffset: {width: 0, height: 3},
+    elevation: 2,
+  },
+  pill: {
+    minHeight: 54,
+    borderRadius: radii.round,
+    paddingHorizontal: 26,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: space.sm,
     overflow: 'hidden',
   },
-  keyEdge: {borderWidth: 1, borderColor: colors.controlEdge},
-  sunk: {transform: [{scale: 0.97}]},
-  keyText: {fontFamily: fonts.semibold, fontSize: 17},
-  quiet: {minHeight: TOUCH, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space.md},
-  plinth: {
-    alignSelf: 'center',
-    width: 176,
-    height: 176,
-    borderRadius: 88,
-    backgroundColor: colors.shade,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  round: {
-    width: 136,
-    height: 136,
-    borderRadius: 68,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    elevation: 6,
-    shadowColor: '#000',
+  pillInk: {
+    // A solid ink base under the gradient, so the pill is never see-through.
+    backgroundColor: colors.actionBottom,
+    shadowColor: colors.action,
     shadowOpacity: 0.45,
-    shadowRadius: 10,
-    shadowOffset: {width: 0, height: 6},
+    shadowRadius: 14,
+    shadowOffset: {width: 0, height: 8},
+    elevation: 5,
   },
-  roundText: {
-    fontFamily: fonts.semibold,
-    fontSize: 18,
-    lineHeight: 22,
-    color: colors.cobaltText,
-    textAlign: 'center',
-    paddingHorizontal: space.md,
-  },
-  dial: {
-    width: 136,
-    height: 136,
-    borderRadius: 68,
-    backgroundColor: colors.keyFace,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderTopColor: colors.topLight,
+  pillGlass: {backgroundColor: colors.pillFill, borderWidth: 1, borderColor: colors.edgeLight, ...shadow, elevation: 2},
+  pillGhost: {backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.controlEdge},
+  pillGuardianPlain: {backgroundColor: colors.amberFill, borderWidth: 1, borderColor: '#F2D48A'},
+  pressed: {transform: [{scale: 0.97}]},
+  pillText: {fontFamily: fonts.semibold, fontSize: 16},
+  arrowOrb: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: -12,
+    backgroundColor: 'rgba(255,255,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: space.xs,
   },
-  lamp: {width: 8, height: 8, borderRadius: 4},
-  highlight: {position: 'absolute', top: 1, height: 1, backgroundColor: colors.keyHighlight},
-  appBar: {flexDirection: 'row', alignItems: 'center', minHeight: 64, marginHorizontal: -space.sm, gap: space.xs},
+  inkHighlight: {position: 'absolute', top: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.25)'},
+  quiet: {minHeight: TOUCH, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space.md},
+  lamp: {width: 7, height: 7, borderRadius: 4},
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 4,
+    paddingLeft: 9,
+    paddingRight: 11,
+    borderRadius: radii.round,
+    backgroundColor: colors.pillFill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignSelf: 'flex-start',
+  },
+  chipDot: {width: 6, height: 6, borderRadius: 3},
+  chipText: {fontFamily: fonts.medium, fontSize: 12, color: colors.textSecondary},
+  chipMono: {fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase'},
+  appBar: {flexDirection: 'row', alignItems: 'center', minHeight: 60, gap: space.sm, marginLeft: -4},
   appBarBack: {width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center'},
-  appBarTitle: {...type.title, fontSize: 22, flex: 1},
-  readout: {
-    minHeight: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space.md,
-  },
+  appBarTitle: {...type.title, flex: 1},
+  readout: {minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md},
   readoutValue: {flexDirection: 'row', alignItems: 'center', gap: space.sm},
-  rule: {height: 1, backgroundColor: colors.hairline, marginVertical: space.sm},
-  row: {
-    minHeight: 64,
-    flexDirection: 'row',
+  rule: {height: 1, backgroundColor: colors.border, marginVertical: space.sm},
+  row: {minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: 20, paddingVertical: space.sm},
+  rowLeading: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.bgElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
-    gap: space.md,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
+    justifyContent: 'center',
   },
-  dots: {flexDirection: 'row', justifyContent: 'center', gap: space.md, marginBottom: space.xl},
-  dot: {width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderColor: colors.controlEdge},
-  dotFilled: {backgroundColor: colors.textTitle, borderColor: colors.textTitle},
-  pad: {flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12, maxWidth: 300, alignSelf: 'center'},
+  line: {height: 24, width: '100%', overflow: 'hidden'},
+  meterHead: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.sm, marginBottom: space.sm},
+  meterTrack: {height: 8, borderRadius: 4, backgroundColor: colors.borderSubtle, overflow: 'hidden'},
+  meterFill: {height: 8, borderRadius: 4, backgroundColor: colors.actionLine},
+  meterTick: {position: 'absolute', top: 0, width: 2, height: 8, backgroundColor: colors.textDim},
+  dots: {flexDirection: 'row', justifyContent: 'center', gap: 16, height: 16, alignItems: 'center', marginBottom: space.lg},
+  dot: {width: 10, height: 10, borderRadius: 5, borderWidth: 1.5, borderColor: colors.controlEdge},
+  dotFilled: {backgroundColor: colors.textLabel, borderColor: colors.textLabel},
+  pad: {flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8},
   pinKey: {
-    width: 84,
-    height: 64,
-    borderRadius: radii.key,
+    width: '32%',
+    height: 58,
+    borderRadius: radii.sm,
+    backgroundColor: colors.bgElevated,
     borderWidth: 1,
     borderColor: colors.controlEdge,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
-  pinBlank: {width: 84, height: 64},
-  pinText: {fontFamily: fonts.medium, fontSize: 26, color: colors.textTitle},
+  pinKeyPressed: {backgroundColor: colors.borderEmphasis},
+  pinBlank: {width: '32%', height: 58},
+  pinText: {fontFamily: fonts.regular, fontSize: 22, color: colors.textTitle},
 });

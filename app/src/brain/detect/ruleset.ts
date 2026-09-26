@@ -15,8 +15,17 @@ export type Ruleset = {
   readonly id: string;
   readonly version: number;
   readonly calibrated: false;
-  /** Per-class threshold, by YAMNet label. */
+  /** Per-class PROMPT threshold (V4), by YAMNet label. */
   readonly thresholdBp: Readonly<Record<string, number>>;
+  /**
+   * Per-class RECORD threshold (CEM-1, PROPOSED, UNCALIBRATED): half the
+   * prompt threshold until the step-d measurements replace it. A confirmed
+   * window here and below the prompt threshold is record-only evidence
+   * (never a check-in by itself, never quieter than V4).
+   */
+  readonly recordThresholdBp: Readonly<Record<string, number>>;
+  /** A context class counts when its window score reaches this (UNCALIBRATED). */
+  readonly contextThresholdBp: number;
   /**
    * How a family is confirmed. `separation` 0: one window at or above threshold
    * confirms (impulses: glass and gun-like sounds are shorter than a window).
@@ -47,6 +56,8 @@ export type Ruleset = {
     /** Snatch: a peak in [snatchPeakMg, impactPeakMg) right after this long stationary. */
     readonly snatchPeakMg: number;
     readonly snatchStillMs: number;
+    /** Liu et al. 2018: 40 m/s² ≈ 4079 mg. Logged as an observation only (weight 0). */
+    readonly liuSnatchPeakMg: number;
     /** Activity: stationary below this std; walking within the band and cadence. */
     readonly stationaryStdMg: number;
     readonly walkingStdMinMg: number;
@@ -61,7 +72,7 @@ export type Ruleset = {
 
 export const RULESET_V1: Ruleset = {
   id: 'vigil-detect',
-  version: 1,
+  version: 2,
   calibrated: false,
   // Starting values. Voice classes sit higher than impulses because shouting
   // and yelling are common in ordinary life (taxi ranks, sport, a TV); glass
@@ -78,6 +89,18 @@ export const RULESET_V1: Ruleset = {
     Shatter: 3000,
     Breaking: 4000,
   },
+  recordThresholdBp: {
+    Shout: 3000,
+    Yell: 3000,
+    Screaming: 2250,
+    'Gunshot, gunfire': 1750,
+    'Machine gun': 1750,
+    Fusillade: 1750,
+    Glass: 1750,
+    Shatter: 1500,
+    Breaking: 2000,
+  },
+  contextThresholdBp: 3000,
   confirm: {
     voice: {separation: 2},
     glass: {separation: 0},
@@ -96,6 +119,7 @@ export const RULESET_V1: Ruleset = {
     shakeCrossings: 4,
     snatchPeakMg: 1800,
     snatchStillMs: 2000,
+    liuSnatchPeakMg: 4079,
     stationaryStdMg: 60,
     walkingStdMinMg: 100,
     walkingStdMaxMg: 600,

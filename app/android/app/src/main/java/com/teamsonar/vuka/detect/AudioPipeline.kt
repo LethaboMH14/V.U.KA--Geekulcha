@@ -26,6 +26,8 @@ data class WindowResult(
     val topIndex: Int,
     val topBp: Int,
     val gunNeighbourBp: Int,
+    /** YamnetClassifier.CONTEXT_LABELS order; empty when context is off. */
+    val contextBp: IntArray = IntArray(0),
 )
 
 /**
