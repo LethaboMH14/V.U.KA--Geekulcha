@@ -41,8 +41,11 @@ Place its `google-services.json` at `app/android/app/google-services.json`
 CI build needs it supplied separately by the app/release owner. Do not put a
 service-account JSON or server credentials in the app.
 
-The Gradle files apply the Google Services plug-in and include only Firebase
-Messaging. From `app/android`, sync Gradle in Android Studio or run
+The Gradle files include Firebase Messaging. They apply the Google Services
+plug-in only when this config file exists, so the public APK build does not
+require it at Gradle configuration time but **has no configured guardian push**.
+Both build paths still need an actual Gradle run. From `app/android`,
+with the config present, sync Gradle in Android Studio or run
 `./gradlew :app:processDebugGoogleServices` after `npm ci` in `app/`.
 This checks configuration processing, not device receipt. Token capture,
 guardian-authorised registration, notification handling, Android 13+ runtime
