@@ -7,7 +7,7 @@
  * phone: the registration entry doesn't carry it.
  */
 import React, {useEffect, useState} from 'react';
-import {Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
+import {BackHandler, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Eyebrow, GlassIcon, Key, Lamp, Panel, PinKeypad, QuietKey, Readout, Rule, Surface, TopAppBar} from './components';
 import {Microphone, ShieldChevron} from './icons';
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
@@ -42,6 +42,41 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
   const [pin, setPin] = useState('');
   const [duress, setDuress] = useState('');
   const [note, setNote] = useState('');
+
+  /** The step Back leads to; null leaves the app (welcome), and the record and invite steps stay put. */
+  const previous = (s: Step): Step | null =>
+    ({
+      welcome: null,
+      account: 'welcome',
+      phone: 'account',
+      email: 'account',
+      code: account?.kind === 'phone' ? 'phone' : 'email',
+      name: account ? (account.kind === 'google' ? 'email' : 'code') : 'account',
+      permissions: 'name',
+      pin: 'permissions',
+      pinAgain: 'pin',
+      duressIntro: 'pin',
+      duress: 'duressIntro',
+      duressAgain: 'duress',
+      record: 'record',
+      invite: 'invite',
+    } as const)[s];
+  const back = () => {
+    const to = previous(step);
+    if (to) {
+      setNote('');
+      setStep(to);
+    }
+  };
+  // Android's system Back walks the steps like the on-screen Back, instead of closing the app mid-sign-up.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (step === 'welcome') return false;
+      back();
+      return true;
+    });
+    return () => sub.remove();
+  });
 
   if (step === 'pin' || step === 'pinAgain' || step === 'duress' || step === 'duressAgain') {
     const copy = {
@@ -98,10 +133,7 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
         <View style={{marginTop: space.lg}}>
           <QuietKey
             label="Back"
-            onPress={() => {
-              setNote('');
-              setStep(step === 'pin' ? 'permissions' : step === 'pinAgain' ? 'pin' : step === 'duress' ? 'duressIntro' : 'duress');
-            }}
+            onPress={back}
           />
         </View>
       </ScrollView>
@@ -118,6 +150,7 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
           <AccountStep
             onBack={() => setStep('welcome')}
             onChoose={k => {
+              setAccount(null);
               setGoogle(k === 'google');
               setStep(k === 'phone' ? 'phone' : 'email');
             }}
@@ -125,7 +158,10 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
         ) : step === 'phone' ? (
           <PhoneStep
             onBack={() => setStep('account')}
-            onSkip={() => setStep('name')}
+            onSkip={() => {
+              setAccount(null);
+              setStep('name');
+            }}
             onNext={msisdn => {
               setAccount({kind: 'phone', contact: msisdn, verified: false});
               setStep('code');
@@ -162,10 +198,9 @@ export function Onboarding({onDone, onGuardian, onInvite}: {onDone: () => void; 
             name={name}
             pin={pin}
             duress={duress}
-            onDone={() => {
-              void device.setAccount(account ?? undefined, surname);
-              setStep('invite');
-            }}
+            account={account}
+            surname={surname}
+            onDone={() => setStep('invite')}
           />
         )}
         {device.simulated ? (
@@ -312,7 +347,21 @@ function DuressIntro({onBack, onNext}: {onBack: () => void; onNext: () => void})
 
 type Phase = 'idle' | 'working' | 'made' | 'failed';
 
-function CreateRecord({name, pin, duress, onDone}: {name: string; pin: string; duress: string; onDone: () => void}) {
+function CreateRecord({
+  name,
+  pin,
+  duress,
+  account,
+  surname,
+  onDone,
+}: {
+  name: string;
+  pin: string;
+  duress: string;
+  account: Account | null;
+  surname: string;
+  onDone: () => void;
+}) {
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState('');
   const [d, setD] = useState<Delivery>(device.delivery());
@@ -329,6 +378,8 @@ function CreateRecord({name, pin, duress, onDone}: {name: string; pin: string; d
     try {
       await device.setPins(pin, duress);
       await device.register(name.trim(), version);
+      // Saved with the profile, before anything else can interrupt: kept on this phone only.
+      await device.setAccount(account ?? undefined, surname);
       await device.flush();
       setPhase('made');
     } catch (e) {

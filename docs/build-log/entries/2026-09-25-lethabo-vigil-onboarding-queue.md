@@ -348,6 +348,10 @@ The contact detail and surname are kept in the phone's profile only. They are ne
 
 Changed in this session:
 - **Permissions step:** a permission refused with "Don't ask again" (microphone or notifications) left the member stuck on the step. The row now offers **Open settings**, with a line explaining why.
+- **Three sign-up bugs found by an independent AI review of the flow** (code reading; no UI test covers onboarding):
+  - Android's system Back closed the app on any of the 14 steps. It now walks the steps like the on-screen Back.
+  - A phone number typed and then skipped was still saved, and Back went to the code step. Choosing a method or skipping now clears it.
+  - The contact detail was saved only on Done, so it was lost if the app was killed first. It is now saved right after registration.
 - **Wording:** two lines claimed what isn't built. "One account per number" is not enforced, and "With Google we use your name and email" is not live. Both are replaced with what is true.
 - **Version:** 0.0.14 (versionCode 14), so the next APK installs over 0.0.13.
 - **Scripts:**
