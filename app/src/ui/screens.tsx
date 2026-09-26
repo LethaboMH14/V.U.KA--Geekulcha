@@ -661,7 +661,7 @@ function Listening({
           <Eyebrow>VIGIL · listening</Eyebrow>
         </View>
         <Text style={[type.display, {marginTop: space.md}]} accessibilityRole="header">
-          Listening
+          Active
         </Text>
         <View style={{marginTop: space.md, marginBottom: space.xs}}>
           <ListeningLine />
