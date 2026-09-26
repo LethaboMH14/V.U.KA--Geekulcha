@@ -566,6 +566,46 @@ paths:
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/InsufficientApproval' }
+  /v1/guardians/me/alerts:
+    get:
+      tags: [VIGIL]
+      operationId: listMyGuardianAlerts
+      x-vuka-implemented: true
+      summary: Alerts delivered to the calling guardian
+      description: >-
+        PROPOSED (Lethabo, 25 Sep). Guardian-signed only; the key identifies the guardian.
+        Built only from recorded delivery evidence, so a decoy guardian (never delivered to)
+        sees an empty list in the same shape as a real guardian with no alerts. Returns no
+        member payload: incident id, trigger and times only. subject_id is returned so the
+        guardian can sign a guardian_ack for that record (G5).
+      x-vuka-required-signer-role: guardian
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      responses:
+        '200':
+          description: Delivered alerts, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [subject_id, alerts]
+                additionalProperties: false
+                properties:
+                  subject_id: { type: string, minLength: 1 }
+                  alerts:
+                    type: array
+                    items:
+                      type: object
+                      required: [incident_id, trigger, delivered_at, opened_at, closed_at, close_reason]
+                      additionalProperties: false
+                      properties:
+                        incident_id: { type: string }
+                        trigger: { type: string, enum: [duress_signal, no_answer, contact_lost, unknown] }
+                        delivered_at: { type: string, format: date-time }
+                        opened_at: { type: string, format: date-time }
+                        closed_at: { type: [string, 'null'], format: date-time }
+                        close_reason: { type: [string, 'null'] }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientApproval' }
   /v1/alerts/{id}/ack:
     post:
       tags: [VIGIL]

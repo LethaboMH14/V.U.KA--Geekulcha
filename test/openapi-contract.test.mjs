@@ -39,6 +39,7 @@ const v2Operations = [
   ["post", "/v1/guardians/accept"],
   ["delete", "/v1/guardians/{id}"],
   ["put", "/v1/guardians/{id}/token"],
+  ["get", "/v1/guardians/me/alerts"],
   ["post", "/v1/alerts/{id}/ack"],
   ["get", "/v1/anchor/proof/{head_hash}"],
   ["get", "/v1/subjects/{id}/export"],
