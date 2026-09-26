@@ -224,6 +224,19 @@ let normalSizes;
   check('evidence: both answers were followed by PIN evidence', normalSizes[1] > 0 && duressSizes[1] > 0);
 }
 
+// ---- 2b. Hold-for-help (ADR-0049): the member asks; duress raises the alarm ----
+{
+  const {d, subject} = await phone('help');
+  const journey = await d.startJourney('0.0.13');
+  const signalId = await d.help(journey, '0.0.13');
+  const c = await d.openCheckin(journey, signalId);
+  await c.shown();
+  check('help: duress PIN at a hold-for-help check-in shows "checked"', (await c.enter('9876', 1200)) === 'checked');
+  await d.flush();
+  check('help: every event received (manual signal accepted)', d.delivery().queued === 0, d.delivery().lastError ?? '');
+  check('help: incident marked duress', sql(`SELECT count(*) FROM incidents WHERE subject_id='${q(subject)}' AND has_duress`) === '1');
+}
+
 // ---- 3. Wrong PINs (T47) ------------------------------------------------------
 {
   const {d} = await phone('wrong');

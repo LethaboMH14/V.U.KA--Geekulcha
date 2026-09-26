@@ -668,3 +668,24 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 - sending only after an alert: the phone would have to learn about alerts, which T30 forbids;
 - a remote map script (a remote-code risk);
 - Google Maps (needs a key and Play Services).
+
+## ADR-0049: hold-for-help, from the app or a Quick Settings tile, opens the same check-in a detection does
+**Status:** Proposed (2026-09-26). Decided by Lethabo (co-lead), from Mutarisi's design. It needs Sibusiso's contract acceptance (a new `sense` value) and Ipeleng's review.
+**Owner:** Lethabo Hoaeane (decision), Mutarisi Chibaya (design), Sibusiso Khumalo (contract)
+**Context:** VIGIL's position is "you don't have to ask". But a member who can ask, and wants to, had no way to. Mutarisi's design has a hold-for-help button and a Quick Settings tile.
+**Decision:**
+1. **How it is raised.** Holding the "Hold for help" control for 2 s on the Listening screen, or tapping the "VUKA" Quick Settings tile, opens a check-in at once. A tap on the button does nothing, and letting go early cancels.
+2. **One event, no new server path.** It is recorded as `signal_detected` pv 1 with `sense: "manual"` (`{kind, pv, journey_id, sense, app_version}`). The server already starts the same check-in deadlines for any `signal_detected`, so the same things follow:
+   - the check-in screen;
+   - the normal PIN closes it;
+   - the duress PIN raises the silent alarm (V5 parity holds: the same screens);
+   - no answer escalates to guardians.
+3. **One check-in at a time.** It takes the grader's single prompt slot, so no detection can open a second check-in over it. If a check-in is already open, it does nothing.
+4. **The tile is labelled only "VUKA"** and opens the app; nothing on it says "help" or "panic".
+
+**Costs, stated before anyone asks:**
+- **A coercer can see the button.** It is not covert, unlike detection plus the duress PIN; the duress PIN at its check-in stays silent.
+- **It asks.** It cuts against the product's thesis, so the pitch leads with detection, and hold-for-help is the fallback.
+- **The server does not validate `signal_detected` payloads** (the §18 sound fields are the phone's). Tightening that is a separate contract change.
+
+**Verified:** in journey-e2e, a duress PIN at a hold-for-help check-in marks the incident duress on the real server.

@@ -36,6 +36,7 @@ type Native = {
   clearCheckin(): void;
   canFullScreen?(): Promise<boolean>;
   openFullScreenSettings?(): void;
+  consumeHelp?(): Promise<boolean>;
 };
 
 const native: Native | undefined = NativeModules.VigilDetection;
@@ -72,6 +73,8 @@ export type Detector = {
   setCheckinOpen(open: boolean): void;
   /** CEM-1: PIN behaviour at a check-in, once its evidence is signed and queued. */
   observePin(p: {retry: boolean; slow: boolean}): void;
+  /** Hold-for-help: take the prompt slot; false if a check-in is already pending or open. */
+  reserveForHelp(): boolean;
   /** V9: the activity bucket for heartbeats. Never location. */
   speedBucket(): 'stationary' | 'walking' | 'other' | 'unknown';
   /**
@@ -259,6 +262,11 @@ export async function startDetection(opts: {
           native.clearCheckin();
         }
       },
+      reserveForHelp() {
+        const ok = grader.reserve();
+        if (ok) state = step(state, {type: 'checkin', open: true}, RULESET_V1).state;
+        return ok;
+      },
       observePin(p) {
         tracker.observePin(p, lastEndMs + Math.max(0, Date.now() - lastWallMs));
       },
@@ -325,6 +333,12 @@ export async function canFullScreen(): Promise<boolean> {
 
 export function openFullScreenSettings(): void {
   native?.openFullScreenSettings?.();
+}
+
+/** True once if VIGIL was opened from its Quick Settings tile (hold-for-help). */
+export async function consumeHelpRequest(): Promise<boolean> {
+  if (!native?.consumeHelp) return false;
+  return native.consumeHelp().catch(() => false);
 }
 
 /** True only in builds made with -PvigilTestFeed=true. */

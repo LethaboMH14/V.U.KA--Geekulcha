@@ -109,6 +109,14 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
         promise.resolve(android.os.Build.VERSION.SDK_INT < 34 || nm.canUseFullScreenIntent())
     }
 
+    /** True once when VIGIL was opened from its Quick Settings tile (hold-for-help). */
+    @ReactMethod
+    fun consumeHelp(promise: Promise) {
+        val asked = HelpRequest.pending
+        HelpRequest.pending = false
+        promise.resolve(asked)
+    }
+
     /** Opens the system page where the member can allow full-screen check-ins. */
     @ReactMethod
     fun openFullScreenSettings() {

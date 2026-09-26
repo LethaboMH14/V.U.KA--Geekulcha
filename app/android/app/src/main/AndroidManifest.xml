@@ -44,6 +44,16 @@
         android:exported="false"
         android:foregroundServiceType="microphone|location" />
       <service
+        android:name=".detect.HelpTileService"
+        android:exported="true"
+        android:icon="@drawable/ic_launcher_monochrome"
+        android:label="VUKA"
+        android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+        <intent-filter>
+          <action android:name="android.service.quicksettings.action.QS_TILE" />
+        </intent-filter>
+      </service>
+      <service
         android:name=".detect.KeepAliveTaskService"
         android:exported="false"
         android:foregroundServiceType="dataSync" />

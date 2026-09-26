@@ -19,7 +19,8 @@ import {GuardianHome, GuardianSetup, useGuardianWatch} from './guardian';
 import {MyRecord} from './record';
 import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, type Delivery} from '../api/device';
 import {version} from '../../package.json';
-import {canFullScreen, openFullScreenSettings, runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
+import {canFullScreen, consumeHelpRequest, openFullScreenSettings, runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
+import {HoldForHelp} from './help';
 import {askLocation, startWindow, stopWindow, windowUntil} from '../sensors/location';
 import type {Decision, Reason} from '../brain/detect';
 
@@ -116,6 +117,31 @@ export function VigilApp() {
     });
     setScreen('check');
   };
+
+  /**
+   * Hold-for-help or the Quick Settings tile: open a check-in now. The same
+   * screen, the same PINs and the same escalation as a detection.
+   */
+  const askForHelp = async () => {
+    const jid = journeyId.current;
+    if (!jid || screen === 'check' || screen === 'checked') return;
+    if (detector.current && !detector.current.reserveForHelp()) return;
+    try {
+      const id = await device.help(jid, version);
+      openCheck(id);
+    } catch {
+      detector.current?.setCheckinOpen(false);
+    }
+  };
+  // Opened from the Quick Settings tile: ask once listening is running.
+  useEffect(() => {
+    if (!startedAt) return;
+    const check = () => void consumeHelpRequest().then(asked => asked && void askForHelp());
+    check();
+    const sub = AppState.addEventListener('change', s => s === 'active' && check());
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startedAt]);
 
   /** The countdown: null until the server has the check-in; never longer than it allows. */
   const checkRemaining = (): number | null => {
@@ -326,6 +352,7 @@ export function VigilApp() {
             delivery={delivery}
             level={level}
             sharingUntil={sharingUntil}
+            onHelp={() => void askForHelp()}
             onPause={() => setScreen('end')}
             onSimCheck={device.simulated ? () => openCheck('00000000-0000-4000-8000-000000000000') : undefined}
             onMenu={() => setScreen('settings')}
@@ -553,6 +580,7 @@ function Listening({
   delivery,
   level,
   sharingUntil,
+  onHelp,
   onPause,
   onSimCheck,
   onMenu,
@@ -563,6 +591,8 @@ function Listening({
   level: Level;
   /** When the 30-minute location window after a check-in ends (0: none). */
   sharingUntil: number;
+  /** Hold-for-help: the member asks themselves. */
+  onHelp: () => void;
   onPause: () => void;
   /** Browser preview only: a check-in with no detection behind it. */
   onSimCheck?: () => void;
@@ -605,6 +635,7 @@ function Listening({
         </View>
       ) : null}
       <FullScreenNotice />
+      <HoldForHelp onHelp={onHelp} />
       <GuardiansCard delivery={delivery} live onInvite={onInvite} />
       <Key label="Pause listening" variant="ghost" onPress={onPause} accessibilityHint="Asks for your PIN" />
       {onSimCheck ? <QuietKey label="Preview: show a check-in" onPress={onSimCheck} /> : null}

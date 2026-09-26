@@ -62,6 +62,12 @@ export type Grader = {
   checkinClosed(): void;
   /** Time passes without windows: settle candidates older than 2 s. */
   tick(nowMs: number): GradeAction[];
+  /**
+   * The member asked for help themselves (hold-for-help): take the one
+   * prompt slot, so no detection opens a second check-in over it. Returns
+   * false when a check-in is already pending or open.
+   */
+  reserve(): boolean;
   /** Listening stopped: settle anything pending as record-only. */
   stop(): GradeAction[];
   /** For tests and the transition list. */
@@ -136,6 +142,12 @@ export function createGrader(opts: {tracker: Tracker; rule: PromptRule; subjectI
     },
     checkinClosed() {
       reserved = false;
+    },
+    reserve() {
+      if (reserved) return false;
+      reserved = true;
+      lastPromptMs = latestMs;
+      return true;
     },
     tick(nowMs) {
       latestMs = Math.max(latestMs, nowMs);

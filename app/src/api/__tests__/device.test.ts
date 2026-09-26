@@ -550,3 +550,13 @@ describe('a member who is also someone else\'s guardian', () => {
     expect(await h.device.startJourney('0.0.13')).toBe(JOURNEY);
   });
 });
+
+test('hold-for-help sends the same detection a sound would, marked manual', async () => {
+  const h = harness();
+  await onboarded(h);
+  const id = await h.device.help(JOURNEY, '0.0.13');
+  await h.device.flush();
+  const sig = h.sent.find(e => e.details.event_id === id)!;
+  expect(sig.payload).toEqual({kind: 'signal_detected', pv: 1, journey_id: JOURNEY, sense: 'manual', app_version: '0.0.13'});
+  expect(sig.target_type).toBe('journey');
+});

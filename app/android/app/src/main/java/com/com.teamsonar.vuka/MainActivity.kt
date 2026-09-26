@@ -34,6 +34,9 @@ class MainActivity : ReactActivity() {
 
   /** Opened by the journey-check notice (spec V4): show over the lock screen and wake the display. */
   private fun showOverLockIfCheckin(i: Intent?) {
+    if (i?.getBooleanExtra(com.teamsonar.vuka.detect.HelpRequest.EXTRA, false) == true) {
+      com.teamsonar.vuka.detect.HelpRequest.pending = true
+    }
     if (i?.getBooleanExtra(com.teamsonar.vuka.detect.CheckinNotice.EXTRA, false) == true) {
       setShowWhenLocked(true)
       setTurnScreenOn(true)

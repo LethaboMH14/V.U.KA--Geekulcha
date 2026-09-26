@@ -191,4 +191,14 @@ describe('graded prompt rule (cem1)', () => {
     r.feed([win(13, 'Shatter', R.recordThresholdBp.Shatter + 50, 41_400)]);
     expect(r.actions().length).toBe(before);
   });
+
+  it('hold-for-help takes the slot: detections record but open no second check-in', () => {
+    const r = rig();
+    expect(r.grader.reserve()).toBe(true);
+    expect(r.grader.reserve()).toBe(false);
+    r.feed([win(1, 'Shatter', 9000, 1000)]);
+    expect(r.actions().map(a => a.type)).toEqual(['v4_record']);
+    r.close();
+    expect(r.grader.reserve()).toBe(true);
+  });
 });

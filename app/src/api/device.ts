@@ -497,6 +497,15 @@ export function createDevice(b: Backend) {
     /** A confirmed detection. Resolves with its event id once queued. */
     signal: (journeyId: string, payload: EventPayload) => record(payload, journey(journeyId)),
 
+    /**
+     * Hold-for-help (ADR-0049, PROPOSED): the member asks themselves. The
+     * same signal_detected a sound would give, with sense "manual", so the
+     * same check-in, the same duress PIN and the same no-answer escalation
+     * follow. Resolves with its event id once queued.
+     */
+    help: (journeyId: string, appVersion: string) =>
+      record({kind: 'signal_detected', pv: 1, journey_id: journeyId, sense: 'manual', app_version: appVersion}, journey(journeyId)),
+
     /** CEM-1 evidence (evidence_observed). Resolves with its event id once queued. */
     evidence: (journeyId: string, payload: EventPayload) => record(payload, journey(journeyId)),
 
