@@ -379,7 +379,12 @@ Posted a correction on PR #79 acknowledging the gap explicitly rather than letti
 
 **Live positive path (ledger ↔ Azure).**
 - **Before the fix:** a fresh `sim_` member, driven by the app's own compiled device layer, registered on Azure, walked a journey, ended it and exported with its PIN. The export (4 entries) passes the stranger verifier offline, but its head was never anchored (bug 5).
-- **After the redeploy:** see the update below.
+- **After the redeploy (`b55b6f5`, 20:31 UTC): LIVE-VERIFIED.**
+  - A fresh `sim_subj_38e5a4fb` ran the same steps.
+  - Its export head `9505ab9f…` was provable 17 s after the export, in root #8 (consensus 20:31:49 UTC).
+  - Pasted into the public ledger's "Verify a record", the browser recomputed all 4 entries and the Merkle root (`fba0ff6c…`). It read the same root from Hedera message #8 and showed **LIVE-VERIFIED**.
+  - The earlier export (from before the fix) is now provable too, because the new snapshot picked up its head.
+  - **Demo note:** straight after exporting, the ledger shows "unavailable" (not anchored yet) for up to about a minute; then paste again.
 
 **Owed / risks before the demo.**
 - (a) The backend (this branch) is still not on `main`.

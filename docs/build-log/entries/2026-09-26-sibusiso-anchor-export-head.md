@@ -24,7 +24,8 @@ Decision (**PROPOSED**):
 Evidence (FACT):
 - **Export-head test.** `server/tests/test_anchor_reads.py::test_an_exported_records_head_is_anchored_even_when_exported_at_once` failed before the change with the same `404 no confirmed anchor contains this head` as Azure. It now passes: the proof verifies against the confirmed root, and a re-fetched export carries the proof inline.
 - **Sidecar test.** `anchor/hedera-sidecar/reason.test.mjs` has a new case using the exact Azure message; it failed before and passes now.
-- **Suites.** Sidecar 13/13. Full Python suite: see the commit.
+- **Suites.** Sidecar 13/13; full Python suite 334 passed.
+- **Live on Azure (`b55b6f5`).** A fresh `sim_subj_38e5a4fb` export's head was provable 17 s later (root #8). The public Pages ledger verified it as **LIVE-VERIFIED** against Hedera testnet message #8.
 
 Decision: None accepted.
 
@@ -32,4 +33,4 @@ Needs/blockers: none.
 
 Business handoff: Tell the demo team that after exporting, the ledger shows the record as not yet anchored for up to about a minute, then live-verified.
 
-Next: deploy; re-run the live check with a fresh `sim_` member; expect LIVE-VERIFIED on the Pages ledger.
+Next: none for this fix; it is deployed and live-verified.
