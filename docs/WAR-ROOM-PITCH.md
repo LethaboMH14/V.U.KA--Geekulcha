@@ -174,7 +174,7 @@ Here's what we want from this room. One insurer, five thousand members, twelve m
 | A sound only opens a check-in; duress PIN identical; no answer → guardians | `DetectionEngine.kt`, `CheckinActivity.kt`, `server/event_effects.py`, `server/escalation.py` |
 | Detection numbers | `docs/eval/cem1-measurements.md` (FSD50K eval, ESC-50) |
 | No audio stored; 3 s buffer | `AudioPipeline.kt`; locked decision D7 |
-| A 32-byte fingerprint to public ledgers (Hedera + Bitcoin) | `docs/VUKA-2-SPEC.md` §10; ADR-0035. **No Hedera root confirmed from the Azure server yet** (topic 0.0.10687280 held manifest messages only on 26 Sep). Say "anchored", not "live on Hedera", until a root is on the topic |
+| A 32-byte fingerprint to public ledgers (Hedera + Bitcoin) | `docs/VUKA-2-SPEC.md` §10; ADR-0035. **First root confirmed on Hedera testnet**: topic 0.0.10687280, message 7, 26 Sep 21:57:29 SAST (testnet mirror node). Say "anchored on Hedera testnet", never "mainnet" |
 | Nothing personal on the ledger; deletable | spec §10 and §13; ADR-0023 |
 | R20 per member/month (`ASSUMPTION`); per-case fee `PROPOSED`; break-even 10,973 at R20 (`ESTIMATE`); anchors: GuardMe R19.90 (FNB, Apr 2022), iTOO R22.50 | `scripts/economics_vigil_anchor.py`; `docs/ECONOMICS-VIGIL-ANCHOR.md`; `docs/EVIDENCE.md` |
 | Not a financial service; no crypto; no tokens | ADR-0034/0035; `context.md`. Our reading, counsel to confirm |

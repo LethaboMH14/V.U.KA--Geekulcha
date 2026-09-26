@@ -18,7 +18,7 @@ Decision: none. Babatunde owns the pitch; this is offered as a PR into his branc
 
 Needs/blockers:
 - The MVP beat needs `/v1/guardians/accept` to work on Azure (503 earlier on 26 Sep; Sibusiso holds the server signing key).
-- "Anchored to a public ledger" is safe; "live on Hedera" is not until a root appears on topic 0.0.10687280.
+- Hedera: the first root was confirmed on **testnet** at 21:57 SAST (topic 0.0.10687280, message 7). Say "Hedera testnet", never "mainnet".
 - The duress-law line from revision 1 needs a named expert and a legal source before it returns.
 
 Business handoff: to Babatunde for the war-room presenters. No pricing change.
