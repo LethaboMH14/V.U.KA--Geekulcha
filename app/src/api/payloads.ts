@@ -73,9 +73,73 @@ const SCHEMAS: Record<string, Record<string, Rule>> = {
   },
 };
 
+const CLASS_LABEL = /^[A-Za-z][A-Za-z ,()-]{0,63}$/;
+const candidate: Rule = v =>
+  !!v &&
+  typeof v === 'object' &&
+  !Array.isArray(v) &&
+  Object.keys(v).sort().join() === 'class_index,class_label,level,score_bp,threshold_bp' &&
+  match(CLASS_LABEL)((v as Record<string, unknown>).class_label) &&
+  intIn(0, 520)((v as Record<string, unknown>).class_index) &&
+  intIn(0, 10000)((v as Record<string, unknown>).score_bp) &&
+  intIn(0, 10000)((v as Record<string, unknown>).threshold_bp) &&
+  oneOf('record', 'prompt')((v as Record<string, unknown>).level);
+const observations: Rule = v => Array.isArray(v) && v.length <= 4 && v.every(o => o === 'snatch_liu');
+const pinReasons: Rule = v =>
+  Array.isArray(v) &&
+  v.length === 2 &&
+  v[0]?.name === 'pin_retry' &&
+  v[1]?.name === 'pin_slow' &&
+  v.every(r => Object.keys(r).sort().join() === 'db,name' && (r.db === 0 || r.db === 2));
+
+/**
+ * evidence_observed pv2 (ADR-0047, PROPOSED): one schema per decision, so a
+ * record carries no signal, a prompt names exactly its signal, and PIN
+ * evidence has no aggregate fields at all (fixed shape for both PINs).
+ */
+const EVIDENCE_V2: Record<string, Record<string, Rule>> = {
+  record: {
+    ...SCHEMAS.evidence_observed,
+    pv: oneOf(2),
+    decision: oneOf('record'),
+    context: oneOf('on', 'off'),
+    observations,
+    candidate,
+    signal_event_id: v => v === null,
+  },
+  prompt: {
+    ...SCHEMAS.evidence_observed,
+    pv: oneOf(2),
+    decision: oneOf('prompt'),
+    context: oneOf('on', 'off'),
+    observations,
+    candidate,
+    signal_event_id: match(UUID),
+  },
+  pin: {
+    kind: oneOf('evidence_observed'),
+    pv: oneOf(2),
+    journey_id: str(1, 128),
+    cem_version: oneOf('CEM-1'),
+    ruleset_digest: match(HEX64),
+    decision: oneOf('pin'),
+    checkin_id: match(UUID),
+    reasons: pinReasons,
+  },
+};
+
+function schemaFor(payload: {kind: string; [k: string]: unknown}): Record<string, Rule> | undefined {
+  if (payload.kind === 'evidence_observed' && payload.pv === 2) {
+    const s = EVIDENCE_V2[String(payload.decision)];
+    if (!s) throw new Error('evidence_observed: "decision" has an invalid value');
+    return s;
+  }
+  return SCHEMAS[payload.kind];
+}
+
 /** Throws naming the first problem; kinds without a schema here pass through. */
 export function checkPayload(payload: {kind: string; [k: string]: unknown}): void {
-  const schema = SCHEMAS[payload.kind];
+  const schema = schemaFor(payload);
   if (!schema) return;
   for (const k of Object.keys(payload)) {
     if (!(k in schema)) throw new Error(`${payload.kind}: field "${k}" is not allowed`);

@@ -135,7 +135,110 @@ test('a result entered before the check is marked shown still follows its checki
   const c = await h.device.openCheckin(JOURNEY, '0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70');
   await c.enter('1234');
   await h.device.flush();
-  expect(kinds(h).slice(-2)).toEqual(['checkin_opened', 'checkin_result']);
+  expect(kinds(h).slice(-3)).toEqual(['checkin_opened', 'checkin_result', 'evidence_observed']);
+});
+
+describe('CEM-1 PIN evidence (ADR-0047, PROPOSED)', () => {
+  const SIGNAL = '0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70';
+
+  test('follows every accepted answer, same fixed shape and length for both PINs', async () => {
+    const bodies: string[] = [];
+    for (const pin of ['1234', '9876']) {
+      const h = harness();
+      await onboarded(h);
+      const c = await h.device.openCheckin(JOURNEY, SIGNAL);
+      await c.shown();
+      expect(await c.enter(pin, 1500)).toBe('checked');
+      await h.device.flush();
+      const ev = h.sent.filter(e => e.payload.kind === 'evidence_observed');
+      expect(ev).toHaveLength(1);
+      expect(ev[0].payload).toMatchObject({pv: 2, decision: 'pin', reasons: [{name: 'pin_retry', db: 0}, {name: 'pin_slow', db: 0}]});
+      bodies.push(canonicalJson({...ev[0].payload, checkin_id: 'x'}));
+    }
+    expect(bodies[0]).toBe(bodies[1]);
+  });
+
+  test('a wrong PIN first gives pin_retry, for either PIN', async () => {
+    for (const pin of ['1234', '9876']) {
+      const h = harness();
+      await onboarded(h);
+      const seen: unknown[] = [];
+      const c = await h.device.openCheckin(JOURNEY, SIGNAL, {onPinObserved: p => seen.push(p)});
+      expect(await c.enter('0000', 900)).toBe('retry');
+      expect(await c.enter(pin, 1100)).toBe('checked');
+      await h.device.flush();
+      const ev = h.sent.find(e => e.payload.kind === 'evidence_observed')!;
+      expect(ev.payload.reasons).toEqual([{name: 'pin_retry', db: 2}, {name: 'pin_slow', db: 0}]);
+      expect(seen).toEqual([{retry: true, slow: false}]);
+    }
+  });
+
+  test('pin_slow only against the member’s own baseline of at least 8 entries', async () => {
+    const h = harness();
+    await onboarded(h);
+    for (let i = 0; i < 8; i++) {
+      const c = await h.device.openCheckin(JOURNEY, SIGNAL);
+      await c.enter('1234', 1000 + (i % 3) * 40);
+    }
+    const seen: {retry: boolean; slow: boolean}[] = [];
+    const c = await h.device.openCheckin(JOURNEY, SIGNAL, {onPinObserved: p => seen.push(p)});
+    await c.enter('9876', 4000);
+    expect(seen).toEqual([{retry: false, slow: true}]);
+    expect(h.device.profile?.pinTimes).toHaveLength(9);
+  });
+
+  test('a failed evidence write never blocks the answer, and nothing counts', async () => {
+    const h = harness();
+    await onboarded(h);
+    const enqueue = h.b.enqueue;
+    let calls = 0;
+    h.b.enqueue = async json => {
+      calls += 1;
+      if (JSON.parse(json).payload.kind === 'evidence_observed') throw new Error('disk full');
+      return enqueue(json);
+    };
+    const seen: unknown[] = [];
+    const c = await h.device.openCheckin(JOURNEY, SIGNAL, {onPinObserved: p => seen.push(p)});
+    expect(await c.enter('9876', 1200)).toBe('checked');
+    await h.device.flush();
+    expect(kinds(h).slice(-2)).toEqual(['checkin_opened', 'checkin_result']);
+    expect(seen).toEqual([]);
+    expect(calls).toBeGreaterThanOrEqual(3);
+  });
+
+  test('enter() never waits on the network, whichever PIN', async () => {
+    for (const pin of ['1234', '9876']) {
+      let release: () => void = () => undefined;
+      const hang = new Promise<void>(r => (release = r));
+      const h = harness({
+        post: async () => {
+          await hang;
+          return {event_hash: 'a'.repeat(64), chain_index: 0, received_at: '2026-09-25T20:00:00Z'};
+        },
+      });
+      await h.device.setPins('1234', '9876');
+      await h.device.register('Lerato', '0.0.6');
+      const c = await h.device.openCheckin(JOURNEY, SIGNAL);
+      // Resolves although every POST is still hanging.
+      await expect(c.enter(pin, 1000)).resolves.toBe('checked');
+      release();
+    }
+  });
+});
+
+describe('check-in countdown bound', () => {
+  const {checkinRemainingMs} = jest.requireActual('../device');
+  test('no number until the server has checkin_opened', () => {
+    expect(checkinRemainingMs(1000, {openedQueuedAt: 0, openedReceived: false})).toBeNull();
+  });
+  test('never beyond either server deadline, with a 5 s margin', () => {
+    // opened at 10 s, signal at 0: fallback (90 s) binds before opened+70 (80 s)? no: 80 < 90.
+    expect(checkinRemainingMs(10_000, {signalQueuedAt: 0, openedQueuedAt: 10_000, openedReceived: true})).toBe(65_000);
+    // signal much earlier (opened delayed): the fallback binds.
+    expect(checkinRemainingMs(60_000, {signalQueuedAt: 0, openedQueuedAt: 55_000, openedReceived: true})).toBe(25_000);
+    // receipt came back after the fallback: time's up at once.
+    expect(checkinRemainingMs(100_000, {signalQueuedAt: 0, openedQueuedAt: 5_000, openedReceived: true})).toBe(0);
+  });
 });
 
 test('wrong PINs (T47): three "retry", then "checked"; attempt counts every entry', async () => {

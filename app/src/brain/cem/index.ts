@@ -20,10 +20,10 @@ export const CONTEXT_WINDOW_S = 1;
 export const DISTRESS_CAP = 6;
 export const K_CONFLICT_PCT = 50;
 
-type Kind = 'trigger' | 'support' | 'context' | 'motion';
+type Kind = 'trigger' | 'support' | 'context' | 'motion' | 'pin';
 type Spec = {db: number; kind: Kind; status: 'BUILT-SPEC' | 'ADR-0039' | 'PROPOSED' | 'CEM-1'; words: string};
 
-/** Phone-observable reasons, exactly as CEM-0 section 4 scores them. */
+/** Phone-observable reasons, as CEM-0 section 4 scores them, plus the CEM-1 PIN reasons. */
 export const REASONS = {
   scream_single: {db: 7, kind: 'trigger', status: 'BUILT-SPEC', words: 'a scream'},
   scream_sustained: {db: 12, kind: 'trigger', status: 'BUILT-SPEC', words: 'sustained screaming'},
@@ -43,6 +43,10 @@ export const REASONS = {
   impact: {db: 4, kind: 'motion', status: 'ADR-0039', words: 'the phone hit hard'},
   snatch: {db: 5, kind: 'motion', status: 'ADR-0039', words: 'the phone grabbed'},
   shake_sustained: {db: 3, kind: 'motion', status: 'ADR-0039', words: 'the phone shaken'},
+  // CEM-1 additions (PROPOSED, weights provisional): behaviour at a check-in,
+  // the same for both PINs. Not gated by trigger windows; they decay like the rest.
+  pin_retry: {db: 2, kind: 'pin', status: 'CEM-1', words: 'a wrong PIN first'},
+  pin_slow: {db: 2, kind: 'pin', status: 'CEM-1', words: 'a slower PIN than usual'},
 } as const satisfies Record<string, Spec>;
 
 export type ReasonName = keyof typeof REASONS;
@@ -95,7 +99,7 @@ function scored(signals: readonly Signal[]): Signal[] {
     if (kind === 'motion') return trig.some(x => s.t <= x && x <= s.t + LOOKBACK_S); // H3: look-back only
     if (kind === 'support') return trig.some(x => Math.abs(x - s.t) <= SUPPORT_WINDOW_S);
     if (kind === 'context') return trig.some(x => Math.abs(x - s.t) <= CONTEXT_WINDOW_S);
-    return true;
+    return true; // trigger, pin
   });
 }
 

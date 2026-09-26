@@ -11,8 +11,10 @@ import {
   TARGETS,
   activityBefore,
   buildSignalDetected,
+  checkContextLabels,
   checkLabels,
   initialState,
+  liuSnatch,
   step,
   type AudioWindow,
   type Decision,
@@ -20,8 +22,9 @@ import {
   type MotionFrame,
   type SignalDetectedV1,
 } from '../brain/detect';
-import {buildEvidenceObserved, createTracker, type EvidenceObservedV1} from '../brain/cem/tracker';
-import {RULESET_DIGEST} from '../brain/cem/ruleset';
+import {buildEvidence, candidateOf, createTracker, type EvidenceAssessedV2, type Observation} from '../brain/cem/tracker';
+import {createGrader, type GradeAction} from '../brain/cem/grader';
+import {PROMPT_RULE, RULESET_DIGEST} from '../brain/cem/ruleset';
 
 type Native = {
   testFeed?: boolean;
@@ -36,13 +39,14 @@ type Native = {
 const native: Native | undefined = NativeModules.VigilDetection;
 
 /** Only the engine's fields, so nothing else from native reaches a decision. */
-const toWindow = (w: AudioWindow): AudioWindow => ({
+const toWindow = (w: AudioWindow, context: boolean): AudioWindow => ({
   seq: w.seq,
   endMs: w.endMs,
   targetBp: w.targetBp,
   topIndex: w.topIndex,
   topBp: w.topBp,
   gunNeighbourBp: w.gunNeighbourBp,
+  ...(context && w.contextBp ? {contextBp: w.contextBp} : {}),
 });
 
 export type ArmResult =
@@ -64,6 +68,8 @@ async function permissions(): Promise<ArmResult> {
 export type Detector = {
   /** Tell the engine a check-in is showing (true) or closed (false). */
   setCheckinOpen(open: boolean): void;
+  /** CEM-1: PIN behaviour at a check-in, once its evidence is signed and queued. */
+  observePin(p: {retry: boolean; slow: boolean}): void;
   /** V9: the activity bucket for heartbeats. Never location. */
   speedBucket(): 'stationary' | 'walking' | 'other' | 'unknown';
   /**
@@ -78,12 +84,16 @@ export type Detector = {
 export async function startDetection(opts: {
   journeyId: string;
   appVersion: string;
+  /** The member's subject id: the graded rule applies only to simulation subjects (sim_). */
+  subjectId: string;
   /**
-   * A confirmed detection: sign and queue the evidence (`evidence_observed`,
-   * the reasons and their weight), then the event itself. Evidence, always.
-   * Resolves with the `signal_detected` event's id once it is in the queue.
+   * A detection the phone commits to (a check-in, or a V4-level record as
+   * V4 always sent): sign and queue `signal_detected`. Resolves with its
+   * event id once it is in the queue.
    */
-  onRecord: (decision: Decision, payload: SignalDetectedV1, evidence: EvidenceObservedV1) => Promise<string | undefined>;
+  onSignal: (payload: SignalDetectedV1) => Promise<string | undefined>;
+  /** CEM-1 evidence (`evidence_observed`): sign and queue it. */
+  onEvidence: (payload: EvidenceAssessedV2) => Promise<string | undefined>;
   /**
    * Open the journey check (only after a record, never over an open
    * check-in). Called only once the detection is queued, with its event id,
@@ -102,8 +112,14 @@ export async function startDetection(opts: {
   if (!perm.ok) return {result: perm};
 
   let state: EngineState = initialState();
-  // CEM-1: the reasons behind each record (prompt rule 'v4': it changes nothing yet).
-  const tracker = createTracker();
+  // CEM-1 (ADR-0047, PROPOSED): the reasons behind each record, and the graded
+  // prompt rule. V4 is unchanged; lifts apply only to simulation subjects.
+  const tracker = createTracker(RULESET_V1);
+  const grader = createGrader({tracker, rule: PROMPT_RULE, subjectIsSim: opts.subjectId.startsWith('sim_')});
+  let context = false;
+  // Engine time (from the audio sample count) and the phone clock at that
+  // window, so PIN observations land on the engine's clock.
+  let lastWallMs = Date.now();
   // Nothing is judged until arming has finished and the model has been checked.
   let armed = false;
   let sha256 = '';
@@ -113,36 +129,62 @@ export async function startDetection(opts: {
   let chain: Promise<void> = Promise.resolve();
   let lastEndMs = 0;
   let lastSeq = 0;
-  const judge = (w: AudioWindow) => {
-    if (opts.onLevel) opts.onLevel(levelOf(w));
-    lastEndMs = Math.max(lastEndMs, w.endMs);
-    lastSeq = Math.max(lastSeq, w.seq);
-    const out = step(state, {type: 'audio', window: toWindow(w)}, RULESET_V1);
-    state = out.state;
-    const d = out.decision;
-    if (d) tracker.observe(d, w.endMs);
-    if (d?.record && d.candidate) {
-      const payload = buildSignalDetected({
-        journeyId: opts.journeyId,
-        candidate: d.candidate,
-        corroboration: d.corroboration,
-        modelSha256: sha256,
-        appVersion: opts.appVersion,
-      });
-      const evidence = buildEvidenceObserved({
+  /** Carry out the grader's actions, strictly in order on the chain. */
+  const act = (a: GradeAction) => {
+    const d = a.decision;
+    if (!d.candidate) return;
+    const cand = d.candidate;
+    const evidence = (decision: 'record' | 'prompt', signalEventId: string | null) =>
+      buildEvidence({
         journeyId: opts.journeyId,
         rulesetDigest: RULESET_DIGEST,
-        decision: d.prompt ? 'prompt' : 'record',
-        assessment: tracker.assess(w.endMs),
+        decision,
+        assessment: a.assessment,
+        candidate: candidateOf(cand, d.level),
+        context: context ? 'on' : 'off',
+        observations: a.observations,
+        signalEventId,
       });
-      chain = chain.then(async () => {
-        const eventId = await opts.onRecord(d, payload, evidence);
-        // Once the journey has ended, a late detection is evidence but never a prompt.
-        if (d.prompt && eventId && armed) {
+    const signal = () =>
+      opts.onSignal(
+        buildSignalDetected({journeyId: opts.journeyId, candidate: cand, corroboration: d.corroboration, modelSha256: sha256, appVersion: opts.appVersion}),
+      );
+    chain = chain
+      .then(async () => {
+        if (a.type === 'record') {
+          // T0: record-only evidence. Never a signal_detected (no server deadline).
+          await opts.onEvidence(evidence('record', null));
+          return;
+        }
+        const eventId = await signal();
+        if (a.type === 'v4_record') {
+          // As V4 always did: the signal is recorded; no check-in.
+          await opts.onEvidence(evidence('record', null)).catch(e => opts.onError?.(String(e)));
+          return;
+        }
+        // A prompt: the check-in opens as soon as its signal is queued; the
+        // evidence follows and never gates it. Once stopped, no check-in.
+        if (eventId && armed) {
           native.showCheckin();
           opts.onPrompt(d, eventId);
         }
-      }).catch(e => opts.onError?.(String(e)));
+        if (eventId) await opts.onEvidence(evidence('prompt', eventId)).catch(e => opts.onError?.(String(e)));
+      })
+      .catch(e => opts.onError?.(String(e)));
+  };
+  const judge = (raw: AudioWindow) => {
+    const w = toWindow(raw, context);
+    if (opts.onLevel) opts.onLevel(levelOf(w));
+    lastEndMs = Math.max(lastEndMs, w.endMs);
+    lastSeq = Math.max(lastSeq, w.seq);
+    lastWallMs = Date.now();
+    const out = step(state, {type: 'audio', window: w}, RULESET_V1);
+    state = out.state;
+    const d = out.decision;
+    if (d) {
+      tracker.observe(d, w);
+      const observations: Observation[] = d.record && liuSnatch(state.motion, w.endMs, RULESET_V1) ? ['snatch_liu'] : [];
+      grader.window(d, w.endMs, observations).forEach(act);
     }
     return d;
   };
@@ -172,6 +214,11 @@ export async function startDetection(opts: {
       return {result: {ok: false, reason: 'model', detail: problems.join('; ')}};
     }
     sha256 = info.sha256;
+    // Context sounds are optional: a mismatch turns them off (and the record
+    // says so), never V4 detection.
+    const contextProblems = checkContextLabels(info.labels);
+    context = contextProblems.length === 0;
+    if (!context) opts.onError?.(`context sounds unavailable: ${contextProblems[0]}`);
     armed = true;
   } catch (e) {
     stopListening();
@@ -182,7 +229,13 @@ export async function startDetection(opts: {
     detector: {
       setCheckinOpen(open) {
         state = step(state, {type: 'checkin', open}, RULESET_V1).state;
-        if (!open) native.clearCheckin();
+        if (!open) {
+          grader.checkinClosed();
+          native.clearCheckin();
+        }
+      },
+      observePin(p) {
+        tracker.observePin(p, lastEndMs + Math.max(0, Date.now() - lastWallMs));
       },
       speedBucket() {
         return state.motion.length ? activityBefore(state.motion, state.motion.length, RULESET_V1) : 'unknown';
@@ -205,6 +258,8 @@ export async function startDetection(opts: {
       async stop() {
         armed = false;
         stopListening();
+        // Anything still waiting settles as record-only: nothing prompts after a pause.
+        grader.stop().forEach(act);
         await chain;
         native.clearCheckin();
         await native.disarm();
@@ -247,7 +302,7 @@ export async function runTestClip(name: string): Promise<{windows: number; decis
   let state = initialState();
   const decisions: Decision[] = [];
   for (const w of windows) {
-    const out = step(state, {type: 'audio', window: toWindow(w)}, RULESET_V1);
+    const out = step(state, {type: 'audio', window: toWindow(w, true)}, RULESET_V1);
     state = out.state;
     if (out.decision) decisions.push(out.decision);
   }

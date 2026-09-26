@@ -44,6 +44,41 @@ export const GUN_NEIGHBOURS: readonly {label: string; index: number}[] = [
   {label: 'Firecracker', index: 427},
 ] as const;
 
+/**
+ * Context classes (CEM-0 section 3, PROPOSED): sounds that explain or weaken a
+ * trigger. Scored only beside a trigger, never on their own. Indices read from
+ * the label list embedded in the registered model (sha256 10c95ea3…17de).
+ * Unlike TARGETS they are optional: a mismatch disables context, never V4.
+ */
+export type ContextReason = 'media_context' | 'crowd_context' | 'children_playing' | 'laughter' | 'siren_nearby' | 'distress_vocal';
+
+export const CONTEXT: readonly {label: string; index: number; reason: ContextReason}[] = [
+  {label: 'Laughter', index: 13, reason: 'laughter'},
+  {label: 'Crying, sobbing', index: 19, reason: 'distress_vocal'},
+  {label: 'Whimper', index: 21, reason: 'distress_vocal'},
+  {label: 'Groan', index: 33, reason: 'distress_vocal'},
+  {label: 'Gasp', index: 39, reason: 'distress_vocal'},
+  {label: 'Cheering', index: 61, reason: 'crowd_context'},
+  {label: 'Applause', index: 62, reason: 'crowd_context'},
+  {label: 'Crowd', index: 64, reason: 'crowd_context'},
+  {label: 'Children playing', index: 66, reason: 'children_playing'},
+  {label: 'Music', index: 132, reason: 'media_context'},
+  {label: 'Video game music', index: 267, reason: 'media_context'},
+  {label: 'Police car (siren)', index: 317, reason: 'siren_nearby'},
+  {label: 'Ambulance (siren)', index: 318, reason: 'siren_nearby'},
+  {label: 'Fire engine, fire truck (siren)', index: 319, reason: 'siren_nearby'},
+  {label: 'Siren', index: 390, reason: 'siren_nearby'},
+  {label: 'Television', index: 518, reason: 'media_context'},
+  {label: 'Radio', index: 519, reason: 'media_context'},
+] as const;
+
+/** Mismatches between the model and CONTEXT; non-empty means context is off. */
+export function checkContextLabels(labels: readonly string[]): string[] {
+  return CONTEXT.filter(c => labels.indexOf(c.label) !== c.index || labels.lastIndexOf(c.label) !== c.index).map(
+    c => `context label "${c.label}" is not at ${c.index}`,
+  );
+}
+
 /** The number of classes YAMNet scores (the model's output width). */
 export const YAMNET_CLASSES = 521;
 

@@ -597,3 +597,46 @@ Two are threat-model items: TM-C9, export showing `duress_pin`, and TM-C10, unli
 - the app's home becomes "Listening" and "Pause listening";
 - the spec's V1 and the "journey" wording in member-facing copy need a follow-up edit once this is accepted;
 - the false-check rate becomes the top measurement priority (M1–M3, Vukosi's P3.V6 instrument).
+
+## ADR-0047: graded check-ins on the phone (CEM-1): V4 unchanged, below-threshold evidence can lift, and every decision says why
+**Status:** Proposed (2026-09-26). Decided by Lethabo (co-lead). Active only for simulation subjects (`sim_`, the whole public demo) until Sibusiso (contract) and Ipeleng (privacy) accept it in `docs/ADR-ACCEPTANCE-RECORD.md` and two leads sign off the ruleset digest (D10). Extends V4 and ADR-0039; does not supersede either.
+**Owner:** Lethabo Hoaeane (decision), Sibusiso Khumalo (contract, server), Ipeleng Modise (privacy), Vukosi Khoza (measurement)
+**Context:** Under V4 every confirmed detection above its class threshold opens a check-in, and nothing below the threshold is recorded at all. A real attack is often quieter than the threshold, and a single sound says less than two different ones together. The team's own coercion evidence model (CEM-0, `docs/COERCION-SCENARIOS.md`) already scores reasons in integer decibans; it had never run on the phone.
+**Decision:**
+1. **CEM-1 on the phone** (`app/src/brain/cem/`, pure). It ports CEM-0 for the reasons the phone can observe (sounds, sound context, motion), with the same exact integer decay and bands. It reproduces the 32 phone-observable catalogue scenarios exactly (`golden.json`, generated from `scripts/coercion_scenarios.py`). It adds two PROPOSED reasons: `pin_retry` (+2, a wrong PIN before the accepted one) and `pin_slow` (+2, slower than the member's own median + 3·MAD, after at least 8 entries). The tally is an uncalibrated sum of reasons, never a probability (ADR-0039).
+2. **Two thresholds per class.** The V4 prompt thresholds are unchanged, and every detection that prompts under V4 still prompts: K never suppresses it. A new record threshold (half the prompt threshold, **UNCALIBRATED**) produces record-only evidence (T0).
+3. **Lift.** A record-level detection opens a check-in only when:
+   - the positive evidence is P ≥ 5 db;
+   - it is not true that K ≥ 50 % and P < 12 db;
+   - the one prompt slot is free;
+   - there has been no prompt in the last 30 s.
+
+   The lift has its own cooldown and never touches V4's. The decision waits until the audio has run 1 s past the candidate, so context such as TV in the next windows is heard. V4 decisions never wait. Pausing settles anything pending as record-only.
+4. **`signal_detected` only when the phone commits.** It is sent for a check-in, and for a V4-level record exactly as before. A record-only detection sends only `evidence_observed`, so it never starts a server deadline, incident or alert.
+5. **`evidence_observed` pv 2** (`contracts/payloads/evidence_observed.v2.json`, rules in `server/evidence.py`). There is one shape per decision:
+   - **`record`:** candidate facts, and no signal.
+   - **`prompt`:** names exactly its own `signal_event_id`. It is sent after the signal and never gates the check-in.
+   - **`pin`:** follows every accepted check-in answer for both PINs, in one fixed shape: `[pin_retry, pin_slow]` with weights 0 or 2 and no aggregate fields. It goes in the same flush as the answer, and the answer never waits on the network (V5).
+
+   Every record carries `ruleset_digest` (CI-checked), `context: on|off` and weight-0 `observations` (the Liu et al. 2018 snatch rule, 40 m/s², logged for Experiment 2 only).
+6. **Guardians see why, in words.** The alerts route returns `why` = the band plus up to 3 reason names. It is read only from the evidence bound to that alert's signal, from the encrypted payload, so deleting the member's data removes it.
+7. **Countdown.** The check-in shows "Answer when you can" until the server has acknowledged `checkin_opened`. It then counts down using a bound that can never overstate the server's time: min(created-at + 70 s, signal created-at + 90 s) − 5 s. At zero it says "Time's up. You can still answer". It is the same for both PINs and never shows reasons.
+8. **Context sounds are optional.** A label mismatch turns them off, and the record says `context: off`. It never disables V4.
+
+**Costs, stated before anyone asks:**
+- **More check-ins.** The transition list (`docs/eval/cem1-transitions.md`) shows that with the record threshold at half the prompt threshold, most single quieter sounds lift: a scream (7 db), glass (5) or a gunshot (8) alone reaches P ≥ 5. Only a lone shout (4) and conflicting context (the gym case) stay record-only. In effect CEM-1 roughly halves the prompt bar for screams, glass and gun-like sounds until the step-d measurements replace the record thresholds. The false-check rate at these thresholds is **not measured**. V4 already gave about 5.5 prompts per hour on replayed ESC-50 clips (ADR-0046, a lab proxy).
+- **Novel scheme.** No published graded duress scheme exists to copy (research R1). The weights are CEM-0's plus two provisional PIN weights.
+- **Pre-existing V4 behaviour kept, not fixed.** A V4-level detection recorded while a check-in is open (or in the cooldown) still sends `signal_detected`. The server gives it its own no-answer fallback (+90 s), so it can alert guardians even after the member answered the first check-in normally. This ADR keeps V4 exactly as it is and flags this for a separate decision.
+- **Pin baseline.** `pin_slow` needs 8 accepted entries on this phone, so it rarely fires in a short demo.
+
+**Rejected alternatives:**
+- a single fused tally that can make V4 quieter;
+- K suppressing V4-level detections;
+- sending `signal_detected` for record-only detections, which creates server deadlines for check-ins the phone never shows;
+- a variable-length PIN evidence event (length leaks);
+- a server-supplied countdown deadline (a contract change the send-time bound makes unnecessary).
+
+**Consequences:**
+- The public demo build runs CEM-1 (every subject is `sim_`).
+- The record thresholds and the venue false-alarm curve (step d) are now the top measurement priority.
+- The concurrency and timing rules (one prompt slot, V4 first, pause settles as record-only, the ±1 s context wait) are pinned by tests (`grader.test.ts`).

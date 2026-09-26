@@ -17,7 +17,7 @@ import {colors, fonts, radii, space, TOUCH, type} from './theme';
 import {Onboarding} from './onboarding';
 import {GuardianHome, GuardianSetup} from './guardian';
 import {MyRecord} from './record';
-import {device, DOWNLOAD_URL, JourneyStartError, type Delivery} from '../api/device';
+import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, type Delivery} from '../api/device';
 import {version} from '../../package.json';
 import {runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
 import type {Decision, Reason} from '../brain/detect';
@@ -55,6 +55,7 @@ export function VigilApp() {
   const detector = useRef<Detector | null>(null);
   const journeyId = useRef<string | null>(null);
   const check = useRef<Promise<CheckSession> | null>(null);
+  const checkIds = useRef<{signal: string; opened: string | null} | null>(null);
   const [armError, setArmError] = useState<ArmResult | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
@@ -99,8 +100,21 @@ export function VigilApp() {
   // is queued: the check-in names the signal that caused it.
   const openCheck = (signalEventId: string) => {
     detector.current?.setCheckinOpen(true);
-    check.current = device.openCheckin(journeyId.current ?? 'sim_jny_none', signalEventId);
+    checkIds.current = {signal: signalEventId, opened: null};
+    check.current = device.openCheckin(journeyId.current ?? 'sim_jny_none', signalEventId, {
+      // CEM-1: PIN behaviour counts toward later evidence only once it is signed and queued.
+      onPinObserved: p => detector.current?.observePin(p),
+    });
     setScreen('check');
+  };
+
+  /** The countdown: null until the server has the check-in; never longer than it allows. */
+  const checkRemaining = (): number | null => {
+    const ids = checkIds.current;
+    if (!ids?.opened) return null;
+    const opened = device.receipt(ids.opened);
+    const signal = device.receipt(ids.signal);
+    return checkinRemainingMs(Date.now(), {signalQueuedAt: signal?.queuedAt, openedQueuedAt: opened?.queuedAt, openedReceived: Boolean(opened?.received)});
   };
 
   const startListening = async () => {
@@ -125,12 +139,11 @@ export function VigilApp() {
       const {result, detector: d} = await startDetection({
         journeyId: id,
         appVersion: version,
-        // Evidence first: every confirmed detection is signed and queued (V7, V8),
-        // its reasons just before it, so the record says why as well as what.
-        onRecord: async (_decision, payload, evidence) => {
-          await device.signal(id, evidence);
-          return device.signal(id, payload);
-        },
+        subjectId: device.profile?.subjectId ?? '',
+        // Evidence first: every detection is signed and queued (V7, V8), with
+        // its reasons (evidence_observed), so the record says why as well as what.
+        onSignal: payload => device.signal(id, payload),
+        onEvidence: evidence => device.evidence(id, evidence),
         onPrompt: (_decision, signalEventId) => openCheck(signalEventId),
         onLevel: setLevel,
       });
@@ -223,8 +236,15 @@ export function VigilApp() {
     const session = check.current;
     return (
       <JourneyCheck
-        onShown={() => void session.then(c => c.shown())}
-        onEnter={async pin => (await session).enter(pin)}
+        onShown={() =>
+          void session
+            .then(c => c.shown())
+            .then(openedId => {
+              if (checkIds.current) checkIds.current.opened = openedId;
+            })
+        }
+        remaining={checkRemaining}
+        onEnter={async (pin, entryMs) => (await session).enter(pin, entryMs)}
         onDone={() => setScreen('checked')}
       />
     );
@@ -649,6 +669,8 @@ function reasonText(r: Reason): string {
       return `${r.class_label} ${r.score_bp} bp vs excluded neighbours ${r.neighbour_bp} bp: ${r.pass ? 'beats them' : 'does not'}`;
     case 'threshold':
       return `${r.class_label}: ${r.score_bp} ${r.pass ? '≥' : '<'} ${r.threshold_bp} bp`;
+    case 'record_threshold':
+      return `${r.class_label}: ${r.score_bp} ≥ record threshold ${r.threshold_bp} bp (record only unless lifted)`;
     case 'winner':
       return `Winner: ${r.class_label} (${r.class_index}) at ${r.score_bp} bp, of ${r.qualifying} qualifying`;
     case 'confirm':
@@ -719,26 +741,35 @@ function DetectorTest({detector}: {detector: Detector | null}) {
  */
 function JourneyCheck({
   onShown,
+  remaining,
   onEnter,
   onDone,
 }: {
   onShown: () => void;
-  onEnter: (pin: string) => Promise<'checked' | 'retry'>;
+  /** ms left (a lower bound on the server's own deadline), or null before the server has it. */
+  remaining: () => number | null;
+  onEnter: (pin: string, entryMs: number) => Promise<'checked' | 'retry'>;
   onDone: () => void;
 }) {
   const [retry, setRetry] = useState(false);
+  const [left, setLeft] = useState<number | null>(null);
   const busy = useRef(false);
+  // The same plain line for both PINs; it never says why the check-in opened.
+  useEffect(() => {
+    const t = setInterval(() => setLeft(remaining()), 500);
+    return () => clearInterval(t);
+  }, [remaining]);
   // checkin_opened means "shown on screen" (§3), so it is recorded on mount.
   useEffect(() => {
     onShown();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const submit = async (pin: string) => {
+  const submit = async (pin: string, entryMs: number) => {
     if (busy.current) return;
     busy.current = true;
     try {
       // The screen learns only "checked" or "try again", never which PIN.
-      if ((await onEnter(pin)) === 'checked') onDone();
+      if ((await onEnter(pin, entryMs)) === 'checked') onDone();
       else setRetry(true);
     } catch {
       // The signed answer couldn't be written: never show it as accepted.
@@ -755,12 +786,21 @@ function JourneyCheck({
         Check-in
       </Text>
       <Text style={[type.body, {textAlign: 'center', marginTop: space.sm}]}>Enter your PIN to continue</Text>
+      <Text style={[type.caption, {textAlign: 'center', marginTop: space.xs, fontVariant: ['tabular-nums']}]}>{countdownText(left)}</Text>
       <Text style={styles.pinNote} accessibilityLiveRegion="polite">
         {retry ? 'Try again' : ''}
       </Text>
       <PinKeypad onComplete={submit} />
     </ScrollView>
   );
+}
+
+/** "Answer when you can" until the server has the check-in, then M:SS, then a plain time's-up line. */
+export function countdownText(ms: number | null): string {
+  if (ms === null) return 'Answer when you can';
+  if (ms <= 0) return "Time's up. You can still answer";
+  const s = Math.ceil(ms / 1000);
+  return `Check-in · ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
 function CheckedIn({onDone}: {onDone: () => void}) {

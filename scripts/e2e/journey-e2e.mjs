@@ -136,21 +136,28 @@ const check = (name, ok, detail = '') => {
 };
 const q = s => s.replace(/'/g, "''");
 
+const CAND = {class_label: 'Glass', class_index: 435, score_bp: 8516, threshold_bp: 3500};
+
+/** As the phone does under CEM-1: the signal, the check-in, then its bound evidence (pv 2). */
 async function detection(d, journey) {
-  // As the phone does: the reasons first (evidence_observed, ADR-0047), then the detection.
-  await d.signal(journey, {
-    kind: 'evidence_observed', pv: 1, journey_id: journey, cem_version: 'CEM-1', ruleset_digest: RULESET_DIGEST,
-    decision: 'prompt', tally_db: 9, band: 'some', k_pct: 0,
-    reasons: [{name: 'glass_or_breaking', db: 5}, {name: 'impact', db: 4}],
-  });
   const signalId = await d.signal(journey, {
-    kind: 'signal_detected', pv: 1, journey_id: journey, sense: 'sound', class_label: 'Glass', class_index: 435,
-    score_bp: 8516, threshold_bp: 3500, window_ms: 975, model_sha256: '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de',
-    app_version: '0.0.6', corroboration: [],
+    kind: 'signal_detected', pv: 1, journey_id: journey, sense: 'sound', ...CAND,
+    window_ms: 975, model_sha256: '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de',
+    app_version: '0.0.9', corroboration: [],
   });
   const c = await d.openCheckin(journey, signalId);
   await c.shown();
+  await d.evidence(journey, evidence(journey, 'prompt', signalId));
   return c;
+}
+
+function evidence(journey, decision, signalId = null) {
+  return {
+    kind: 'evidence_observed', pv: 2, journey_id: journey, cem_version: 'CEM-1', ruleset_digest: RULESET_DIGEST,
+    decision, tally_db: 9, band: 'some', k_pct: 0, context: 'on',
+    reasons: [{name: 'glass_or_breaking', db: 5}, {name: 'impact', db: 4}],
+    observations: [], candidate: {...CAND, level: decision === 'prompt' ? 'prompt' : 'record'}, signal_event_id: signalId,
+  };
 }
 
 // ---- 1. Normal: check-in answered, journey ended ------------------------------
@@ -202,7 +209,7 @@ let normalSizes;
   for (const [who, pin] of [[a, '1234'], [b, '9876']]) {
     const journey = await who.d.startJourney('0.0.6');
     const c = await detection(who.d, journey);
-    check(`${who === a ? 'parity-normal' : 'duress'}: PIN shows "checked"`, (await c.enter(pin)) === 'checked');
+    check(`${who === a ? 'parity-normal' : 'duress'}: PIN shows "checked"`, (await c.enter(pin, 1400)) === 'checked');
     await who.d.flush();
     check(`${who === a ? 'parity-normal' : 'duress'}: every event received`, who.d.delivery().queued === 0, who.d.delivery().lastError ?? '');
   }
@@ -211,6 +218,10 @@ let normalSizes;
   check('parity-normal: no duress alarm', sql(`SELECT count(*) FROM incidents WHERE subject_id='${q(a.subject)}' AND has_duress`) === '0');
   normalSizes = a.sizes.filter(s => s.kind === 'checkin_result').map(s => s.bytes);
   duressSizes = b.sizes.filter(s => s.kind === 'checkin_result').map(s => s.bytes);
+  // PIN evidence (CEM-1) follows both answers: the last evidence_observed each phone sent.
+  normalSizes.push(a.sizes.filter(s => s.kind === 'evidence_observed').at(-1)?.bytes);
+  duressSizes.push(b.sizes.filter(s => s.kind === 'evidence_observed').at(-1)?.bytes);
+  check('evidence: both answers were followed by PIN evidence', normalSizes[1] > 0 && duressSizes[1] > 0);
 }
 
 // ---- 3. Wrong PINs (T47) ------------------------------------------------------
@@ -225,15 +236,26 @@ let normalSizes;
   check('wrong: late normal PIN (attempt 4) is not terminal', sql(`SELECT coalesce(outcome,'open') FROM checkins WHERE checkin_id='${q(c.checkinId)}'`) === 'open');
 }
 
-// ---- 4. No answer -------------------------------------------------------------
+// ---- 4. No answer; and a record-only detection escalates nothing (R1) ---------
 if (!fast) {
   const {d} = await phone('no-answer');
   const journey = await d.startJourney('0.0.6');
   const c = await detection(d, journey);
   await d.flush();
-  console.log('      waiting 75 s for the check-in deadline (60 s window + 10 s grace)…');
-  await new Promise(r => setTimeout(r, 75000));
+  // A record-only (T0) detection on another member: evidence alone, never a signal.
+  const quiet = await phone('record-only');
+  const qj = await quiet.d.startJourney('0.0.9');
+  await quiet.d.evidence(qj, evidence(qj, 'record'));
+  await quiet.d.flush();
+  check('record-only: evidence received', quiet.d.delivery().queued === 0, quiet.d.delivery().lastError ?? '');
+  console.log('      waiting 100 s: the check-in deadline, and past any 90 s fallback…');
+  await new Promise(r => setTimeout(r, 100000));
   check('no answer: scheduler fixed the outcome as no_answer', sql(`SELECT outcome FROM checkins WHERE checkin_id='${q(c.checkinId)}'`) === 'no_answer');
+  check(
+    'record-only: no deadline, no incident, no alert (R1)',
+    sql(`SELECT count(*) FROM signal_deadlines WHERE subject_id='${q(quiet.subject)}'`) === '0' &&
+      sql(`SELECT count(*) FROM incidents WHERE subject_id='${q(quiet.subject)}'`) === '0',
+  );
 }
 
 // ---- 5b. Guardians: invite, accept, alert, stand down (#96 + guardian alerts) ----
@@ -274,6 +296,8 @@ if (!fast) {
   // Bodies differ only by random values: the DER signature is 70–72 bytes of base64 either way.
   const diff = Math.abs(normalSizes[0] - duressSizes[0]);
   check('parity: normal and duress checkin_result bodies within DER-length noise', diff <= 4, `normal ${normalSizes[0]} B, duress ${duressSizes[0]} B`);
+  const diffPin = Math.abs(normalSizes[1] - duressSizes[1]);
+  check('parity: normal and duress PIN evidence bodies within DER-length noise', diffPin <= 4, `normal ${normalSizes[1]} B, duress ${duressSizes[1]} B`);
 }
 
 const failed = results.filter(r => !r.ok).length;

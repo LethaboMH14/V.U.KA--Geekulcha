@@ -27,6 +27,8 @@ import {canonicalJson} from '../../../shared/canonical.js';
 import {buildEvent, postEvent, rfc3339, signedRequest, uuid, type EventPayload, type EventSubmission, type Receipt, type Signer} from './events';
 import {checkPayload} from './payloads';
 import {checkRecord, type Export, type RecordCheck} from './verifyRecord';
+import {buildPinEvidence} from '../brain/cem/tracker';
+import {RULESET_DIGEST} from '../brain/cem/ruleset';
 
 export const MODEL_SHA256 = '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de';
 /**
@@ -80,7 +82,46 @@ export type Profile = {
   invites?: {guardianId: string; at: string}[];
   /** Guardians: who they guard and the guardian key id (G5). */
   guardian?: {guardianId: string; keyId: string; memberName: string};
+  /**
+   * CEM-1: how long this member's accepted check-in entries took (ms), newest
+   * last, at most 20. Stays on this phone; only "slower than usual" (a
+   * boolean) ever leaves it. Kept for both PINs alike.
+   */
+  pinTimes?: number[];
 };
+
+const PIN_BASELINE = 20;
+const PIN_BASELINE_MIN = 8;
+/** A MAD below this (ms) is treated as this, so a very steady member is not "slow" at every jitter. */
+const PIN_MAD_FLOOR_MS = 50;
+
+const median = (xs: number[]) => {
+  const a = [...xs].sort((x, y) => x - y);
+  const m = a.length >> 1;
+  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+};
+
+/** CEM-1 pin_slow: slower than the member's own median + 3 MAD, after at least 8 entries. */
+export function pinSlow(times: readonly number[], entryMs: number | undefined): boolean {
+  if (entryMs === undefined || times.length < PIN_BASELINE_MIN) return false;
+  const m = median([...times]);
+  const mad = Math.max(median(times.map(t => Math.abs(t - m))), PIN_MAD_FLOOR_MS);
+  return entryMs > m + 3 * mad;
+}
+
+/**
+ * The check-in countdown, never longer than the server really allows. Any
+ * phone time at which an event had been created precedes the server's receipt
+ * of it, so queuedAt + window is a lower bound on the server's deadline:
+ * checkin_opened + 70 s, and the signal's fallback + 90 s; 5 s more margin for
+ * the scheduler tick. null until the server has acknowledged checkin_opened.
+ */
+export function checkinRemainingMs(now: number, t: {signalQueuedAt?: number; openedQueuedAt?: number; openedReceived: boolean}): number | null {
+  if (!t.openedReceived || t.openedQueuedAt === undefined) return null;
+  const bounds = [t.openedQueuedAt + 70_000];
+  if (t.signalQueuedAt !== undefined) bounds.push(t.signalQueuedAt + 90_000);
+  return Math.max(0, Math.min(...bounds) - now - 5_000);
+}
 
 /** One alert delivered to this guardian (GET /v1/guardians/me/alerts). */
 export type GuardianAlert = {
@@ -151,9 +192,19 @@ export function createDevice(b: Backend) {
    * Checks, signs and seals one event into the queue. It is evidence from
    * this moment. Resolves with the event's id once it is queued.
    */
+  /** When each event was created on this phone, and whether the server has it (for the countdown). */
+  const receipts = new Map<string, {queuedAt: number; received: boolean; waiters: (() => void)[]}>();
+  const noteReceived = (eventId: string) => {
+    const r = receipts.get(eventId);
+    if (!r || r.received) return;
+    r.received = true;
+    r.waiters.splice(0).forEach(f => f());
+  };
+
   async function record(payload: EventPayload, target: Target, opts: {action?: string; genesis?: boolean; send?: boolean} = {}): Promise<string> {
     if (!profile) throw new Error('no profile');
     checkPayload(payload);
+    const queuedAt = Date.now();
     const entry = await buildEvent({
       signer: b.signer,
       subjectId: profile.subjectId,
@@ -166,6 +217,9 @@ export function createDevice(b: Backend) {
       genesis: opts.genesis,
     });
     await b.enqueue(JSON.stringify(entry));
+    receipts.set(entry.details.event_id, {queuedAt, received: false, waiters: []});
+    // The preview has no server: treat events as received, so screens behave.
+    if (b.simulated) noteReceived(entry.details.event_id);
     publish({queued: delivery.queued + 1});
     if (opts.send !== false) void flush();
     return entry.details.event_id;
@@ -216,6 +270,7 @@ export function createDevice(b: Backend) {
                 received_at: receipt.received_at,
               };
               await b.markReceived(it.seq, JSON.stringify(kept));
+              noteReceived(entry.details.event_id);
               publish({lastSentAt: receipt.received_at});
             } catch (e) {
               lastError = String(e instanceof Error ? e.message : e);
@@ -328,6 +383,22 @@ export function createDevice(b: Backend) {
     /** A confirmed detection. Resolves with its event id once queued. */
     signal: (journeyId: string, payload: EventPayload) => record(payload, journey(journeyId)),
 
+    /** CEM-1 evidence (evidence_observed). Resolves with its event id once queued. */
+    evidence: (journeyId: string, payload: EventPayload) => record(payload, journey(journeyId)),
+
+    /** When the event was created here, and whether the server has acknowledged it. */
+    receipt(eventId: string): {queuedAt: number; received: boolean} | null {
+      const r = receipts.get(eventId);
+      return r ? {queuedAt: r.queuedAt, received: r.received} : null;
+    },
+    /** Resolves once the server has acknowledged the event (never rejects). */
+    whenReceived(eventId: string): Promise<void> {
+      const r = receipts.get(eventId);
+      if (!r) return new Promise(() => undefined);
+      if (r.received) return Promise.resolve();
+      return new Promise(res => r.waiters.push(res));
+    },
+
     /**
      * One check-in (§4b, §8, T47). Call `shown()` once the check is on
      * screen: that is when `checkin_opened` is recorded. `enter(pin)` gives
@@ -335,7 +406,7 @@ export function createDevice(b: Backend) {
      * from then on every entry shows "Checked in" (the outcome is already
      * no_answer server-side), so the check-in is never a PIN oracle.
      */
-    async openCheckin(journeyId: string, signalEventId: string) {
+    async openCheckin(journeyId: string, signalEventId: string, opts: {onPinObserved?: (p: {retry: boolean; slow: boolean}) => void} = {}) {
       const checkinId = await uuid(b.signer);
       let opened: Promise<string> | null = null;
       const shown = (): Promise<string> =>
@@ -347,7 +418,13 @@ export function createDevice(b: Backend) {
       return {
         checkinId,
         shown,
-        async enter(pin: string): Promise<'checked' | 'retry'> {
+        /**
+         * entryMs: how long this entry took, first key to last. The answer is
+         * durable before anything optional happens, the PIN evidence goes in
+         * the same flush for both PINs, and nothing here waits on the network,
+         * so the screen's timing never depends on which PIN it was.
+         */
+        async enter(pin: string, entryMs?: number): Promise<'checked' | 'retry'> {
           entries += 1;
           const attempt = entries;
           const mode = await b.verify(pin);
@@ -356,7 +433,23 @@ export function createDevice(b: Backend) {
           await record(
             {kind: 'checkin_result', pv: 1, checkin_id: checkinId, result: mode === 'duress' ? 'duress_pin' : 'normal_pin', attempt},
             journey(journeyId),
+            {send: false},
           );
+          try {
+            const times = profile?.pinTimes ?? [];
+            const obs = {retry: attempt > 1, slow: pinSlow(times, entryMs)};
+            await record(buildPinEvidence({journeyId, rulesetDigest: RULESET_DIGEST, checkinId, ...obs}), journey(journeyId), {send: false});
+            // Only now, signed and queued, may it count toward a later lift.
+            opts.onPinObserved?.(obs);
+            if (profile && entryMs !== undefined && Number.isSafeInteger(entryMs) && entryMs > 0) {
+              profile = {...profile, pinTimes: [...times, entryMs].slice(-PIN_BASELINE)};
+              await b.setProfile(JSON.stringify(profile));
+            }
+          } catch {
+            // Optional evidence: its failure never blocks or changes the answer.
+          } finally {
+            void flush();
+          }
           return 'checked';
         },
       };

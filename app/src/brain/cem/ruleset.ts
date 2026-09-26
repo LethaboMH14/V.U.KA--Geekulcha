@@ -8,11 +8,17 @@
  * on the phone. The digest is recorded here by hand and checked by
  * __tests__/ruleset.test.ts, so a change that forgets to update it fails CI.
  */
-import {RULESET_V1} from '../detect';
+import {CONTEXT, RULESET_V1} from '../detect';
+import {LIFT_COOLDOWN_MS, LIFT_K_PCT, PROMPT_P_DB, SETTLE_AFTER_MS, STRONG_P_DB, type PromptRule} from './grader';
 import {CEM_VERSION, CONTEXT_WINDOW_S, DISTRESS_CAP, HALF_LIFE_S, K_CONFLICT_PCT, LOOKBACK_S, REASONS, SUPPORT_WINDOW_S} from '.';
 
-/** 'v4': every confirmed detection prompts (spec V4). 'cem1' is ADR-0047, PROPOSED. */
-export const PROMPT_RULE = 'v4' as const;
+/**
+ * 'v4': every confirmed detection prompts, nothing else does (spec V4).
+ * 'cem1': V4 unchanged, plus lifts of record-level detections (ADR-0047,
+ * PROPOSED). Active only for simulation subjects until ADR-0047 is accepted
+ * by Sibusiso and Ipeleng and this digest is signed off by two leads (D10).
+ */
+export const PROMPT_RULE: PromptRule = 'cem1';
 
 export const RULESET_CANONICAL = {
   detect: RULESET_V1,
@@ -26,7 +32,16 @@ export const RULESET_CANONICAL = {
     k_conflict_pct: K_CONFLICT_PCT,
     reasons: Object.fromEntries(Object.entries(REASONS).map(([k, v]) => [k, v.db])),
   },
-  prompt_rule: PROMPT_RULE,
+  context: CONTEXT.map(c => ({label: c.label, index: c.index, reason: c.reason})),
+  grade: {
+    prompt_rule: PROMPT_RULE,
+    prompt_p_db: PROMPT_P_DB,
+    strong_p_db: STRONG_P_DB,
+    lift_k_pct: LIFT_K_PCT,
+    lift_cooldown_ms: LIFT_COOLDOWN_MS,
+    settle_after_ms: SETTLE_AFTER_MS,
+    sim_subjects_only: true,
+  },
 };
 
-export const RULESET_DIGEST = '41c9f661465fdcfa27aa2109edafad2f9e759f5303b5a51c97ac1ed0a032a9b3';
+export const RULESET_DIGEST = 'ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b';

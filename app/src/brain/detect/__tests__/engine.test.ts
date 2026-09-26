@@ -78,8 +78,11 @@ describe('impulses (glass, gun-like) confirm in one window', () => {
   it('does not record one basis point below threshold, and names the closest miss', () => {
     const t = R.thresholdBp['Gunshot, gunfire'];
     const {decisions} = run([audio(win(1, 'Gunshot, gunfire', t - 1))]);
-    expect(decisions[0].record).toBe(false);
-    expect(decisions[0].reasons.at(-1)).toEqual({rule: 'threshold', class_label: 'Gunshot, gunfire', score_bp: t - 1, threshold_bp: t, pass: false});
+    // V4: no prompt-level record. CEM-1 keeps it as record-only evidence
+    // (it clears the lower record threshold), never a prompt by itself.
+    expect(decisions[0].prompt).toBe(false);
+    expect(decisions[0].level).toBe('record');
+    expect(decisions[0].reasons).toContainEqual({rule: 'threshold', class_label: 'Gunshot, gunfire', score_bp: t - 1, threshold_bp: t, pass: false});
   });
 });
 
@@ -296,5 +299,51 @@ describe('signal_detected pv1', () => {
     expect(() => buildSignalDetected({...base, candidate: c, modelSha256: 'ABC'})).toThrow(/hex/);
     const item = {sense: 'motion' as const, pattern: 'impact' as const, peak_mg: 3000, duration_ms: 200, offset_ms: -100, rule_version: 'motion-rules.v1'};
     expect(() => buildSignalDetected({...base, candidate: c, corroboration: [item, item, item, item, item]})).toThrow(/at most 4/);
+  });
+});
+
+describe('CEM-1 record level: never quieter than V4', () => {
+  const idxOf = (l: string) => TARGETS.findIndex(t => t.label === l);
+  function two(seq: number, a: [string, number], b: [string, number], endMs = seq * 488): AudioWindow {
+    const w = win(seq, a[0], a[1], endMs);
+    const targetBp = [...w.targetBp];
+    targetBp[idxOf(b[0])] = b[1];
+    return {...w, targetBp};
+  }
+
+  it('a V4 class wins even when a louder class only clears its record threshold', () => {
+    // Shout 5900 < 6000 (record level) and Glass 3600 >= 3500 (V4) in one window.
+    const {decisions} = run([audio(two(1, ['Shout', 5900], ['Glass', 3600]))]);
+    expect(decisions[0]).toMatchObject({level: 'prompt', record: true, prompt: true});
+    expect(decisions[0].candidate?.class_label).toBe('Glass');
+  });
+
+  it('a record-level hit never delays a V4 record of the same family', () => {
+    const {decisions} = run([audio(win(1, 'Glass', 2000, 1000)), audio(win(2, 'Glass', 9000, 2000))]);
+    expect(decisions.map(d => [d.level, d.record, d.prompt])).toEqual([
+      ['record', true, false],
+      ['prompt', true, true],
+    ]);
+  });
+
+  it('a record-level hit within 5 s of a V4 record of its family is a duplicate', () => {
+    const {decisions} = run([audio(win(1, 'Glass', 9000, 1000)), audio(win(2, 'Glass', 2000, 3000))]);
+    expect(decisions[1].record).toBe(false);
+  });
+
+  it('record-level voices confirm on the record history (two windows, separation 2)', () => {
+    const s = R.recordThresholdBp.Shout + 100;
+    const {decisions} = run([1, 2, 3].map(n => audio(win(n, 'Shout', s))));
+    expect(decisions.map(d => d.record)).toEqual([false, false, true]);
+    expect(decisions[2]).toMatchObject({level: 'record', prompt: false});
+  });
+
+  it('below the record threshold nothing is recorded', () => {
+    const {decisions} = run([audio(win(1, 'Glass', R.recordThresholdBp.Glass - 1))]);
+    expect(decisions[0].record).toBe(false);
+  });
+
+  it('the record threshold is half the prompt threshold for every class (UNCALIBRATED)', () => {
+    for (const t of TARGETS) expect(R.recordThresholdBp[t.label]).toBe(Math.floor(R.thresholdBp[t.label] / 2));
   });
 });

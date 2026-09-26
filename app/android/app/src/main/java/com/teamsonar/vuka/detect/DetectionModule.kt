@@ -36,6 +36,7 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
         putInt("topIndex", w.topIndex)
         putInt("topBp", w.topBp)
         putInt("gunNeighbourBp", w.gunNeighbourBp)
+        if (w.contextBp.isNotEmpty()) putArray("contextBp", Arguments.fromArray(w.contextBp))
     })
 
     override fun onMotion(f: MotionFrame) = emit("vigil.motion", Arguments.createMap().apply {
@@ -140,6 +141,7 @@ class DetectionModule(private val ctx: ReactApplicationContext) : ReactContextBa
                         putInt("topIndex", w.topIndex)
                         putInt("topBp", w.topBp)
                         putInt("gunNeighbourBp", w.gunNeighbourBp)
+                        if (w.contextBp.isNotEmpty()) putArray("contextBp", Arguments.fromArray(w.contextBp))
                     })
                     start += AudioPipeline.HOP
                 }

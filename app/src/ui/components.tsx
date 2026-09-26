@@ -474,8 +474,11 @@ const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
  * PIN keypad: flat and plain, the prototype's Journey check keypad. It knows
  * nothing about which PIN is which: it hands the digits up and resets. Every
  * entry looks the same, so the screen can never reveal a duress PIN (V5, T15).
+ * `onComplete` also gets how long the entry took, first key to last (ms): it
+ * stays on the phone; only "slower than usual" is ever recorded (CEM-1).
  */
-export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete: (pin: string) => void}) {
+export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete: (pin: string, entryMs: number) => void}) {
+  const startedAt = useRef<number | null>(null);
   const [pin, setPin] = useState('');
   const press = (k: string) => {
     if (k === 'del') {
@@ -483,9 +486,12 @@ export function PinKeypad({length = 4, onComplete}: {length?: number; onComplete
       return;
     }
     const next = (pin + k).slice(0, length);
+    if (startedAt.current === null) startedAt.current = Date.now();
     if (next.length === length) {
+      const entryMs = Date.now() - startedAt.current;
+      startedAt.current = null;
       setPin('');
-      onComplete(next);
+      onComplete(next, entryMs);
     } else {
       setPin(next);
     }
