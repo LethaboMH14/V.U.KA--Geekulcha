@@ -414,3 +414,33 @@ test('My record shows only the server’s held export, however many receipts the
   expect(rows.map(r => r.kind)).toEqual(['registration', 'journey_armed']);
   expect(JSON.stringify(rows)).not.toMatch(/duress|normal_pin/);
 });
+
+test('a moved demo server is followed without restarting the app', async () => {
+  const urls: string[] = [];
+  const h = harness({
+    post: async (url, entry) => {
+      urls.push(url);
+      if (url === 'https://old.example') throw new Error('Network request failed');
+      return {event_hash: 'a'.repeat(64), chain_index: 0, received_at: '2026-09-25T20:00:00Z'};
+    },
+  });
+  let where = 'https://old.example';
+  h.b.discover = async () => where;
+  await h.device.setPins('1234', '9876');
+  await h.device.register('Lerato', '0.0.6');
+  await h.device.flush();
+  expect(h.device.delivery().queued).toBe(1);
+  where = 'https://new.example';
+  // The first failure already looked it up once; a minute later it looks again.
+  const realNow = Date.now;
+  Date.now = () => realNow() + 61_000;
+  try {
+    await h.device.flush();
+    await h.device.flush();
+  } finally {
+    Date.now = realNow;
+  }
+  expect(urls.at(-1)).toBe('https://new.example');
+  expect(h.device.delivery().queued).toBe(0);
+  expect(h.device.profile?.serverUrl).toBe('https://new.example');
+});

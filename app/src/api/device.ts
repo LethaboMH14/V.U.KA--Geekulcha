@@ -250,6 +250,22 @@ export function createDevice(b: Backend) {
   let flushing: Promise<void> | null = null;
   let again = false;
   /**
+   * The demo server's address can move (a restarted tunnel). When it stops
+   * answering, look it up again (at most once a minute), never over a server
+   * the member pinned.
+   */
+  let lastRediscover = 0;
+  async function rediscover() {
+    if (!profile || profile.serverPinned || Date.now() - lastRediscover < 60_000) return;
+    lastRediscover = Date.now();
+    const found = await b.discover().catch(() => null);
+    if (found && profile && found !== profile.serverUrl) {
+      profile = {...profile, serverUrl: found};
+      await b.setProfile(JSON.stringify(profile)).catch(() => undefined);
+      again = true;
+    }
+  }
+  /**
    * Sends queued events oldest first, and keeps going until nothing new was
    * queued meanwhile. A network or server failure stops the pass (it retries
    * on the next event or the next timer). A refusal (4xx) leaves that event
@@ -274,7 +290,7 @@ export function createDevice(b: Backend) {
             if (refused.has(it.seq)) continue;
             const entry = JSON.parse(it.json) as EventSubmission;
             try {
-              const receipt = await b.post(p.serverUrl, entry);
+              const receipt = await b.post((profile ?? p).serverUrl, entry);
               const kept: Omit<RecordEntry, 'seq'> = {
                 kind: String(entry.payload.kind),
                 ts: entry.ts,
@@ -290,6 +306,8 @@ export function createDevice(b: Backend) {
               lastError = String(e instanceof Error ? e.message : e);
               if (!/^4\d\d /.test(lastError)) {
                 again = false;
+                // Unreachable: the address may have moved. Retry at once if it did.
+                await rediscover();
                 break;
               }
               refused.add(it.seq);
@@ -376,7 +394,10 @@ export function createDevice(b: Backend) {
         ({journey_id: id} = await b.request<{journey_id: string}>(profile.serverUrl, 'POST', '/v1/journeys', ''));
       } catch (e) {
         const m = String(e instanceof Error ? e.message : e);
-        throw new JourneyStartError(/^\d{3} /.test(m) ? 'refused' : 'offline', m);
+        const offline = !/^\d{3} /.test(m);
+        // Unreachable: the demo server may have moved; the next retry uses the new address.
+        if (offline) await rediscover();
+        throw new JourneyStartError(offline ? 'offline' : 'refused', m);
       }
       await record({kind: 'journey_armed', pv: 1, journey_id: id, app_version: appVersion}, journey(id));
       return id;

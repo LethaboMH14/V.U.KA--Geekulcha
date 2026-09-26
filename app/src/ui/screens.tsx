@@ -807,10 +807,14 @@ export function countdownText(ms: number | null): string {
 }
 
 function CheckedIn({onDone}: {onDone: () => void}) {
+  // The parent re-renders every audio window with a new onDone; a timer keyed
+  // on it would restart forever and this screen would never move on.
+  const done = useRef(onDone);
+  done.current = onDone;
   useEffect(() => {
-    const t = setTimeout(onDone, 2600);
+    const t = setTimeout(() => done.current(), 2600);
     return () => clearTimeout(t);
-  }, [onDone]);
+  }, []);
   return (
     <ScrollView
       style={{backgroundColor: colors.bgBase}}
