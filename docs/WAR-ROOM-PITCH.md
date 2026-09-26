@@ -1,6 +1,6 @@
 # VUKA — War Room Pitch
 
-> **Spoken target:** 3 minutes (competition round 1). **Actual: 324 words (~2:19 at 140 wpm).** Six beats, hard caps. Under 3:00.
+> **Spoken target:** 3 minutes (competition round 1). **Actual: 325 words (~2:19 at 140 wpm).** Six beats, hard caps. Under 3:00.
 > **Companion files:** `context.md` · `pitch-deck-outline.md` · `docs/reviews/ANCHOR-ACCESS-MODEL-ADR-PROPOSAL.md`.
 > **Read `docs/MASTER-CONTEXT.md` §2 for the judging criteria** (I 15 · T 15 · U 10 · S 10 · B 15 · Q 5).
 
@@ -12,9 +12,9 @@
 | 2 · Problem | Why nothing fixes it | 65 | 48 |
 | 3 · Solution | What VUKA is (3-sec test) | 45 | 37 |
 | 4 · How It Works (user view, demo) | What the user experiences | 80 | 79 |
-| 5 · Why It Wins | The single differentiator | 70 | 65 |
+| 5 · Why It Wins | The single differentiator | 70 | 66 |
 | 6 · The Ask | Who pays + what we want | 45 | 43 |
-| | | **Total** | **324** |
+| | | **Total** | **325** |
 
 ---
 
@@ -38,7 +38,7 @@ A journey begins — then a scream. VUKA quietly asks: are you okay? A normal PI
 
 ### Beat 5 — Why It Wins
 
-The alternatives? A panic button, like FNB GuardMe — useless if your hands aren't free. A bank's duress code, like Discovery's — only inside that bank. And the "evidence" is just a bank record saying you authorised it, or an affidavit — your word. Every option needs you to press something. VUKA doesn't. It notices on its own, and proves when it happened. That is why we win.
+Our direct competitors are detection tools — a panic button like FNB GuardMe, a duress code like Discovery's. They raise an alarm — but hand over no proof. Evidence tools prove something existed, but cannot detect duress. So the field splits: notice, or prove. VUKA does both. It notices on its own, and hands back proof a bank or a court can check. That is why we win.
 
 ### Beat 6 — The Ask
 
