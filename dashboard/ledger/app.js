@@ -222,6 +222,7 @@ function connect() {
   try {
     state.sources = srcMod.createSources({ server: state.server, network: "testnet" });
   } catch (error) {
+    state.sources = null; // late answers from the previous server must not land
     notice(error.message);
     return;
   }

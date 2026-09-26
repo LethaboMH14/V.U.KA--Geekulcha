@@ -258,4 +258,11 @@ test("pins without the manifest (or without a fingerprint) fail instead of skipp
     assert.equal(confirmReceipt({ ...receipt, topic_epoch: undefined }, { topic_id: pins.topic_id }, msg).state, "unavailable");
     assert.equal(confirmReceipt(receipt, null, msg).state, "unavailable");
   });
+
+  test("confirmReceipt: a sequence number that is not an integer is a bad receipt", () => {
+    for (const seq of ["42", true, "4.2e1", 42.5, 0, null]) {
+      assert.equal(confirmReceipt({ ...receipt, sequence_number: seq }, pins, msg).state, "failed", String(seq));
+    }
+    assert.equal(confirmReceipt(receipt, pins, { ...msg, sequence_number: "42" }).state, "failed");
+  });
 }

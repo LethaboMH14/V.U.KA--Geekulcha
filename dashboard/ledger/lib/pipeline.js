@@ -532,7 +532,9 @@ export function confirmReceipt(receipt, pins, message) {
       reason: `The server names topic ${String(r.topic_id ?? "(none)")}, epoch ${String(r.topic_epoch ?? "(none)")}; the pinned topic is ${pins.topic_id}, epoch ${pins.topic_epoch}.`,
     };
   }
-  const seq = Number(r.sequence_number);
+  // The server sends an integer (anchor/publish.py); "42", true or 4.2e1 are not
+  // receipts (Number(true) === 1), and verifyTrace compares it strictly too.
+  const seq = r.sequence_number;
   const str = (v) => typeof v === "string" && v.length > 0;
   if (!Number.isSafeInteger(seq) || seq < 1 || !str(r.consensus_timestamp) || !str(r.running_hash)) {
     return { state: "failed", label: "Bad receipt", reason: "The server's receipt lacks a valid sequence number, consensus time or running hash." };
@@ -541,7 +543,7 @@ export function confirmReceipt(receipt, pins, message) {
     return { state: "unavailable", label: "Not on mirror yet", reason: `The mirror has no message #${seq} on the pinned topic yet, so the server's receipt is not confirmed.` };
   }
   const ok = message.kind === "root" &&
-    Number(message.sequence_number) === seq &&
+    message.sequence_number === seq &&
     (message.topic_id === null || message.topic_id === undefined || message.topic_id === pins.topic_id) &&
     message.consensus_timestamp === r.consensus_timestamp &&
     message.running_hash === r.running_hash;
