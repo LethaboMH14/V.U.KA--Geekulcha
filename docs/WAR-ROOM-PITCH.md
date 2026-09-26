@@ -1,6 +1,6 @@
 # VUKA — War Room Pitch
 
-> **Spoken target:** ≤560 words. **Actual: 550.** One job per beat, drafted to a hard budget.
+> **Spoken target:** 3–5 minutes (war room). **Actual: 723 words (~4.8 min).** One job per beat, drafted to a hard budget.
 > **Companion files:** `context.md` · `pitch-deck-outline.md` · `docs/reviews/ANCHOR-ACCESS-MODEL-ADR-PROPOSAL.md`.
 > **Read `docs/MASTER-CONTEXT.md` §2 for the judging criteria** (I 15 · T 15 · U 10 · S 10 · B 15 · Q 5).
 
@@ -14,10 +14,11 @@
 | 4A · How it works | The mechanism — automatic | T, U | 54 |
 | 4B · The record | Where it lives; one matched record | T, S, B | 98 |
 | 5 · Why it works | The sale — two halves, nobody does both | I, T | 111 |
-| 6 · Business | There is a business; why they pay | B | 89 |
+| 6A · The money | Who pays, how much | B | 51 |
+| 6B · Why the insurer pays | Fake claims — the claim and the proof | B, I | 80 |
 | 7 · Compliance | Neutralise the objections; deployability | S, B | 52 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **681** |
+| | | **Total** | **723** |
 
 ---
 
@@ -47,9 +48,13 @@ That record is made automatically. It goes to their phone, and to their guardian
 
 Here's why it wins. This problem has two halves: noticing the duress, and proving it. Nobody does both. Detection tools can notice — a panic button, a fraud score, the safety features on your phone — but they leave the victim with nothing a bank or a court can act on. Evidence tools can prove something happened, but they can't notice it in the first place. And a bank's own duress PIN only works if you can still type — inside that one bank. Everybody owns one half. Nobody owns both. VUKA notices without them touching a button, and hands back a record anyone can verify. For the first time, the proof is theirs.
 
-### Beat 6 — Business
+### Beat 6A — The money
 
-Two people pay. The insurer pays per member, per month — about fifty rand — because a claim now carries a record made at the time: real claims settle faster, and fakes get harder to pass off. The bank pays per case — fifteen rand — when it pulls a verified record, because that is far cheaper than a disputed escalation. The victim pays nothing. Neither payer has to recover the stolen money for that to pay off. Break-even is three thousand seven hundred and seventy-four members. The model carries the infrastructure cost from the first rand.
+Two people pay; the victim pays nothing. The insurer pays about fifty rand per member, per month. The bank pays fifteen rand per case — far less than the R5,000 it costs to fight a dispute. Break-even is three thousand seven hundred and seventy-four members, and the model carries the infrastructure cost.
+
+### Beat 6B — Why the insurer pays
+
+The insurer pays because VUKA cuts its fake-claim payouts. Today, someone can claim they were forced to transfer, and with no proof of the coercion, the insurer can't tell a real claim from a made-up one — so it pays. VUKA changes that: a real coercion leaves a record made at the time, signed and anchored, impossible to fake later. A made-up claim can't produce one. Already proven: ASISA members stopped R1.4 billion of fraud in 2024 just by testing claims.
 
 ### Beat 7 — Compliance
 
@@ -95,6 +100,7 @@ Here's what we want from this room. One insurer, five thousand members, twelve m
 ### How each stakeholder makes or saves money (the honest mechanism)
 - **The money is gone.** Once a coerced transfer settles and the criminal withdraws it, VUKA **does not recover it** — and we never claim to. The value is *before* and *around* the payout, not the stolen cash.
 - **Both payers still profit, without recovering a cent.** The insurer saves the value of the **fake claims it would otherwise pay** (plus handling time). The bank saves the **cost of the disputes it no longer escalates** (plus customer churn). **Neither saving depends on clawing the money back.**
+- **Why it has to be on the whole book — the logic, not a demand.** A fraudster will not opt into a test. If VUKA were optional, the people most likely to fake a claim would be the ones who don't have it — so the insurer extends it across the book, the way cover is conditioned on a working device. On the whole book, a claim **without** a record is the exception, not a loophole. (This is why "everyone needs VUKA" is a *consequence* of the anti-fraud logic, not an assertion.)
 - **The insurer saves** by **not paying fakes** it can now evidence against, and by **settling genuine claims faster and cheaper**. Genuine claims are ones it owed anyway; the saving is the **fabricated share plus handling time**. The pilot measures it — the actuary test is that the insurer saves more than twelve times the price per member, per year.
 - **The bank saves** because a verified record **resolves a dispute without escalation**: an Ombud case costs the system **~R4,962** and **~61 days**, and **disbelieved customers leave**. The bank is **not liable for the loss today** (no mandatory reimbursement in SA), so its cost is dispute handling and churn — not the stolen money.
 - **Where money can still be saved:** the **PROPOSED bank protective signal** (ADR-0037) lets the bank place its own hold on new-beneficiary or large transfers on a duress signal — so where the transfer has **not yet cleared or been withdrawn, funds can be frozen**. That is the only path to recovering the money itself; it is partner-dependent and **not yet live**.
