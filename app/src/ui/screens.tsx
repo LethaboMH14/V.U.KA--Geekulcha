@@ -15,7 +15,7 @@ import {CheckCircle, GearSix, Microphone, Phone, ShareNetwork, ShieldChevron, Us
 import {Chip, Eyebrow, GlassIcon, Key, Lamp, LevelMeter, ListeningLine, Panel, PinKeypad, QuietKey, Readout, Row, Rule, Surface, TopAppBar} from './components';
 import {colors, fonts, radii, space, TOUCH, type} from './theme';
 import {Onboarding} from './onboarding';
-import {GuardianHome, GuardianSetup} from './guardian';
+import {GuardianHome, GuardianSetup, useGuardianWatch} from './guardian';
 import {MyRecord} from './record';
 import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, type Delivery} from '../api/device';
 import {version} from '../../package.json';
@@ -49,6 +49,8 @@ const TOP_INSET = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
 
 export function VigilApp() {
   const [screen, setScreen] = useState<Screen>('boot');
+  // A member who is also someone's guardian hears about alerts on any screen.
+  useGuardianWatch(device.profile?.role === 'member' && Boolean(device.profile?.guardian) && screen !== 'guardianHome');
   // When listening began (a server-issued session is running), or null.
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [invite, setInvite] = useState<Invite | null>(null);
@@ -210,6 +212,10 @@ export function VigilApp() {
         setScreen('settings');
         return true;
       }
+      if ((screen === 'guardianHome' || screen === 'guardianSetup') && device.profile?.role === 'member') {
+        setScreen('settings');
+        return true;
+      }
       return screen === 'check' || screen === 'checked';
     });
     return () => sub.remove();
@@ -222,10 +228,12 @@ export function VigilApp() {
     return <Onboarding onDone={() => setScreen('home')} onGuardian={() => setScreen('guardianSetup')} />;
   }
   if (screen === 'guardianSetup') {
-    return <GuardianSetup onDone={() => setScreen('guardianHome')} onBack={() => setScreen('onboarding')} />;
+    const member = device.profile?.role === 'member';
+    return <GuardianSetup onDone={() => setScreen('guardianHome')} onBack={() => setScreen(member ? 'settings' : 'onboarding')} />;
   }
   if (screen === 'guardianHome') {
-    return <GuardianHome />;
+    // A member who also guards someone comes back to their own settings.
+    return <GuardianHome onBack={device.profile?.role === 'member' ? () => setScreen('settings') : undefined} />;
   }
   if (screen === 'invitePin') {
     return (
@@ -305,6 +313,7 @@ export function VigilApp() {
           <Settings
             onBack={() => setScreen(home)}
             onGuardian={() => setScreen('guardian')}
+            onGuard={() => setScreen(device.profile?.guardian ? 'guardianHome' : 'guardianSetup')}
             onRecord={() => setScreen(device.simulated ? 'record' : 'recordPin')}
             onInvite={() => setScreen('invitePin')}
             delivery={delivery}
@@ -641,6 +650,7 @@ const offline = (d: Delivery) => Boolean(d.lastError && !/^\d{3} /.test(d.lastEr
 function Settings({
   onBack,
   onGuardian,
+  onGuard,
   onRecord,
   onInvite,
   delivery,
@@ -648,6 +658,8 @@ function Settings({
 }: {
   onBack: () => void;
   onGuardian: () => void;
+  /** Be someone else's guardian too (or open that view). */
+  onGuard: () => void;
   onRecord: () => void;
   onInvite: () => void;
   delivery: Delivery;
@@ -671,6 +683,12 @@ function Settings({
         </View>
         <View style={styles.rowRule} />
         <Row label="Add a guardian" detail="Needs your PIN; gives a one-time code to share" onPress={onInvite} />
+        <View style={styles.rowRule} />
+        <Row
+          label={device.profile?.guardian ? `You guard ${device.profile.guardian.memberName}` : "Be someone's guardian"}
+          detail={device.profile?.guardian ? 'Open your guardian view' : 'Enter the code they sent you'}
+          onPress={onGuard}
+        />
         <View style={styles.rowRule} />
         <Row label="Guardian view" detail="Preview what a guardian sees (simulated)" onPress={onGuardian} />
       </Panel>

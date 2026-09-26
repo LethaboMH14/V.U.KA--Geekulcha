@@ -523,3 +523,30 @@ describe('following the demo server to a different server', () => {
     expect(h.sent).toHaveLength(0);
   });
 });
+
+describe('a member who is also someone else\'s guardian', () => {
+  test('keeps their own record; alerts and answers use the guarded member\'s record', async () => {
+    const requests: {path: string; keyId?: string}[] = [];
+    const h = harness({
+      request: async <T,>(_u: string, method: string, path: string, _body: string, keyId?: string) => {
+        requests.push({path, keyId});
+        if (path === '/v1/guardians/accept') return {guardian_id: 'g1234567'} as T;
+        if (path === '/v1/guardians/me/alerts') return {subject_id: 'sim_subj_other', alerts: []} as T;
+        return (path === '/v1/journeys' ? {journey_id: JOURNEY} : {}) as T;
+      },
+    });
+    await onboarded(h);
+    const own = h.device.profile!.subjectId;
+    await h.device.becomeGuardian('abcd1234-123456', 'Thabo');
+    expect(h.device.profile).toMatchObject({role: 'member', subjectId: own, guardian: {guardianId: 'g1234567', memberName: 'Thabo'}});
+    await h.device.guardianAlerts();
+    expect(h.device.profile?.subjectId).toBe(own);
+    expect(h.device.profile?.guardian?.memberSubjectId).toBe('sim_subj_other');
+    await h.device.acknowledge('6c1f7e0e-2f4b-4a55-9b1a-0d1c2e3f4a5b', 'handling');
+    const ack = h.sent.find(e => e.payload.kind === 'guardian_ack')!;
+    expect(ack.target_id).toBe('sim_subj_other');
+    expect(ack.actor_id).toBe('guardian_g1234567');
+    // Their own listening still starts on their own record.
+    expect(await h.device.startJourney('0.0.13')).toBe(JOURNEY);
+  });
+});

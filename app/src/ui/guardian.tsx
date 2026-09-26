@@ -178,7 +178,34 @@ export function GuardianSetup({onDone, onBack}: {onDone: () => void; onBack: () 
 
 type Acked = Record<string, ('called_10111' | 'handling' | 'stand_down')[]>;
 
-export function GuardianHome() {
+/**
+ * For a member who is also someone's guardian: watch for alerts app-wide,
+ * so a new one pops up on any screen (and in the background).
+ */
+export function useGuardianWatch(enabled: boolean) {
+  const told = useRef(new Set<string>());
+  useEffect(() => {
+    if (!enabled) return;
+    let live = true;
+    const poll = async () => {
+      const a = await device.guardianAlerts().catch(() => null);
+      if (!live || !a) return;
+      const fresh = a.find(x => !x.closed_at && !told.current.has(x.incident_id));
+      if (fresh) {
+        told.current.add(fresh.incident_id);
+        notice?.showAlert?.(`${device.profile?.guardian?.memberName ?? 'Your member'} may need help`, "Open VUKA. Don't call or text them: call 10111.");
+      }
+    };
+    void poll();
+    const t = setInterval(poll, 10_000);
+    return () => {
+      live = false;
+      clearInterval(t);
+    };
+  }, [enabled]);
+}
+
+export function GuardianHome({onBack}: {onBack?: () => void} = {}) {
   const g = device.profile?.guardian;
   const who = g?.memberName ?? 'your member';
   const [alerts, setAlerts] = useState<GuardianAlert[] | null>(null);
@@ -239,6 +266,7 @@ export function GuardianHome() {
     <View style={{flex: 1}}>
       <Surface tone="guardian" />
       <ScrollView contentContainerStyle={styles.page}>
+        {onBack ? <TopAppBar title="You're a guardian" onBack={onBack} tone="guardian" /> : null}
         <View style={styles.screen}>
           <View style={styles.greeting}>
             <View>

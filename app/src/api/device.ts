@@ -86,8 +86,12 @@ export type Profile = {
   chainFromSeq?: number;
   /** Members: the guardian invites they created (id and time), newest last. */
   invites?: {guardianId: string; at: string}[];
-  /** Guardians: who they guard and the guardian key id (G5). */
-  guardian?: {guardianId: string; keyId: string; memberName: string};
+  /**
+   * Who this phone guards and its guardian key id (G5). A member can be
+   * someone else's guardian too: this slot is separate from their own record
+   * (memberSubjectId is the guarded member's record, never this phone's).
+   */
+  guardian?: {guardianId: string; keyId: string; memberName: string; memberSubjectId?: string};
   /**
    * CEM-1: how long this member's accepted check-in entries took (ms), newest
    * last, at most 20. Stays on this phone; only "slower than usual" (a
@@ -624,16 +628,15 @@ export function createDevice(b: Backend) {
         fcm_token: 'sim_poll_while_open',
         popia_s18_acknowledged: true,
       });
-      const r = await b.request<{guardian_id: string}>(serverUrl, 'POST', '/v1/guardians/accept', body, keyId);
-      profile = {
-        v: 1,
-        role: 'guardian',
-        firstName: '',
-        subjectId: '',
-        actorId: `guardian_${r.guardian_id}`,
-        serverUrl,
-        guardian: {guardianId: r.guardian_id, keyId, memberName: memberName.trim() || 'your member'},
-      };
+      const guardianServer = profile && profile.role !== 'guardian' ? profile.serverUrl : serverUrl;
+      const r = await b.request<{guardian_id: string}>(guardianServer, 'POST', '/v1/guardians/accept', body, keyId);
+      const guardian = {guardianId: r.guardian_id, keyId, memberName: memberName.trim() || 'your member'};
+      if (profile && profile.role !== 'guardian') {
+        // A member who also guards someone: their own record is untouched.
+        profile = {...profile, guardian};
+      } else {
+        profile = {v: 1, role: 'guardian', firstName: '', subjectId: '', actorId: `guardian_${r.guardian_id}`, serverUrl, guardian};
+      }
       await b.setProfile(JSON.stringify(profile));
       return profile;
     },
@@ -649,8 +652,8 @@ export function createDevice(b: Backend) {
         profile.guardian.keyId,
       );
       publish({lastContactAt: new Date().toISOString()});
-      if (r.subject_id && r.subject_id !== profile.subjectId) {
-        profile = {...profile, subjectId: r.subject_id};
+      if (r.subject_id && r.subject_id !== profile.guardian.memberSubjectId) {
+        profile = {...profile, guardian: {...profile.guardian, memberSubjectId: r.subject_id}};
         await b.setProfile(JSON.stringify(profile));
       }
       return r.alerts;
@@ -658,15 +661,17 @@ export function createDevice(b: Backend) {
 
     /** Guardians: a signed acknowledgement (G5): called_10111, handling or stand_down. */
     async acknowledge(incidentId: string, action: 'called_10111' | 'handling' | 'stand_down'): Promise<void> {
-      if (!profile?.guardian || !profile.subjectId) throw new Error('not a guardian yet');
+      // The guarded member's record (older guardian-only profiles kept it in subjectId).
+      const memberSubject = profile?.guardian?.memberSubjectId ?? (profile?.role === 'guardian' ? profile.subjectId : '');
+      if (!profile?.guardian || !memberSubject) throw new Error('not a guardian yet');
       checkPayload({kind: 'guardian_ack', pv: 1, incident_id: incidentId, action});
       const entry = await buildEvent({
         signer: b.signer,
-        subjectId: profile.subjectId,
-        actorId: profile.actorId,
+        subjectId: memberSubject,
+        actorId: `guardian_${profile.guardian.guardianId}`,
         action: 'guardian_event',
         targetType: 'subject',
-        targetId: profile.subjectId,
+        targetId: memberSubject,
         payload: {kind: 'guardian_ack', pv: 1, incident_id: incidentId, action},
         ts: rfc3339(new Date()),
         as: {role: 'guardian', keyId: profile.guardian.keyId},
