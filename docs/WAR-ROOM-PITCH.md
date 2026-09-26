@@ -14,10 +14,10 @@
 | 4A · How it works | The mechanism — automatic | T, U | 54 |
 | 4B · The record | Where it lives; one matched record | T, S, B | 98 |
 | 5 · Why it works | The sale — two halves, nobody does both | I, T | 111 |
-| 6 · Business | There is a business | B | 51 |
+| 6 · Business | There is a business; why they pay | B | 68 |
 | 7 · Compliance | Neutralise the objections; deployability | S, B | 52 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **643** |
+| | | **Total** | **660** |
 
 ---
 
@@ -49,7 +49,7 @@ Here's why it wins. This problem has two halves: noticing the duress, and provin
 
 ### Beat 6 — Business
 
-Two people pay. The insurer pays per member, per month — about fifty rand. The bank pays per case — fifteen rand — when it pulls a verified record. The victim pays nothing. Break-even is three thousand seven hundred and seventy-four members. The model carries the infrastructure cost from the first rand.
+Two people pay. The insurer pays per member, per month — about fifty rand — because it stops paying staged claims and settles real ones faster. The bank pays per case — fifteen rand — when it pulls a verified record, because that is far cheaper than a disputed escalation. The victim pays nothing. Break-even is three thousand seven hundred and seventy-four members. The model carries the infrastructure cost from the first rand.
 
 ### Beat 7 — Compliance
 
@@ -83,6 +83,13 @@ Here's what we want from this room. One insurer, five thousand members, twelve m
 | R50 per member/month (working); R15 per case (proposed); break-even 3,774; infra carried by the model | `scripts/economics_vigil_anchor.py`; `docs/ECONOMICS-VIGIL-ANCHOR.md` |
 | Blockchain is legal here; not a financial service; no crypto; no tokens | ADR-0034/0035; `context.md` |
 | Built for the ECT Act | ECTA 25 of 2002 s15(3)(a)–(c) |
+
+### How each stakeholder makes or saves money (the honest mechanism)
+- **The money is gone.** Once a coerced transfer settles and the criminal withdraws it, VUKA **does not recover it** — and we never claim to. The value is *before* and *around* the payout, not the stolen cash.
+- **The insurer saves** by **not paying staged claims** it can now evidence against, and by **settling genuine claims faster and cheaper**. Genuine claims are ones it owed anyway; the saving is the **fraudulent share plus handling time**. The pilot measures it — the actuary test is that the insurer saves more than twelve times the price per member, per year.
+- **The bank saves** because a verified record **resolves a dispute without escalation**: an Ombud case costs the system **~R4,962** and **~61 days**, and **disbelieved customers leave**. The bank is **not liable for the loss today** (no mandatory reimbursement in SA), so its cost is dispute handling and churn — not the stolen money.
+- **Where money can still be saved:** the **PROPOSED bank protective signal** (ADR-0037) lets the bank place its own hold on new-beneficiary or large transfers on a duress signal — so where the transfer has **not yet cleared or been withdrawn, funds can be frozen**. That is the only path to recovering the money itself; it is partner-dependent and **not yet live**.
+- **The victim** gets the proof — and, where covered, faster reimbursement: the thing they never had.
 
 ### Governance tokens & deployment economics — the rationale
 - **We issue no token** — no governance token, no coin, no ICO. Hedera is governed by its council; there is nothing to trade. A token would add securities, tax and AML exposure for zero product benefit (ADR-0034/0035).
