@@ -41,6 +41,19 @@ class GuardianAlertFragment : Fragment(R.layout.fragment_guardian_alert) {
             startActivity(Intent(Intent.ACTION_DIAL, "tel:10111".toUri()))
         }
 
+        // 112 reaches an emergency centre from any mobile, even without airtime.
+        view.findViewById<View>(R.id.btnCall112).setOnClickListener {
+            startActivity(Intent(Intent.ACTION_DIAL, "tel:112".toUri()))
+        }
+
+        // Their last shared fix (ADR-0048), in the phone's own maps app.
+        view.findViewById<View>(R.id.btnMaps).setOnClickListener {
+            lastFix()?.let { (lat, lon) ->
+                val geo = "geo:%.6f,%.6f?q=%.6f,%.6f(Last known location)".format(java.util.Locale.ROOT, lat, lon, lat, lon)
+                startActivity(Intent(Intent.ACTION_VIEW, geo.toUri()))
+            }
+        }
+
         // "Are they safe?" Yes stands down; No leaves everything as it was.
         view.findViewById<View>(R.id.btnStandDown).setOnClickListener {
             val beforeCalling = GuardianAlerts.ack.value == Ack.NEW
@@ -71,6 +84,15 @@ class GuardianAlertFragment : Fragment(R.layout.fragment_guardian_alert) {
         render()
     }
 
+    /** The alert's last location fix as (lat, lon), or null when none was shared. */
+    private fun lastFix(): Pair<Double, Double>? {
+        @Suppress("UNCHECKED_CAST")
+        val last = ((GuardianAlerts.alert.value?.get("location") as? Map<String, Any?>)?.get("last") as? Map<String, Any?>) ?: return null
+        val lat = (last["lat_e7"] as? Number)?.toLong() ?: return null
+        val lon = (last["lon_e7"] as? Number)?.toLong() ?: return null
+        return lat / 1e7 to lon / 1e7
+    }
+
     private fun setAck(ack: Ack) {
         GuardianAlerts.setAck(ack)
         render()
@@ -88,6 +110,9 @@ class GuardianAlertFragment : Fragment(R.layout.fragment_guardian_alert) {
         }
         view.findViewById<View>(R.id.tvPreviewNote).visibility =
             if (ack == Ack.NEW || ack == Ack.HANDLING) View.VISIBLE else View.GONE
+        view.findViewById<View>(R.id.moreActions).visibility =
+            if (ack == Ack.NEW || ack == Ack.HANDLING) View.VISIBLE else View.GONE
+        view.findViewById<View>(R.id.btnMaps).visibility = if (lastFix() != null) View.VISIBLE else View.GONE
 
         view.findViewById<View>(R.id.statusLine).visibility =
             if (ack == Ack.HANDLING || ack == Ack.STOOD_DOWN) View.VISIBLE else View.GONE

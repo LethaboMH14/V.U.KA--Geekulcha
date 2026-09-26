@@ -116,6 +116,7 @@ class EnrolFragment : Fragment(R.layout.fragment_guardian_enrol) {
             vm.joining = false
             if (view == null) return@acceptInvite
             result.onSuccess {
+                GuardianWatchService.start(requireContext())
                 onboardingViewModel.enrolAsGuardian()
                 findNavController().navigate(
                     if (onboardingViewModel.memberSignedIn) R.id.action_guardianEnrol_to_standbyKeepMember

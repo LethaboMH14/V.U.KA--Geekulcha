@@ -17,6 +17,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.navOptions
 import za.co.vuka.app.auth.AccountStore
 import za.co.vuka.app.ui.guardian.GuardianAlerts
+import za.co.vuka.app.ui.guardian.GuardianWatchService
 import za.co.vuka.app.ui.settings.ThemePrefs
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -34,10 +35,11 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         GuardianAlerts.startPolling(this) // only does anything for a linked guardian
+        GuardianWatchService.start(this) // and keeps alerts coming with the app closed
     }
 
     override fun onStop() {
-        GuardianAlerts.stopPolling()
+        if (!GuardianWatchService.running) GuardianAlerts.stopPolling()
         super.onStop()
     }
 

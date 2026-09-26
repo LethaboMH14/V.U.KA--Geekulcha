@@ -15,7 +15,7 @@ import za.co.vuka.app.ui.record.RecordStore
  */
 object Panic {
 
-    enum class Source { HOME_BUTTON, QS_TILE }
+    enum class Source { HOME_BUTTON, QS_TILE, POWER_BUTTON }
 
     /** Record the alert and hand it to the alert path. Callers then show [screenIntent]. */
     fun raise(context: Context, source: Source) {

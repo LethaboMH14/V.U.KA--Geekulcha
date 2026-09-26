@@ -154,7 +154,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             !active -> "VIGIL isn't listening yet. Activate it and it will listen on this phone until you deactivate it."
             listening is Listening.State.Failed -> "Not listening: ${listening.reason}. Deactivate, then try again."
             listening == Listening.State.On ->
-                "Listening on this phone. Detection isn't calibrated yet. A detected sound opens a Journey check; if it isn't answered, VUKA's server alerts your guardians."
+                "Listening on this phone. You can close the app: VIGIL keeps listening until you deactivate. A detected sound opens a Journey check; if it isn't answered, VUKA's server alerts your guardians. Need help without the app? Press the power button 4 times quickly. Detection isn't calibrated yet."
             listening == Listening.State.Starting -> "Starting to listen…"
             else -> "Your journey is open, but this phone isn't listening (VUKA was closed). Deactivate, then Activate to listen again."
         }

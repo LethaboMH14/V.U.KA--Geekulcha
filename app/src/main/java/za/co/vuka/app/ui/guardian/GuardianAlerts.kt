@@ -114,6 +114,7 @@ object GuardianAlerts {
 
     /** Stepping down as a guardian, or deleting the profile, drops any alert. */
     fun clear(context: Context) {
+        GuardianWatchService.stop(context)
         stopPolling()
         _alert.value = null
         ServerSync.leaveGuardian()
@@ -151,7 +152,13 @@ object GuardianAlerts {
             .setContentText("Don't call or text them. Call 10111.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVibrate(longArrayOf(0, 600, 250, 600, 250, 600))
             .setContentIntent(open)
+            // Over the lock screen where Android allows it, so a guardian sees it at once.
+            .apply {
+                val nm = context.getSystemService(NotificationManager::class.java)
+                if (Build.VERSION.SDK_INT < 34 || nm.canUseFullScreenIntent()) setFullScreenIntent(open, true)
+            }
             .setAutoCancel(true)
             .build()
         @Suppress("MissingPermission") // checked above

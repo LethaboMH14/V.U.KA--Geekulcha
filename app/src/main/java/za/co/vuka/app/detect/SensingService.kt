@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit
 import za.co.vuka.app.R
 import za.co.vuka.app.ui.record.RecordEntry
 import za.co.vuka.app.ui.record.RecordStore
+import za.co.vuka.app.panic.Panic
+import za.co.vuka.app.panic.PowerPressReceiver
 
 /** Whether VIGIL is actually listening, for Home to show truthfully. */
 object Listening {
@@ -86,6 +88,10 @@ class SensingService : Service() {
     private var wake: PowerManager.WakeLock? = null
     private var heartbeats: ScheduledExecutorService? = null
     private val engine = DetectionEngine()
+    private val powerPresses = PowerPressReceiver {
+        // Four quick power presses: the same help request as the Emergency button (ADR-0049).
+        Panic.raise(this, Panic.Source.POWER_BUTTON)
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -93,6 +99,7 @@ class SensingService : Service() {
         createChannels()
         val notification = NotificationCompat.Builder(this, CHANNEL_ACTIVE)
             .setContentTitle("VUKA journey active")
+            .setContentText("Listening. You can close the app.")
             .setSmallIcon(R.drawable.ic_shield_chevron)
             .setContentIntent(openApp())
             .setOngoing(true)
@@ -100,7 +107,10 @@ class SensingService : Service() {
             .build()
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                startForeground(NOTIFICATION_ACTIVE, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+                // Location only when allowed: the window after a Journey check (ADR-0048).
+                val types = ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or
+                    (if (LocationShare.granted(this)) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
+                startForeground(NOTIFICATION_ACTIVE, notification, types)
             } else {
                 startForeground(NOTIFICATION_ACTIVE, notification)
             }
@@ -129,6 +139,7 @@ class SensingService : Service() {
                 onStarted = { Listening.set(Listening.State.On) },
                 onFailed = { fail("the microphone couldn't start") },
             ).also { it.start() }
+            powerPresses.register(this)
             // V9: contact clock input every 30 s while active.
             heartbeats = Executors.newSingleThreadScheduledExecutor().apply {
                 scheduleWithFixedDelay({ ServerSync.heartbeat() }, 0, 30, TimeUnit.SECONDS)
@@ -170,6 +181,7 @@ class SensingService : Service() {
     }
 
     override fun onDestroy() {
+        powerPresses.unregister(this)
         heartbeats?.shutdownNow()
         heartbeats = null
         audio?.stop() // blocks until capture and inference have finished

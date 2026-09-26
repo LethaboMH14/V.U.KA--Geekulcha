@@ -256,6 +256,45 @@
             android:textColor="@color/vuka_text_dim"
             android:textSize="12sp" />
 
+        <!-- More ways to get help: 112 from any mobile, and their last location in Maps -->
+        <LinearLayout
+            android:id="@+id/moreActions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCall112"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:text="Call 112"
+                android:textAllCaps="false"
+                android:textColor="@color/vuka_text_title"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="25dp"
+                app:strokeColor="?attr/vukaBorder" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMaps"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:text="Open in Maps"
+                android:textAllCaps="false"
+                android:textColor="@color/vuka_text_title"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:cornerRadius="25dp"
+                app:strokeColor="?attr/vukaBorder" />
+        </LinearLayout>
+
         <!-- Shown before and after calling: the notification alone may be enough -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStandDown"

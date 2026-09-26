@@ -54,6 +54,7 @@ class CheckinActivity : AppCompatActivity() {
          * Android allows it, otherwise a high-priority notification (V4).
          */
         fun notify(context: Context, journeyId: String, signalEventId: String, fullScreen: Boolean) {
+            LocationShare.open(context) // ADR-0048: kept by the server only if guardians get alerted
             val nm = context.getSystemService(NotificationManager::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 nm.createNotificationChannel(NotificationChannel(CHANNEL, "Journey check", NotificationManager.IMPORTANCE_HIGH))

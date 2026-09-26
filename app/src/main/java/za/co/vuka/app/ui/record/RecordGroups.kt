@@ -59,7 +59,7 @@ data class RecordGroup(val entries: List<RecordEntry>) {
         fun label(e: RecordEntry) = when (e.kind) {
             RecordEntry.Kind.JOURNEY_STARTED -> "Activated"
             RecordEntry.Kind.JOURNEY_ENDED -> "Deactivated"
-            RecordEntry.Kind.PANIC -> "Emergency alert · not sent"
+            RecordEntry.Kind.PANIC -> "Emergency alert"
             RecordEntry.Kind.PROFILE_UPDATED -> "Profile updated"
             RecordEntry.Kind.TERMS_ACCEPTED -> "Terms accepted"
             RecordEntry.Kind.PASSWORD_RESET -> "Password reset"
