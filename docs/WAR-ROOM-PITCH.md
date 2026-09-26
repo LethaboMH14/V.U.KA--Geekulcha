@@ -13,11 +13,11 @@
 | 3 · Solution | What VUKA is | I | 32 |
 | 4A · How it works | The mechanism — automatic | T, U | 54 |
 | 4B · The record | Where it lives; one matched record | T, S, B | 98 |
-| 5 · Why it works | The sale | I, T | 77 |
+| 5 · Why it works | The sale — two halves, nobody does both | I, T | 111 |
 | 6 · Business | There is a business | B | 51 |
 | 7 · Compliance | Neutralise the objections; deployability | S, B | 52 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **609** |
+| | | **Total** | **643** |
 
 ---
 
@@ -45,7 +45,7 @@ That record is made automatically. It goes to their phone, and to their guardian
 
 ### Beat 5 — Why it works
 
-Here's why it wins. Look at everyone else. Half the market detects, but gives you no proof. The other half proves, but detects nothing. A bank's duress PIN works only if you can type, inside one bank. Everybody owns one half. Nobody owns both. VUKA is the only design that notices without them lifting a finger, and hands back a record a stranger can check. For the first time, they hold evidence someone else can verify.
+Here's why it wins. This problem has two halves: noticing the duress, and proving it. Nobody does both. Detection tools can notice — a panic button, a fraud score, the safety features on your phone — but they leave the victim with nothing a bank or a court can act on. Evidence tools can prove something happened, but they can't notice it in the first place. And a bank's own duress PIN only works if you can still type — inside that one bank. Everybody owns one half. Nobody owns both. VUKA notices without them touching a button, and hands back a record anyone can verify. For the first time, the proof is theirs.
 
 ### Beat 6 — Business
 
