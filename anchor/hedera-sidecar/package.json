@@ -1,0 +1,17 @@
+{
+  "name": "vuka-hedera-sidecar",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@hiero-ledger/sdk": "2.88.0"
+  },
+  "overrides": {
+    "@hiero-ledger/proto": {
+      "protobufjs": "8.8.0"
+    },
+    "ws": "8.21.3"
+  }
+}

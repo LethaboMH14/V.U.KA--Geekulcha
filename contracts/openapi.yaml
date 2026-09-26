@@ -1,11 +1,15 @@
 openapi: 3.1.0
 info:
-  title: VUKA service contract
-  version: 0.1.0
+  title: VIGIL + ANCHOR service contract
+  version: 2.0.0
   description: >-
-    Machine-readable contract for the specified VUKA service surface. Machine
-    inputs stop at watch_candidate; consequential actions require an
-    authenticated human and scoped approvals.
+    INCOMPLETE — x-vuka-implemented reports route registration only, not that
+    all specified behavior is complete; only operations marked
+    x-vuka-implemented: true are served by the ANCHOR server at this head;
+    every other operation is a contract for future work.
+    Contract v2 for VIGIL + ANCHOR. Device, guardian and server events are
+    signed as specified in docs/VUKA-2-SPEC.md; the contract describes the
+    interface and does not itself implement authentication or verification.
 servers:
   - url: https://api.example.invalid
     description: PROPOSED placeholder; deployment host is not selected
@@ -14,11 +18,19 @@ tags:
     description: Subject-controlled record and deletion proof path (F14/F15)
   - name: Operations
     description: Authenticated operator and evidence operations
+  - name: VIGIL
+    description: Journey, check-in and guardian operations
+  - name: ANCHOR
+    description: Subject evidence and public anchoring operations
+  - name: Simulation
+    description: Explicitly simulated bank integration surface
 paths:
   /v1/sightings:
     post:
       tags: [Operations]
       operationId: ingestSightings
+      x-vuka-implemented: false
+      deprecated: true
       summary: Ingest one or more signed sightings
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -39,6 +51,8 @@ paths:
     get:
       tags: [Operations]
       operationId: getEntity
+      x-vuka-implemented: false
+      deprecated: true
       summary: Read an entity and its current review state
       security: [{ bearerAuth: [] }]
       parameters: [{ $ref: '#/components/parameters/EntityId' }]
@@ -54,6 +68,8 @@ paths:
     post:
       tags: [Operations]
       operationId: verifyEntity
+      x-vuka-implemented: false
+      deprecated: true
       summary: Submit an authenticated human review action
       description: >-
         The machine cannot perform a consequential transition. A human review
@@ -78,6 +94,8 @@ paths:
     get:
       tags: [Operations]
       operationId: getRisk
+      x-vuka-implemented: false
+      deprecated: true
       summary: Read the three-tier risk fallback
       security: [{ bearerAuth: [] }]
       parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }]
@@ -92,6 +110,8 @@ paths:
     get:
       tags: [Operations]
       operationId: getHotspots
+      x-vuka-implemented: false
+      deprecated: true
       summary: Read available hotspot cells
       security: [{ bearerAuth: [] }]
       parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }]
@@ -106,6 +126,8 @@ paths:
     get:
       tags: [Operations]
       operationId: getSafestRoute
+      x-vuka-implemented: false
+      deprecated: true
       summary: Read a member-facing safest route
       security: [{ bearerAuth: [] }]
       parameters:
@@ -123,6 +145,8 @@ paths:
     post:
       tags: [Operations]
       operationId: createPatrolRoute
+      x-vuka-implemented: false
+      deprecated: true
       summary: Request a patrol route under the declared fuel budget
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -138,6 +162,7 @@ paths:
     get:
       tags: [Operations]
       operationId: verifyEvidenceIntegrity
+      x-vuka-implemented: false
       summary: Return the first broken evidence link by index
       security: [{ bearerAuth: [] }]
       responses:
@@ -151,22 +176,32 @@ paths:
     get:
       tags: [Operations]
       operationId: getLatestAnchor
-      summary: Read the latest public commitment status
-      security: [{ bearerAuth: [] }]
+      x-vuka-implemented: false
+      summary: Read the latest public anchor receipt
+      description: Public endpoint; exposes no subject data.
+      security: []
       responses:
         '200':
-          description: Anchor status
+          description: Latest public anchor receipt and verification key manifest
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/AnchorStatus' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+              schema:
+                type: object
+                required: [receipt, key_manifest]
+                additionalProperties: false
+                properties:
+                  receipt: { $ref: '#/components/schemas/AnchorReceipt' }
+                  key_manifest: { $ref: '#/components/schemas/KeyManifest' }
   /v1/subjects/{id}/record:
     get:
       tags: [Showcase]
       operationId: getSubjectRecord
+      x-vuka-implemented: false
       summary: Subject access with an independently checkable proof package
-      description: F14 showcase path. Private payload and proof are returned subject to authentication and rights review.
-      security: [{ bearerAuth: [] }]
+      description: >-
+        F14 showcase path. Private payload and proof are returned subject to signed subject
+        authentication and rights review. This bodyless request signs the hash of empty bytes.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }, { $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }]
       responses:
         '200':
@@ -181,15 +216,16 @@ paths:
     delete:
       tags: [Showcase]
       operationId: deleteSubjectData
-      summary: Delete private subject payload while retaining the required proof residue
-      description: F15 showcase path. Requires two distinct authorised signatures; deletion is recorded and idempotent.
-      security: [{ bearerAuth: [] }]
+      x-vuka-implemented: false
+      summary: Request deletion of private subject payload while retaining proof residue
+      description: F15 showcase path. Subject-authenticated and PIN-authorised per §9; deletion is recorded and idempotent.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
       parameters: [{ $ref: '#/components/parameters/SubjectId' }, { $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/DeletionRequest' }
+            schema: { $ref: '#/components/schemas/SubjectDeletionRequest' }
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -201,6 +237,8 @@ paths:
     get:
       tags: [Operations]
       operationId: openOpsStream
+      x-vuka-implemented: false
+      deprecated: true
       summary: Open the authenticated operator event stream
       security: [{ bearerAuth: [] }]
       responses:
@@ -210,17 +248,498 @@ paths:
     get:
       tags: [Showcase]
       operationId: openMemberStream
+      x-vuka-implemented: false
       summary: Open the member event stream
       description: Member streams never receive operator-room events.
       security: [{ bearerAuth: [] }]
       responses:
         '101': { description: WebSocket upgrade accepted }
         '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/subjects:
+    post:
+      tags: [ANCHOR]
+      operationId: createSubject
+      x-vuka-implemented: false
+      summary: Create a subject and genesis registration entry
+      description: >-
+        INCOMPLETE — this dedicated route is not implemented. Genesis registration is
+        currently accepted at POST /v1/events with action: registration.
+        Device-signed registration request; target_id is the random 128-bit subject id.
+        Because no key is enrolled yet, the request signature is verified with the registration
+        signer_pubkey and signer_key_id in the submission before the key is enrolled.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventSubmission' }
+      responses:
+        '201':
+          description: Subject created with its genesis entry
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EvidenceEntryV2' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /v1/devices/recover:
+    post:
+      tags: [VIGIL]
+      operationId: recoverDevice
+      x-vuka-implemented: false
+      summary: Recover a subject onto a new device
+      description: Recovery-code authenticated; PIN and signature verification are performed by the implementation, not this contract.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recovery_code, new_device_key]
+              additionalProperties: false
+              properties:
+                recovery_code: { type: string, minLength: 1, writeOnly: true }
+                new_device_key: { type: string, minLength: 1 }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /v1/journeys:
+    post:
+      tags: [VIGIL]
+      operationId: startJourney
+      x-vuka-implemented: false
+      summary: Start a journey by explicit user action
+      description: Device-signed request; arming requires the app in the foreground and granted microphone and notification permissions.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      responses:
+        '201': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/journeys/{id}/heartbeat:
+    post:
+      tags: [VIGIL]
+      operationId: sendJourneyHeartbeat
+      x-vuka-implemented: false
+      summary: Record a journey heartbeat
+      description: Device-signed; includes a speed bucket only and never location.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [speed_bucket, ts]
+              additionalProperties: false
+              properties:
+                speed_bucket: { type: string, minLength: 1 }
+                ts: { type: string, format: date-time }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/journeys/{id}/end:
+    post:
+      tags: [VIGIL]
+      operationId: endJourney
+      x-vuka-implemented: false
+      summary: End an active journey
+      description: >-
+        Device-signed request. ADR-0041 requires a fresh pin_authorised record for
+        action end_journey and this journey id. A missing or mismatched authorisation
+        is refused with pin_authorisation_required. A duress authorisation has the
+        same phone-visible result as a normal one but triggers the server alarm.
+        INCOMPLETE — see ADR-0041 G35, implementation pending.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientApproval' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/events:
+    post:
+      tags: [ANCHOR]
+      operationId: appendEvidenceEvent
+      x-vuka-implemented: true
+      summary: Append a signed v2 evidence entry
+      description: >-
+        Device/guardian-signed event submission. The signed details.sig binds the event context;
+        X-Vuka-Signature separately authenticates the HTTP request. The server computes chain
+        fields, recomputes the payload commitment and stores payload and salt encrypted at rest.
+        Check order is request authentication, event_id idempotency lookup, then nonce, counter
+        and clock-skew checks. An identical retry returns the original receipt before replay checks.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventSubmission' }
+      responses:
+        '201':
+          description: Entry received and appended
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [event_hash, chain_index, received_at]
+                additionalProperties: false
+                properties:
+                  event_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+                  chain_index: { type: integer, minimum: 0 }
+                  received_at: { type: string, format: date-time }
+        '400':
+          description: Invalid submission shape or payload commitment mismatch.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Genesis registration blocked while simulation-only mode is enabled.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                code: simulation_only
+                message: genesis registration target must use the sim_ prefix while simulation-only mode is enabled
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /v1/checkins/{id}/opened:
+    post:
+      tags: [VIGIL]
+      operationId: openCheckin
+      x-vuka-implemented: false
+      summary: Record that a check-in was shown
+      description: Device-signed event; posted only after the check-in is confirmed shown.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventSubmission' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/checkins/{id}/result:
+    post:
+      tags: [VIGIL]
+      operationId: submitCheckinResult
+      x-vuka-implemented: false
+      summary: Record a check-in result
+      description: Device-signed event; normal and duress outcomes use the same request shape.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventSubmission' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/pin-authorisations:
+    post:
+      tags: [VIGIL]
+      operationId: submitPinAuthorisation
+      x-vuka-implemented: false
+      summary: Submit a PIN-authority statement scoped to one action
+      description: Device-signed PIN-authority statement per §9; signature verification is implementation behavior.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinAuthorisationStatement' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/guardians/invites:
+    post:
+      tags: [VIGIL]
+      operationId: createGuardianInvite
+      x-vuka-implemented: false
+      summary: Create a PIN-authorised guardian invite
+      description: Device-signed with fresh PIN authorisation per §§7 and 9.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinAuthorisationStatement' }
+      responses:
+        '201': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/guardians/accept:
+    post:
+      tags: [VIGIL]
+      operationId: acceptGuardianInvite
+      x-vuka-implemented: false
+      summary: Accept a one-time guardian invite
+      description: Guardian-signed request; the guardian acknowledges the POPIA s18 notice.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invite_code, guardian_key, fcm_token, popia_s18_acknowledged]
+              additionalProperties: false
+              properties:
+                invite_code: { type: string, minLength: 1, writeOnly: true }
+                guardian_key: { type: string, minLength: 1 }
+                fcm_token: { type: string, minLength: 1 }
+                popia_s18_acknowledged: { const: true }
+      responses:
+        '201': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/guardians/{id}:
+    delete:
+      tags: [VIGIL]
+      operationId: removeGuardian
+      x-vuka-implemented: false
+      summary: Request delayed removal of a guardian
+      description: Device-signed with fresh PIN authorisation; normal removal has a 24-hour delay and duress is a no-op.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinAuthorisationStatement' }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /v1/guardians/{id}/token:
+    put:
+      tags: [VIGIL]
+      operationId: updateGuardianToken
+      x-vuka-implemented: false
+      summary: Update a guardian notification token
+      description: >-
+        Guardian-signed only. The X-Vuka-Key-Id must resolve to this guardian's active guardian key;
+        subject/device keys and PIN-authorisation statements are not accepted for token updates.
+      x-vuka-required-signer-role: guardian
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fcm_token]
+              additionalProperties: false
+              properties:
+                fcm_token: { type: string, minLength: 1 }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientApproval' }
+  /v1/alerts/{id}/ack:
+    post:
+      tags: [VIGIL]
+      operationId: acknowledgeAlert
+      x-vuka-implemented: false
+      summary: Record a guardian alert acknowledgement
+      description: Guardian-signed acknowledgement.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              additionalProperties: false
+              properties:
+                action: { type: string, enum: [called_10111, handling, stand_down] }
+                ts: { type: string, format: date-time }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/anchor/proof/{head_hash}:
+    get:
+      tags: [ANCHOR]
+      operationId: getAnchorProof
+      x-vuka-implemented: false
+      summary: Read the proof and receipt for an anchored chain head
+      description: Public; head-keyed and returns no chain segment.
+      security: []
+      parameters:
+        - { name: head_hash, in: path, required: true, schema: { type: string, pattern: '^[0-9a-f]{64}$' } }
+      responses:
+        '200':
+          description: Merkle audit path and anchor receipt
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proof, receipt]
+                additionalProperties: false
+                properties:
+                  proof: { $ref: '#/components/schemas/Proof' }
+                  receipt: { $ref: '#/components/schemas/AnchorReceipt' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/subjects/{id}/export:
+    get:
+      tags: [ANCHOR]
+      operationId: exportSubjectRecord
+      x-vuka-implemented: true
+      summary: Export the authenticated subject's permitted evidence prefix
+      description: >-
+        Subject-authenticated with the §7 signed-request headers and a fresh
+        pin_authorised record for action export and this subject id. Missing or
+        mismatched PIN authority returns pin_authorisation_required. ADR-0041's
+        pre-incident hold returns only genesis through the pre-incident head while
+        an incident is open and for 6 hours after its last PIN entry, whichever ends
+        later; normal and duress authorisations yield byte-identical visible results.
+        Otherwise the full chain is returned. The response is unpaginated. For this
+        bodyless request, body_sha256 is SHA-256 of the empty byte string.
+        INCOMPLETE — see ADR-0041 T30, implementation pending.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      responses:
+        '200':
+          description: Subject export with payloads, salts, proofs and receipts
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubjectExport' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientApproval' }
+  /healthz:
+    get:
+      tags: [ANCHOR]
+      operationId: getHealth
+      x-vuka-implemented: true
+      summary: Read public service health and queue state
+      security: []
+      responses:
+        '200':
+          description: Health state without subject data
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [last_anchor_at, anchor_queue_depth, pending_deadlines, outbox_backlog]
+                additionalProperties: false
+                properties:
+                  last_anchor_at: { type: [string, 'null'], format: date-time }
+                  anchor_queue_depth: { type: integer, minimum: 0 }
+                  pending_deadlines: { type: integer, minimum: 0 }
+                  outbox_backlog: { type: integer, minimum: 0 }
+  /ws/panel:
+    get:
+      tags: [ANCHOR]
+      operationId: openPublicPanelStream
+      x-vuka-implemented: false
+      summary: Open the public opaque-hash panel stream
+      description: Exposes opaque hashes, chain indices and receipts; event kinds are emitted only for sim_ subjects and are labelled simulated.
+      security: []
+      responses:
+        '101': { description: WebSocket upgrade accepted }
+  /sim_bank/v1/risk-signal:
+    post:
+      tags: [Simulation]
+      operationId: sendSimulatedBankRiskSignal
+      x-vuka-implemented: false
+      summary: Send a labelled simulated bank risk signal
+      description: >-
+        SIMULATED only; signed by ANCHOR with the pinned Ed25519 server key and requires an
+        Idempotency-Key. The key is carried inside the signed body as `idempotency_key`; the
+        `Idempotency-Key` header must equal it, otherwise 400 `idempotency_key_mismatch`.
+        The signature does not cover headers, so only the body copy is authenticated. Each
+        accepted new key opens one hold and the receipt's `hold_ref` names it (a subject can
+        have more than one). Same key and same body returns the original receipt and opens no
+        second hold; same key with a different body is 409 `idempotency_conflict`.
+      security: [{ VukaTimestamp: [], VukaNonce: [], VukaServerSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BankSignal' }
+      responses:
+        '202': { $ref: '#/components/responses/SimBankAcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /sim_bank/v1/release:
+    post:
+      tags: [Simulation]
+      operationId: releaseSimulatedBankSignal
+      x-vuka-implemented: false
+      summary: Release a labelled simulated bank hold
+      description: >-
+        SIMULATED only; signed by ANCHOR with the pinned Ed25519 server key and requires an
+        Idempotency-Key, carried inside the signed body as `idempotency_key` (the header must
+        equal it, otherwise 400 `idempotency_key_mismatch`). The body names the one hold to
+        lift with `hold_ref` (the `hold_ref` returned by risk-signal); other holds of the same
+        subject stay active. An unknown `hold_ref`, or one that belongs to another subject, is
+        404 `unknown_hold`. A hold already released by a different request is 409
+        `hold_already_released`. Same key and same body returns the original receipt.
+      security: [{ VukaTimestamp: [], VukaNonce: [], VukaServerSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BankRelease' }
+      responses:
+        '202': { $ref: '#/components/responses/SimBankAcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
+    VukaKeyId:
+      type: apiKey
+      in: header
+      name: X-Vuka-Key-Id
+      description: Active device or guardian signer_key_id used to resolve the registered public key.
+    VukaTimestamp:
+      type: apiKey
+      in: header
+      name: X-Vuka-Ts
+      description: RFC 3339 request timestamp included in the signed request statement.
+    VukaNonce:
+      type: apiKey
+      in: header
+      name: X-Vuka-Nonce
+      description: Per-request nonce; retained per key for 24 hours, subject to event retry ordering in §7.
+    VukaSignature:
+      type: apiKey
+      in: header
+      name: X-Vuka-Signature
+      description: >-
+        Base64 raw P-256 r||s signature over canonical({method, path, ts, body_sha256, nonce});
+        body_sha256 hashes the exact HTTP body bytes. For initial registration, verify with the
+        submitted signer_pubkey before enrolling the signer_key_id.
+    VukaServerSignature:
+      type: apiKey
+      in: header
+      name: X-Vuka-Server-Signature
+      description: >-
+        Base64 Ed25519 signature over canonical({method, path, ts, body_sha256, nonce});
+        body_sha256 hashes the exact HTTP body bytes. Verify only with server_ed25519_public_key
+        from contracts/keys/manifest.json; the request cannot supply its own verification key.
   parameters:
     EntityId: { name: id, in: path, required: true, schema: { type: string, minLength: 1 } }
     SubjectId: { name: id, in: path, required: true, schema: { type: string, minLength: 1 } }
@@ -312,7 +831,17 @@ components:
       properties:
         receipt_id: { type: string }
         state: { type: string, enum: [accepted, queued, pending, confirmed, refused] }
+        sim: { type: boolean, const: true, description: Present and true on simulated bank receipts. }
+        hold_ref: { type: string, minLength: 1, description: Present on a simulated risk-signal receipt; names the hold that a later release must cite. }
         anchor_status: { type: string, enum: [not_submitted, submitted, pending, confirmed, gap] }
+        pin_authorisation: { $ref: '#/components/schemas/PinAuthorisation', description: Present when a verified PIN-authority statement is recorded; expiry is server-derived. }
+    SimBankReceipt:
+      allOf:
+        - $ref: '#/components/schemas/Receipt'
+        - type: object
+          required: [sim]
+          properties:
+            sim: { type: boolean, const: true }
     EvidenceEntry:
       type: object
       required: [action, actor_id, target_type, target_id, details, ts, prev_hash, event_hash]
@@ -326,6 +855,201 @@ components:
         ts: { type: string, format: date-time }
         prev_hash: { type: [string, 'null'] }
         event_hash: { type: string }
+    EventSubmission:
+      type: object
+      description: >-
+        Device/guardian-submitted v2 event. The server supplies prev_hash, event_hash,
+        details.received_at and details.chain_index. It recomputes commitment as
+        SHA-256(salt bytes concatenated with canonical(payload)); a mismatch returns 400.
+        Payload and salt are sent over TLS and stored separately encrypted at rest.
+      required: [action, actor_id, target_type, target_id, ts, details, payload, salt]
+      additionalProperties: false
+      properties:
+        action: { type: string, minLength: 1 }
+        actor_id: { type: string, minLength: 1 }
+        target_type: { type: string, enum: [journey, subject] }
+        target_id: { type: string, minLength: 1 }
+        ts: { type: string, format: date-time, description: Signer's source time. }
+        details:
+          type: object
+          required: [v, signer, signer_key_id, counter, event_id, commitment, sig]
+          additionalProperties: false
+          properties:
+            v: { const: 2 }
+            signer: { type: string, enum: [device, guardian] }
+            signer_key_id: { type: string, minLength: 1 }
+            counter: { type: integer, minimum: 0 }
+            event_id: { type: string, format: uuid }
+            commitment: { type: string, pattern: '^[0-9a-f]{64}$' }
+            sig: { type: string, contentEncoding: base64, minLength: 1, description: Event-context signature over the §4 canonical statement. }
+            signer_pubkey: { type: string, contentEncoding: base64, description: Present on registration and guardian-accept entries. }
+        payload:
+          type: object
+          description: >-
+            Private committed payload. kind and pv select the per-kind schema at
+            contracts/payloads/{kind}.v{pv}.json; validate against that schema before acceptance.
+            Every value must also be canonical-safe (no floats, unsafe integers or non-ASCII keys).
+          required: [kind, pv]
+          propertyNames: { pattern: '^[\x00-\x7F]*$' }
+          properties:
+            kind: { type: string, minLength: 1 }
+            pv: { type: integer, minimum: 1 }
+          additionalProperties: { $ref: '#/components/schemas/CanonicalJsonValue' }
+        salt:
+          type: string
+          contentEncoding: base64
+          minLength: 24
+          maxLength: 24
+          pattern: '^[A-Za-z0-9+/]{21}[AEIMQUYcgkosw048]==$'
+          description: Base64 encoding of exactly 16 random bytes.
+    CanonicalJsonValue:
+      description: Recursive JSON value subset accepted by the §5 canonical form.
+      oneOf:
+        - type: string
+        - type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        - type: boolean
+        - type: 'null'
+        - type: array
+          items: { $ref: '#/components/schemas/CanonicalJsonValue' }
+        - type: object
+          propertyNames: { pattern: '^[\x00-\x7F]*$' }
+          additionalProperties: { $ref: '#/components/schemas/CanonicalJsonValue' }
+    EvidenceEntryV2:
+      type: object
+      description: >-
+        Format-v2 signed chain entry. Genesis prev_hash is 64 zero hex
+        characters; it is never null. Receipt time and chain index are server
+        fields inside details and are not part of the device signature.
+      required: [action, actor_id, target_type, target_id, details, ts, prev_hash, event_hash]
+      additionalProperties: false
+      properties:
+        action: { type: string, minLength: 1 }
+        actor_id: { type: string, minLength: 1 }
+        target_type: { type: string, enum: [journey, subject] }
+        target_id: { type: string, minLength: 1 }
+        details:
+          type: object
+          required: [v, signer, signer_key_id, counter, event_id, commitment, sig, received_at, chain_index]
+          additionalProperties: false
+          properties:
+            v: { const: 2 }
+            signer: { type: string, enum: [device, guardian, server] }
+            signer_key_id: { type: string, minLength: 1 }
+            counter: { type: integer, minimum: 0 }
+            event_id: { type: string, format: uuid }
+            commitment: { type: string, pattern: '^[0-9a-f]{64}$' }
+            sig: { type: string, contentEncoding: base64, minLength: 1 }
+            received_at: { type: string, format: date-time }
+            chain_index: { type: integer, minimum: 0 }
+            signer_pubkey: { type: string, contentEncoding: base64, description: Present on registration entries. }
+        ts: { type: string, format: date-time, description: Signer's source time. }
+        prev_hash: { type: string, pattern: '^[0-9a-f]{64}$', description: Genesis is exactly 64 zero hex characters; never null. }
+        event_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+    PinAuthorisationStatement:
+      type: object
+      description: >-
+        Device-signed §9 statement. sig is base64 DER ECDSA P-256 over canonical of
+        exactly action, target_id, mode and nonce; signer_key_id identifies the signing key.
+        The statement alone is not proof that a PIN was correctly verified.
+      required: [action, target_id, mode, nonce, sig, signer_key_id]
+      additionalProperties: false
+      properties:
+        action: { type: string, minLength: 1 }
+        target_id: { type: string, minLength: 1 }
+        mode: { type: string, enum: [normal, duress] }
+        nonce: { type: string, minLength: 1 }
+        sig: { type: string, contentEncoding: base64, minLength: 1 }
+        signer_key_id: { type: string, minLength: 1 }
+    PinAuthorisation:
+      type: object
+      description: Server-side PIN-authority record; expires_at is set from server receipt time + 120 seconds after statement verification.
+      required: [action, target_id, mode, nonce, sig, signer_key_id, expires_at]
+      additionalProperties: false
+      properties:
+        action: { type: string, minLength: 1 }
+        target_id: { type: string, minLength: 1 }
+        mode: { type: string, enum: [normal, duress] }
+        nonce: { type: string, minLength: 1 }
+        sig: { type: string, contentEncoding: base64, minLength: 1 }
+        signer_key_id: { type: string, minLength: 1 }
+        expires_at: { type: string, format: date-time, readOnly: true }
+    Proof:
+      type: array
+      description: Ordered Merkle audit path from leaf to root.
+      items:
+        type: object
+        required: [side, hash]
+        additionalProperties: false
+        properties:
+          side: { type: string, enum: [L, R] }
+          hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+    AnchorReceipt:
+      type: object
+      required: [topic_id, sequence_number, consensus_timestamp, running_hash, topic_epoch]
+      additionalProperties: false
+      properties:
+        topic_id: { type: string, minLength: 1 }
+        sequence_number: { type: integer, minimum: 1 }
+        consensus_timestamp:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{1,9}$'
+          description: Hedera mirror consensus time as seconds.nanoseconds, not RFC 3339.
+        running_hash: { type: string, minLength: 1 }
+        topic_epoch: { type: integer, minimum: 1, description: Epoch of the pinned topic/key manifest. }
+    KeyManifest:
+      type: object
+      description: Public verification keys only; private key material is never part of the manifest.
+      required: [server_ed25519_public_key]
+      additionalProperties: false
+      properties:
+        server_ed25519_public_key: { type: string, contentEncoding: base64, minLength: 1 }
+        ml_dsa_65_public_key: { type: string, contentEncoding: base64, minLength: 1, description: Present only if this key is built. }
+    SubjectExport:
+      type: object
+      description: >-
+        Subject-authenticated, fresh-PIN-gated and unpaginated. Contains genesis
+        through the permitted head (pre-incident head during ADR-0041's hold,
+        current head otherwise), with payloads and salts kept separately from
+        the public chain.
+      required: [subject_id, entries, payloads, salts, proofs, receipts]
+      additionalProperties: false
+      properties:
+        subject_id: { type: string, minLength: 1 }
+        entries: { type: array, items: { $ref: '#/components/schemas/EvidenceEntryV2' } }
+        payloads: { type: array, items: { type: object }, description: Private event payloads keyed by event_id. }
+        salts: { type: array, items: { type: string, contentEncoding: base64 }, description: Private salts keyed by event_id. }
+        proofs: { type: array, items: { $ref: '#/components/schemas/Proof' } }
+        receipts: { type: array, items: { $ref: '#/components/schemas/AnchorReceipt' } }
+    SubjectDeletionRequest:
+      type: object
+      description: Subject-initiated §9 deletion request with action- and target-scoped PIN authority.
+      required: [pin_authorisation]
+      additionalProperties: false
+      properties:
+        pin_authorisation: { $ref: '#/components/schemas/PinAuthorisationStatement' }
+    BankSignal:
+      type: object
+      description: >-
+        SIMULATED bank signal for a sim_ subject; outcome identifies the qualifying S1
+        trigger, never detection alone.
+      required: [subject_id, triggering_outcome, idempotency_key]
+      additionalProperties: false
+      properties:
+        subject_id: { type: string, minLength: 1, description: sim_ subject identifier. }
+        triggering_outcome: { type: string, enum: [duress_signal, no_answer, contact_lost] }
+        idempotency_key: { type: string, minLength: 1, maxLength: 128, description: Inside the signed body so the retry binding is authenticated; must equal the Idempotency-Key header. }
+    BankRelease:
+      type: object
+      description: >-
+        SIMULATED release of exactly one hold, named by the hold_ref that risk-signal returned.
+      required: [subject_id, hold_ref, idempotency_key]
+      additionalProperties: false
+      properties:
+        subject_id: { type: string, minLength: 1, description: sim_ subject identifier. }
+        hold_ref: { type: string, minLength: 1, description: The hold_ref from the risk-signal receipt that opened the hold to lift. }
+        idempotency_key: { type: string, minLength: 1, maxLength: 128, description: Inside the signed body; must equal the Idempotency-Key header. }
     IntegrityResult:
       type: object
       description: >-
@@ -399,6 +1123,11 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Receipt' }
+    SimBankAcceptedReceipt:
+      description: Simulated bank request accepted or queued; receipt is explicitly marked simulated.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/SimBankReceipt' }
     InvalidRequest:
       description: Request shape or value is invalid.
       content:
@@ -420,7 +1149,10 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
     IdempotencyConflict:
-      description: Idempotency key was reused with a different request shape.
+      description: >-
+        Idempotency key was reused with a different request shape (`idempotency_conflict`); on
+        /sim_bank/v1/release also a hold already released by a different request
+        (`hold_already_released`).
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
