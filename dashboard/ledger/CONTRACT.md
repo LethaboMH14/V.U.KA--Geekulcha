@@ -88,7 +88,7 @@ export function createTerminal(rootEl, {
 ```
 It renders with `textContent` only, and never `innerHTML`, for anything that came from an export.
 The page links `terminal.css` and the mono font ("JetBrains Mono", with fallbacks).
-- `play()` resolves with the iterable's return value (the Result), or `null` if it returns nothing; it rejects after printing the error if the iterable throws. The verdict banner and the head/root lines are printed from the Result.
+- `play()` resolves with the iterable's return value (the Result), or `null` if it returns nothing; it rejects after printing the error if the iterable throws. The verdict banner and the head/root lines are printed from the Result; a `verdict`-phase step is folded into that banner (printed as a line only when no Result follows).
 - Calling `play()` again skips earlier runs to the end, then starts: every promise resolves with its own Result and lines never interleave. `play()` does not clear; call `clear()` first for a fresh screen.
 - `clear()` during a play empties the log; that play keeps consuming its steps silently and still resolves.
 - Motion is off when `reducedMotion` is true, when `prefers-reduced-motion: reduce` matches, or when the tab is hidden. `Escape` inside the terminal and its Skip button call `skip()`.
