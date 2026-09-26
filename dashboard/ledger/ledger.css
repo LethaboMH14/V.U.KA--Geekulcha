@@ -281,8 +281,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .top-inner {
   height: calc(var(--size-lg) - 1px); /* 48px with the 1px bottom border */
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
-  grid-template-areas: "brand tabs . quick net";
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas: "brand tabs . quick net gear";
   align-items: stretch;
 }
 .brand {
@@ -311,7 +311,22 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 }
 .tabs a:hover { color: var(--shell-text); background: var(--shell-hover); text-decoration: none; }
 .tabs a:focus-visible { outline: 2px solid var(--shell-text); outline-offset: -2px; }
-.tabs a[aria-current="true"] { color: var(--shell-text); border-bottom-color: var(--cds-interactive); }
+.tabs a[aria-current="page"] { color: var(--shell-text); border-bottom-color: var(--cds-interactive); }
+/* Verify is the primary job: brighter and heavier than the other items while not current */
+.tabs a.tab-primary:not([aria-current="page"]) { color: var(--shell-text); font-weight: 600; }
+/* Settings: a gear icon button at the right of the bar */
+.gear {
+  grid-area: gear; display: inline-flex; align-items: center; justify-content: center;
+  width: var(--size-lg); height: var(--size-lg);
+  color: var(--shell-muted); border-left: 1px solid var(--shell-border);
+}
+.gear svg { width: 16px; height: 16px; }
+.gear:hover { color: var(--shell-text); background: var(--shell-hover); }
+.gear:focus-visible { outline: 2px solid var(--shell-text); outline-offset: -2px; }
+.gear[aria-current="page"] { color: var(--shell-text); box-shadow: inset 0 -3px 0 var(--cds-interactive); }
+/* "← Home" shows on phones only (the wordmark also links home) */
+.home-link { grid-area: home; display: none; align-items: center; gap: var(--sp-02); color: var(--shell-muted); white-space: nowrap; }
+.home-link:hover { color: var(--shell-text); }
 .quick { grid-area: quick; position: relative; margin: 0; width: 20rem; display: flex; }
 .quick-icon {
   position: absolute; left: var(--sp-05); top: 50%; transform: translateY(-50%);
@@ -339,16 +354,18 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   html { scroll-padding-top: calc(2 * var(--head-h) + var(--sp-05)); }
   .top-inner {
     height: auto;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     grid-template-rows: var(--size-lg) var(--size-lg);
-    grid-template-areas: "brand quick net" "tabs tabs tabs";
+    grid-template-areas: "brand quick net gear" "tabs tabs tabs tabs";
   }
   .tabs { border-left: 0; border-top: 1px solid var(--shell-border); padding-left: 0; }
   .quick { width: auto; justify-self: end; min-width: 0; max-width: 20rem; width: 100%; }
 }
 @media (max-width: 671px) {
   :root { --gutter: var(--sp-05); }
-  .top-inner { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "brand net" "tabs tabs"; }
+  /* the menu becomes a sideways strip beside "← Home"; the network chip and gear stay on row 1 */
+  .top-inner { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "brand brand net gear" "home tabs tabs tabs"; }
+  .home-link { display: inline-flex; padding: 0 var(--sp-03) 0 var(--sp-05); border-top: 1px solid var(--shell-border); border-right: 1px solid var(--shell-border); }
   .brand { padding-right: var(--sp-05); }
   .net { justify-self: end; border-left: 0; }
   .quick { display: none; }
@@ -357,7 +374,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 /* ---------------------------------------------------------------- page frame (Carbon 2x grid) */
 .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gutter) var(--sp-10); }
 .view { padding-top: var(--sp-07); display: grid; gap: var(--sp-06); min-width: 0; }
-.view + .view { border-top: 1px solid var(--cds-border-subtle-01); margin-top: var(--sp-09); padding-top: var(--sp-09); }
+/* one view shows at a time (hash router in app.js), so views need no separator between them.
+   The router focuses the view's h1 (tabindex=-1) on navigation; that is not a control, so no ring. */
+.view h1[tabindex="-1"]:focus { outline: none; }
 .view-head { display: grid; gap: var(--sp-03); }
 .view-sub { color: var(--cds-text-secondary); max-width: 80ch; }
 .block { display: grid; gap: 0; min-width: 0; }
@@ -366,6 +385,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .block-head { padding-bottom: var(--sp-03); }
 .src-details[open] { flex-basis: 100%; }
 .block-head h2 { margin-right: auto; }
+.block-link { white-space: nowrap; }
 .notices { display: grid; gap: var(--sp-03); padding-top: var(--sp-06); }
 .notices:empty { display: none; }
 

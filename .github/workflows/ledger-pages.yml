@@ -57,11 +57,11 @@ jobs:
           <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
-          <meta http-equiv="refresh" content="0; url=dashboard/ledger/">
+          <meta http-equiv="refresh" content="0; url=dashboard/">
           <title>VUKA public ledger</title>
-          <link rel="canonical" href="dashboard/ledger/">
+          <link rel="canonical" href="dashboard/">
           </head>
-          <body><p><a href="dashboard/ledger/">Open the VUKA public ledger dashboard</a></p></body>
+          <body><p><a href="dashboard/">Open VUKA Ledger</a></p></body>
           </html>
           HTML
           touch site/.nojekyll

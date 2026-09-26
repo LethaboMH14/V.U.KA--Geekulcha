@@ -8,6 +8,25 @@
   <script src="./security.js" defer></script>
 </head>
 <body>
+  <!-- Site bar. Hrefs are written for GitHub Pages, where this page is served at the SITE ROOT
+       (dashboard/ and dashboard/ledger/ sit beside it). security.js rewrites them from
+       data-site-href when the page is served from inside dashboard/ (a repository-root checkout). -->
+  <header class="vk-top">
+    <div class="vk-bar">
+      <a class="vk-brand" href="dashboard/" data-site-href="./" aria-label="VUKA Ledger, home">
+        <svg class="vk-mark" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <circle cx="5" cy="8" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <path d="M8.25 8H14.5M12.5 8v2.5M10.5 8v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+        </svg>
+        <span>VUKA <strong>Ledger</strong></span>
+      </a>
+      <nav class="vk-nav" aria-label="Site">
+        <a href="dashboard/ledger/#overview" data-site-href="ledger/#overview">Ledger</a>
+        <a href="dashboard/ledger/#verify" data-site-href="ledger/#verify">Verify</a>
+        <a href="security.html" aria-current="page">Security</a>
+      </nav>
+    </div>
+  </header>
   <header class="wrap">
     <p class="eyebrow">VUKA · Security &amp; privacy</p>
     <h1>Security evidence</h1>

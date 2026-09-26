@@ -54,6 +54,23 @@ summary { width: fit-content; color: #1E3A5F; cursor: pointer; font-weight: 700;
   .meta-grid { gap: .6rem; }
   h2 { margin-top: 2rem; }
 }
+/* Site bar: the same shape and colours as the VUKA Ledger top bar (hashscan.css, light theme).
+   This page is light only, so the bar is too. The shared stylesheets are not linked here: their
+   global body, heading and table rules would restyle this page. */
+.vk-top { --vk-bar: #FFFFFF; --vk-text: #050505; --vk-muted: #6F6F6F; --vk-rule: #EFEFEF; --vk-tab: rgba(5, 5, 5, 0.05); --vk-focus: #255CF4;
+  background: var(--vk-bar); color: var(--vk-text); border-bottom: 1px solid var(--vk-rule); }
+.vk-bar { display: flex; align-items: center; gap: 8px 24px; min-height: 64px; padding: 0 1rem; }
+.vk-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--vk-text); font-weight: 500; font-size: 1rem; text-decoration: none; white-space: nowrap; }
+.vk-brand strong { font-weight: 700; }
+.vk-brand:hover { color: var(--vk-text); text-decoration: none; }
+.vk-mark { width: 20px; height: 20px; }
+.vk-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; min-width: 0; overflow-x: auto; }
+.vk-nav a { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; color: var(--vk-muted); font-weight: 400; font-size: .875rem; text-decoration: none; white-space: nowrap; }
+.vk-nav a:hover { background: var(--vk-tab); color: var(--vk-text); }
+.vk-nav a[aria-current="page"] { background: var(--vk-tab); color: var(--vk-text); font-weight: 500; }
+.vk-top a:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: -2px; }
+@media (min-width: 760px) { .vk-bar { padding: 0 2rem; } }
+@media (max-width: 420px) { .vk-bar { gap: 8px; } .vk-nav a { padding: 0 8px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
 `;
 
@@ -61,6 +78,13 @@ const sheet = new CSSStyleSheet();
 sheet.replaceSync(css);
 document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 let barIndex = 0;
+
+// Site bar links: on GitHub Pages this page is at the site root and the static hrefs already point
+// into dashboard/. Served from inside dashboard/ (a repository-root checkout), use the
+// dashboard-relative data-site-href instead.
+if (/\/dashboard\/[^/]*$/.test(location.pathname)) {
+  for (const link of document.querySelectorAll('a[data-site-href]')) link.setAttribute('href', link.dataset.siteHref);
+}
 
 const byId = id => document.getElementById(id);
 const setText = (element, value) => { element.textContent = value; };

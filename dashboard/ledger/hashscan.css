@@ -261,7 +261,21 @@ h3, .cds-heading-02, .h-sub { font: 500 1rem/1.5rem var(--font-sans); letter-spa
 .tabs a:hover { background: var(--hs-tab-bg); color: var(--cds-text-primary); text-decoration: none; }
 .tabs a:focus-visible { outline: 2px solid var(--cds-focus); outline-offset: -2px; }
 /* current tab: primary text on a tab-background pill (shape + weight, not colour alone) */
-.tabs a[aria-current="true"] { color: var(--cds-text-primary); background: var(--hs-tab-bg); font-weight: 500; }
+.tabs a[aria-current="page"] { color: var(--cds-text-primary); background: var(--hs-tab-bg); font-weight: 500; }
+/* Verify, the primary job: accent text and weight while it is not the current view */
+.tabs a.tab-primary:not([aria-current="page"]) { color: var(--cds-link-primary); font-weight: 500; }
+.tabs a.tab-primary:not([aria-current="page"]):hover { color: var(--cds-link-primary-hover); }
+/* Settings gear: a 40px icon button, current view shown with the tab pill */
+.gear {
+  align-self: center; width: 40px; height: 40px; border-left: 0; border-radius: 8px;
+  color: var(--cds-text-secondary);
+}
+.gear:hover { background: var(--hs-tab-bg); color: var(--cds-text-primary); }
+.gear:focus-visible { outline: 2px solid var(--cds-focus); outline-offset: -2px; }
+.gear[aria-current="page"] { background: var(--hs-tab-bg); color: var(--cds-text-primary); box-shadow: none; }
+.gear svg { width: 20px; height: 20px; }
+.home-link { color: var(--cds-text-secondary); font: 400 14px/1.35 var(--font-sans); letter-spacing: 0; }
+.home-link:hover { color: var(--cds-text-primary); text-decoration: none; }
 .quick { align-self: center; }
 .quick-icon { left: 12px; fill: var(--cds-text-secondary); }
 .quick input {
@@ -282,13 +296,14 @@ h3, .cds-heading-02, .h-sub { font: 500 1rem/1.5rem var(--font-sans); letter-spa
 }
 @media (max-width: 671px) {
   .brand { padding-right: 0; }
+  .top-inner { column-gap: 8px; }
+  .home-link { align-self: start; height: 32px; margin-top: 2px; padding: 0 12px 0 0; border: 0; border-right: 1px solid var(--cds-border-subtle-01); }
 }
 
 /* ---------------------------------------------------------------- page frame (.h-page-content) */
 .wrap { padding: 0 var(--gutter) 64px; }
 .wrap-inner { padding: 24px var(--gutter) 48px; }
 .view { padding-top: 24px; gap: 16px; }
-.view + .view { border-top: 0; margin-top: 32px; padding-top: 16px; }
 .view-head, .vw-head { gap: 4px; }
 .notices { padding-top: 16px; }
 
@@ -548,11 +563,13 @@ input:focus-visible, select:focus-visible, textarea:focus-visible,
    transitions (Carbon "productive" timing, 110 ms). ledger.css turns all of it off under
    prefers-reduced-motion (its !important rule wins). */
 .top { top: env(safe-area-inset-top, 0px); }
-main section[id] { scroll-margin-top: calc(var(--head-h) + 16px); }
-@media (max-width: 1055px) { main section[id] { scroll-margin-top: 116px; } }
+/* One view at a time: the router scrolls to the top on each route, so only things scrolled to
+   inside a view (the verify result) need to land clear of the sticky header. */
+.view, .vf-result { scroll-margin-top: calc(var(--head-h) + 16px); }
+@media (max-width: 1055px) { .view, .vf-result { scroll-margin-top: 116px; } }
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
-  a, .tabs a, .cds-btn, .btn, input, textarea, select, .cds-table tbody tr, .chain-table tbody tr, .feed tbody tr {
+  a, .tabs a, .gear, .cds-btn, .btn, input, textarea, select, .cds-table tbody tr, .chain-table tbody tr, .feed tbody tr {
     transition: color 110ms cubic-bezier(0.2, 0, 0.38, 0.9), background-color 110ms cubic-bezier(0.2, 0, 0.38, 0.9),
                 border-color 110ms cubic-bezier(0.2, 0, 0.38, 0.9), box-shadow 110ms cubic-bezier(0.2, 0, 0.38, 0.9);
   }
