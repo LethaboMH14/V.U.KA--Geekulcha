@@ -1,6 +1,6 @@
 # VUKA — War Room Pitch
 
-> **Spoken target:** 3–5 minutes (war room). **Actual: 723 words (~4.8 min).** One job per beat, drafted to a hard budget.
+> **Spoken target:** 3–5 minutes (war room). **Actual: 751 words (~5.0 min).** One job per beat, drafted to a hard budget.
 > **Companion files:** `context.md` · `pitch-deck-outline.md` · `docs/reviews/ANCHOR-ACCESS-MODEL-ADR-PROPOSAL.md`.
 > **Read `docs/MASTER-CONTEXT.md` §2 for the judging criteria** (I 15 · T 15 · U 10 · S 10 · B 15 · Q 5).
 
@@ -16,9 +16,9 @@
 | 5 · Why it works | The sale — two halves, nobody does both | I, T | 111 |
 | 6A · The money | Who pays, how much | B | 51 |
 | 6B · Why the insurer pays | Fake claims — the claim and the proof | B, I | 80 |
-| 7 · Compliance | Neutralise the objections; deployability | S, B | 52 |
+| 7 · Compliance | Deployability, licence, ECTA | S, B | 80 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **723** |
+| | | **Total** | **751** |
 
 ---
 
@@ -58,7 +58,7 @@ The insurer pays because VUKA cuts its fake-claim payouts. Today, someone can cl
 
 ### Beat 7 — Compliance
 
-Nothing personal ever touches the ledger — only a fingerprint, and they hold the key. The ledger is lawful here; we are not a financial service, and we issue no token — no coin, no ICO. Deploying it costs only network fees: a fixed, bounded cost we have modelled. Built for the ECT Act.
+Compliance is our moat. We can deploy this here — there is nothing to license. Nothing personal ever touches the ledger, only a fingerprint, and they hold the key. We don't build or run a blockchain; we use an existing public network, hold no customer crypto, and move no money. Running it costs only network fees — a fixed, bounded cost we've modelled. And the record is built to maximise the ECTA (Electronic Communications and Transactions Act) section 15 reliability factors.
 
 ### Beat 8 — Ask
 
