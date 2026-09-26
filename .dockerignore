@@ -1,0 +1,26 @@
+# Keep secrets, local data and the Android app out of the server image.
+.git
+.venv
+venv
+node_modules
+**/__pycache__
+**/*.pyc
+.env
+.env.*
+!.env.backup.example
+*.pem
+*.key
+app/
+build/
+prototype/
+archive/
+research/
+dashboard/
+docs/
+team/
+templates/
+test/
+gradle/
+**/tests/
+anchor/hedera-sidecar/
+*.zip

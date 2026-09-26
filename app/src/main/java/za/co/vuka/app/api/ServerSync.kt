@@ -35,6 +35,14 @@ object ServerSync {
      */
     const val EMULATOR_HOST_URL = "http://localhost:8000"
     private const val K_SERVER = "server_url"
+    private const val K_BACKUP = "backup_url"
+
+    /** The team's backup server (docs/deploy/BACKUP-HOSTING.md), once its address is entered. */
+    val backupUrl: String? get() = if (::app.isInitialized) prefs.getString(K_BACKUP, null) else null
+
+    fun setBackupUrl(url: String) {
+        if (::app.isInitialized) prefs.edit(commit = true) { putString(K_BACKUP, url.trim().trimEnd('/')) }
+    }
 
     /** The server this phone talks to (Settings → Server). */
     val serverUrl: String get() = if (::app.isInitialized) prefs.getString(K_SERVER, null) ?: CLOUD_URL else CLOUD_URL

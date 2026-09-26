@@ -217,6 +217,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         val which = when (s.serverUrl) {
             ServerSync.CLOUD_URL -> "VUKA cloud (Azure)"
             ServerSync.EMULATOR_HOST_URL -> "This computer (development)"
+            ServerSync.backupUrl -> "Backup server"
             else -> "Custom"
         }
         rows.addView(row(rows, R.drawable.ic_gear, "Server", "$which\n${s.serverUrl}", chevron = true) { chooseServer() })
@@ -241,24 +242,46 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     // Each server has its own database: switching registers this phone again there.
     private fun chooseServer() {
-        val options = arrayOf("VUKA cloud (Azure)", "This computer (development, via adb reverse)", "Custom address…")
+        val backup = ServerSync.backupUrl
+        val options = arrayOf(
+            "VUKA cloud (Azure)",
+            if (backup != null) "Backup server ($backup)" else "Backup server (set its address)",
+            "This computer (development, via adb reverse)",
+            "Custom address…",
+        )
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Choose a server")
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> ServerSync.setServer(requireContext(), ServerSync.CLOUD_URL)
-                    1 -> ServerSync.setServer(requireContext(), ServerSync.EMULATOR_HOST_URL)
-                    else -> {
-                        val input = EditText(requireContext()).apply { setText(ServerSync.serverUrl); setSingleLine() }
-                        MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Server address")
-                            .setView(input)
-                            .setPositiveButton("Use it") { _, _ -> ServerSync.setServer(requireContext(), input.text.toString()) }
-                            .setNegativeButton("Cancel", null)
-                            .show()
+                    1 -> if (backup != null) ServerSync.setServer(requireContext(), backup) else askAddress("Backup server address", "https://") { url ->
+                        ServerSync.setBackupUrl(url)
+                        ServerSync.setServer(requireContext(), url)
                     }
+                    2 -> ServerSync.setServer(requireContext(), ServerSync.EMULATOR_HOST_URL)
+                    else -> askAddress("Server address", ServerSync.serverUrl) { url -> ServerSync.setServer(requireContext(), url) }
                 }
             }
+            .setNeutralButton(if (backup != null) "Change backup address" else null) { _, _ ->
+                askAddress("Backup server address", backup ?: "https://") { url ->
+                    ServerSync.setBackupUrl(url)
+                    ServerSync.setServer(requireContext(), url)
+                }
+            }
+            .show()
+    }
+
+    private fun askAddress(title: String, prefill: String, onUse: (String) -> Unit) {
+        val input = EditText(requireContext()).apply { setText(prefill); setSingleLine(); setSelection(text.length) }
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(title)
+            .setMessage("HTTPS only, except a development server on this computer.")
+            .setView(input)
+            .setPositiveButton("Use it") { _, _ ->
+                val url = input.text.toString().trim()
+                if (url.startsWith("https://") || url.startsWith("http://localhost") || url.startsWith("http://10.0.2.2")) onUse(url)
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 

@@ -1,0 +1,40 @@
+# Render blueprint: the backup ANCHOR server as one Docker web service.
+# The database is external (Neon's free PostgreSQL): paste its connection
+# string as DATABASE_URL. Secrets are entered in Render's dashboard, never here.
+# Free instances sleep after ~15 minutes idle: fine for demos, NOT for real
+# escalation timing (docs/deploy/BACKUP-HOSTING.md).
+services:
+  - type: web
+    name: vuka-backup-server
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    autoDeploy: false
+    envVars:
+      - key: DATABASE_URL            # Neon connection string (…?sslmode=require)
+        sync: false
+      - key: VUKA_PAYLOAD_KEY_B64    # from scripts/make-backup-keys.py
+        sync: false
+      - key: VUKA_SERVER_ED25519_KEY_B64
+        sync: false
+      - key: VUKA_BACKUP_MANIFEST_JSON
+        sync: false
+      - key: VUKA_SMTP_HOST
+        sync: false
+      - key: VUKA_SMTP_PORT
+        value: "587"
+      - key: VUKA_SMTP_USER
+        sync: false
+      - key: VUKA_SMTP_PASSWORD
+        sync: false
+      - key: VUKA_SMTP_FROM
+        sync: false
+      - key: VUKA_TWILIO_ACCOUNT_SID
+        sync: false
+      - key: VUKA_TWILIO_AUTH_TOKEN
+        sync: false
+      - key: VUKA_TWILIO_FROM
+        sync: false
+      - key: VUKA_CONTACT_LOST_ENABLED
+        value: "0"
