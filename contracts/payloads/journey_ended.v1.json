@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vuka.example/contracts/payloads/journey_ended.v1.json",
+  "title": "journey_ended payload, pv 1 (PROPOSED, docs/VUKA-2-SPEC.md §4b)",
+  "description": "Committed private payload of a journey_ended event. Deliberately carries no `mode` and no authorisation reference: the PIN authority is the separate pin_authorised event for action end_journey, matched by §9's exact-action-and-target rule. That keeps a duress end and a normal end byte-identical in shape (T52, T15 harness). Numeric fields are integers (spec §5). Adding a field is a pv bump.",
+  "type": "object",
+  "required": [
+    "kind",
+    "pv",
+    "journey_id"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "journey_ended"
+    },
+    "pv": {
+      "const": 1
+    },
+    "journey_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "The journey being ended; must equal the target_id of the fresh end_journey pin_authorised (§9)."
+    }
+  },
+  "examples": [
+    {
+      "kind": "journey_ended",
+      "pv": 1,
+      "journey_id": "sim_journey_1"
+    }
+  ]
+}
