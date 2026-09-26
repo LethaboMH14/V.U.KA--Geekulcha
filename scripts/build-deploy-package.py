@@ -17,6 +17,12 @@ import zipfile
 PRIVATE_KEY_SHAPE = re.compile(rb"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----")
 REQUIRED_MEMBERS = {
     "anchor/canonical.py",
+    "anchor/merkle.py",
+    "anchor/payloads.py",
+    "anchor/pin_authority.py",
+    "anchor/publish.py",
+    "anchor/verify.py",
+    "contracts/keys/manifest.json",
     "requirements.txt",
     "server/db.py",
     "server/main.py",
@@ -58,11 +64,25 @@ def forbidden_path_reason(name: str) -> str | None:
 
 
 def should_package(name: str) -> bool:
+    """The server imports every non-test module under anchor/, plus the payload
+    schemas and key manifest anchor/payloads.py and server/server_signing.py
+    read from disk. Packaging only anchor/canonical.py (the original scope,
+    from when the server had three routes) leaves those imports unresolved at
+    runtime; a deployed server would fail on its first request, not at boot,
+    since most are imported lazily inside route handlers."""
     path = PurePosixPath(name)
+    parts = [p.lower() for p in path.parts]
     if len(path.parts) > 1 and path.parts[0] == "server":
-        return not any(part.lower() in {"tests", "__pycache__", ".pytest_cache"} for part in path.parts)
+        return not any(part in {"tests", "__pycache__", ".pytest_cache"} for part in parts)
+    if len(path.parts) > 1 and path.parts[0] == "anchor":
+        if path.parts[1] == "hedera-sidecar" or "tests" in parts or "__pycache__" in parts:
+            return False
+        return path.suffix == ".py"
+    if len(path.parts) > 2 and path.parts[0] == "contracts" and path.parts[1] == "payloads":
+        return path.suffix == ".json"
     return name in {
         "anchor/canonical.py",
+        "contracts/keys/manifest.json",
         "requirements.txt",
         "startup.sh",
     }

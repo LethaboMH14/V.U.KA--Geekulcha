@@ -55,6 +55,26 @@ def test_package_selection_keeps_server_runtime_and_excludes_tests_and_sidecars(
     }
 
 
+def test_every_anchor_module_and_payload_schema_the_server_imports_is_included():
+    """Regression: the server imports anchor.merkle/payloads/pin_authority/publish/
+    verify and reads contracts/payloads/*.json + contracts/keys/manifest.json at
+    runtime. Packaging only anchor/canonical.py (the original three-route scope)
+    leaves those unresolved on a real deploy."""
+    files = complete_deploy_files()
+    files.update({
+        "anchor/guardian_governance.py": b"sim_module",
+        "contracts/payloads/checkin_result.v1.json": b"{}",
+        "contracts/keys/verify-pins.json": b"{}",
+        "anchor/hedera-sidecar/cli.mjs": b"sim_sidecar",
+        "anchor/tests/test_merkle.py": b"sim_test",
+    })
+    selected = {item.name for item in package_builder.read_safe_package_members(make_archive(files))}
+    assert "anchor/guardian_governance.py" in selected
+    assert "contracts/payloads/checkin_result.v1.json" in selected
+    assert "anchor/hedera-sidecar/cli.mjs" not in selected
+    assert "anchor/tests/test_merkle.py" not in selected
+
+
 def test_archive_path_guard_rejects_forbidden_names():
     for name in (
         "app/.env",
