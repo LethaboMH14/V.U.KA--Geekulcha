@@ -6,6 +6,9 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import za.co.vuka.app.api.ServerSync
+import za.co.vuka.app.api.EventClient
 import za.co.vuka.app.auth.AccountStore
 import za.co.vuka.app.auth.AccountStore.RecoveryChannel
 import za.co.vuka.app.auth.InterimPasswordStore
@@ -17,7 +20,7 @@ import za.co.vuka.app.auth.InterimPasswordStore
  * the PIN is recovered with the recovery code (spec §9, ADR-0036/0041), which
  * isn't in this build, and the screen says so.
  *
- * SIMULATED: no SMS or email service, so no code is actually sent.
+ * The choice is saved on VUKA's server, which sends the reset code there.
  */
 class RecoveryFragment : Fragment(R.layout.fragment_recovery) {
 
@@ -46,8 +49,23 @@ class RecoveryFragment : Fragment(R.layout.fragment_recovery) {
         }
 
         view.findViewById<View>(R.id.btnContinue).setOnClickListener {
-            store.recoveryChannel = selected
-            findNavController().navigateUp()
+            val choice = selected ?: return@setOnClickListener
+            ServerSync.setRecoveryChannel(if (choice == RecoveryChannel.EMAIL) "email" else "sms") { result ->
+                if (view == null) return@setRecoveryChannel
+                result.onSuccess {
+                    store.recoveryChannel = choice
+                    findNavController().navigateUp()
+                }.onFailure { e ->
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Not saved")
+                        .setMessage(
+                            if (e is EventClient.ServerError) "${e.reason}. Verify it from Edit profile first."
+                            else "Couldn't reach VUKA's server. Try again when you're online."
+                        )
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+            }
         }
         render(view)
     }

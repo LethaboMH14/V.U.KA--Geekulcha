@@ -140,7 +140,11 @@ class AudioPipeline(
                         val end = SystemClock.elapsedRealtime()
                         inference.execute {
                             try {
-                                onWindow(summarise(classifier, classifier.classify(samples), s, end))
+                                var sum = 0.0
+                                for (x in samples) sum += x * x
+                                val db = 20 * kotlin.math.log10(kotlin.math.sqrt(sum / samples.size) + 1e-9)
+                                val level = ((db + 60) * 100 / 60).toInt().coerceIn(0, 100)
+                                onWindow(summarise(classifier, classifier.classify(samples), s, end).also { it.level = level })
                             } catch (e: Exception) {
                                 onError("inference: ${e.message}")
                             } finally {

@@ -197,7 +197,7 @@
                 android:layout_marginTop="10dp"
                 android:fontFamily="monospace"
                 android:letterSpacing="0.08"
-                android:text="SIMULATED · NO CODE IS SENT IN THIS BUILD"
+                android:text="CODES ARE SENT BY VUKA'S SERVER"
                 android:textColor="@color/vuka_text_dim"
                 android:textSize="10sp" />
         </LinearLayout>

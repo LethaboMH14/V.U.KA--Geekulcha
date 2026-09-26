@@ -85,6 +85,7 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
         _phoneNumber.value = phone
         _email.value = email
         persistIfSignedIn()
+        ServerSync.saveProfile(first, last)
         RecordStore.add(getApplication(), RecordEntry.Kind.PROFILE_UPDATED, changed.joinToString(", "))
         return true
     }
@@ -127,6 +128,12 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
     fun isRegistered(phone: String) = store.isRegistered(phone)
 
     /** End of onboarding: save the profile and stay signed in. */
+    /**
+     * The email sign-up password, kept in memory only until the email is
+     * verified, then saved on the server (as an Argon2id hash) and cleared.
+     */
+    var pendingPassword: String? = null
+
     /** Ticked on "Create your account"; recorded when registration completes. */
     var termsAccepted = false
 
@@ -138,6 +145,7 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
         store.recoveryChannel = if (verifiedByEmail) AccountStore.RecoveryChannel.EMAIL else AccountStore.RecoveryChannel.PHONE
         store.memberSignedIn = true
         ServerSync.register(getApplication())
+        ServerSync.saveProfile(_firstName.value, _surname.value)
         if (termsAccepted) {
             RecordStore.add(getApplication(), RecordEntry.Kind.TERMS_ACCEPTED, "Terms $TERMS_VERSION and Privacy notice")
         }

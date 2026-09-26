@@ -23,7 +23,11 @@ import java.util.TimeZone
  */
 object EventClient {
 
-    class ServerError(val status: Int, val code: String, message: String) : Exception("$status $code: $message")
+    class ServerError(val status: Int, val code: String, message: String, val body: Map<String, Any?> = emptyMap()) :
+        Exception("$status $code: $message") {
+        /** The server's own words, for showing to the member. */
+        val reason: String = message
+    }
 
     /** RFC 3339 with seconds and an offset (the server rejects anything else). */
     fun rfc3339(d: Date = Date()): String =
@@ -138,7 +142,7 @@ object EventClient {
             val json = (if (text.isBlank()) emptyMap<String, Any?>() else runCatching { Canonical.parse(text) }.getOrNull()) as? Map<String, Any?>
                 ?: emptyMap()
             if (status !in 200..299) {
-                throw ServerError(status, json["code"] as? String ?: "error", json["message"] as? String ?: "")
+                throw ServerError(status, json["code"] as? String ?: "error", json["message"] as? String ?: "", json)
             }
             return json
         } finally {

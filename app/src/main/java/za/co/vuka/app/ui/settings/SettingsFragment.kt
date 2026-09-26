@@ -16,6 +16,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
+import za.co.vuka.app.ui.onboarding.VerifyContactDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import za.co.vuka.app.api.ServerSync
 import za.co.vuka.app.auth.AccountStore
 import za.co.vuka.app.auth.PinGateSheet
 import za.co.vuka.app.auth.PinResult
@@ -100,6 +103,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 onboardingViewModel.pendingInvites.collect { bindGuardians(view, it) }
+            }
+        }
+        ServerSync.init(requireContext())
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                ServerSync.status.collect { bindServer(view, it) }
             }
         }
     }
@@ -202,6 +211,57 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         // under Account once the ANCHOR server exists; there's no separate row for it.
     }
 
+    private fun bindServer(view: View, s: ServerSync.Status) {
+        val rows = view.findViewById<ViewGroup>(R.id.serverRows)
+        rows.removeAllViews()
+        val which = when (s.serverUrl) {
+            ServerSync.CLOUD_URL -> "VUKA cloud (Azure)"
+            ServerSync.EMULATOR_HOST_URL -> "This computer (development)"
+            else -> "Custom"
+        }
+        rows.addView(row(rows, R.drawable.ic_gear, "Server", "$which\n${s.serverUrl}", chevron = true) { chooseServer() })
+        rows.addView(row(rows, R.drawable.ic_key, "This phone's account", s.subjectId ?: "Not registered yet"))
+        val delivery = when {
+            s.waiting > 0 && s.lastError != null -> "${s.sent} received · ${s.waiting} waiting (${s.lastError})"
+            s.waiting > 0 -> "${s.sent} received · ${s.waiting} sending…"
+            else -> "${s.sent} signed events received" + if (s.refused > 0) " · ${s.refused} refused" else ""
+        }
+        rows.addView(row(rows, R.drawable.ic_file_text, "Delivery", delivery))
+        rows.addView(row(rows, R.drawable.ic_check_circle, "Test connection", "Calls the server now and shows its answer", chevron = true) {
+            ServerSync.testConnection(requireContext()) { result ->
+                if (!isAdded) return@testConnection
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(if (result.isSuccess) "Connected" else "Not connected")
+                    .setMessage(result.getOrElse { "Couldn't reach ${ServerSync.serverUrl}: ${it.message}" })
+                    .setPositiveButton("OK", null)
+                    .show()
+            }
+        })
+    }
+
+    // Each server has its own database: switching registers this phone again there.
+    private fun chooseServer() {
+        val options = arrayOf("VUKA cloud (Azure)", "This computer (development, via adb reverse)", "Custom address…")
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Choose a server")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> ServerSync.setServer(requireContext(), ServerSync.CLOUD_URL)
+                    1 -> ServerSync.setServer(requireContext(), ServerSync.EMULATOR_HOST_URL)
+                    else -> {
+                        val input = EditText(requireContext()).apply { setText(ServerSync.serverUrl); setSingleLine() }
+                        MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("Server address")
+                            .setView(input)
+                            .setPositiveButton("Use it") { _, _ -> ServerSync.setServer(requireContext(), input.text.toString()) }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                    }
+                }
+            }
+            .show()
+    }
+
     private fun bindAccount(view: View) {
         val rows = view.findViewById<ViewGroup>(R.id.accountRows)
         rows.addView(
@@ -297,8 +357,20 @@ class EditProfileSheet : BottomSheetDialogFragment(R.layout.dialog_edit_profile)
                 view.findViewById<View>(R.id.errorContainer).visibility = View.VISIBLE
                 return@setOnClickListener
             }
-            onboardingViewModel.updateProfile(first, last, if (digits.isEmpty()) "" else "+27$digits", email)
+            val oldEmail = onboardingViewModel.email.value
+            val oldPhone = onboardingViewModel.phoneNumber.value
+            val phone = if (digits.isEmpty()) "" else "+27$digits"
+            onboardingViewModel.updateProfile(first, last, phone, email)
+            // A new email or number is verified with a real code before it counts on the server.
+            val activity = requireActivity()
+            val newEmail = email.isNotBlank() && !email.equals(oldEmail, ignoreCase = true)
+            val newPhone = phone.isNotBlank() && phone != oldPhone
             dismiss()
+            when {
+                newEmail && newPhone -> VerifyContactDialog.show(activity, "email", email) { VerifyContactDialog.show(activity, "sms", phone) }
+                newEmail -> VerifyContactDialog.show(activity, "email", email)
+                newPhone -> VerifyContactDialog.show(activity, "sms", phone)
+            }
         }
     }
 }

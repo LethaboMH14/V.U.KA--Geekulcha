@@ -7,6 +7,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
+import za.co.vuka.app.api.ServerSync
+import za.co.vuka.app.api.EventClient
 import za.co.vuka.app.auth.AccountStore
 import za.co.vuka.app.auth.InterimPasswordStore
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -74,15 +76,22 @@ class SignInExistingFragment : Fragment(R.layout.fragment_sign_in_existing) {
         }
 
         view.findViewById<View>(R.id.btnSignIn).setOnClickListener {
-            // A password is saved at sign-up, before onboarding finishes, so also require
-            // the completed profile that "Welcome back" signs into.
-            val ok = InterimPasswordStore(requireContext())
-                .verify(etEmail.text.toString(), etPassword.text.toString()) &&
-                AccountStore(requireContext()).profile() != null
+            val email = etEmail.text.toString()
+            val password = etPassword.text.toString()
             etPassword.text.clear()
-            // One message for any mismatch, so it never reveals which part was wrong.
-            error.visibility = if (ok) View.GONE else View.VISIBLE
-            if (ok) findNavController().navigate(R.id.action_signInExisting_to_welcomeBack)
+            // The completed profile that "Welcome back" signs into must be on this phone.
+            val hasProfile = AccountStore(requireContext()).profile() != null
+            // VUKA's server checks the password; offline, this phone's own copy does.
+            ServerSync.checkPassword(requireContext(), email, password) { result ->
+                if (view == null) return@checkPassword
+                val ok = hasProfile && result.fold(
+                    onSuccess = { true },
+                    onFailure = { e -> e !is EventClient.ServerError && InterimPasswordStore(requireContext()).verify(email, password) },
+                )
+                // One message for any mismatch, so it never reveals which part was wrong.
+                error.visibility = if (ok) View.GONE else View.VISIBLE
+                if (ok) findNavController().navigate(R.id.action_signInExisting_to_welcomeBack)
+            }
         }
     }
 }

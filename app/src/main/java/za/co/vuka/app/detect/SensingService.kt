@@ -37,8 +37,19 @@ object Listening {
     private val _state = MutableStateFlow<State>(State.Off)
     val state: StateFlow<State> = _state
 
+    /** What the model hears right now: its top label, how sure (bp) and how loud (0..100). Never audio. */
+    data class Heard(val label: String, val bp: Int, val level: Int)
+
+    private val _heard = MutableStateFlow<Heard?>(null)
+    val heardNow: StateFlow<Heard?> = _heard
+
+    internal fun heard(label: String, bp: Int, level: Int) {
+        _heard.value = Heard(label, bp, level)
+    }
+
     internal fun set(s: State) {
         _state.value = s
+        if (s != State.On) _heard.value = null
     }
 }
 
@@ -127,6 +138,7 @@ class SensingService : Service() {
     }
 
     private fun onWindow(w: WindowResult) {
+        classifier?.let { c -> Listening.heard(c.labels.getOrElse(w.topIndex) { "" }, w.topBp, w.level) }
         val decision = engine.step(w) ?: return
         RecordStore.add(this, RecordEntry.Kind.SOUND_DETECTED, decision.label)
         classifier?.let { c ->

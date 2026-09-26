@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
+import za.co.vuka.app.api.ServerSync
 import za.co.vuka.app.auth.PinGateSheet
 import za.co.vuka.app.auth.PinResult
 import za.co.vuka.app.detect.Listening
@@ -77,6 +78,39 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             startActivity(Intent(Intent.ACTION_DIAL, "tel:10111".toUri()))
         }
 
+        ServerSync.init(requireContext())
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                Listening.heardNow.collect { h ->
+                    view.findViewById<View>(R.id.hearingRow).visibility = if (h == null) View.GONE else View.VISIBLE
+                    if (h != null) {
+                        val quiet = h.level < 15
+                        view.findViewById<TextView>(R.id.tvHearing).text =
+                            if (quiet) "Hearing: quiet" else "Hearing: ${h.label} · ${h.bp / 100}% sure"
+                        view.findViewById<android.widget.ProgressBar>(R.id.levelBar).progress = h.level
+                    }
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                ServerSync.status.collect { s ->
+                    val time = s.lastSentAt?.let {
+                        runCatching {
+                            val f = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
+                            java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(f.parse(it)!!)
+                        }.getOrNull()
+                    }
+                    view.findViewById<TextView>(R.id.tvServer).text = when {
+                        !s.registered -> "○ Not linked to VUKA's server yet"
+                        s.waiting > 0 && s.lastError != null -> "○ Offline · ${s.waiting} waiting to send"
+                        s.waiting > 0 -> "● Sending ${s.waiting} to VUKA's server…"
+                        time != null -> "● Connected to VUKA's server · last contact $time"
+                        else -> "● Linked to VUKA's server"
+                    }
+                }
+            }
+        }
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 combine(journey.active, Listening.state, onboardingViewModel.pendingInvites) { active, listening, pending ->

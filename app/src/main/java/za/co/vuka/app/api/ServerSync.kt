@@ -27,7 +27,17 @@ import java.util.concurrent.Executors
  */
 object ServerSync {
     private const val TAG = "VukaServer"
-    const val SERVER_URL = "https://vuka-anchor-server.azurewebsites.net"
+    /** VUKA's cloud server (Azure). */
+    const val CLOUD_URL = "https://vuka-anchor-server.azurewebsites.net"
+    /**
+     * A development server on this computer, reached through `adb reverse tcp:8000 tcp:8000`
+     * (emulator or a USB phone). 10.0.2.2 is often blocked by the host firewall.
+     */
+    const val EMULATOR_HOST_URL = "http://localhost:8000"
+    private const val K_SERVER = "server_url"
+
+    /** The server this phone talks to (Settings → Server). */
+    val serverUrl: String get() = if (::app.isInitialized) prefs.getString(K_SERVER, null) ?: CLOUD_URL else CLOUD_URL
     /** The server requires a semantic version. */
     const val APP_VERSION = "1.0.0"
     /** Spec section 7 allows 20 or 60; the member gets the longer window (as in the RN app). */
@@ -53,6 +63,8 @@ object ServerSync {
         val lastError: String? = null,
         val lastSentAt: String? = null,
         val journeyId: String? = null,
+        val serverUrl: String = CLOUD_URL,
+        val subjectId: String? = null,
     )
 
     private val _status = MutableStateFlow(Status())
@@ -83,6 +95,12 @@ object ServerSync {
     fun register(context: Context) {
         init(context)
         worker.execute {
+            registerNow()
+            flushNow()
+        }
+    }
+
+    private fun registerNow() {
             if (prefs.getString(K_SUBJECT, null) == null) {
                 val short = signer.identity().keyId.removePrefix("dev_").take(8)
                 prefs.edit(commit = true) { putString(K_SUBJECT, "sim_subj_$short").putString(K_ACTOR, "sim_member_$short") }
@@ -97,8 +115,6 @@ object ServerSync {
                     genesis = true,
                 )
             }
-            flushNow()
-        }
     }
 
     /** Opens a journey on the server (it issues the id) and queues `journey_armed`. */
@@ -117,7 +133,7 @@ object ServerSync {
                 return@execute
             }
             try {
-                val id = EventClient.request(SERVER_URL, signer, "POST", "/v1/journeys")["journey_id"] as? String
+                val id = EventClient.request(serverUrl, signer, "POST", "/v1/journeys")["journey_id"] as? String
                     ?: throw IllegalStateException("no journey_id in the reply")
                 prefs.edit(commit = true) { putString(K_JOURNEY, id) }
                 enqueue(journeyTarget(id), "device_event", mapOf("kind" to "journey_armed", "pv" to 1, "journey_id" to id, "app_version" to APP_VERSION))
@@ -139,7 +155,7 @@ object ServerSync {
             val id = journeyId ?: return@execute
             try {
                 val body = Canonical.json(mapOf("speed_bucket" to "unknown", "ts" to EventClient.rfc3339()))
-                EventClient.request(SERVER_URL, signer, "POST", "/v1/journeys/$id/heartbeat", body)
+                EventClient.request(serverUrl, signer, "POST", "/v1/journeys/$id/heartbeat", body)
                 _status.value = _status.value.copy(lastSentAt = EventClient.rfc3339())
             } catch (e: Exception) {
                 Log.w(TAG, "heartbeat missed: ${e.message}")
@@ -268,7 +284,7 @@ object ServerSync {
                 enqueue(subjectTarget(), "device_event", pinAuthorised("add_guardian", subject, duress))
                 flushNow()
                 if (readList(K_OUTBOX).isNotEmpty()) throw IllegalStateException(_status.value.lastError ?: "can't reach the server")
-                EventClient.request(SERVER_URL, signer, "POST", "/v1/guardians/invites")["invite_code"] as? String
+                EventClient.request(serverUrl, signer, "POST", "/v1/guardians/invites")["invite_code"] as? String
                     ?: throw IllegalStateException("no invite code in the reply")
             }
             onMain(cb, result)
@@ -298,7 +314,7 @@ object ServerSync {
                     "fcm_token" to "sim_poll_while_open",
                     "popia_s18_acknowledged" to true,
                 ))
-                val r = EventClient.request(SERVER_URL, signer, "POST", "/v1/guardians/accept", body, keyId = guardianKeyId())
+                val r = EventClient.request(serverUrl, signer, "POST", "/v1/guardians/accept", body, keyId = guardianKeyId())
                 val id = r["guardian_id"] as? String ?: throw IllegalStateException("no guardian_id in the reply")
                 prefs.edit(commit = true) { putString(K_G_ID, id) }
                 Unit
@@ -313,7 +329,7 @@ object ServerSync {
         if (!isGuardian) return
         worker.execute {
             val result = runCatching {
-                val r = EventClient.request(SERVER_URL, signer, "GET", "/v1/guardians/me/alerts", keyId = guardianKeyId())
+                val r = EventClient.request(serverUrl, signer, "GET", "/v1/guardians/me/alerts", keyId = guardianKeyId())
                 (r["subject_id"] as? String)?.let { prefs.edit(commit = true) { putString(K_G_MEMBER, it) } }
                 @Suppress("UNCHECKED_CAST")
                 (r["alerts"] as? List<Map<String, Any?>>) ?: emptyList()
@@ -333,7 +349,7 @@ object ServerSync {
                     mapOf("kind" to "guardian_ack", "pv" to 1, "incident_id" to incidentId, "action" to action),
                     guardianKeyId = guardianKeyId(),
                 )
-                EventClient.request(SERVER_URL, signer, "POST", "/v1/events", Canonical.json(event), keyId = guardianKeyId())
+                EventClient.request(serverUrl, signer, "POST", "/v1/events", Canonical.json(event), keyId = guardianKeyId())
             } catch (e: Exception) {
                 Log.w(TAG, "guardian_ack not sent: ${e.message}")
             }
@@ -343,6 +359,140 @@ object ServerSync {
     /** Stop being a guardian on this phone (the server keeps its own record). */
     fun leaveGuardian() {
         if (::app.isInitialized) worker.execute { prefs.edit(commit = true) { remove(K_G_ID).remove(K_G_MEMBER) } }
+    }
+
+    // ── Server choice and connection test ──
+
+    /**
+     * Switches server. Each server has its own database, so this phone
+     * registers again there (same key, new genesis); anything still queued for
+     * the old server is set aside, and an open journey is forgotten.
+     */
+    fun setServer(context: Context, url: String) {
+        init(context)
+        worker.execute {
+            val clean = url.trim().trimEnd('/')
+            if (clean == serverUrl) return@execute
+            val refused = readList(K_REFUSED) + readList(K_OUTBOX)
+            prefs.edit(commit = true) {
+                putString(K_SERVER, clean)
+                remove(K_SUBJECT).remove(K_ACTOR).remove(K_JOURNEY).remove(K_G_ID).remove(K_G_MEMBER).remove(K_PENDING_HELP)
+                putString(K_OUTBOX, "[]").putString(K_REFUSED, Canonical.json(refused)).putInt(K_SENT, 0)
+            }
+            publish(error = null)
+        }
+        register(context)
+    }
+
+    /** One live round trip: /healthz, then a signed GET /v1/account. Human-readable result. */
+    fun testConnection(context: Context, cb: (Result<String>) -> Unit) {
+        init(context)
+        worker.execute {
+            val result = runCatching {
+                val health = java.net.URL(serverUrl.trimEnd('/') + "/healthz").openConnection() as java.net.HttpURLConnection
+                health.connectTimeout = 10_000
+                health.readTimeout = 10_000
+                val code = health.responseCode
+                health.disconnect()
+                if (code != 200) throw IllegalStateException("health check answered $code")
+                flushNow()
+                if (prefs.getString(K_SUBJECT, null) == null) return@runCatching "Server reachable. This phone isn't registered yet."
+                val acct = EventClient.request(serverUrl, signer, "GET", "/v1/account")
+                "Connected. Signed in as ${acct["subject_id"]}. ${prefs.getInt(K_SENT, 0)} signed events received."
+            }
+            _status.value = _status.value.copy(lastSentAt = if (result.isSuccess) EventClient.rfc3339() else _status.value.lastSentAt)
+            onMain(cb, result)
+        }
+    }
+
+    // ── Accounts (server/accounts.py, PROPOSED) ──
+
+    data class OtpSent(val otpId: String, val sentTo: String, val delivery: String)
+
+    /** Sends a 6-digit code by email or sms. purpose "reset" sends to the verified recovery contact. */
+    fun sendOtp(context: Context, channel: String, to: String?, purpose: String, cb: (Result<OtpSent>) -> Unit) {
+        init(context)
+        worker.execute {
+            val result = runCatching {
+                awaitRegistered()
+                val body = Canonical.json(buildMap {
+                    put("channel", channel); put("purpose", purpose); if (to != null) put("to", to)
+                })
+                val r = EventClient.request(serverUrl, signer, "POST", "/v1/account/otp", body)
+                OtpSent(r["otp_id"] as String, r["sent_to"] as? String ?: "", r["delivery"] as? String ?: "")
+            }
+            onMain(cb, result)
+        }
+    }
+
+    /** Checks a code. Errors are EventClient.ServerError (wrong_code, expired, locked, contact_in_use). */
+    fun verifyOtp(otpId: String, code: String, cb: (Result<Map<String, Any?>>) -> Unit) {
+        worker.execute {
+            onMain(cb, runCatching {
+                EventClient.request(serverUrl, signer, "POST", "/v1/account/otp/verify", Canonical.json(mapOf("otp_id" to otpId, "code" to code)))
+            })
+        }
+    }
+
+    fun getAccount(cb: (Result<Map<String, Any?>>) -> Unit) {
+        worker.execute { onMain(cb, runCatching { awaitRegistered(); EventClient.request(serverUrl, signer, "GET", "/v1/account") }) }
+    }
+
+    fun saveProfile(first: String, last: String, cb: (Result<Unit>) -> Unit = {}) {
+        if (!::app.isInitialized) return
+        worker.execute {
+            onMain(cb, runCatching {
+                awaitRegistered()
+                EventClient.request(serverUrl, signer, "PUT", "/v1/account/profile", Canonical.json(mapOf("first_name" to first, "surname" to last)))
+                Unit
+            })
+        }
+    }
+
+    fun setPassword(password: String, cb: (Result<Unit>) -> Unit = {}) {
+        worker.execute {
+            onMain(cb, runCatching {
+                EventClient.request(serverUrl, signer, "PUT", "/v1/account/password", Canonical.json(mapOf("password" to password)))
+                Unit
+            })
+        }
+    }
+
+    fun checkPassword(context: Context, email: String, password: String, cb: (Result<Unit>) -> Unit) {
+        init(context)
+        worker.execute {
+            onMain(cb, runCatching {
+                awaitRegistered()
+                EventClient.request(serverUrl, signer, "POST", "/v1/account/password/check", Canonical.json(mapOf("email" to email, "password" to password)))
+                Unit
+            })
+        }
+    }
+
+    fun resetPassword(otpId: String, code: String, password: String, cb: (Result<Unit>) -> Unit) {
+        worker.execute {
+            onMain(cb, runCatching {
+                EventClient.request(serverUrl, signer, "POST", "/v1/account/password/reset",
+                    Canonical.json(mapOf("otp_id" to otpId, "code" to code, "password" to password)))
+                Unit
+            })
+        }
+    }
+
+    fun setRecoveryChannel(channel: String, cb: (Result<Unit>) -> Unit) {
+        worker.execute {
+            onMain(cb, runCatching {
+                EventClient.request(serverUrl, signer, "PUT", "/v1/account/recovery", Canonical.json(mapOf("channel" to channel)))
+                Unit
+            })
+        }
+    }
+
+    /** Account calls need the registration received first (it enrols the key). */
+    private fun awaitRegistered() {
+        if (prefs.getString(K_SUBJECT, null) == null) registerNow()
+        flushNow()
+        if (readList(K_OUTBOX).isNotEmpty()) throw IllegalStateException(_status.value.lastError ?: "can't reach the server")
     }
 
     fun retry() {
@@ -388,7 +538,7 @@ object ServerSync {
         while (outbox.isNotEmpty()) {
             val body = outbox.first()
             try {
-                EventClient.request(SERVER_URL, signer, "POST", "/v1/events", body)
+                EventClient.request(serverUrl, signer, "POST", "/v1/events", body)
                 prefs.edit(commit = true) { putInt(K_SENT, prefs.getInt(K_SENT, 0) + 1) }
                 _status.value = _status.value.copy(lastSentAt = EventClient.rfc3339())
             } catch (e: EventClient.ServerError) {
@@ -423,6 +573,8 @@ object ServerSync {
             sending = sending,
             lastError = error,
             journeyId = journeyId,
+            serverUrl = serverUrl,
+            subjectId = prefs.getString(K_SUBJECT, null),
         )
     }
 

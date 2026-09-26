@@ -5,12 +5,14 @@ hex hashes (§6), never payloads. Read-only; the BatchCoordinator that writes
 this table lives in server/anchoring.py and is not started here.
 """
 import json
+import os
 from pathlib import Path
 
 from anchor.merkle import build_merkle_proof
 from server.anchoring import validate_receipt
 
-_MANIFEST_PATH = Path(__file__).resolve().parents[1] / "contracts" / "keys" / "manifest.json"
+_MANIFEST_PATH = Path(os.environ["VUKA_SERVER_MANIFEST_PATH"]) if os.environ.get("VUKA_SERVER_MANIFEST_PATH") \
+    else Path(__file__).resolve().parents[1] / "contracts" / "keys" / "manifest.json"
 
 
 class ProofNotFound(LookupError):

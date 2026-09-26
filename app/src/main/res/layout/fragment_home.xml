@@ -114,6 +114,36 @@
                     android:layout_marginBottom="4dp"
                     android:visibility="gone" />
 
+                <!-- Live: what VIGIL hears right now (label + loudness), only while listening -->
+                <LinearLayout
+                    android:id="@+id/hearingRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvHearing"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:accessibilityLiveRegion="none"
+                        android:textColor="@color/vuka_text_label"
+                        android:textSize="13sp" />
+
+                    <ProgressBar
+                        android:id="@+id/levelBar"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="80dp"
+                        android:layout_height="6dp"
+                        android:layout_marginStart="10dp"
+                        android:importantForAccessibility="no"
+                        android:max="100"
+                        android:progressTint="@color/vuka_action" />
+                </LinearLayout>
+
                 <TextView
                     android:id="@+id/tvVigilBody"
                     android:layout_width="match_parent"
@@ -168,6 +198,18 @@
                 android:gravity="center"
                 android:text="Opens your dialer with 10111 ready. Press call there."
                 android:textColor="@color/vuka_text_dim"
+                android:textSize="12sp" />
+
+            <!-- Live link to VUKA's server (ServerSync) -->
+            <TextView
+                android:id="@+id/tvServer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:accessibilityLiveRegion="polite"
+                android:drawablePadding="6dp"
+                android:gravity="center"
+                android:textColor="@color/vuka_text_secondary"
                 android:textSize="12sp" />
 
             <!-- Guardians ready -->

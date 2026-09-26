@@ -16,15 +16,19 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import za.co.vuka.app.R
+import za.co.vuka.app.api.ServerSync
+import za.co.vuka.app.api.EventClient
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
  * Onboarding step 5 — Verify code. Six one-digit boxes and an on-screen keypad.
  *
- * SIMULATED: no SMS provider exists yet, so [submit] accepts any complete code.
- * The WRONG / EXPIRED / LOCKED states match VerifyCode.tsx. A real
- * verification call can set them; nothing does today.
+ * Real codes from VUKA's server (server/accounts.py): the screen asks the
+ * server to send one when it opens, on Resend and on a channel change, and
+ * the server checks the 6 digits. WRONG / EXPIRED / LOCKED come from the
+ * server's answer. On a development server without an email or SMS provider
+ * the code is printed in the server's console, and the note says so.
  *
  * The code can go by text or by email. If the member picks one they haven't
  * given (the number was skipped, or there's no email on the phone route),
@@ -40,15 +44,20 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
     private var secondsLeft = RESEND_SECONDS
     private var timer: CountDownTimer? = null
     private var codeByEmail = false
+    private var otpId: String? = null
+    private var sending = false
 
     private lateinit var boxes: List<TextView>
     private val onboardingViewModel: OnboardingViewModel by activityViewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // No number (skipped on the email route): the code goes to the email.
-        codeByEmail = onboardingViewModel.phoneNumber.value.isBlank()
+        // The server identity comes first: codes are requested with this phone's key.
+        ServerSync.register(requireContext())
+        // No number (skipped), or an email sign-up (its password needs a verified email): code by email.
+        codeByEmail = onboardingViewModel.phoneNumber.value.isBlank() || onboardingViewModel.pendingPassword != null
         savedInstanceState?.let {
+            otpId = it.getString(KEY_OTP)
             codeByEmail = it.getBoolean(KEY_BY_EMAIL, codeByEmail)
             value =it.getString(KEY_VALUE).orEmpty()
             state = CodeState.valueOf(it.getString(KEY_STATE) ?: CodeState.IDLE.name)
@@ -87,6 +96,45 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
         render()
         renderChannel()
         startTimer()
+        if (otpId == null) sendCode()
+    }
+
+    /** Asks the server to send a code to the chosen email or number. */
+    private fun sendCode() {
+        if (sending) return
+        sending = true
+        otpId = null
+        val channel = if (codeByEmail) "email" else "sms"
+        val to = if (codeByEmail) onboardingViewModel.email.value else onboardingViewModel.phoneNumber.value
+        view?.findViewById<TextView>(R.id.tvCodeNote)?.text = "SENDING THE CODE…"
+        ServerSync.sendOtp(requireContext(), channel, to, "verify") { result ->
+            sending = false
+            val v = view ?: return@sendOtp
+            result.onSuccess { sent ->
+                otpId = sent.otpId
+                v.findViewById<TextView>(R.id.tvIntro).text = "Enter the 6-digit code we sent to ${sent.sentTo}."
+                v.findViewById<TextView>(R.id.tvCodeNote).text = if (sent.delivery == "dev_log") {
+                    "DEVELOPMENT SERVER · THE CODE IS PRINTED IN THE SERVER CONSOLE"
+                } else {
+                    "SENT BY VUKA'S SERVER · VALID FOR 10 MINUTES"
+                }
+            }.onFailure { e ->
+                v.findViewById<TextView>(R.id.tvCodeNote).text = "NO CODE WAS SENT"
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Couldn't send a code")
+                    .setMessage(
+                        when {
+                            e is EventClient.ServerError && e.code == "delivery_unavailable" ->
+                                "This server can't send ${if (codeByEmail) "emails" else "text messages"} yet: no provider is set up on it. ${e.reason}"
+                            e is EventClient.ServerError && e.code == "rate_limited" -> "Too many codes were requested. Wait a few minutes, then tap Resend."
+                            e is EventClient.ServerError -> e.reason
+                            else -> "Couldn't reach VUKA's server (${ServerSync.serverUrl}). Check your connection, then tap Resend."
+                        }
+                    )
+                    .setPositiveButton("OK", null)
+                    .show()
+            }
+        }
     }
 
     private fun selectChannel(byEmail: Boolean) {
@@ -175,6 +223,7 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(KEY_BY_EMAIL, codeByEmail)
+        otpId?.let { outState.putString(KEY_OTP, it) }
         outState.putString(KEY_VALUE, value)
         outState.putString(KEY_STATE, state.name)
         outState.putInt(KEY_ATTEMPTS, attemptsLeft)
@@ -189,10 +238,42 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
     }
 
     private fun submit(code: String) {
-        // SIMULATED — replace with the real check. On a wrong code: set
-        // state = WRONG, decrement attemptsLeft (LOCKED at 0) and clear value.
         value = ""
         render()
+        val id = otpId
+        if (id == null) {
+            sendCode()
+            return
+        }
+        ServerSync.verifyOtp(id, code) { result ->
+            if (view == null) return@verifyOtp
+            result.onSuccess { verified() }.onFailure { e ->
+                when {
+                    e is EventClient.ServerError && e.code == "wrong_code" -> {
+                        attemptsLeft = (e.body["attempts_left"] as? Long)?.toInt() ?: (attemptsLeft - 1)
+                        state = if (attemptsLeft <= 0) CodeState.LOCKED else CodeState.WRONG
+                    }
+                    e is EventClient.ServerError && e.code == "expired" -> state = CodeState.EXPIRED
+                    e is EventClient.ServerError && e.code == "locked" -> state = CodeState.LOCKED
+                    else -> MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Couldn't check the code")
+                        .setMessage(if (e is EventClient.ServerError) e.reason else "Couldn't reach VUKA's server. Try again.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+                render()
+            }
+        }
+    }
+
+    /** The server confirmed the code: the contact is verified on the account. */
+    private fun verified() {
+        onboardingViewModel.pendingPassword?.let { pw ->
+            if (codeByEmail) {
+                ServerSync.setPassword(pw)
+                onboardingViewModel.pendingPassword = null
+            }
+        }
         onboardingViewModel.verifiedByEmail = codeByEmail
         val existing = onboardingViewModel.isRegistered(onboardingViewModel.phoneNumber.value)
         if (onboardingViewModel.signingIn && !existing) {
@@ -214,12 +295,13 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
     }
 
     private fun resend() {
-        // SIMULATED — no SMS is sent; this only restarts the countdown.
         state = CodeState.IDLE
         value = ""
+        attemptsLeft = MAX_ATTEMPTS
         secondsLeft = RESEND_SECONDS
         render()
         startTimer()
+        sendCode()
     }
 
     private fun startTimer() {
@@ -296,6 +378,7 @@ class VerifyCodeFragment : Fragment(R.layout.fragment_verify_code) {
         private const val RESEND_SECONDS = 45
 
         private const val KEY_BY_EMAIL = "verify_by_email"
+        private const val KEY_OTP = "verify_otp_id"
         private const val KEY_VALUE ="verify_value"
         private const val KEY_STATE = "verify_state"
         private const val KEY_ATTEMPTS = "verify_attempts"

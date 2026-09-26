@@ -205,6 +205,22 @@
                 android:showDividers="middle" />
         </LinearLayout>
 
+        <!-- VUKA server: which server, this phone's account there, and a live test -->
+        <LinearLayout style="@style/Widget.Vuka.SettingsSection">
+
+            <TextView
+                style="@style/Widget.Vuka.SettingsSectionTitle"
+                android:text="VUKA server" />
+
+            <LinearLayout
+                android:id="@+id/serverRows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@drawable/divider_subtle"
+                android:orientation="vertical"
+                android:showDividers="middle" />
+        </LinearLayout>
+
         <!-- Privacy and data -->
         <LinearLayout style="@style/Widget.Vuka.SettingsSection">
 

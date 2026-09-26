@@ -84,7 +84,8 @@
                 android:layout_marginTop="10dp"
                 android:fontFamily="monospace"
                 android:letterSpacing="0.08"
-                android:text="SIMULATED · NO CODE IS SENT · ANY 6 DIGITS CONTINUE"
+                android:id="@+id/tvCodeNote"
+                android:text="SENDING THE CODE…"
                 android:textColor="@color/vuka_text_dim"
                 android:textSize="10sp" />
         </LinearLayout>

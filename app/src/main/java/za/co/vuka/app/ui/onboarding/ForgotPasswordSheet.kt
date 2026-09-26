@@ -7,6 +7,8 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import za.co.vuka.app.R
+import za.co.vuka.app.api.ServerSync
+import za.co.vuka.app.api.EventClient
 import za.co.vuka.app.auth.AccountStore
 import za.co.vuka.app.auth.InterimPasswordStore
 import za.co.vuka.app.ui.record.RecordEntry
@@ -24,12 +26,15 @@ import com.google.android.material.button.MaterialButton
  * Resets the email sign-in password only; the PIN is never reset this way
  * (spec §9), and the member still enters it on "Welcome back".
  *
- * SIMULATED: no SMS or email service, so any 6 digits continue, and the sheet
- * says so. LOCAL ONLY: only an account on this phone can be reset.
+ * Real codes: VUKA's server sends the reset code to the account's verified
+ * recovery contact (never to an address typed here) and checks it with the
+ * new password (POST /v1/account/password/reset).
  */
 class ForgotPasswordSheet : BottomSheetDialogFragment(R.layout.dialog_forgot_password) {
 
     private var codeSent = false
+    private var otpId: String? = null
+    private var sentTo: String = ""
 
     override fun getTheme() = R.style.ThemeOverlay_Vuka_BottomSheet
 
@@ -63,9 +68,19 @@ class ForgotPasswordSheet : BottomSheetDialogFragment(R.layout.dialog_forgot_pas
             !passwords.hasPassword() || !passwords.isAccountEmail(email) ->
                 return showError(view, "There's no VUKA account with an email password for that address on this phone.")
         }
-        codeSent = true
-        hideError(view)
-        render(view)
+        val channel = if (AccountStore(requireContext()).recoveryChannel == AccountStore.RecoveryChannel.PHONE) "sms" else "email"
+        ServerSync.sendOtp(requireContext(), channel, null, "reset") { result ->
+            val v = this.view ?: return@sendOtp
+            result.onSuccess { sent ->
+                otpId = sent.otpId
+                sentTo = sent.sentTo + if (sent.delivery == "dev_log") " (development server: the code is in its console)" else ""
+                codeSent = true
+                hideError(v)
+                render(v)
+            }.onFailure { e ->
+                showError(v, if (e is EventClient.ServerError) e.reason else "Couldn't reach VUKA's server. Try again when you're online.")
+            }
+        }
     }
 
     private fun resetPassword(view: View) {
@@ -82,9 +97,25 @@ class ForgotPasswordSheet : BottomSheetDialogFragment(R.layout.dialog_forgot_pas
         }
         if (message != null) return showError(view, message)
 
-        InterimPasswordStore(requireContext()).set(email, password)
-        etPassword.text.clear()
-        etConfirm.text.clear()
+        val id = otpId ?: return showError(view, "Request a new code.")
+        ServerSync.resetPassword(id, code, password) { result ->
+            val v = this.view ?: return@resetPassword
+            result.onSuccess {
+                InterimPasswordStore(requireContext()).set(email, password)
+                etPassword.text.clear()
+                etConfirm.text.clear()
+                finishReset()
+            }.onFailure { e ->
+                showError(v, when {
+                    e is EventClient.ServerError && e.code == "wrong_code" -> "That code isn't right. ${e.body["attempts_left"]} attempts left."
+                    e is EventClient.ServerError -> e.reason
+                    else -> "Couldn't reach VUKA's server. Try again."
+                })
+            }
+        }
+    }
+
+    private fun finishReset() {
         val via = when (AccountStore(requireContext()).recoveryChannel) {
             AccountStore.RecoveryChannel.PHONE -> "via mobile number"
             else -> "via email"
@@ -99,12 +130,7 @@ class ForgotPasswordSheet : BottomSheetDialogFragment(R.layout.dialog_forgot_pas
         view.findViewById<View>(R.id.stepReset).visibility = if (codeSent) View.VISIBLE else View.GONE
         view.findViewById<MaterialButton>(R.id.btnPrimary).text = if (codeSent) "Save new password" else "Send code"
         if (codeSent) {
-            val profile = AccountStore(requireContext()).profile()
-            val destination = when (AccountStore(requireContext()).recoveryChannel) {
-                AccountStore.RecoveryChannel.PHONE -> "your mobile number, ${maskPhone(profile?.phone.orEmpty())}"
-                else -> "your email, ${maskEmail(profile?.email.orEmpty())}"
-            }
-            view.findViewById<TextView>(R.id.tvIntro).text = "Enter the code we sent to $destination, then choose a new password."
+            view.findViewById<TextView>(R.id.tvIntro).text = "Enter the code we sent to $sentTo, then choose a new password."
         }
     }
 

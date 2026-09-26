@@ -53,6 +53,7 @@ class EmailSignUpFragment : Fragment(R.layout.fragment_email_sign_up) {
             }
             error.visibility = View.GONE
             InterimPasswordStore(requireContext()).set(email, password)
+            onboardingViewModel.pendingPassword = password // to the server once the email is verified
             etPassword.text.clear()
             etConfirm.text.clear()
             onboardingViewModel.setEmailAccount(email)

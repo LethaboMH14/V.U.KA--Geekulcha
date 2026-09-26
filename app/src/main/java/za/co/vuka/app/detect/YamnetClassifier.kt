@@ -105,12 +105,19 @@ class WindowResult(
     val endMs: Long,
     val targetBp: IntArray,
     val gunNeighbourBp: Int,
+    /** The model's top class over all 521, for the live "Hearing" line (never audio). */
+    val topIndex: Int = 0,
+    val topBp: Int = 0,
+    /** Loudness of the window, 0..100 (RMS against full scale, in dB above -60). */
+    var level: Int = 0,
 )
 
 fun summarise(c: YamnetClassifier, scores: FloatArray, seq: Int, endMs: Long): WindowResult {
     var neighbour = 0
     for (i in c.neighbourIndices) neighbour = maxOf(neighbour, toBp(scores[i]))
-    return WindowResult(seq, endMs, IntArray(c.targetIndices.size) { toBp(scores[c.targetIndices[it]]) }, neighbour)
+    var top = 0
+    for (i in 1 until scores.size) if (scores[i] > scores[top]) top = i
+    return WindowResult(seq, endMs, IntArray(c.targetIndices.size) { toBp(scores[c.targetIndices[it]]) }, neighbour, top, toBp(scores[top]))
 }
 
 /** Score 0..1 to integer basis points 0..10000, rounding half up. */
