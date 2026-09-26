@@ -15,9 +15,9 @@
 | 4B · The record | Where it lives; automatic fingerprint | T, S | 89 |
 | 5 · Why it works | The sale | I, T | 77 |
 | 6 · Business | There is a business | B | 51 |
-| 7 · Compliance | Neutralise the four objections | S | 40 |
+| 7 · Compliance | Neutralise the objections; deployability | S, B | 52 |
 | 8 · Ask | Confident close | B | 55 |
-| | | **Total** | **588** |
+| | | **Total** | **600** |
 
 ---
 
@@ -53,7 +53,7 @@ Two people pay. The insurer pays per member, per month — about fifty rand. The
 
 ### Beat 7 — Compliance
 
-Nothing personal ever touches the ledger — only a fingerprint, and they hold the key. Blockchain is legal here; we are not a financial service and we hold no crypto. No tokens, no coin. Built for the ECT Act.
+Nothing personal ever touches the ledger — only a fingerprint, and they hold the key. The ledger is lawful here; we are not a financial service, and we issue no token — no coin, no ICO. Deploying it costs only network fees: a fixed, bounded cost we have modelled. Built for the ECT Act.
 
 ### Beat 8 — Ask
 
@@ -84,8 +84,11 @@ Here's what we want from this room. One insurer, five thousand members, twelve m
 | Blockchain is legal here; not a financial service; no crypto; no tokens | ADR-0034/0035; `context.md` |
 | Built for the ECT Act | ECTA 25 of 2002 s15(3)(a)–(c) |
 
-### Governance tokens — the rationale
-**None.** The ledger anchors a hash; there is nothing to trade. A token would create securities, tax and AML obligations for zero product benefit. **No token, no coin, no ICO** (ADR-0034/0035).
+### Governance tokens & deployment economics — the rationale
+- **We issue no token** — no governance token, no coin, no ICO. Hedera is governed by its council; there is nothing to trade. A token would add securities, tax and AML exposure for zero product benefit (ADR-0034/0035).
+- **The only token involved is the network's own utility token (HBAR),** held in small quantity to pay message fees. That is an operating cost, not a security, and not a CASP activity (no advice, intermediary, exchange or custody).
+- **Deployment cost is bounded and fixed:** the anchoring ceiling is **R569.47/month** at any member count (`ESTIMATE`, spec §10) — hourly roots ≈ R9.34/month, immediate roots capped ≈ R560.13/month; OpenTimestamps → Bitcoin is free. Printed by `scripts/economics_vigil_anchor.py`.
+- **SA deployability:** the anchor records a hash — we do not process payments, move money, or hold customer assets. *(Counsel confirm — tracked with Ipeleng.)*
 
 ### Infrastructure cost — the breakdown
 - **Anchoring ceiling: R569.47/month, fixed at any member count** (`ESTIMATE`, spec §10).
