@@ -15,6 +15,9 @@ buildscript {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        // Firebase (push for guardians, Google sign-in). Applied in app/build.gradle only when
+        // app/google-services.json exists, so a build without it works as before.
+        classpath("com.google.gms:google-services:4.4.2")
     }
 }
 

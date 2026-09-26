@@ -1,6 +1,12 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+// Firebase is configured only when app/google-services.json is present (downloaded from the
+// team's Firebase project; gitignored, never committed). Without it VIGIL builds and runs as
+// before: guardians get alerts in the app, and Google sign-in stays SIMULATED.
+if (file("google-services.json").exists()) {
+    apply plugin: "com.google.gms.google-services"
+}
 
 /**
  * This is the configuration block to customize your React Native Android app.
