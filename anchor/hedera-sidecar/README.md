@@ -24,10 +24,13 @@ re-reads and checks that manifest message before submitting `0x01`. The
 previous spike's plain-text message at sequence 1 is **not** a manifest
 publication and cannot satisfy this condition.
 
-`anchor/publish.py` is a narrow process adapter for a future durable batch
-worker. No worker calls it yet. If submission succeeds but mirror read-back
-fails, the state is ambiguous: inspect the topic before any retry to avoid a
-duplicate ledger message. Live publication and a verified 60-second batching
-policy remain outstanding until the outbox/batch coordinator and credentials
-are available. Nothing in this directory signs Merkle roots off-chain or
-records a production receipt.
+`anchor/publish.py` is a narrow process adapter. `server/anchoring.py`'s
+`BatchCoordinator`, run every second by `server/run_workers.py`, is its
+durable batch worker and owns the 60-second coalescing policy; this sidecar
+does not schedule anything itself. If submission succeeds but mirror
+read-back fails, the state is ambiguous: inspect the topic before any retry
+to avoid a duplicate ledger message. Live publication still needs real
+`HEDERA_OPERATOR_ID`/`HEDERA_OPERATOR_KEY`/`HEDERA_SUBMIT_KEY` and this
+directory's `npm ci` run — the coordinator itself has been live since
+26 Sep. Nothing in this directory signs Merkle roots off-chain or records a
+production receipt.

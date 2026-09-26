@@ -361,6 +361,41 @@ paths:
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /v1/journeys/{id}/location:
+    post:
+      tags: [VIGIL]
+      operationId: sendJourneyLocation
+      x-vuka-implemented: true
+      summary: Send a location fix while a check-in may have alerted guardians
+      description: >-
+        PROPOSED (ADR-0048). Device-signed. The phone sends a fix every 30 s for 30 minutes
+        after any check-in opens, after either PIN alike (V5). The server keeps a fix only
+        while the member has an open incident with a guardian alert requested, and drops
+        it otherwise; the answer is the same 202 either way, so the phone never learns
+        whether an alert was raised (T30). Kept fixes are readable only by the alerted
+        guardian (alerts route), stop at incident close, and are purged 24 h after it and
+        on subject deletion. Integers only (spec §5).
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      parameters: [{ $ref: '#/components/parameters/SubjectId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat_e7, lon_e7, acc_m, fix_age_ms, ts]
+              additionalProperties: false
+              properties:
+                lat_e7: { type: integer, minimum: -900000000, maximum: 900000000 }
+                lon_e7: { type: integer, minimum: -1800000000, maximum: 1800000000 }
+                acc_m: { type: integer, minimum: 0, maximum: 100000 }
+                fix_age_ms: { type: integer, minimum: 0, maximum: 3600000 }
+                ts: { type: string, format: date-time }
+      responses:
+        '202': { $ref: '#/components/responses/AcceptedReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /v1/journeys/{id}/end:
     post:
       tags: [VIGIL]
@@ -564,6 +599,91 @@ paths:
       responses:
         '202': { $ref: '#/components/responses/AcceptedReceipt' }
         '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientApproval' }
+  /v1/guardians/me/alerts:
+    get:
+      tags: [VIGIL]
+      operationId: listMyGuardianAlerts
+      x-vuka-implemented: true
+      summary: Alerts delivered to the calling guardian
+      description: >-
+        PROPOSED (Lethabo, 25 Sep). Guardian-signed only; the key identifies the guardian.
+        Built only from recorded delivery evidence, so a decoy guardian (never delivered to)
+        sees an empty list in the same shape as a real guardian with no alerts. Returns no
+        member payload: incident id, trigger, times and, for a detection, the evidence band
+        and reason names (`why`). subject_id is returned so the
+        guardian can sign a guardian_ack for that record (G5).
+      x-vuka-required-signer-role: guardian
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      responses:
+        '200':
+          description: Delivered alerts, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [subject_id, alerts]
+                additionalProperties: false
+                properties:
+                  subject_id: { type: string, minLength: 1 }
+                  alerts:
+                    type: array
+                    items:
+                      type: object
+                      required: [incident_id, trigger, delivered_at, opened_at, closed_at, close_reason, why, location]
+                      additionalProperties: false
+                      properties:
+                        incident_id: { type: string }
+                        trigger: { type: string, enum: [duress_signal, no_answer, contact_lost, unknown] }
+                        delivered_at: { type: string, format: date-time }
+                        opened_at: { type: string, format: date-time }
+                        closed_at: { type: [string, 'null'], format: date-time }
+                        close_reason: { type: [string, 'null'] }
+                        why:
+                          description: >-
+                            PROPOSED (ADR-0047). For an incident that began with a detection, the
+                            phone's evidence band and up to three reason names from the
+                            evidence_observed recorded just before it. Words only, never a number;
+                            null when there is none (or the member's data was deleted).
+                          type: [object, 'null']
+                          required: [band, reasons]
+                          additionalProperties: false
+                          properties:
+                            band: { type: string, enum: [faint, some, strong, very strong, overwhelming] }
+                            reasons:
+                              type: array
+                              maxItems: 3
+                              items: { type: string, pattern: '^[a-z][a-z0-9_]{0,39}$' }
+                        location:
+                          description: >-
+                            PROPOSED (ADR-0048). The member's last fix and a trail of up to 20
+                            (oldest first), kept only while this alert's incident was open; null
+                            when none.
+                          type: [object, 'null']
+                          required: [last, trail]
+                          additionalProperties: false
+                          properties:
+                            last:
+                              type: object
+                              required: [lat_e7, lon_e7, acc_m, at]
+                              additionalProperties: false
+                              properties:
+                                lat_e7: { type: integer }
+                                lon_e7: { type: integer }
+                                acc_m: { type: integer }
+                                at: { type: string, format: date-time }
+                            trail:
+                              type: array
+                              maxItems: 20
+                              items:
+                                type: object
+                                required: [lat_e7, lon_e7, at]
+                                additionalProperties: false
+                                properties:
+                                  lat_e7: { type: integer }
+                                  lon_e7: { type: integer }
+                                  at: { type: string, format: date-time }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/InsufficientApproval' }
   /v1/alerts/{id}/ack:
