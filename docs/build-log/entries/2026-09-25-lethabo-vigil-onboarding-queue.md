@@ -403,3 +403,46 @@ Not ported, needs a team decision:
 - a `TERMS_ACCEPTED` record entry.
 
 Evidence: `npx tsc --noEmit` is clean; `npx jest` gives 220/220. The sign-up transitions were walked with a throwaway renderer test (3 routes, forward and back). Not run on a device or emulator.
+
+### Addendum, 26 Sep late afternoon: everything else of Mutarisi's ported, adopted by Lethabo (0.0.14). Claude Code assistant, parallel sub-agents, each result reviewed and tested before commit
+
+**Research:**
+- A feature-by-feature audit of `origin/feature/ui` (`bd26289`..`012f997`) against `app/src`.
+- A read-only review of the Firebase work on #95, #96 and #99, and on both apps.
+
+**Real data / references:** not applicable (UI and flow only; no figures).
+
+**Business reasoning:** one app carrying the whole team's design for the demo.
+
+Lethabo decided to adopt the four items held back earlier. Ported:
+- **Home** (`c541fb9`):
+  - One layout, with Activate / Deactivate. Deactivate reuses the pause PIN screen unchanged.
+  - The listening wave.
+  - One-tap "Emergency · call 10111" in place of the 2 s hold. It raises the same manual check-in and opens the dialer (`tel:`). ADR-0049 is amended, with the stray-tap cost recorded (`22c0f43`).
+- **Guardian** (`c541fb9`):
+  - the "Turn on alerts?" pop-up;
+  - the notifications-off notice;
+  - the "Response recorded" timeline;
+  - "Location unavailable";
+  - a shared styled `Dialog`.
+- **My record** (`d10c199`): sessions and a view-only detail page over the same server-held export (T30 unchanged).
+- **Accounts** (`358a726` and the screen wiring):
+  - sign-out and returning-member sign-in;
+  - an email password (salted SHA-256) and forgot password (SIMULATED code);
+  - the recovery contact;
+  - Documents and your rights, with the Terms and Privacy notice marked as drafts. All of it is local only.
+- **Last items:** see the commit that wires them.
+
+Known gaps, stated rather than hidden:
+- **Duress PIN at two new prompts (V6).** A duress PIN at sign-in, or at sign-out while listening is already paused, raises no alarm. The locked `pin_authorised` action list has nothing that fits. Sign-out while listening does alarm, through the pause path. This needs a contract action (Sibusiso) and Ipeleng's review.
+- **Password hashing.** It is one salted SHA-256, weaker than his 50,000-round hash. It is local only.
+- **Not ported:** the "Terms accepted" and "Password reset" record entries (nothing from these screens enters the record).
+- **Push notifications (Firebase review).**
+  - The FCM sender on #95 is never started. `run_workers.py` on #99 uses `SimulatedGuardianNotifier`.
+  - `FCM_ACCESS_TOKEN` is a static token with no refresh (`server/src/notify/fcm.py:63-69`).
+  - One `FcmError` stalls the whole incident's delivery (`guardian_worker.py:21-22`).
+  - Neither app has a Firebase client. The RN app enrols with the placeholder token `sim_poll_while_open`.
+  - The three channel names differ: `vuka_guardian_alerts`, `guardian_alerts` and `alerts`.
+  - No Firebase secrets are committed; `google-services.json` is gitignored.
+
+Evidence: `npx tsc --noEmit` is clean and `npx jest` gives 241/241 at `358a726`, plus new tests for grouping, emergency presses, the guardian timeline and accounts. Not run on a device or emulator.
