@@ -55,6 +55,9 @@ The pilot must show a saving of at least **12× the annual fee — R240 per memb
 ### 1.10 What's your margin?
 **R14.28 contribution per member per month at R20**, before fixed costs (`ESTIMATE`).
 
+### 1.11 How much are you raising, and how is it built?
+**R1,884,583 for the first 12 months** (`ESTIMATE`): itemised product/ledger **R80,917.68** + one-off **R3,665** (PI, cyber, CIPC) + a **5-person team at R30,000/month = R1,800,000** (`ASSUMPTION`). The technology is R80,918/year; the balance is the team and a pilot runway. Legal counsel and the HBAR float are unpriced and sit inside the contingency.
+
 ---
 
 ## 2 · Blockchain compliance & eligibility in South Africa

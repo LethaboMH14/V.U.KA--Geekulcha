@@ -21,7 +21,7 @@
 
 | Line | Value | Tag |
 |---|---:|---|
-| Variable cost per member per month (cloud R0.15 + support R5.00 + compliance R0.57; anchoring moved into fixed cost) | **R5.72** | `ESTIMATE` — Babatunde's plan |
+| Variable cost per member per month — cloud R0.15 (`ASSUMPTION`, conservative: the scale model shows ~2.45 MB retained per member per year, so true marginal cloud is well under R0.01) + support R5.00 (`ESTIMATE`, a **step** cost: 1 agent per 5,000 at R25,000/month `FACT`) + compliance R0.57 (`ESTIMATE`, a **fixed** R68,000/year allocated over members; falls as members grow) | **R5.72** | `ESTIMATE` — conservative; components have different natures |
 | Fixed cost per month, **itemised** — stipends R150,000 (`ASSUMPTION`) + R6,683.98 register-backed (Azure R348.30 · anchoring R569.47 `ESTIMATE` · insurance R667.92 · accountant R4,400 · tools R648.30 · CIPC R50) | **R156,683.98** | `ESTIMATE`; every non-stipend line is `FACT`-derived from `docs/MARKET-DATA.md` §4 |
 | Contribution margin at R20 | **71.4%** | `ESTIMATE` |
 | **Break-even at R20** (rounded **up**) | **10,973 members** | `ESTIMATE` |
@@ -59,6 +59,8 @@ adoption in one channel       F(t) = (1 − e^−(p+q)t) / (1 + (q/p)·e^−(p+q
 | Legal counsel — POPIA + ECTA + blockchain legality | **quote needed** | evidence request | — |
 | Hedera mainnet HBAR float (fund real anchoring) | **quote needed** | evidence request | — |
 | Team stipends during build | R30,000/person/month | `ASSUMPTION` | — |
+
+**First-year funding ask (12 months):** itemised product/ledger **R80,917.68** + one-off **R3,665** + **5-person team at R30,000/month = R1,800,000** = **R1,884,583** (`ESTIMATE`; team count is `ASSUMPTION`). Legal counsel and the HBAR float are unpriced and sit inside the contingency.
 
 ## 3 · What the South African market already pays for this shelf
 

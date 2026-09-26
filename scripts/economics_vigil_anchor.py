@@ -34,9 +34,9 @@ IN = {
     "engineering_tools_count": (2, "FACT", "ChatGPT Plus + Claude Pro"),
     "cipc_annual": (600.00, "FACT", "CIPC 2026, upper band (MARKET-DATA.md:50)"),
     # Variable per member - ESTIMATE; allocations over FACT inputs
-    "var_cloud": (0.15, "ESTIMATE", "business plan: extra cloud per member at 10,000 members"),
-    "var_support": (5.00, "ESTIMATE", "FACT agent R25,000/month (MARKET-DATA.md:46) / 5,000 members ASSUMPTION"),
-    "var_compliance": (0.57, "ESTIMATE", "business plan: R68,000/year compliance over 10,000 members; POPIA Information Officer registration itself is free"),
+    "var_cloud": (0.15, "ASSUMPTION", "CONSERVATIVE allowance. The anchor scale model shows ~2.45 MB retained per member per year (10 events/day x 672 bytes; research/anchor_scale_model.py), so the true marginal storage/egress is well under R0.01/member/month; the platform cloud is fixed (Azure SKUs above)"),
+    "var_support": (5.00, "ESTIMATE", "FACT agent R25,000/month (MARKET-DATA.md:46) / 5,000 members per agent (ASSUMPTION, unverified) - a STEP cost, linearised; SMS/WhatsApp support excluded"),
+    "var_compliance": (0.57, "ESTIMATE", "FIXED cost (R68,000/year compliance over 10,000 members) allocated per member - not a true variable; falls as members grow (R1.13 at 5,000, R0.28 at 20,000); check overlap with the accountant retainer in fixed; POPIA Information Officer registration itself is free"),
     # Price - DECIDED 26 Sep 2026
     "price_recommended": (20.00, "ASSUMPTION", "decided 26 Sep 2026, single tier; anchors GuardMe R19.90 and iTOO R22.50 (MARKET-DATA.md:30-31)"),
     # One-off / initial investment
