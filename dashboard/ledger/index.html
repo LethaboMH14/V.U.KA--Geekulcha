@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>VUKA Ledger</title>
+  <meta name="description" content="Check a VUKA record's fingerprint against the public Hedera testnet topic, in your own browser." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" />
+  <link rel="stylesheet" href="./ledger.css" />
+  <link rel="stylesheet" href="./terminal.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="top">
+    <div class="top-inner">
+      <a class="brand" href="#ledger" aria-label="VUKA Ledger, go to the ledger summary">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <rect x="2" y="9" width="9" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" />
+          <rect x="21" y="9" width="9" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" />
+          <path d="M11 16h10" stroke="currentColor" stroke-width="2" />
+          <circle cx="16" cy="16" r="2.5" fill="currentColor" />
+        </svg>
+        <span class="brand-name">VUKA Ledger</span>
+      </a>
+      <span class="net-chip" id="net-chip">Hedera testnet</span>
+      <nav class="tabs" aria-label="Sections">
+        <a href="#ledger" data-nav="ledger">Ledger</a>
+        <a href="#verify" data-nav="verify">Verify a record</a>
+        <a href="#how" data-nav="how">How it works</a>
+        <a href="#settings" data-nav="settings">Settings</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <div id="notices" class="notices" role="status" aria-live="polite"></div>
+
+    <!-- ============ 1. LEDGER ============ -->
+    <section id="ledger" class="view" aria-labelledby="ledger-title">
+      <div class="intro">
+        <p class="eyebrow">Public ledger · topic <span class="mono" id="intro-topic">0.0.10687280</span></p>
+        <h1 id="ledger-title">One fingerprint a minute, public for anyone to check.</h1>
+        <p class="lede">
+          ANCHOR keeps a hash chain for each VIGIL member. When a chain changes, the server publishes a
+          33-byte Merkle root to a Hedera topic. A bank, an insurer or the member can check an exported record
+          against that root here, in the browser, without trusting VUKA.
+        </p>
+      </div>
+
+      <ul class="sources" id="sources" aria-label="Connections">
+        <li class="source" id="src-api">
+          <span class="source-name">Azure API</span>
+          <span class="source-pill"></span>
+          <span class="source-detail mono" id="src-api-detail">…</span>
+        </li>
+        <li class="source" id="src-feed">
+          <span class="source-name">Live feed</span>
+          <span class="source-pill"></span>
+          <span class="source-detail mono" id="src-feed-detail">…</span>
+        </li>
+        <li class="source" id="src-mirror">
+          <span class="source-name">Hedera mirror</span>
+          <span class="source-pill"></span>
+          <span class="source-detail mono" id="src-mirror-detail">…</span>
+        </li>
+      </ul>
+
+      <dl class="status-strip" aria-label="Ledger status">
+        <div class="tile" id="tile-latest">
+          <dt>Latest confirmed anchor</dt>
+          <dd class="tile-pill"></dd>
+          <dd class="tile-value" id="latest-value">…</dd>
+          <dd class="tile-note" id="latest-note">Asking the server…</dd>
+        </div>
+        <div class="tile" id="tile-manifest">
+          <dt>Key manifest (0x02)</dt>
+          <dd class="tile-pill"></dd>
+          <dd class="tile-value mono" id="manifest-value">…</dd>
+          <dd class="tile-note" id="manifest-note">Hashing the pinned manifest…</dd>
+        </div>
+        <div class="tile" id="tile-topic">
+          <dt>Topic</dt>
+          <dd class="tile-pill"></dd>
+          <dd class="tile-value mono"><a id="topic-link" href="https://hashscan.io/testnet/topic/0.0.10687280" target="_blank" rel="noopener">0.0.10687280</a></dd>
+          <dd class="tile-note" id="topic-note">Pinned in contracts/keys/verify-pins.json</dd>
+        </div>
+      </dl>
+
+      <div class="block-head">
+        <h2 id="chain-title">Anchored roots</h2>
+        <p class="block-sub">Messages on the topic, newest first. <span class="mono">0x01</span> carries a Merkle root; <span class="mono">0x02</span> pins the server's key manifest.</p>
+      </div>
+      <p class="chain-note" id="chain-note">Reading the topic from the Hedera mirror…</p>
+      <div class="chain-scroll" tabindex="0" aria-labelledby="chain-title">
+        <ol class="chain" id="chain"></ol>
+      </div>
+
+      <div class="block-head">
+        <h2 id="feed-title">Live activity</h2>
+        <p class="block-sub">Every event the server accepts, as it arrives from <span class="mono">/ws/panel</span>. Subjects are salted hashes that change on every server restart. Event kinds appear only for <span class="mono">sim_</span> test subjects, marked SIMULATED.</p>
+      </div>
+      <div class="feed-grid">
+        <figure class="chart-card" id="rate-figure">
+          <figcaption>
+            <span class="chart-title">Events received per minute</span>
+            <span class="chart-sub" id="rate-sub">Last 15 minutes, from this browser's feed</span>
+          </figcaption>
+          <div class="chart-wrap">
+            <svg id="rate-chart" viewBox="0 0 560 150" role="img" aria-label="Events received per minute, last 15 minutes"></svg>
+            <div class="tooltip" id="rate-tip" hidden></div>
+          </div>
+        </figure>
+        <div class="feed-card">
+          <div class="feed-bar">
+            <span id="feed-pill"></span>
+            <span class="feed-count" id="feed-count">0 events</span>
+            <button type="button" class="btn btn-quiet" id="feed-reconnect">Reconnect</button>
+          </div>
+          <div class="feed-scroll" tabindex="0" aria-labelledby="feed-title">
+            <table class="feed">
+              <thead>
+                <tr><th scope="col">Subject (opaque)</th><th scope="col">Index</th><th scope="col">Event hash</th><th scope="col">Received</th><th scope="col">Kind</th></tr>
+              </thead>
+              <tbody id="feed-body"></tbody>
+            </table>
+            <p class="feed-empty" id="feed-empty">Waiting for the feed.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. VERIFY ============ -->
+    <section id="verify" class="view" aria-labelledby="verify-title">
+      <div class="block-head">
+        <p class="eyebrow">For banks, insurers and members</p>
+        <h2 id="verify-title" class="h-section">Verify a record</h2>
+        <p class="block-sub">A member gets their record in VIGIL: <strong>Settings → My record → Share with a bank or insurer</strong>. That shares the same export JSON the app checks on the phone. Drop it here to check it independently.</p>
+      </div>
+      <ol class="flow-steps">
+        <li><span class="step-n">1</span><span>The member shares their record from VIGIL (My record).</span></li>
+        <li><span class="step-n">2</span><span>They give the file to you: a bank, an insurer, or themselves.</span></li>
+        <li><span class="step-n">3</span><span>You run it here. Your browser recomputes every hash and signature and the Merkle root, then reads the root from Hedera.</span></li>
+        <li><span class="step-n">4</span><span>You keep the fingerprint: root, head, topic, sequence and consensus time.</span></li>
+      </ol>
+
+      <div class="verify-grid">
+        <div class="input-card">
+          <label class="drop" id="drop" for="export-file">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <span class="drop-main">Drop an export file here, or <u>choose a file</u></span>
+            <span class="drop-sub">JSON exported from VIGIL. It stays in this browser; nothing is uploaded.</span>
+            <input type="file" id="export-file" accept="application/json,.json" />
+          </label>
+          <label class="field-label" for="export-text">Or paste the export JSON</label>
+          <textarea id="export-text" spellcheck="false" rows="7" placeholder='{"subject_id": "…", "entries": [ … ], "payloads": { … }, "salts": { … }}'></textarea>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="btn-verify">Verify this record</button>
+            <button type="button" class="btn btn-quiet" id="btn-clear">Clear</button>
+          </div>
+          <p class="input-note" id="input-note">Nothing is uploaded. The proof comes from the ANCHOR server and the root from the public Hedera mirror.</p>
+        </div>
+
+        <div class="run-card">
+          <div class="run-head">
+            <span class="run-title">Verification trace</span>
+            <span class="run-sub" id="run-sub">Each line is a check your browser ran.</span>
+          </div>
+          <div id="terminal" class="terminal-host"></div>
+        </div>
+      </div>
+
+      <article class="result" id="result" aria-labelledby="result-title" hidden>
+        <header class="result-head">
+          <span id="result-pill"></span>
+          <h3 id="result-title" class="result-title"></h3>
+        </header>
+        <p class="result-text" id="result-text"></p>
+        <div class="keep">
+          <div class="keep-head">
+            <h4>Fingerprint to keep</h4>
+            <button type="button" class="btn" id="btn-copy">Copy all</button>
+            <span class="copy-status" id="copy-status" role="status" aria-live="polite"></span>
+          </div>
+          <p class="keep-note" id="keep-note">File these values with your records. Anyone can later check them against the public topic.</p>
+          <dl class="keep-list" id="keep-list"></dl>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ 3. HOW IT WORKS ============ -->
+    <section id="how" class="view" aria-labelledby="how-title">
+      <div class="block-head">
+        <p class="eyebrow">VIGIL · guardians · ANCHOR · Hedera</p>
+        <h2 id="how-title" class="h-section">How it works</h2>
+      </div>
+
+      <figure class="diagram">
+        <div class="diagram-scroll" tabindex="0" aria-label="System diagram, scrolls sideways on small screens">
+          <svg viewBox="0 0 960 470" role="img" aria-labelledby="dg-title dg-desc">
+            <title id="dg-title">How a VUKA record reaches the public ledger and a bank's files</title>
+            <desc id="dg-desc">The member's phone and the guardians' phones send signed entries to the ANCHOR server, which keeps one hash chain per member in PostgreSQL. The server publishes one Merkle root per window of up to a minute to a Hedera testnet topic as a 33-byte message. The member exports their record and gives it to a bank or insurer, who runs it on this verify page, which matches the recomputed root against the Hedera message. Separately, the server sends a bank signal to the bank through the partner API.</desc>
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 10 5 0 10z" fill="currentColor" />
+              </marker>
+              <marker id="ah-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 10 5 0 10z" class="dg-accent-fill" />
+              </marker>
+              <marker id="ah-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 10 5 0 10z" class="dg-amber-fill" />
+              </marker>
+            </defs>
+
+            <!-- column A: phones -->
+            <g class="dg-node">
+              <rect x="20" y="40" width="200" height="76" rx="12" />
+              <text x="120" y="72" class="dg-t">Member phone</text>
+              <text x="120" y="94" class="dg-s">VIGIL · device key</text>
+            </g>
+            <g class="dg-node dg-guardian">
+              <rect x="20" y="196" width="200" height="76" rx="12" />
+              <text x="120" y="228" class="dg-t">Guardian phones</text>
+              <text x="120" y="250" class="dg-s">own guardian keys</text>
+            </g>
+
+            <!-- column B: server -->
+            <g class="dg-node dg-server">
+              <rect x="320" y="24" width="260" height="264" rx="14" />
+              <text x="450" y="56" class="dg-t">ANCHOR server</text>
+              <text x="450" y="76" class="dg-s">checks, orders, signs server events</text>
+              <rect x="342" y="98" width="216" height="130" rx="10" class="dg-inner" />
+              <text x="450" y="122" class="dg-s">PostgreSQL · a chain per member</text>
+              <g class="dg-chain">
+                <rect x="358" y="146" width="36" height="36" rx="6" />
+                <rect x="414" y="146" width="36" height="36" rx="6" />
+                <rect x="470" y="146" width="36" height="36" rx="6" class="dg-ack" />
+                <rect x="526" y="146" width="22" height="36" rx="6" class="dg-fade" />
+                <line x1="394" y1="164" x2="414" y2="164" />
+                <line x1="450" y1="164" x2="470" y2="164" />
+                <line x1="506" y1="164" x2="526" y2="164" />
+              </g>
+              <text x="376" y="206" class="dg-xs">h₀</text>
+              <text x="432" y="206" class="dg-xs">h₁</text>
+              <text x="488" y="206" class="dg-xs dg-amber-text">ack</text>
+              <text x="450" y="258" class="dg-s">Merkle tree of changed heads</text>
+            </g>
+
+            <!-- column C: Hedera -->
+            <g class="dg-node dg-hedera">
+              <rect x="720" y="40" width="220" height="92" rx="12" />
+              <text x="830" y="72" class="dg-t">Hedera testnet topic</text>
+              <text x="830" y="94" class="dg-s mono-t">0.0.10687280</text>
+              <text x="830" y="114" class="dg-xs">consensus time + order</text>
+            </g>
+
+            <!-- bottom row -->
+            <g class="dg-node">
+              <rect x="20" y="370" width="200" height="76" rx="12" />
+              <text x="120" y="402" class="dg-t">Member's export</text>
+              <text x="120" y="424" class="dg-s">chain + payloads + salts</text>
+            </g>
+            <g class="dg-node">
+              <rect x="350" y="370" width="200" height="76" rx="12" />
+              <text x="450" y="402" class="dg-t">Bank / insurer</text>
+              <text x="450" y="424" class="dg-s">files the fingerprint</text>
+            </g>
+            <g class="dg-node dg-verify">
+              <rect x="720" y="370" width="220" height="76" rx="12" />
+              <text x="830" y="402" class="dg-t">VUKA Ledger</text>
+              <text x="830" y="424" class="dg-s">this page, in the browser</text>
+            </g>
+
+            <!-- arrows -->
+            <g class="dg-edge">
+              <line x1="220" y1="78" x2="318" y2="78" marker-end="url(#ah)" />
+              <text x="269" y="68" class="dg-lbl">signed</text>
+              <text x="269" y="98" class="dg-lbl">entries</text>
+            </g>
+            <g class="dg-edge dg-edge-amber">
+              <line x1="220" y1="234" x2="318" y2="234" marker-end="url(#ah-amber)" />
+              <text x="269" y="224" class="dg-lbl">signed</text>
+              <text x="269" y="254" class="dg-lbl">acks</text>
+            </g>
+            <g class="dg-edge dg-edge-accent">
+              <line x1="580" y1="86" x2="718" y2="86" marker-end="url(#ah-accent)" />
+              <text x="649" y="66" class="dg-lbl">root per ≤1 min</text>
+              <text x="649" y="106" class="dg-lbl mono-t">0x01 ‖ root</text>
+              <text x="649" y="122" class="dg-lbl">33 bytes</text>
+            </g>
+            <g class="dg-edge">
+              <path d="M380 288 V330 H120 V368" fill="none" marker-end="url(#ah)" />
+              <text x="250" y="322" class="dg-lbl">member-signed export</text>
+            </g>
+            <g class="dg-edge">
+              <line x1="220" y1="408" x2="348" y2="408" marker-end="url(#ah)" />
+              <text x="284" y="398" class="dg-lbl">hands over</text>
+            </g>
+            <g class="dg-edge">
+              <line x1="550" y1="408" x2="718" y2="408" marker-end="url(#ah)" />
+              <text x="634" y="398" class="dg-lbl">runs it here</text>
+            </g>
+            <g class="dg-edge dg-edge-accent">
+              <line x1="830" y1="368" x2="830" y2="134" marker-end="url(#ah-accent)" />
+              <text x="842" y="246" class="dg-lbl dg-left">reads message,</text>
+              <text x="842" y="262" class="dg-lbl dg-left">matches root</text>
+            </g>
+            <g class="dg-edge dg-edge-dash">
+              <line x1="520" y1="288" x2="520" y2="368" marker-end="url(#ah)" />
+              <text x="532" y="322" class="dg-lbl dg-left">bank_signal (S1)</text>
+              <text x="532" y="338" class="dg-lbl dg-left">partner API</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>
+          Phones sign; the server orders entries into one hash chain per member and publishes only a 33-byte root to Hedera.
+          The record itself travels by hand, from member to bank, and the bank's browser checks it against the public root.
+          The dashed arrow is the separate bank signal (S1), sent by the server through the partner API. In this demo it goes to <span class="mono">sim_bank</span>, which is SIMULATED.
+        </figcaption>
+      </figure>
+
+      <div class="math">
+        <h3 class="h-sub">The mathematical model</h3>
+        <p class="math-lede">These are the exact steps this page reruns. Hashes are SHA-256; <span class="mono">canon</span> is canonical JSON (spec §5); <span class="mono">‖</span> joins bytes.</p>
+        <dl class="formulas">
+          <div class="f">
+            <dt>Commitment</dt>
+            <dd class="eq"><var>c</var> = SHA-256(<var>salt</var> ‖ canon(<var>payload</var>))</dd>
+            <dd class="why">The event's kind and details stay private. Only <var>c</var> is in the chain; the salt is 16 random bytes.</dd>
+          </div>
+          <div class="f">
+            <dt>Event hash</dt>
+            <dd class="eq"><var>h</var><sub>i</sub> = SHA-256(canon(<var>entry</var><sub>i</sub> without <span class="mono">event_hash</span>))</dd>
+            <dd class="why">Any change to any field of an entry changes its hash.</dd>
+          </div>
+          <div class="f">
+            <dt>Link</dt>
+            <dd class="eq"><span class="mono">prev_hash</span><sub>i</sub> = <var>h</var><sub>i−1</sub>,&nbsp;&nbsp; <span class="mono">prev_hash</span><sub>0</sub> = 0<sup>64</sup></dd>
+            <dd class="why">Each entry names the one before it, so entries cannot be removed or reordered unnoticed.</dd>
+          </div>
+          <div class="f">
+            <dt>Signature</dt>
+            <dd class="eq"><var>σ</var><sub>i</sub> = Sign<sub><var>k</var></sub>(canon(<var>statement</var><sub>i</sub>))</dd>
+            <dd class="why">The statement binds subject, actor, target, action, source time, key id, counter, event id and <var>c</var>. Device and guardian keys come from the chain; the server key only from the pinned manifest.</dd>
+          </div>
+          <div class="f">
+            <dt>Leaf</dt>
+            <dd class="eq"><var>leaf</var> = SHA-256(0x00 ‖ <var>head</var>),&nbsp;&nbsp; <var>head</var> = <var>h</var><sub>n−1</sub></dd>
+            <dd class="why">One leaf per member chain that changed in the window.</dd>
+          </div>
+          <div class="f">
+            <dt>Node</dt>
+            <dd class="eq"><var>node</var> = SHA-256(0x01 ‖ <var>L</var> ‖ <var>R</var>)</dd>
+            <dd class="why">For <var>n</var> leaves, split at the largest power of two below <var>n</var> (RFC 6962). Odd leaves are never duplicated.</dd>
+          </div>
+          <div class="f">
+            <dt>Message</dt>
+            <dd class="eq"><var>m</var> = 0x01 ‖ <var>root</var>&nbsp;&nbsp; (33 bytes)</dd>
+            <dd class="why">The page decodes the Hedera message and requires its 32 bytes to equal the root it recomputed. Key manifests use 0x02 ‖ SHA-256(canon(<var>manifest</var>)).</dd>
+          </div>
+        </dl>
+
+        <div class="proves">
+          <div class="proves-col">
+            <h4>A match proves</h4>
+            <ul>
+              <li>These exact entries existed, in this order, no later than the topic's consensus time.</li>
+              <li>Each entry was signed by the key registered for it, and the server key is the pinned one.</li>
+              <li>Nobody has edited, removed or reordered an entry since.</li>
+            </ul>
+          </div>
+          <div class="proves-col">
+            <h4>It does not prove</h4>
+            <ul>
+              <li>That the event was real. A signature shows a key was used, not what a microphone heard.</li>
+              <li>That nothing is missing from before the export, or that a compromised server sent every alert.</li>
+              <li>Permanence on testnet. Hedera resets testnet; a re-anchor after a reset is a later record under a new epoch.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="duress">
+          <h3 class="h-sub">Duress stays private</h3>
+          <p>A duress PIN is recorded inside a signed commitment, so the chain shows only a hash. The public topic carries one root per window of up to a minute, so anyone watching it sees that something happened in that minute, never whether it was a duress check-in or a normal one. The bank learns of duress separately, through its own bank signal, and can later check that signal against the member's export.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4. SETTINGS ============ -->
+    <section id="settings" class="view" aria-labelledby="settings-title">
+      <div class="block-head">
+        <h2 id="settings-title" class="h-section">Settings</h2>
+      </div>
+      <form class="settings" id="settings-form" novalidate>
+        <div class="field">
+          <label for="server-url">ANCHOR server</label>
+          <input type="url" id="server-url" name="server" inputmode="url" autocomplete="off" spellcheck="false" />
+          <p class="hint">Also accepted in the address as <span class="mono">?server=https://…</span>. The ledger itself is always read from the public Hedera mirror.</p>
+        </div>
+        <div class="field">
+          <label for="network">Network</label>
+          <select id="network" name="network">
+            <option value="testnet" selected>Hedera testnet</option>
+          </select>
+          <p class="hint">Only testnet is pinned (<span class="mono">contracts/keys/verify-pins.json</span>).</p>
+        </div>
+        <fieldset class="field">
+          <legend>Theme</legend>
+          <div class="seg">
+            <input type="radio" name="theme" id="theme-system" value="system" checked /><label for="theme-system">System</label>
+            <input type="radio" name="theme" id="theme-light" value="light" /><label for="theme-light">Ivory</label>
+            <input type="radio" name="theme" id="theme-dark" value="dark" /><label for="theme-dark">Midnight</label>
+          </div>
+        </fieldset>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary" id="btn-apply">Apply and reconnect</button>
+          <button type="button" class="btn btn-quiet" id="btn-reset">Use the default server</button>
+          <span class="copy-status" id="settings-status" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap-inner">
+      <p>VUKA Ledger reads the public Hedera mirror and the ANCHOR server's public routes only. Verification runs in your browser; exports are never uploaded.</p>
+      <p>The ledger is Hedera testnet, which Hedera resets from time to time. <span class="mono">sim_</span> subjects and <span class="mono">sim_bank</span> are SIMULATED.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
