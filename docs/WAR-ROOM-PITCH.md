@@ -1,6 +1,6 @@
 # VUKA — War Room Pitch
 
-> **Spoken target:** 3 minutes (competition round 1). **Actual: 329 words (~2:21 at 140 wpm).** Six beats, hard caps. Under 3:00.
+> **Spoken target:** 3 minutes (competition round 1). **Actual: 327 words (~2:20 at 140 wpm).** Six beats, hard caps. Under 3:00.
 > **Companion files:** `context.md` · `pitch-deck-outline.md` · `docs/reviews/ANCHOR-ACCESS-MODEL-ADR-PROPOSAL.md`.
 > **Read `docs/MASTER-CONTEXT.md` §2 for the judging criteria** (I 15 · T 15 · U 10 · S 10 · B 15 · Q 5).
 
@@ -13,8 +13,8 @@
 | 3 · Solution | What VUKA is (3-sec test) | 45 | 37 |
 | 4 · How It Works (user view, demo) | What the user experiences | 80 | 79 |
 | 5 · Why It Wins | The single differentiator | 70 | 70 |
-| 6 · The Ask | Who pays + what we want | 45 | 43 |
-| | | **Total** | **329** |
+| 6 · The Ask | Who pays + what we want | 45 | 41 |
+| | | **Total** | **327** |
 
 ---
 
@@ -42,7 +42,7 @@ Our direct competitors are detection tools: FNB GuardMe needs a panic press; Dis
 
 ### Beat 6 — The Ask
 
-The insurer pays twenty rand per member, per month. The victim pays nothing. We want one insurer and one bank to switch VUKA on for their customers — and one point nine million rand to run the twelve-month pilot. Help us prove it.
+The insurer pays twenty rand per member, per month, and stops paying fake claims. The bank pays per case, and settles disputes on evidence. The victim pays nothing. Switch VUKA on, and help fund the one point nine million rand pilot.
 
 ---
 
