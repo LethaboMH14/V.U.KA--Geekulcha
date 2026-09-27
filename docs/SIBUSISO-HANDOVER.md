@@ -456,3 +456,13 @@ The full suite passes (354), and 6 of the new tests fail on the original code.
 - **VIGIL vs VUKA:** VIGIL (`com.teamsonar.vuka`, React Native, `main`) is the demo app. VUKA and VUKA-next (`za.co.vuka.app`, native Kotlin, `feature/integrate` and #114) are separate apps; tonight's app fixes are only in VIGIL.
 - **0.0.15 is published** (built from `fb76ee9`, checked: it contains #118 and #120). The team's first test ran on an older install; the server log shows no `GET /v1/guardians` calls. Reinstall and check **Settings → Apps → VIGIL → 0.0.15**.
 - **#122:** VIGIL's sign-up "Verify code" now uses real email codes. The phone registers first, the server emails the code, and the server checks it; the record step keeps that one registration. jest 285/285; end to end 8/8. **Needs Lethabo to review, merge, and build and upload VIGIL.apk 0.0.16.** The existing VIGIL QR then serves it.
+
+**Update, ~07:20 UTC — 0.0.16 live, phones on Azure, one sign-up trap.**
+- **VIGIL 0.0.16** (Lethabo, #123, `c14c049`) is checked: versionCode 16, Team SONAR certificate `ddfbf916…`. It contains #122 (real email codes), no code step after Google, VIGIL wording, and her phone-number sign-in by email code. The YAMNet model matches `10c95ea3…`.
+- **`server.json` had pointed VIGIL at an old tunnel server** (`multi-senators-macro-bridge.trycloudflare.com`, set at 05:05 UTC). That server had no `/v1/guardians`, no `/v1/account/otp` and no Hedera. It is now **back on Azure** (~07:00 UTC). The tunnel address is kept as `server-tunnel.json`, and Lethabo was told on #123. Phones confirmed on Azure (invite polling, real code sends and a verify).
+- **Sign-up trap:** after clearing a phone's storage, signing up with the **same email** fails with `409 contact_in_use`, because the email is bound to the old sim subject. 0.0.16 shows this as "Couldn't reach VIGIL's server". Repeated tries also hit the 3-per-address limit (429). **Demo workaround:** use Gmail plus-addressing (`name+demo1@gmail.com`, `+demo2`, …).
+- **Owed:**
+  - map `contact_in_use` to its own message in the app;
+  - decide whether a freshly verified inbox may move an email off an abandoned sim account.
+- **`scripts/e2e/azure-demo-check.mjs`:** a live, API-only demo check. 14/14 on Azure; one run saw a client-side "couldn't reach" at the first step with no server-side error, and a rerun passed.
+- **Settled:** the ledger site, CORS, the live feed, the Hedera mirror (root #38) and the pinned manifest are all fine. FCM is skipped for the demo (the guardian keeps VIGIL open).
