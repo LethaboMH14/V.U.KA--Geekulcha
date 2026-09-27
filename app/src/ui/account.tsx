@@ -326,7 +326,7 @@ export function SignIn({onFound, onPhone, onCreate, onBack}: {onFound: () => voi
       {google.live ? (
         <Text style={type.caption}>With Google, the sign-in goes to Google and Firebase Authentication; VIGIL's own server never receives your email.</Text>
       ) : null}
-      <QuietKey label="New to VUKA? Create an account" onPress={onCreate} />
+      <QuietKey label="New to VIGIL? Create an account" onPress={onCreate} />
       {google.chooser}
       <Dialog
         visible={notFound !== null}
@@ -338,7 +338,7 @@ export function SignIn({onFound, onPhone, onCreate, onBack}: {onFound: () => voi
         }}
         cancel="Cancel"
         onCancel={() => setNotFound(null)}>
-        {`There's no VUKA account for ${notFound ?? ''} on this phone.`}
+        {`There's no VIGIL account for ${notFound ?? ''} on this phone.`}
       </Dialog>
       <Dialog visible={changed} title="Password changed" confirm="OK" onConfirm={() => setChanged(false)} onCancel={() => setChanged(false)}>
         Sign in with your new password. You'll still need your PIN.
@@ -434,7 +434,7 @@ export function ForgotPassword({initialEmail, onBack, onDone}: {initialEmail: st
 
   const send = () => {
     if (!EMAIL.test(email.trim())) return setProblem(BAD_EMAIL);
-    if (!device.canResetPassword(email.trim())) return setProblem("There's no VUKA account with an email password for that address on this phone.");
+    if (!device.canResetPassword(email.trim())) return setProblem("There's no VIGIL account with an email password for that address on this phone.");
     setProblem('');
     setStage('reset');
   };

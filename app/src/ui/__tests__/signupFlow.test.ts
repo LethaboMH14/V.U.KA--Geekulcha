@@ -72,7 +72,7 @@ test('sign-in with Google or email and password → Welcome back → Home', () =
   expect(walk(fresh, ['getStarted', 'signIn', 'found', 'found'])).toEqual(['welcome', 'account', 'signIn', 'welcomeBack', 'home']);
   expect(back('signIn', fresh)).toBe('account');
   expect(back('welcomeBack', fresh)).toBe('signIn');
-  // "New to VUKA? Create an account" goes back to Create your account.
+  // "New to VIGIL? Create an account" goes back to Create your account.
   expect(next('signIn', 'create', fresh)).toBe('account');
 });
 

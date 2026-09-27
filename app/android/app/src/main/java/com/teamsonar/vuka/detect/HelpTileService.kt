@@ -15,7 +15,7 @@ object HelpRequest {
 /**
  * Hold-for-help from the Quick Settings panel (Mutarisi's design; ADR-0049,
  * PROPOSED): one tap opens VIGIL, which opens a check-in at once. The tile is
- * labelled only "VUKA", like the app.
+ * labelled only "VIGIL", like the app.
  */
 class HelpTileService : TileService() {
     override fun onClick() {

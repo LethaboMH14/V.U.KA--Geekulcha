@@ -69,8 +69,8 @@ function alertNotice(fromPush = false, trigger?: GuardianAlert['trigger']): void
   if (fromPush) pushNoticeAt = Date.now();
   else if (Date.now() - pushNoticeAt < 60_000) return;
   const who = device.profile?.guardian?.memberName ?? 'Your member';
-  if (trigger === 'wrong_pin') notice?.showAlert?.(`${who} entered a wrong PIN`, "Open VUKA. Don't call or text them yet.");
-  else notice?.showAlert?.(`${who} may need help`, "Open VUKA. Don't call or text them: call 10111.");
+  if (trigger === 'wrong_pin') notice?.showAlert?.(`${who} entered a wrong PIN`, "Open VIGIL. Don't call or text them yet.");
+  else notice?.showAlert?.(`${who} may need help`, "Open VIGIL. Don't call or text them: call 10111.");
 }
 
 /**
@@ -137,7 +137,7 @@ export async function notificationsOff(n: Notice | undefined = notice): Promise<
   return ASKS_FOR_NOTIFICATIONS ? !(await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS).catch(() => true)) : false;
 }
 
-/** "Turn on notifications": VUKA's notification settings (Android 8+), else the app's settings page. */
+/** "Turn on notifications": VIGIL's notification settings (Android 8+), else the app's settings page. */
 const openNotificationSettings = () => (notice?.openNotificationSettings ? notice.openNotificationSettings() : void Linking.openSettings());
 
 /* ── Setup ───────────────────────────────────────────────────── */
@@ -615,7 +615,7 @@ export function GuardianHome({onBack, onSetUpSelf, onLeft}: {onBack?: () => void
           <Panel>
             <Text style={type.label}>Your guardian role</Text>
             {onSetUpSelf && device.profile?.role === 'guardian' ? (
-              <Row label="Set up VUKA for yourself" detail={`Be protected too. You stay ${who}'s guardian.`} onPress={onSetUpSelf} leading={<ShieldChevron size={20} color={colors.textLabel} />} />
+              <Row label="Set up VIGIL for yourself" detail={`Be protected too. You stay ${who}'s guardian.`} onPress={onSetUpSelf} leading={<ShieldChevron size={20} color={colors.textLabel} />} />
             ) : null}
             {onLeft ? (
               <Row label="Stop being a guardian" detail="You won't get their alerts any more" onPress={() => setLeaving(true)} leading={<UsersThree size={20} color={colors.textLabel} />} />

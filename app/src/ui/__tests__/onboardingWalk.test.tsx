@@ -116,7 +116,7 @@ test('"Already have an account? Sign in" → Sign in; Back returns to Create you
   expect(shown(t)).toContain('Sign in with Google');
   expect(shown(t)).toContain('Sign in with your phone number');
   expect(shown(t)).toContain('or with email');
-  expect(shown(t)).toContain('New to VUKA? Create an account');
+  expect(shown(t)).toContain('New to VIGIL? Create an account');
   await press(t, 'Sign in');
   expect(shown(t)).toContain("That email and password don't match an account on this phone.");
   await press(t, 'Sign in with your phone number');
