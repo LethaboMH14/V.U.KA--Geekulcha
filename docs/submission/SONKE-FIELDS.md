@@ -24,13 +24,13 @@ A coerced transfer authenticates exactly like a voluntary one, and no party hold
 
 ## Solution and features
 VUKA notices duress without a button — and proves when it happened.
-- Activate once, then close the app: the phone listens with an on-device sound model; audio never leaves the phone.
+- Always on after set-up: the phone listens with an on-device sound model; audio never leaves the phone.
 - A scream, shout, breaking glass or gunshot opens a quiet Journey check over the lock screen. A sound alone never alerts anyone.
-- Normal PIN: nothing is sent. Duress PIN: the same "Checked in" screen, and guardians are alerted silently. No answer: guardians are alerted after the window.
-- Emergency button opens the dialer with 10111 and sends a help signal.
-- The guardian sees who and why in words, with one button to call 10111.
+- Normal PIN: no alert. Duress PIN: the same "Checked in" screen, and guardians are alerted silently. Wrong PIN: guardians get a heads-up (never treated as duress). No answer: guardians are alerted after the window.
+- Hold for help (2 s) or the Quick Settings tile opens the same check-in without any sound.
+- The guardian sees who and why in words, a map of the phone's location during the alert, and one button to call 10111. The member sees "Guardian added" when an invite is accepted.
 - Every event is signed on the phone, chained on the server, and a 33-byte Merkle root is anchored on Hedera (testnet). Anyone can paste a record into the public ledger and check it in their own browser — no need to trust us.
-- Live today: server on Azure, root #8 LIVE-VERIFIED on Hedera testnet, real sign-up email codes. Built but not yet phone-tested: guardian alerts with the app closed, 4 power presses for help, location with Open in Maps. Android only for now, not iOS.
+- Live today: server on Azure; root #8 LIVE-VERIFIED on Hedera testnet; wrong-PIN heads-up tested live (5/5); the server sends real sign-up email codes (VIGIL's code step is still simulated). Push notifications are not configured in this build. Android only for now, not iOS.
 
 ## Security considerations
 - Threat model with coercion-specific threats (an attacker holding the unlocked phone, watching the PIN, forcing the normal PIN, staged fraud, a compromised server); 79 tracked security controls on a public scorecard.
@@ -54,5 +54,5 @@ The person under threat gets help without a free hand, and a record made at the 
 ## Links
 - Code: https://github.com/LethaboMH14/V.U.KA--Geekulcha
 - Public ledger (verify a record): https://lethabomh14.github.io/V.U.KA--Geekulcha/dashboard/ledger/
-- Android app: https://github.com/LethaboMH14/V.U.KA--Geekulcha/releases/download/vigil-demo/VUKA.apk
+- Android app (VIGIL 0.0.15): https://github.com/LethaboMH14/V.U.KA--Geekulcha/releases/download/vigil-demo/VIGIL.apk
 - Demo video: uploaded with this submission (46 s)
