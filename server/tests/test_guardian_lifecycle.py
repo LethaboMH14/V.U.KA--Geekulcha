@@ -179,3 +179,63 @@ def test_one_guardian_cannot_change_another_guardians_token(sim_api):
     headers = make_signed_headers("PUT", f"/v1/guardians/{a_id}/token", body, key_id=bkid, private_key=bkey)
     headers["Content-Type"] = "application/json"
     assert client.put(f"/v1/guardians/{a_id}/token", content=body, headers=headers).status_code == 403
+
+
+
+# ---- member-side status (27 Sep): the invite screen learns when it was accepted ----
+
+def my_guardians(sim_api):
+    store, client, subject, key, *_ = sim_api
+    response = device_call(client, "GET", "/v1/guardians", key)
+    assert response.status_code == 200, response.json()
+    return {g["guardian_id"]: g for g in response.json()["guardians"]}
+
+
+def test_the_member_sees_an_invite_turn_accepted(sim_api):
+    store, client, subject, key, event, post, now, connect = sim_api
+    receipt = invite(sim_api)
+    assert my_guardians(sim_api)[receipt["guardian_id"]]["status"] == "waiting"
+    response, _gkey, _gkid = accept(client, receipt["invite_code"])
+    assert response.status_code == 201
+    shown = my_guardians(sim_api)[receipt["guardian_id"]]
+    assert shown["status"] == "accepted" and shown["accepted_at"]
+    assert set(shown) == {"guardian_id", "status", "invited_at", "accepted_at"}  # no decoy flag, key or token
+
+
+def test_an_unused_invite_reads_expired_after_ten_minutes(sim_api):
+    store, client, subject, key, event, post, now, connect = sim_api
+    receipt = invite(sim_api)
+    now[0] += timedelta(minutes=11)
+    assert my_guardians(sim_api)[receipt["guardian_id"]]["status"] == "expired"
+
+
+def test_a_decoy_invite_reads_exactly_like_a_real_one(sim_api):
+    store, client, subject, key, event, post, now, connect = sim_api
+    real = invite(sim_api)
+    decoy = invite(sim_api, mode="duress")
+    before = my_guardians(sim_api)
+    assert before[real["guardian_id"]]["status"] == before[decoy["guardian_id"]]["status"] == "waiting"
+    for receipt in (real, decoy):
+        assert accept(client, receipt["invite_code"])[0].status_code == 201
+    after = my_guardians(sim_api)
+    assert after[real["guardian_id"]]["status"] == after[decoy["guardian_id"]]["status"] == "accepted"
+    assert set(after[real["guardian_id"]]) == set(after[decoy["guardian_id"]])
+
+
+def test_a_duress_removal_reads_like_a_normal_one(sim_api):
+    """A duress removal does nothing, a normal one is scheduled 24 h out; the
+    member's list must read the same for both, or it would reveal the duress PIN."""
+    store, client, subject, key, event, post, now, connect = sim_api
+    first, _k1, _i1 = add_real_guardian(sim_api)
+    second, _k2, _i2 = add_real_guardian(sim_api)
+    authorise(event, post, key, first, "remove_guardian")
+    assert device_call(client, "DELETE", f"/v1/guardians/{first}", key).status_code == 202
+    authorise(event, post, key, second, "remove_guardian", mode="duress")
+    assert device_call(client, "DELETE", f"/v1/guardians/{second}", key).status_code == 202
+    shown = my_guardians(sim_api)
+    assert shown[first]["status"] == shown[second]["status"] == "accepted"
+
+
+def test_the_list_needs_the_members_device_key(sim_api):
+    store, client, subject, key, *_ = sim_api
+    assert client.get("/v1/guardians").status_code == 401

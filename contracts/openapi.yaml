@@ -574,6 +574,41 @@ paths:
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/IdempotencyConflict' }
+  /v1/guardians:
+    get:
+      tags: [VIGIL]
+      operationId: listMyGuardians
+      x-vuka-implemented: true
+      summary: The calling member's own guardian invites and their status
+      description: >-
+        PROPOSED (27 Sep). Device-signed only; lets the member's phone show when an invite
+        was accepted. Coercion-safe (§9): a decoy is never marked, and a scheduled removal
+        reads as accepted, so neither a duress invite nor a duress removal (which does
+        nothing) differs from a normal one. No guardian name, key or token is returned.
+      security: [{ VukaKeyId: [], VukaTimestamp: [], VukaNonce: [], VukaSignature: [] }]
+      responses:
+        '200':
+          description: This member's invites and guardians, oldest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [guardians]
+                additionalProperties: false
+                properties:
+                  guardians:
+                    type: array
+                    items:
+                      type: object
+                      required: [guardian_id, status, invited_at, accepted_at]
+                      additionalProperties: false
+                      properties:
+                        guardian_id: { type: string }
+                        status: { type: string, enum: [waiting, accepted, expired, removed] }
+                        invited_at: { type: string, format: date-time }
+                        accepted_at: { type: [string, "null"], format: date-time }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientApproval' }
   /v1/guardians/{id}/token:
     put:
       tags: [VIGIL]

@@ -738,6 +738,42 @@ def create_app(database=None) -> FastAPI:
         return JSONResponse(status_code=201, content={"receipt_id": str(uuid4()), "state": "accepted",
                                                       "guardian_id": guardian_id, "invite_code": code})
 
+    @app.get("/v1/guardians")
+    async def list_my_guardians(request: Request):
+        """PROPOSED (27 Sep): the calling member's own invites and guardians, so the
+        phone can show when an invite was accepted. Device-signed only. Coercion-safe
+        (§9): a decoy is never marked, and removal_scheduled reads as accepted, so
+        neither a duress invite nor a duress removal (which does nothing) differs
+        from a normal one here."""
+        from contextlib import closing
+        principal, refused = await _signed_caller(request, role="device")
+        if refused:
+            return refused
+        now = datetime.fromisoformat(_server_time().replace("Z", "+00:00"))
+        try:
+            with closing(store._connection()) as connection, connection, connection.cursor() as cur:
+                cur.execute("""SELECT guardian_id, status, invite_expires_at, invited_at, accepted_at
+                               FROM guardians WHERE subject_id=%s ORDER BY invited_at, guardian_id""",
+                            (principal.subject_id,))
+                rows = cur.fetchall()
+        except DatabaseUnavailable:
+            return _error_response(503, "database_unavailable", "database unavailable")
+
+        def iso(value):
+            return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z") if value else None
+
+        def shown(status, expires_at):
+            if status in ("active", "removal_scheduled"):
+                return "accepted"
+            if status == "invited":
+                return "expired" if expires_at is not None and expires_at <= now else "waiting"
+            return status  # expired, removed
+
+        return {"guardians": [
+            {"guardian_id": guardian_id, "status": shown(status, expires_at),
+             "invited_at": iso(invited_at), "accepted_at": iso(accepted_at)}
+            for guardian_id, status, expires_at, invited_at, accepted_at in rows]}
+
     _ACCEPT_FIELDS = (
         "invite_code",
         "guardian_key",

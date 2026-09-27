@@ -37,6 +37,7 @@ const v2Operations = [
   ["post", "/v1/checkins/{id}/result"],
   ["post", "/v1/pin-authorisations"],
   ["post", "/v1/guardians/invites"],
+  ["get", "/v1/guardians"],
   ["post", "/v1/guardians/accept"],
   ["delete", "/v1/guardians/{id}"],
   ["put", "/v1/guardians/{id}/token"],
