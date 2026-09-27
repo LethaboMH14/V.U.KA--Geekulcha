@@ -22,7 +22,7 @@ import {Documents, Recovery, recoveryDetail, type DocumentId} from './account';
 import {AlertBanner, consumeGuardianOpen, GuardianHome, GuardianSetup, useGuardianPush, useGuardianWatch} from './guardian';
 import {openedFromGuardianPush, registerGuardianPush} from '../api/push';
 import {MyRecord} from './record';
-import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, profileContacts, recoveryChannel, type Delivery} from '../api/device';
+import {checkinRemainingMs, device, DOWNLOAD_URL, JourneyStartError, monoNow, profileContacts, recoveryChannel, type Delivery, type GuardianStatus} from '../api/device';
 import {version} from '../../package.json';
 import {canFullScreen, consumeHelpRequest, openFullScreenSettings, runTestClip, startDetection, testFeedAvailable, type ArmResult, type Detector, type Level} from '../sensors/detection';
 import {EmergencyButton, OutlineKey} from './help';
@@ -594,12 +594,46 @@ function GuardiansCard({delivery, live, onInvite}: {delivery: Delivery; live: bo
 }
 
 /** The invite: a one-time code (10 minutes) and a message to share. */
+/** One line per invite in Settings. A decoy reads like a real one (server-side). */
+function inviteLine(status: GuardianStatus | undefined, at: string): string {
+  switch (status) {
+    case 'accepted':
+      return 'Guardian added';
+    case 'waiting':
+      return 'Waiting for them to accept';
+    case 'expired':
+      return 'Code expired before it was used';
+    case 'removed':
+      return 'Removed';
+    default:
+      return `Code issued ${new Date(at).toLocaleDateString()}`;
+  }
+}
+
 function InviteShare({invite, onDone}: {invite: Invite; onDone: () => void}) {
   const [left, setLeft] = useState(600 - Math.floor((Date.now() - invite.at) / 1000));
+  const [accepted, setAccepted] = useState(false);
   useEffect(() => {
     const t = setInterval(() => setLeft(600 - Math.floor((Date.now() - invite.at) / 1000)), 1000);
     return () => clearInterval(t);
   }, [invite.at]);
+  const waiting = !accepted && left > 0;
+  // Ask the server every 3 s until the guardian accepts (or the code expires),
+  // so the member sees it happen instead of a countdown that runs on.
+  useEffect(() => {
+    if (!waiting) return;
+    let alive = true;
+    const check = async () => {
+      const statuses = await device.guardianStatuses();
+      if (alive && statuses?.[invite.guardianId] === 'accepted') setAccepted(true);
+    };
+    void check();
+    const t = setInterval(() => void check(), 3000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [invite.guardianId, waiting]);
   const name = device.profile?.firstName || 'Someone';
   const message =
     `${name} asked you to be their VIGIL guardian.\n\n` +
@@ -607,6 +641,20 @@ function InviteShare({invite, onDone}: {invite: Invite; onDone: () => void}) {
     `2. Open it and tap "I'm a guardian"\n` +
     `3. Enter the code ${invite.code} (valid for 10 minutes)`;
   const expired = left <= 0;
+  if (accepted) {
+    return (
+      <View style={styles.screen}>
+        <TopAppBar title="Add a guardian" onBack={onDone} />
+        <Panel hero>
+          <Eyebrow>Guardian added</Eyebrow>
+          <Text style={[type.body, {marginTop: space.sm}]}>
+            Your guardian accepted. They are now told if you don't answer a check-in, or if you use your second PIN.
+          </Text>
+        </Panel>
+        <Key label="Done" variant="signal" onPress={onDone} />
+      </View>
+    );
+  }
   return (
     <View style={styles.screen}>
       <TopAppBar title="Add a guardian" onBack={onDone} />
@@ -618,7 +666,7 @@ function InviteShare({invite, onDone}: {invite: Invite; onDone: () => void}) {
         <Text style={[type.body, {marginTop: space.sm}]}>
           {expired
             ? 'This code has expired. Make a new one.'
-            : `Valid for ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}. Send it with the download link to the person you trust.`}
+            : `Valid for ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}. Send it with the download link to the person you trust. This screen changes when they accept.`}
         </Text>
         <View style={{marginTop: space.lg}}>
           <Key
@@ -899,6 +947,16 @@ function Settings({
   const p = device.profile;
   const member = p?.role === 'member';
   const invites = p?.invites ?? [];
+  // Each invite's status from the server; null keeps the old "Code issued" line.
+  const [statuses, setStatuses] = useState<Record<string, GuardianStatus> | null>(null);
+  useEffect(() => {
+    if (!member || !invites.length) return;
+    let alive = true;
+    void device.guardianStatuses().then(s => alive && setStatuses(s));
+    return () => {
+      alive = false;
+    };
+  }, [member, invites.length]);
   const docs: [DocumentId, string][] = [
     ['terms', 'Terms and conditions'],
     ['privacy', 'Privacy notice'],
@@ -921,7 +979,7 @@ function Settings({
                 {i ? <View style={styles.rowRule} /> : null}
                 <View style={styles.infoRow}>
                   <Text style={type.label}>{`Invite ${i + 1}`}</Text>
-                  <Text style={[type.caption, {marginTop: 2}]}>{`Code issued ${new Date(inv.at).toLocaleDateString()}`}</Text>
+                  <Text style={[type.caption, {marginTop: 2}]}>{inviteLine(statuses?.[inv.guardianId], inv.at)}</Text>
                 </View>
               </View>
             ))
