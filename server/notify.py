@@ -12,12 +12,15 @@ Configured only by environment settings, never by code:
   sms     VUKA_TWILIO_ACCOUNT_SID, VUKA_TWILIO_AUTH_TOKEN, VUKA_TWILIO_FROM
 
 With neither set, a LOCAL development server may set VUKA_DEV_OTP_LOG=1 to
-print codes to its own console. Codes never appear in an API response.
+print codes to its own console. It is refused on Azure App Service (its logs
+are kept and shared), so a stray setting there can never leak codes. Codes
+never appear in an API response.
 Anything else raises DeliveryUnavailable, and the API says so plainly.
 """
 import base64
 import http.client
 import json
+import logging
 import os
 import smtplib
 import ssl
@@ -30,7 +33,13 @@ class DeliveryUnavailable(Exception):
 
 
 class DeliveryFailed(Exception):
-    """The provider refused or could not be reached."""
+    """The provider refused or could not be reached. The message is a fixed
+    phrase plus at most the provider's HTTP status, never the provider's own
+    text (it can echo the recipient or describe our account)."""
+
+
+def _on_app_service() -> bool:
+    return bool(os.environ.get("WEBSITE_SITE_NAME"))
 
 
 def _message(code: str, purpose: str) -> str:
@@ -65,7 +74,9 @@ def send_code(channel: str, to: str, code: str, purpose: str) -> str:
     if channel == "sms" and sms_configured():
         _send_sms(to, code, purpose)
         return "sms"
-    if os.environ.get("VUKA_DEV_OTP_LOG") == "1":
+    if os.environ.get("VUKA_DEV_OTP_LOG") == "1" and _on_app_service():
+        logging.warning("vuka: VUKA_DEV_OTP_LOG is ignored on App Service; no code was sent")
+    elif os.environ.get("VUKA_DEV_OTP_LOG") == "1":
         # Local development only: the operator reads it from this console.
         print(f"vuka: DEV OTP for {channel} {to}: {code} ({purpose})", flush=True)
         return "dev_log"
@@ -119,13 +130,9 @@ def _send_brevo(to: str, code: str, purpose: str) -> None:
             "Accept": "application/json",
         })
         resp = conn.getresponse()
-        text = resp.read()
+        resp.read()
         if resp.status >= 300:
-            try:
-                detail = json.loads(text).get("message", "")
-            except ValueError:
-                detail = ""
-            raise DeliveryFailed(f"email provider refused ({resp.status}) {detail}".strip())
+            raise DeliveryFailed(f"email provider refused ({resp.status})")
     except OSError as exc:
         raise DeliveryFailed("email provider could not be reached") from exc
     finally:
@@ -141,13 +148,9 @@ def _send_sms(to: str, code: str, purpose: str) -> None:
         conn.request("POST", f"/2010-04-01/Accounts/{urllib.parse.quote(sid)}/Messages.json", body=body,
                      headers={"Authorization": f"Basic {auth}", "Content-Type": "application/x-www-form-urlencoded"})
         resp = conn.getresponse()
-        text = resp.read()
+        resp.read()
         if resp.status >= 300:
-            try:
-                detail = json.loads(text).get("message", "")
-            except ValueError:
-                detail = ""
-            raise DeliveryFailed(f"sms provider refused ({resp.status}) {detail}".strip())
+            raise DeliveryFailed(f"sms provider refused ({resp.status})")
     except OSError as exc:
         raise DeliveryFailed("sms provider could not be reached") from exc
     finally:

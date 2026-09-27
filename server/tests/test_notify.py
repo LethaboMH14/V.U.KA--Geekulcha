@@ -56,8 +56,10 @@ def test_brevo_sends_one_https_request_with_the_code(brevo):
 
 def test_brevo_refusal_is_a_delivery_failure(brevo):
     brevo.status, brevo.body = 401, b'{"code": "unauthorized", "message": "Key not found"}'
-    with pytest.raises(notify.DeliveryFailed, match="Key not found"):
+    with pytest.raises(notify.DeliveryFailed) as caught:
         notify.send_code("email", "a@b.co", "123456", "reset")
+    # Only a fixed phrase and the status: provider text can echo the recipient or our account.
+    assert str(caught.value) == "email provider refused (401)"
 
 
 def test_plain_sender_address_is_accepted():
@@ -70,3 +72,16 @@ def test_nothing_configured_is_delivery_unavailable(monkeypatch):
         monkeypatch.delenv(k, raising=False)
     with pytest.raises(notify.DeliveryUnavailable):
         notify.send_code("email", "a@b.co", "123456", "verify")
+
+
+def test_dev_code_logging_is_refused_on_app_service(monkeypatch, capsys):
+    for k in ("VUKA_BREVO_API_KEY", "VUKA_EMAIL_FROM", "VUKA_SMTP_HOST", "VUKA_TWILIO_ACCOUNT_SID"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("VUKA_DEV_OTP_LOG", "1")
+    monkeypatch.setenv("WEBSITE_SITE_NAME", "sim-app-service")
+    with pytest.raises(notify.DeliveryUnavailable):
+        notify.send_code("email", "a@b.co", "123456", "verify")
+    out = capsys.readouterr()
+    assert "123456" not in out.out + out.err and "a@b.co" not in out.out + out.err
+    monkeypatch.delenv("WEBSITE_SITE_NAME")
+    assert notify.send_code("email", "a@b.co", "123456", "verify") == "dev_log"  # local development still works

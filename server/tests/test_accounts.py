@@ -86,9 +86,9 @@ def test_an_expired_code_is_refused(sim_api, outbox):
 
 def test_codes_are_rate_limited(sim_api, outbox):
     store, client, subject, key, *_ = sim_api
-    for _ in range(5):
-        assert call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "a@b.co"}).status_code == 201
-    sixth = call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "a@b.co"})
+    for n in range(5):  # distinct addresses, so only the per-subject limit applies
+        assert call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": f"a{n}@b.co"}).status_code == 201
+    sixth = call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "a9@b.co"})
     assert sixth.status_code == 429 and sixth.json()["code"] == "rate_limited"
 
 
@@ -140,3 +140,79 @@ def test_without_a_provider_the_api_says_so(sim_api, monkeypatch):
 def test_account_routes_need_a_signed_device_request(sim_api):
     store, client, subject, key, *_ = sim_api
     assert client.get("/v1/account").status_code == 401
+
+
+# ---- review fixes (27 Sep, #116): store before send, recipient/global caps, redaction ----
+
+def test_a_code_is_committed_before_it_is_sent(sim_api, monkeypatch):
+    """A code that reaches the member must be verifiable even if the database
+    fails after the send, so the row is committed before the provider call."""
+    store, client, subject, key, event, post, now, connect = sim_api
+    seen = []
+
+    def send(channel, to, code, purpose):
+        with connect() as conn, conn.cursor() as cur:  # a separate connection sees only committed rows
+            cur.execute("SELECT count(*) FROM account_otps WHERE subject_id=%s", (subject,))
+            seen.append(cur.fetchone()[0])
+        return channel
+
+    monkeypatch.setattr(notify, "send_code", send)
+    assert call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "a@b.co"}).status_code == 201
+    assert seen == [1]
+
+
+def test_one_recipient_is_capped_across_subjects(sim_api, outbox, monkeypatch):
+    """Fresh sim_ registrations each get their own per-subject allowance, so the
+    recipient itself is capped: 3 codes per 15 minutes, whoever asks."""
+    from server import accounts
+    store, client, subject, key, event, post, now, connect = sim_api
+    monkeypatch.setattr(accounts, "OTP_RATE", 100)
+    lookup = accounts._Fields(store._payload_key()).lookup("otp_target", "email\0victim@b.co")
+    with connect() as conn, conn.cursor() as cur:  # one code already sent there by another subject
+        cur.execute("""INSERT INTO account_otps (otp_id, subject_id, channel, purpose, target_ct, target_lookup, code_phc, expires_at, created_at)
+                       VALUES ('sim_otp_other', 'sim_subj_other', 'email', 'verify', 'x', %s, 'x', now() + interval '10 minutes', now())""", (lookup,))
+    for _ in range(2):
+        assert call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "Victim@b.co"}).status_code == 201
+    capped = call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "victim@b.co"})
+    assert capped.status_code == 429 and capped.json()["code"] == "rate_limited"
+    assert call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "someone@b.co"}).status_code == 201
+
+
+def test_server_wide_cap(sim_api, outbox, monkeypatch):
+    from server import accounts
+    store, client, subject, key, *_ = sim_api
+    monkeypatch.setattr(accounts, "OTP_GLOBAL_RATE", 2)
+    assert call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "one@b.co"}).status_code == 201
+    assert call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "two@b.co"}).status_code == 201
+    third = call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "three@b.co"})
+    assert third.status_code == 429 and third.json()["code"] == "rate_limited"
+
+
+def test_a_failed_send_never_verifies_still_counts_and_hides_provider_text(sim_api, monkeypatch):
+    store, client, subject, key, event, post, now, connect = sim_api
+    codes = []
+
+    def refuse(channel, to, code, purpose):
+        codes.append(code)
+        raise notify.DeliveryFailed("email provider refused (400) sim_provider_detail")
+
+    monkeypatch.setattr(notify, "send_code", refuse)
+    r = call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "a@b.co"})
+    assert r.status_code == 502 and r.json()["code"] == "delivery_failed"
+    assert "sim_provider_detail" not in r.text and "400" not in r.text and codes[0] not in r.text
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT otp_id, consumed_at FROM account_otps WHERE subject_id=%s", (subject,))
+        (otp_id, consumed_at), = cur.fetchall()
+    assert consumed_at is not None  # counts against the limits, but can never verify
+    late = call(client, key, "POST", "/v1/account/otp/verify", {"otp_id": otp_id, "code": codes[0]})
+    assert late.status_code != 200
+
+
+def test_no_provider_leaves_no_code_behind(sim_api, monkeypatch):
+    store, client, subject, key, event, post, now, connect = sim_api
+    for k in ("VUKA_BREVO_API_KEY", "VUKA_SMTP_HOST", "VUKA_TWILIO_ACCOUNT_SID", "VUKA_DEV_OTP_LOG"):
+        monkeypatch.delenv(k, raising=False)
+    assert call(client, key, "POST", "/v1/account/otp", {"channel": "email", "to": "a@b.co"}).status_code == 503
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM account_otps WHERE subject_id=%s", (subject,))
+        assert cur.fetchone()[0] == 0

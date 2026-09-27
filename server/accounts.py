@@ -21,12 +21,16 @@ The PIN is never reset here: PIN recovery stays the recovery code (§9).
 Personal data at rest: email, phone and names are AES-256-GCM encrypted with
 the payload key; lookups use an HMAC of the normalised value. Codes and
 passwords are stored only as Argon2id PHC strings. Codes expire in 10
-minutes, allow 5 tries, and a subject may request at most 5 per 15 minutes.
+minutes and allow 5 tries. At most 5 codes per subject and 3 per recipient
+(whichever subject asks) per 15 minutes, and 100 per hour server-wide, so
+fresh sim_ registrations cannot turn the sender against someone's inbox. A
+code is stored before it is sent, so any code that arrives can be verified.
 """
 import base64
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import secrets
@@ -43,8 +47,14 @@ from server import notify
 
 OTP_TTL = timedelta(minutes=10)
 OTP_ATTEMPTS = 5
-OTP_RATE = 5
+OTP_RATE = 5                    # per subject, per OTP_RATE_WINDOW
+OTP_TARGET_RATE = 3             # per recipient across all subjects, per OTP_RATE_WINDOW
 OTP_RATE_WINDOW = timedelta(minutes=15)
+OTP_GLOBAL_RATE = 100           # server-wide, per OTP_GLOBAL_WINDOW
+OTP_GLOBAL_WINDOW = timedelta(hours=1)
+# Serialises code issuing so concurrent requests cannot all pass the counts.
+# Other advisory-lock keys: 864203 anchoring, 864204 scheduler, 864205 schema init.
+OTP_ISSUE_LOCK = 864206
 MIN_PASSWORD = 8
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 PHONE = re.compile(r"^\+27[1-9][0-9]{8}$")
@@ -71,6 +81,7 @@ CREATE TABLE IF NOT EXISTS account_otps (
     channel TEXT NOT NULL CHECK (channel IN ('email', 'sms')),
     purpose TEXT NOT NULL CHECK (purpose IN ('verify', 'reset')),
     target_ct TEXT NOT NULL,
+    target_lookup TEXT,
     code_phc TEXT NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
     attempts INTEGER NOT NULL DEFAULT 0,
@@ -78,7 +89,10 @@ CREATE TABLE IF NOT EXISTS account_otps (
     consumed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL
 );
+ALTER TABLE account_otps ADD COLUMN IF NOT EXISTS target_lookup TEXT;
 CREATE INDEX IF NOT EXISTS account_otps_subject ON account_otps (subject_id, created_at);
+CREATE INDEX IF NOT EXISTS account_otps_target ON account_otps (target_lookup, created_at);
+CREATE INDEX IF NOT EXISTS account_otps_created ON account_otps (created_at);
 """
 
 
@@ -185,10 +199,8 @@ def register_routes(app, store, signed_caller):
         channel, purpose, subject = data["channel"], data.get("purpose", "verify"), principal.subject_id
         f, t = fields(), now()
 
-        def work(cur):
-            cur.execute("SELECT count(*) FROM account_otps WHERE subject_id=%s AND created_at > %s", (subject, t - OTP_RATE_WINDOW))
-            if cur.fetchone()[0] >= OTP_RATE:
-                return _err(429, "rate_limited", "too many codes requested; wait a few minutes")
+        def reserve(cur):
+            cur.execute("SELECT pg_advisory_xact_lock(%s)", (OTP_ISSUE_LOCK,))
             if purpose == "reset":
                 cur.execute("SELECT email_ct, phone_ct, email_verified_at, phone_verified_at, password_phc FROM accounts WHERE subject_id=%s", (subject,))
                 row = cur.fetchone()
@@ -201,21 +213,47 @@ def register_routes(app, store, signed_caller):
                 target = normalise(channel, str(data.get("to", "")))
                 if not (EMAIL.match(target) if channel == "email" else PHONE.match(target)):
                     return _err(400, "invalid_request", "email address or +27 mobile number is invalid")
+            lookup = f.lookup("otp_target", f"{channel}\0{target}")
+            cur.execute("""SELECT count(*) FILTER (WHERE subject_id=%s AND created_at > %s),
+                                  count(*) FILTER (WHERE target_lookup=%s AND created_at > %s),
+                                  count(*) FILTER (WHERE created_at > %s)
+                           FROM account_otps WHERE created_at > %s""",
+                        (subject, t - OTP_RATE_WINDOW, lookup, t - OTP_RATE_WINDOW, t - OTP_GLOBAL_WINDOW,
+                         t - max(OTP_RATE_WINDOW, OTP_GLOBAL_WINDOW)))
+            mine, to_target, everyone = cur.fetchone()
+            if mine >= OTP_RATE or to_target >= OTP_TARGET_RATE:
+                return _err(429, "rate_limited", "too many codes requested; wait a few minutes")
+            if everyone >= OTP_GLOBAL_RATE:
+                return _err(429, "rate_limited", "codes are paused for a while; try again later")
             code = f"{secrets.randbelow(10 ** 6):06d}"
             otp_id = str(uuid.uuid4())
-            try:
-                via = notify.send_code(channel, target, code, purpose)
-            except notify.DeliveryUnavailable as exc:
-                return _err(503, "delivery_unavailable", str(exc))
-            except notify.DeliveryFailed as exc:
-                return _err(502, "delivery_failed", str(exc))
-            cur.execute("""INSERT INTO account_otps (otp_id, subject_id, channel, purpose, target_ct, code_phc, expires_at, created_at)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-                        (otp_id, subject, channel, purpose, f.seal(subject, "otp_target", target), _hash(code), t + OTP_TTL, t))
-            return JSONResponse(status_code=201, content={
-                "otp_id": otp_id, "channel": channel, "sent_to": mask(channel, target),
-                "expires_in_s": int(OTP_TTL.total_seconds()), "delivery": via})
-        return run(work)
+            # Stored (and committed) before it is sent: a code that reaches the
+            # member can always be verified, even if the database fails later.
+            cur.execute("""INSERT INTO account_otps (otp_id, subject_id, channel, purpose, target_ct, target_lookup, code_phc, expires_at, created_at)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        (otp_id, subject, channel, purpose, f.seal(subject, "otp_target", target), lookup, _hash(code), t + OTP_TTL, t))
+            return otp_id, target, code
+
+        reserved = run(reserve)
+        if isinstance(reserved, JSONResponse):
+            return reserved
+        otp_id, target, code = reserved
+        try:
+            via = notify.send_code(channel, target, code, purpose)
+        except notify.DeliveryUnavailable as exc:
+            # Nothing was sent, so the reservation is dropped and does not count.
+            run(lambda cur: cur.execute("DELETE FROM account_otps WHERE otp_id=%s", (otp_id,)))
+            return _err(503, "delivery_unavailable", str(exc))
+        except notify.DeliveryFailed as exc:
+            # It may still have gone out (a timeout), so it keeps counting against
+            # the limits but can never verify. The provider's own text stays in
+            # the log (fixed phrase + status only), never in the response.
+            run(lambda cur: cur.execute("UPDATE account_otps SET consumed_at=%s WHERE otp_id=%s", (now(), otp_id)))
+            logging.warning("vuka: %s code not delivered (%s)", channel, exc)
+            return _err(502, "delivery_failed", f"the code could not be sent by {channel}; try again in a few minutes")
+        return JSONResponse(status_code=201, content={
+            "otp_id": otp_id, "channel": channel, "sent_to": mask(channel, target),
+            "expires_in_s": int(OTP_TTL.total_seconds()), "delivery": via})
 
     def check_code(cur, subject, otp_id, code, t):
         """Returns (row, None) on a right code, or (None, error response)."""
