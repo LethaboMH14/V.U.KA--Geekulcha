@@ -93,3 +93,21 @@ This requires Sibusiso to build a minimal `anchor/verifier.py` that demonstrates
 - [ ] If not proceeding: this document stays as `PROPOSED` analysis; 5 bonus points are not claimed.
 
 *Written 15 Sep 2026. Owned by Lethabo (architecture, positioning). Sibusiso (anchor, chain, blockchain track) to verify the cryptographic claims before any public positioning.*
+
+---
+
+## 27 Sep 2026 — implemented as a demonstration (PROPOSED)
+
+**Threats this responds to (demonstration scope).** (1) *Future signature forgery:* Shor's algorithm would let a large quantum computer forge Ed25519 and P-256 signatures, so a signed statement "VUKA attested this root" could be faked later. (2) *Harvest now, decrypt later:* anything protected by an elliptic-curve key exchange (TLS today, a sealed export to a bank tomorrow) can be recorded now and decrypted once such a computer exists. The anchored hash chain itself is SHA-256 and Merkle trees; Grover leaves about 128-bit security, so the committed bytes and their timing stay checkable even if a signature scheme falls. The anchor does not prove that the underlying event or signer was genuine, and the ML-KEM work below is an interoperability test, not protection in use.
+
+| Algorithm (standard) | VUKA use | Status 27 Sep | Evidence | Time to production (`ESTIMATE`) |
+|---|---|---|---|---|
+| **ML-DSA-65** (FIPS 204) + Ed25519, AND | Hybrid attestation of each anchored root: signs the canonical statement binding topic, epoch, sequence, consensus time and the exact 33-byte message; the verifier also compares the bytes with the mirror node | **Built as a post hoc demonstration** on the real testnet root #8, with TEST keys that are **not pinned** | `anchor/pq.py`, `server/pq_attest.py`, `shared/pq.js`; `anchor/tests/test_pq.py` + `server/tests/test_pq_attest.py` (28 pass), `shared/test/pq.test.js` (in the 171-test shared suite); vectors both ways in `contracts/vectors/pq.json`, `pq-js.json` | 2–3 days: key ceremony, `ml_dsa_65_public_key` into the manifest, re-pin + new 0x02 anchor, sign every new root in the anchoring worker, verify in the public ledger |
+| **ML-KEM-768** (FIPS 203) | Protect records shared per case with a bank or insurer against harvest-now-decrypt-later | **Interoperability only**: pyca and noble derive identical keys from one seed and decapsulate each other's ciphertexts; the hybrid sealed export (X-Wing draft) is designed, not built | same tests | 1–2 weeks: X-Wing combiner with published known-answer vectors, recipient-key authentication, authorisation and AAD; the per-case access path itself is still PROPOSED |
+| **SLH-DSA** (FIPS 205) | Long-lived signer of the key manifest (hash-based, conservative; large signatures are fine for a rarely signed object) | Outlined only; pyca 50 has no SLH-DSA | — | 3–5 days once a reviewed Python or Node signer is chosen |
+| ML-KEM in TLS (X25519MLKEM768) | Transport between phone and server | Not ours to build: depends on the Azure front end and Android's TLS stack | TLS 1.3 negotiated on the Azure endpoint (probe, 27 Sep) | Platform-dependent |
+| Device identity (P-256 in Android Keystore) | Every event is signed on the phone | Unchanged: Android Keystore offers no ML-DSA key; a software key would lose hardware protection | — | Months; tracks Android platform support |
+
+**Libraries.** pyca/cryptography 50.0.0 (already pinned in `server/requirements.txt`) provides ML-DSA-44/65/87 and ML-KEM-768/1024. `@noble/post-quantum` 0.7.1 (exact pin in `shared/`) provides ML-KEM, ML-DSA and SLH-DSA; its README states it "has not been independently audited yet".
+
+**Still refused:** "quantum-resistant", "post-quantum ready". The demonstration keys are not in `contracts/keys/manifest.json`, so a valid attestation proves the scheme works end to end, not that VUKA's server issued it. Checklist P3.Q1 stays open.

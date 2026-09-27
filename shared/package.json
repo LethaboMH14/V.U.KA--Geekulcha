@@ -11,5 +11,8 @@
   },
   "devDependencies": {
     "vitest": "^5.0.1"
+  },
+  "dependencies": {
+    "@noble/post-quantum": "0.7.1"
   }
 }
