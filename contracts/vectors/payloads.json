@@ -189,6 +189,144 @@
       "canonical_hex": "7b22616374696f6e223a2264656c657465222c226b696e64223a2270696e5f617574686f7269736564222c226d6f6465223a226e6f726d616c222c226e6f6e6365223a2273696d5f6e6f6e6365222c227076223a312c22736967223a224d41413d222c227369676e65725f6b65795f6964223a2273696d5f6b6579222c227461726765745f6964223a2273696d5f7375626a656374227d",
       "sha256_hex": "37937d62d23c4abfb5e7099a08917949e29d972d219c96119f20b218b7065bcf",
       "commitment_hex": "9f8f82eca5d4dac987ae8b9f08e32d14025437f0da3f4b92aef8aee0ed2a7f16"
+    },
+    {
+      "name": "sim_evidence_observed_v1_prompt",
+      "kind": "evidence_observed",
+      "payload": {
+        "kind": "evidence_observed",
+        "pv": 1,
+        "journey_id": "sim_journey_1",
+        "cem_version": "CEM-1",
+        "ruleset_digest": "ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b",
+        "decision": "prompt",
+        "tally_db": 12,
+        "band": "strong",
+        "k_pct": 0,
+        "reasons": [
+          {
+            "name": "scream_single",
+            "db": 7
+          },
+          {
+            "name": "snatch",
+            "db": 5
+          }
+        ]
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b2262616e64223a227374726f6e67222c2263656d5f76657273696f6e223a2243454d2d31222c226465636973696f6e223a2270726f6d7074222c226a6f75726e65795f6964223a2273696d5f6a6f75726e65795f31222c226b5f706374223a302c226b696e64223a2265766964656e63655f6f62736572766564222c227076223a312c22726561736f6e73223a5b7b226462223a372c226e616d65223a2273637265616d5f73696e676c65227d2c7b226462223a352c226e616d65223a22736e61746368227d5d2c2272756c657365745f646967657374223a2265613133366238343662656333656230306334316334646563313831363631616262396465616266303338666366333262333837333864346365653539383362222c2274616c6c795f6462223a31327d",
+      "sha256_hex": "34c04f61b15c2f028ef836c868ad10b06fc8f7c737bca1587760d5fc48a30702",
+      "commitment_hex": "41bd4d18eedf2c02a094b11bd747a00296ebb1d6b3e7cbbcece1f80134faa4de"
+    },
+    {
+      "name": "sim_evidence_observed_v2_record",
+      "kind": "evidence_observed",
+      "payload": {
+        "kind": "evidence_observed",
+        "pv": 2,
+        "journey_id": "sim_journey_1",
+        "cem_version": "CEM-1",
+        "ruleset_digest": "ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b",
+        "decision": "record",
+        "tally_db": 9,
+        "band": "some",
+        "k_pct": 0,
+        "context": "on",
+        "reasons": [
+          {
+            "name": "glass_or_breaking",
+            "db": 5
+          },
+          {
+            "name": "impact",
+            "db": 4
+          }
+        ],
+        "observations": [
+          "snatch_liu"
+        ],
+        "candidate": {
+          "class_label": "Shatter",
+          "class_index": 437,
+          "score_bp": 2100,
+          "threshold_bp": 1500,
+          "level": "record"
+        },
+        "signal_event_id": null
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b2262616e64223a22736f6d65222c2263616e646964617465223a7b22636c6173735f696e646578223a3433372c22636c6173735f6c6162656c223a2253686174746572222c226c6576656c223a227265636f7264222c2273636f72655f6270223a323130302c227468726573686f6c645f6270223a313530307d2c2263656d5f76657273696f6e223a2243454d2d31222c22636f6e74657874223a226f6e222c226465636973696f6e223a227265636f7264222c226a6f75726e65795f6964223a2273696d5f6a6f75726e65795f31222c226b5f706374223a302c226b696e64223a2265766964656e63655f6f62736572766564222c226f62736572766174696f6e73223a5b22736e617463685f6c6975225d2c227076223a322c22726561736f6e73223a5b7b226462223a352c226e616d65223a22676c6173735f6f725f627265616b696e67227d2c7b226462223a342c226e616d65223a22696d70616374227d5d2c2272756c657365745f646967657374223a2265613133366238343662656333656230306334316334646563313831363631616262396465616266303338666366333262333837333864346365653539383362222c227369676e616c5f6576656e745f6964223a6e756c6c2c2274616c6c795f6462223a397d",
+      "sha256_hex": "e5043b1aa7dd43647a179407b4cdf61a1171a4bf1cc767591fa598e1af46c110",
+      "commitment_hex": "a388aca7ce60504ad23345e834ea10c006314b7e59851c4fc20b9f9fe9f0dfd6"
+    },
+    {
+      "name": "sim_evidence_observed_v2_prompt",
+      "kind": "evidence_observed",
+      "payload": {
+        "kind": "evidence_observed",
+        "pv": 2,
+        "journey_id": "sim_journey_1",
+        "cem_version": "CEM-1",
+        "ruleset_digest": "ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b",
+        "decision": "prompt",
+        "tally_db": 9,
+        "band": "some",
+        "k_pct": 0,
+        "context": "on",
+        "reasons": [
+          {
+            "name": "glass_or_breaking",
+            "db": 5
+          },
+          {
+            "name": "impact",
+            "db": 4
+          }
+        ],
+        "observations": [
+          "snatch_liu"
+        ],
+        "candidate": {
+          "class_label": "Shatter",
+          "class_index": 437,
+          "score_bp": 2100,
+          "threshold_bp": 1500,
+          "level": "prompt"
+        },
+        "signal_event_id": "0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70"
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b2262616e64223a22736f6d65222c2263616e646964617465223a7b22636c6173735f696e646578223a3433372c22636c6173735f6c6162656c223a2253686174746572222c226c6576656c223a2270726f6d7074222c2273636f72655f6270223a323130302c227468726573686f6c645f6270223a313530307d2c2263656d5f76657273696f6e223a2243454d2d31222c22636f6e74657874223a226f6e222c226465636973696f6e223a2270726f6d7074222c226a6f75726e65795f6964223a2273696d5f6a6f75726e65795f31222c226b5f706374223a302c226b696e64223a2265766964656e63655f6f62736572766564222c226f62736572766174696f6e73223a5b22736e617463685f6c6975225d2c227076223a322c22726561736f6e73223a5b7b226462223a352c226e616d65223a22676c6173735f6f725f627265616b696e67227d2c7b226462223a342c226e616d65223a22696d70616374227d5d2c2272756c657365745f646967657374223a2265613133366238343662656333656230306334316334646563313831363631616262396465616266303338666366333262333837333864346365653539383362222c227369676e616c5f6576656e745f6964223a2230663861326236632d393164342d346537612d623363352d366431653966326134623730222c2274616c6c795f6462223a397d",
+      "sha256_hex": "2de247eea53096aadf90d3263f2c8946e0c27a3c9204881810bdc9d17ae58a9d",
+      "commitment_hex": "3bec7efb5056feffe297a6d2bd68146c6e62e8c10c3db8db2decbec88523b2c2"
+    },
+    {
+      "name": "sim_evidence_observed_v2_pin",
+      "kind": "evidence_observed",
+      "payload": {
+        "kind": "evidence_observed",
+        "pv": 2,
+        "journey_id": "sim_journey_1",
+        "cem_version": "CEM-1",
+        "ruleset_digest": "ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b",
+        "decision": "pin",
+        "checkin_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+        "reasons": [
+          {
+            "name": "pin_retry",
+            "db": 2
+          },
+          {
+            "name": "pin_slow",
+            "db": 0
+          }
+        ]
+      },
+      "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+      "canonical_hex": "7b2263656d5f76657273696f6e223a2243454d2d31222c22636865636b696e5f6964223a2237633164336630652d356232612d346338652d396136312d326634643865306231633333222c226465636973696f6e223a2270696e222c226a6f75726e65795f6964223a2273696d5f6a6f75726e65795f31222c226b696e64223a2265766964656e63655f6f62736572766564222c227076223a322c22726561736f6e73223a5b7b226462223a322c226e616d65223a2270696e5f7265747279227d2c7b226462223a302c226e616d65223a2270696e5f736c6f77227d5d2c2272756c657365745f646967657374223a2265613133366238343662656333656230306334316334646563313831363631616262396465616266303338666366333262333837333864346365653539383362227d",
+      "sha256_hex": "a808668a2f9d440d25942ecdf93b090c6380f78851a30182814a76934895a742",
+      "commitment_hex": "b8d9fc0c24db31a0d36a242ff8c7718515f094ab68fc2cb64b33ea69c5a5ada2"
     }
   ],
   "rejections": [
@@ -329,6 +467,66 @@
       "kind": "pin_authorised",
       "json": "{\"kind\":\"pin_authorised\",\"pv\":1,\"action\":\"export\",\"target_id\":\"sim_subject\",\"mode\":\"normal\",\"nonce\":\"sim_nonce\",\"sig\":\"!bad\",\"signer_key_id\":\"sim_key\"}",
       "reason": "invalid proposed PIN payload"
+    },
+    {
+      "name": "sim_evidence_observed_v1_float_db",
+      "kind": "evidence_observed",
+      "json": "{\"kind\":\"evidence_observed\",\"pv\":1,\"journey_id\":\"sim_journey_1\",\"cem_version\":\"CEM-1\",\"ruleset_digest\":\"ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b\",\"decision\":\"prompt\",\"tally_db\":12,\"band\":\"strong\",\"k_pct\":0,\"reasons\":[{\"name\":\"scream_single\",\"db\":7.5},{\"name\":\"snatch\",\"db\":5}]}",
+      "reason": "invalid proposed evidence payload"
+    },
+    {
+      "name": "sim_evidence_observed_v1_extra_property",
+      "kind": "evidence_observed",
+      "json": "{\"kind\":\"evidence_observed\",\"pv\":1,\"journey_id\":\"sim_journey_1\",\"cem_version\":\"CEM-1\",\"ruleset_digest\":\"ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b\",\"decision\":\"prompt\",\"tally_db\":12,\"band\":\"strong\",\"k_pct\":0,\"reasons\":[{\"name\":\"scream_single\",\"db\":7},{\"name\":\"snatch\",\"db\":5}],\"confidence\":93}",
+      "reason": "invalid proposed evidence payload"
+    },
+    {
+      "name": "sim_evidence_observed_v1_nine_reasons",
+      "kind": "evidence_observed",
+      "json": "{\"kind\":\"evidence_observed\",\"pv\":1,\"journey_id\":\"sim_journey_1\",\"cem_version\":\"CEM-1\",\"ruleset_digest\":\"ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b\",\"decision\":\"prompt\",\"tally_db\":12,\"band\":\"strong\",\"k_pct\":0,\"reasons\":[{\"name\":\"impact\",\"db\":1},{\"name\":\"impact\",\"db\":1},{\"name\":\"impact\",\"db\":1},{\"name\":\"impact\",\"db\":1},{\"name\":\"impact\",\"db\":1},{\"name\":\"impact\",\"db\":1},{\"name\":\"impact\",\"db\":1},{\"name\":\"impact\",\"db\":1},{\"name\":\"impact\",\"db\":1}]}",
+      "reason": "invalid proposed evidence payload"
+    },
+    {
+      "name": "sim_evidence_observed_v1_k_over_100",
+      "kind": "evidence_observed",
+      "json": "{\"kind\":\"evidence_observed\",\"pv\":1,\"journey_id\":\"sim_journey_1\",\"cem_version\":\"CEM-1\",\"ruleset_digest\":\"ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b\",\"decision\":\"prompt\",\"tally_db\":12,\"band\":\"strong\",\"k_pct\":101,\"reasons\":[{\"name\":\"scream_single\",\"db\":7},{\"name\":\"snatch\",\"db\":5}]}",
+      "reason": "invalid proposed evidence payload"
+    },
+    {
+      "name": "sim_evidence_observed_v1_reason_extra_field",
+      "kind": "evidence_observed",
+      "json": "{\"kind\":\"evidence_observed\",\"pv\":1,\"journey_id\":\"sim_journey_1\",\"cem_version\":\"CEM-1\",\"ruleset_digest\":\"ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b\",\"decision\":\"prompt\",\"tally_db\":12,\"band\":\"strong\",\"k_pct\":0,\"reasons\":[{\"name\":\"impact\",\"db\":1,\"p\":2}]}",
+      "reason": "invalid proposed evidence payload"
+    },
+    {
+      "name": "sim_evidence_observed_v2_unknown_decision",
+      "kind": "evidence_observed",
+      "json": "{\"kind\":\"evidence_observed\",\"pv\":2,\"journey_id\":\"sim_journey_1\",\"cem_version\":\"CEM-1\",\"ruleset_digest\":\"ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b\",\"decision\":\"maybe\",\"tally_db\":9,\"band\":\"some\",\"k_pct\":0,\"context\":\"on\",\"reasons\":[{\"name\":\"glass_or_breaking\",\"db\":5},{\"name\":\"impact\",\"db\":4}],\"observations\":[\"snatch_liu\"],\"candidate\":{\"class_label\":\"Shatter\",\"class_index\":437,\"score_bp\":2100,\"threshold_bp\":1500,\"level\":\"record\"},\"signal_event_id\":null}",
+      "reason": "invalid proposed evidence payload"
+    },
+    {
+      "name": "sim_evidence_observed_v2_signal_not_uuid",
+      "kind": "evidence_observed",
+      "json": "{\"kind\":\"evidence_observed\",\"pv\":2,\"journey_id\":\"sim_journey_1\",\"cem_version\":\"CEM-1\",\"ruleset_digest\":\"ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b\",\"decision\":\"prompt\",\"tally_db\":9,\"band\":\"some\",\"k_pct\":0,\"context\":\"on\",\"reasons\":[{\"name\":\"glass_or_breaking\",\"db\":5},{\"name\":\"impact\",\"db\":4}],\"observations\":[\"snatch_liu\"],\"candidate\":{\"class_label\":\"Shatter\",\"class_index\":437,\"score_bp\":2100,\"threshold_bp\":1500,\"level\":\"prompt\"},\"signal_event_id\":\"not-a-uuid\"}",
+      "reason": "invalid proposed evidence payload"
+    },
+    {
+      "name": "sim_evidence_observed_v2_unknown_observation",
+      "kind": "evidence_observed",
+      "json": "{\"kind\":\"evidence_observed\",\"pv\":2,\"journey_id\":\"sim_journey_1\",\"cem_version\":\"CEM-1\",\"ruleset_digest\":\"ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b\",\"decision\":\"record\",\"tally_db\":9,\"band\":\"some\",\"k_pct\":0,\"context\":\"on\",\"reasons\":[{\"name\":\"glass_or_breaking\",\"db\":5},{\"name\":\"impact\",\"db\":4}],\"observations\":[\"heart_rate\"],\"candidate\":{\"class_label\":\"Shatter\",\"class_index\":437,\"score_bp\":2100,\"threshold_bp\":1500,\"level\":\"record\"},\"signal_event_id\":null}",
+      "reason": "invalid proposed evidence payload"
+    },
+    {
+      "name": "sim_evidence_observed_v2_candidate_level",
+      "kind": "evidence_observed",
+      "json": "{\"kind\":\"evidence_observed\",\"pv\":2,\"journey_id\":\"sim_journey_1\",\"cem_version\":\"CEM-1\",\"ruleset_digest\":\"ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b\",\"decision\":\"record\",\"tally_db\":9,\"band\":\"some\",\"k_pct\":0,\"context\":\"on\",\"reasons\":[{\"name\":\"glass_or_breaking\",\"db\":5},{\"name\":\"impact\",\"db\":4}],\"observations\":[\"snatch_liu\"],\"candidate\":{\"class_label\":\"Shatter\",\"class_index\":437,\"score_bp\":2100,\"threshold_bp\":1500,\"level\":\"maybe\"},\"signal_event_id\":null}",
+      "reason": "invalid proposed evidence payload"
+    },
+    {
+      "name": "sim_evidence_observed_pv3_unknown",
+      "kind": "evidence_observed",
+      "json": "{\"kind\":\"evidence_observed\",\"pv\":3,\"journey_id\":\"sim_journey_1\",\"cem_version\":\"CEM-1\",\"ruleset_digest\":\"ea136b846bec3eb00c41c4dec181661abb9deabf038fcf32b38738d4cee5983b\",\"decision\":\"prompt\",\"tally_db\":12,\"band\":\"strong\",\"k_pct\":0,\"reasons\":[{\"name\":\"scream_single\",\"db\":7},{\"name\":\"snatch\",\"db\":5}]}",
+      "reason": "invalid proposed evidence payload"
     }
   ]
 }

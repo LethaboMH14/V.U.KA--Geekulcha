@@ -305,3 +305,164 @@ Posted a correction on PR #79 acknowledging the gap explicitly rather than letti
 **The work is split by what each tool can actually reach.** Codex runs under a separate Windows account with no `az` login, so it cannot deploy and must never see the encryption key. **Part A (Codex):** the sim-only guard with tests, the leak-proof package script, `scripts/smoke-live.py` (signed round trip with synthetic `sim_` keys, plus a non-`sim_` registration refused), and a local proof from a clean venv with only `requirements.txt` against local PostgreSQL including a restart to show persistence. **Part B (Claude, using Sibusiso's `az` session):** set the startup command; generate and set `VUKA_PAYLOAD_KEY_B64` and `VUKA_SIM_ONLY=1` via a temp file outside the repo that is deleted afterwards (never echoed); deploy the package built from the pushed SHA and check the Oryx build installed `requirements.txt`; run the smoke test against the live URL; restart the App Service and re-read the export; record the deployed SHA. Not ticked until both leads accept. Rollback is `az webapp stop`; no new Azure resources.
 
 **Sequencing.** Codex was also handed `contract-implementation-status` (an `x-vuka-implemented` flag on every operation plus a test comparing flags to registered routes, answering Lethabo's `POST /v1/subjects` point on #51). Told Codex to do that first only if it hasn't started, since the deploy is late. Awaiting Codex's Part A SHA; I will re-verify it from a fresh checkout before doing Part B.
+
+## 2026-09-26 — Azure deploy is live for the first time; guardian FCM/sim_bank/#99 reviewed; Hedera credentials configured and the manifest message is live on-chain
+
+**The first live Azure deploy landed today (P3.A6 — was blocked every prior check, now done).** `https://vuka-anchor-server.azurewebsites.net` is up, survives a restart, and a real signed round trip (register -> append -> export) works. Three real bugs were found and fixed purely by trying the deploy rigorously, none caught by unit tests alone:
+1. The deploy packager only bundled `anchor/canonical.py`; the server imports five more `anchor.*` modules and reads `contracts/payloads/*.json` and `contracts/keys/verify-pins.json` from disk. Found by grepping every `from anchor.` import; the `verify-pins.json` gap specifically was only caught by actually booting the packaged zip in a clean venv, not by a test.
+2. `startup.sh`'s bare `python` resolved to Azure's system interpreter, not Oryx's `antenv` -- a custom App Service startup command is not run through Oryx's own venv-activation wrapper. This was the real root cause of every earlier "deploy" this project ever recorded as failing.
+3. A pre-existing Azure config bug, not code: `DATABASE_URL`'s password had a literal unescaped `%`, which `psycopg2` rejected. Fixed via `az` CLI; the value was never printed.
+
+**Guardian FCM / sim_bank / #99 review pass (earlier today, before the deploy).** Reproduced and fixed Khutso's two #96 findings: a naive-timestamp crash in `sim_bank` (`sim_bank/main.py`, new test proves both the crash and the fix), and unified the `guardian_fcm_tokens`/`guardians` schema split between #95 and #96 so Khutso's FCM adapter reads guardians (identity, decoy, status, token) from the one table #96 already owns. Reviewed #99 (Lethabo's guardian-alerts worker) in depth: found and fixed a real starvation bug (`server/outbox.py`'s `claim_due` gained a `kinds` filter so a worker that only handles `guardian_alert` doesn't lease away `anchor_request`/`bank_signal` rows it can't process, crowding out its own kind) and a missing `x-vuka-implemented` contract flag for `GET /v1/guardians/me/alerts` that was failing CI's route-parity check. Traced a repo-wide `secret-scan` false positive to a commit on Mutarisi's `feature/ui` branch (the word "tokens" in an XML comment trips Gitleaks' `generic-api-key` rule; CI scans all branch history, so it turns every PR red) and posted the diagnosis with two fix options -- still unresolved as of writing, still not from anyone's actual code. Responded to Babatunde's #100 ANCHOR-access ADR: two of its points (victim-held payload key, guardian-held record backup) contradict the built system (server-held AES key, because escalation has to read `checkin_result`/`pin_authorised` to detect duress; guardians get no record copy today, only incident id/trigger/times). Babatunde applied the correction at `0c8a863`, narrowing accepted points to what's built and moving the rest to owned open questions -- resolved cleanly.
+
+**Dashboard + local-run enablement, for Lethabo.** CORS (`VUKA_DASHBOARD_ORIGINS`, GET-only, no credentials, off if unset -- widens which browser origins can *read* the three already-public routes, never what any request can *do*, since every signed route still needs a real key a browser can't forge); `.env.example`; `server/README.md` rewritten; new `docs/DASHBOARD-INTEGRATION.md` (exact `/ws/panel` shape, a working JS example). Merged cleanly with Lethabo's concurrent `evidence_observed`/ADR-0047 commits twice today (`git fetch` + `git merge --no-edit`, full suite re-run each time) -- she also landed `evidence_observed`'s guardian-`why` field (flagged that it's a privacy-relevant change needing Ipeleng's review, ADR-0047 text, and JS/Python validator parity, none of which existed yet) and, later, a `PROPOSED` location-sharing feature (ADR-0048: 30 s fixes while a guardian alert is open, purged 24 h after incident close).
+
+**`run_workers.py` now drives all three outbox effects, not just guardian alerts -- this was the reason nothing anchored or reached the bank outside tests.** `server/bank_worker.py` and `server/anchoring.py`'s `BatchCoordinator` already existed, fully built and tested, just never invoked. Consolidated into the one process: bank_signal delivers to a live `sim_bank` over HTTP (`VUKA_SIM_BANK_URL`); the anchor coordinator ticks every second using the **real** Hedera transport unconditionally -- this codebase never fabricates a ledger receipt, so with no credentials configured batches are created from real chain heads but just stay unconfirmed, which is the honest state. `startup.sh` now also launches `run_workers.py` alongside uvicorn. Proven with a new end-to-end test driving one worker tick against a live `sim_bank` socket and a fixture Hedera receipt (guardian_alert + bank_signal + anchor batch all complete in one tick); reverting the fix was confirmed to break the test before it shipped.
+
+**Two more real bugs found redeploying with that change, both fixed and confirmed live:**
+- The deploy packager's `.env*` safety filter refused the whole build over the repo's own `.env.example` (secret-free, added earlier today) -- too broad a check; carved out the one name `.gitignore` already exempts.
+- A genuine PostgreSQL deadlock on cold boot: `run_workers.py` and uvicorn now start concurrently and both call `PostgresDatabase.initialize()`'s dozen-table `CREATE TABLE IF NOT EXISTS` transaction independently -- two such transactions racing on a fresh database deadlocked for real (`psycopg2.errors.DeadlockDetected`, self-healed on retry, but real, confirmed from the live container's own startup log). Fixed with a session-level `pg_advisory_lock`, released only by `connection.close()` after commit -- an intermediate version that unlocked explicitly *inside* the transaction, before it committed, just turned the deadlock into a different race (`DuplicateObject`), caught by mutation-testing the fix before shipping it. Redeployed; confirmed clean on a real cold boot (log shows normal startup, no deadlock, right where the old error used to fire every time).
+
+**Hedera testnet credentials are now configured on Azure, and the manifest message is live and mirror-confirmed.** Sibusiso set `HEDERA_OPERATOR_ID`/`HEDERA_OPERATOR_KEY`/`HEDERA_SUBMIT_KEY` (the same account and pinned topic from the 23 Sep spike -- `0.0.10686482` on topic `0.0.10687280` -- so the operator key doubles as the topic's submit key) as Azure app settings. The Claude Code assistant was explicitly blocked by its own harness from moving the private key through any of its tools (a clipboard read was refused as "Credential Materialization") -- correctly, per the standing rule never to handle secrets in plain text -- so Sibusiso ran the one-time `0x02` manifest publish himself, locally, with Node + the sidecar's own `npm ci`. Real, mirror-confirmed receipt: `topic_id 0.0.10687280, sequence_number 3, confirmed_by public_mirror`, message hex matching the pinned manifest fingerprint exactly. `HEDERA_MANIFEST_SEQUENCE=3` is now set on Azure too.
+
+**Open, unresolved as of writing:** posting one real `checkin_result` event to the live server (via `scripts/smoke-live.py`) did enqueue a real `anchor_request`, but `/v1/anchor/latest` still returns 404 several minutes later -- the batch coordinator's own ticks are silent by design whether they succeed or fail (never fabricate, never log a fake status), so this can't be distinguished from logs alone. Most likely cause: Azure's `PYTHON|3.13` App Service container plausibly has no Node runtime, and `anchor/publish.py` shells out to `node` for the real Hedera submission -- this is a genuine unconfirmed gap, not a guess acted on; checking it directly via Kudu was also blocked by the harness ("Production Reads"). Needs a hands-on check (SSH into the Kudu console, or add Node to the container) before a real root will ever confirm on the live deploy.
+
+**Owed / next.** (a) Resolve whether Node exists on Azure for the sidecar -- if not, decide: install it in `startup.sh` (apt-get, or a portable Node binary), or move to a custom container image with both runtimes. (b) Once resolved, confirm a real root actually lands on `/v1/anchor/latest`. (c) Khutso's re-review of the #95/#96/#99 fixes; Ipeleng's still-pending Semgrep ruling and secret-scan allowlist decision (both single points of failure blocking #89/#95/#96/#99 CI simultaneously); Mutarisi's `feature/ui` branch still needs its one flagged commit reworded/rebased. (d) P3.L4 (joint end-to-end slice with Lethabo/Vukosi/Ipeleng) -- was blocked on a live, reachable server; that block is gone, this is the next thing to actually schedule.
+
+## 2026-09-26 (afternoon) — Node on Azure, why no root has landed, and the stuck batch
+
+**Node on Azure: `startup.sh` now installs it (`aec1641`, `724ebe9`, and this push).** Whether the App Service image has Node couldn't be checked directly. A Kudu command was refused, and `az` returns the Kudu publishing password as the literal string `"REDACTED"`, so the assistant can't log into Kudu at all. Sibusiso chose to make the question irrelevant instead:
+- **What it does:** on the Azure/Oryx path only (`antenv` present; a local `bash startup.sh` is untouched), `startup.sh` downloads the pinned `node-v24.18.0-linux-x64`, checks it against nodejs.org's `SHASUMS256.txt` before extracting, and caches it under `/home/vuka`, the only path Azure keeps across restarts. It exports `VUKA_NODE_BINARY` and runs the sidecar's `npm ci` into the app's (fresh every boot) folder. A network or checksum failure never stops the API from starting.
+- **First deploy failed, and taught something:** the Node download itself took ~5 s, but `npm ci` ran in the foreground and took over 3 minutes, so Azure killed the container ("no listening ports"). Azure kept the previous deploy live, so there was no downtime. The whole install now runs in the background, and boots are back to ~60 s.
+- **This push:** every step now logs a `vuka:` line, success or failure, so the App Service log shows how far it got (grep `vuka:`). A completion marker (`.vuka-install-complete`) is written only after extraction finishes. The 10:40 UTC install was killed mid-way, possibly mid-extract onto the slow `/home` share, so an install without the marker is wiped and redone.
+
+**Why no root has landed: two real bugs, both fixed and tested.**
+1. **`anchor/publish.py` (`073fee3`):** `OSError` (the sidecar process never started, e.g. no `node`) was treated as an *ambiguous* failure. `server/anchoring.py` marks a batch `submitted` *before* calling the sidecar, and deliberately never resubmits an ambiguous one, so a missing binary parked the batch forever. It now raises `AnchorNotSubmitted` (retryable). A timeout stays ambiguous, because that process was running.
+2. **`anchor/hedera-sidecar/cli.mjs` (this push):** a missing `node_modules` (`npm ci` not finished) failed the *top-level* import before the sidecar's own exit-2 ("not submitted") handler existed. Node exited 1, which again reads as ambiguous and parks the batch. The import now happens inside `main()`, so the same failure exits 2 with "dependencies not installed". The new `cli.test.mjs` proves it; with the old import it exits 1 (mutation-tested).
+
+**The stuck batch on Azure: Sibusiso is clearing it by hand.** The public mirror shows topic `0.0.10687280` has only three messages ever: the spike's text message (seq 1) and the `0x02` manifest (seq 2 on 25 Sep, seq 3 today). There's no `0x01` root. So the batch from the 10:03 UTC smoke test (before Node existed) never reached Hedera, and it is safe to reset.
+- **Why it matters:** while an unconfirmed row exists, the coordinator never starts a new batch. It always picks the oldest unconfirmed one first, so that one row blocks all anchoring.
+- **The steps:** check `node_modules` via App Service SSH; re-check the mirror; connect from Azure Cloud Shell (the DB firewall only allows Azure services, and Cloud Shell counts); run `SELECT ... FROM anchor_batches WHERE state <> 'confirmed'`; then `UPDATE ... SET state='failed' WHERE state='submitted'` inside a transaction. `failed` is a state the worker already retries by itself.
+- **No database credentials passed through the assistant.** The DB password stays with Sibusiso.
+
+**PR replies.**
+- **#99 (Lethabo):** all four of my asks closed. She put ADR-0047 decision 6 (the `why` privacy change) and ADR-0048 on #88's branch, to avoid an `adr.md` merge conflict. JS/Python validator parity landed in `eb4f5d1`, and the full suite passes on it. Told her what the Azure logs show.
+  - Told her gating the phones' move to Azure on `/v1/anchor/latest == 200` waits on *anchoring*, not the API. `/healthz` is the right gate for "the server works".
+- **#100 (Babatunde):** confirmed the real SKUs: App Service **Basic B1** (his model said "Shared") and PostgreSQL **B1ms**. His $9.49 is Azure's Dev/Test price, not pay-as-you-go (~$13.14). No metered spend shows on this subscription (likely credits), so the figure should be tagged `ESTIMATE`. Khutso has since asked him to stop labelling the modelled Azure charge `FACT`.
+
+**Owed / next.** (a) Redeploy this push and read the `vuka:` lines in the App Service log to confirm Node and the sidecar are actually ready. (b) Sibusiso clears the stuck `anchor_batches` row, *after* (a) shows the sidecar ready, or the retry fails and sticks again. (c) Confirm a real `0x01` root on the mirror and `/v1/anchor/latest` → 200. That is also Lethabo's trigger for moving the phones to Azure. (d) Still open, needs a team decision, not a fix: there is no recovery at all from a *genuinely* ambiguous failure (a real timeout). A bounded-staleness rule would change a deliberate safety invariant ("None is not permission to resubmit").
+
+**Update, ~13:20 UTC — FCM live on Azure, sidecar confirmed ready (`8cb8459`).**
+- **FCM:** Khutso's adapter (#95) is merged in and routed per guardian. A real device token gets a Firebase push; the app's placeholder `sim_poll_while_open` keeps in-app delivery. A failed push (e.g. the ~1 h access token expiring) falls back to in-app and is logged. `GET /v1/guardians/me/alerts` now reads `guardian_deliveries`, so FCM-delivered alerts show in-app too. The live log confirms `vuka: guardian alerts via FCM push`.
+- **For Lethabo:** no guardian gets a real push until the app sends a real FCM registration token to `PUT /v1/guardians/{id}/token`. `FCM_ACCESS_TOKEN` must also be refreshed before the demo.
+- **Sidecar:** confirmed on the real container. Node v24.18.0 is ready on local disk and `npm ci` finished (102 packages, ~2 min) at 13:19 UTC.
+- **Correction:** container logging had been **off**. Earlier "no output" and "hang" readings were log gaps, not failures; logging is now on (filesystem).
+- **Next:** the stuck `anchor_batches` row is now safe to reset (the SQL steps above). A real root should then land within a minute or two.
+
+## 2026-09-26 (evening) — worker outage fixed, server key rotated, first real root on Hedera, ledger positive path
+
+**Headline: Azure has anchored real roots on Hedera.** The first `0x01` root is mirror seq 5 (root `bd7f395d…c2dcc4c2`), confirmed 19:52:33 UTC; seq 6 and 7 followed. `/v1/anchor/latest` returns 200 with that receipt and the new key manifest. The public ledger (https://lethabomh14.github.io/V.U.KA--Geekulcha/dashboard/ledger/) shows the latest root as "On ledger" and the manifest as "Pinned". This was Lethabo's trigger for moving the phones and the ledger to live-verified.
+
+**What was in the way, in order (all fixed, tested and deployed):**
+1. **Worker outage (`5629d27`).** The server signing key was missing on Azure, and one unsignable deadline made the scheduler raise, which stopped *every* worker effect: ~11k failures in the log, and no alerts or anchors. The scheduler now runs each subject in isolation (with the subject lock), logs each distinct failure at most once per 5 min, and `run_workers.step()` keeps delivery and anchoring going even if a whole scheduler tick fails.
+   - Also fixed: two advisory locks shared key 864204. Schema init now uses 864205, and a test pins that all keys are distinct.
+2. **Server key rotated (`6c8c74e` here, `c5ad883` on `main`).** Sibusiso generated a new Ed25519 key locally with `scripts/new-server-signing-key.py`; the private key never passed through the assistant. He set it on Azure and published the new `0x02` manifest (seq 4, fingerprint `f20cf84a…4830`). `contracts/keys/manifest.json` and `verify-pins.json` are re-pinned on both branches (byte-identical), and Pages serves the new pin. **Needs Ipeleng's review.**
+3. **The deploy package never shipped `shared/` (`0898c34`).** This is the real reason no root had ever landed. `publish.mjs` imports `../../shared/keys.js`, and Node reports a missing source file the same way as a missing npm package. A new packaging test follows every import from `cli.mjs` recursively.
+4. **Held-export heads (`5629d27`).** An incident's `pre_incident_head` is now anchored, so a record held under T30 can still be verified.
+5. **Export heads (this push).** An export ends at the entry *before* its own PIN authorisation, so a record exported right after the member's last event was never a leaf, and the ledger said "not anchored yet" forever. It was found by the live positive path below. The coordinator now anchors every export's head, and the sidecar error names a half-installed package without its full `/tmp` path. See `docs/build-log/entries/2026-09-26-sibusiso-anchor-export-head.md`.
+
+**Other changes this evening.**
+- `https://lethabomh14.github.io` was added to `VUKA_DASHBOARD_ORIGINS` on Azure.
+- The stuck batch was reset over a temporary single-IP DB firewall rule, which was deleted straight after; only `AllowAzureServices` remains.
+
+**Unexplained: the worker went silent from 19:34 to 19:47 UTC.** No log lines at all; an `az webapp restart` at 19:47 fixed it, and the root landed at 19:52. The cause is unknown and could recur. If anchoring stalls before the demo, check that `vuka: anchor status` lines are still appearing in `default_docker.log`, and restart if not.
+
+**Live positive path (ledger ↔ Azure).**
+- **Before the fix:** a fresh `sim_` member, driven by the app's own compiled device layer, registered on Azure, walked a journey, ended it and exported with its PIN. The export (4 entries) passes the stranger verifier offline, but its head was never anchored (bug 5).
+- **After the redeploy (`b55b6f5`, 20:31 UTC): LIVE-VERIFIED.**
+  - A fresh `sim_subj_38e5a4fb` ran the same steps.
+  - Its export head `9505ab9f…` was provable 17 s after the export, in root #8 (consensus 20:31:49 UTC).
+  - Pasted into the public ledger's "Verify a record", the browser recomputed all 4 entries and the Merkle root (`fba0ff6c…`). It read the same root from Hedera message #8 and showed **LIVE-VERIFIED**.
+  - The earlier export (from before the fix) is now provable too, because the new snapshot picked up its head.
+  - **Demo note:** straight after exporting, the ledger shows "unavailable" (not anchored yet) for up to about a minute; then paste again.
+
+**Owed / risks before the demo.**
+- (a) The backend (this branch) is still not on `main`.
+- (b) `main`'s CI is red from the `feature/ui` `89f8f1c` Gitleaks false positive. The fix is to delete or rebase `feature/ui`; that is Mutarisi's or Lethabo's call.
+- (c) `FCM_ACCESS_TOKEN` expires hourly and must be refreshed just before the demo.
+- (d) `sim_bank` is not running on Azure, so `bank_signal` rows wait.
+- (e) The key rotation needs Ipeleng's review.
+- (f) #105 was merged with review conditions still open.
+- (g) The 19:34–19:47 worker silence above.
+
+## 2026-09-27 (early hours) — sign-up codes: account service live on Azure, #116 risks fixed first
+
+**Why:** Khutso's #116 found that the native `VUKA.apk` sign-up never got a code, because Azure answered 404 on `/v1/account/otp`. The account service only existed on `feature/integrate`. Lethabo's #115 ported just that service onto the deploy branch.
+
+**Before deploying,** I fixed the four #116 risks in #115's code (`e29db84`, build-log `2026-09-27-sibusiso-account-otp-review-fixes.md`):
+- **Stored before sent:** a code is committed before the provider call.
+- **Caps:** 3 codes per recipient per 15 minutes and 100 per hour server-wide, on top of 5 per subject, with the counts serialised by advisory lock 864206.
+- **Dev log:** `VUKA_DEV_OTP_LOG` is refused on App Service.
+- **Errors:** provider error text never reaches the client.
+
+The full suite passes (354), and 6 of the new tests fail on the original code.
+
+**Deployed:**
+- `e29db84` was fast-forwarded onto `feat/lethabo-guardian-delivery`, which merges #115, and deployed at ~02:01 UTC. The boot is clean and the sidecar was ready at 02:04:55.
+- Sibusiso set `VUKA_BREVO_API_KEY` and `VUKA_EMAIL_FROM` as app settings himself; only the names were checked.
+- A signed `sim_` request reads `GET /v1/account` (the schema exists), and `POST /v1/account/otp` validates input. No email was sent by the assistant.
+
+**Owed:**
+- (a) One real sign-up from the app to a consenting team inbox, with the receipt recorded per Khutso's #116 acceptance matrix. Check spam, since new Brevo senders often land there.
+- (b) SMS is not configured (no Twilio), so SMS sign-up answers 503 `delivery_unavailable`. Say "email only" in the demo.
+- (c) The Google button in the native app is simulated (#116 item 1).
+- (d) The account contract and POPIA notice still need Lethabo and Ipeleng.
+
+**Update, 02:28 UTC: the first real sign-up code was delivered and verified.**
+- **The first attempts failed.** Brevo refused them with 401 because its "Authorised IPs" blocking was on for API keys; the key itself was valid. Sibusiso deactivated that blocking for API keys in Brevo. Turn it back on after the demo, or authorise Azure's outbound IPs (`az webapp show --query possibleOutboundIpAddresses`).
+- **Then a rate limit.** Three refused sends to one address had filled its per-recipient cap (3 per 15 min), so the next request got 429. That is by design, but a *definite* provider refusal should not count, because no email went out. That's owed as a follow-up.
+- **Success.** At 02:28:13 `POST /v1/account/otp` returned 201, `/otp/verify` returned 200 at 02:28:38, and `PUT /v1/account/password` returned 200 at 02:28:39. The code arrived in Sibusiso's inbox from the native app, which is Khutso's #116 email acceptance with n=1. No address or code is recorded here.
+- **One stray failure.** An earlier try at 02:25:06 got a 401 from our own signature check, not from Brevo. It didn't recur on the retry; look at it after the demo.
+
+## 2026-09-27 (03:00–03:55 UTC) — bank signal delivered, invite status, wrong-PIN heads-up
+
+- **sim_bank runs on Azure (`7ba10de`).**
+  - Why: the team's VIGIL run raised an incident, and every bank signal was refused, because `sim_bank` was never packaged or started.
+  - Fix: it now runs in the container on `127.0.0.1:8001`, loopback only.
+  - The waiting signal was delivered at 02:57:58 UTC (`risk-signal 202`), with no failures since.
+- **The invite shows as accepted (`f5e16f5` server, #118 app, merged).**
+  - New device-signed `GET /v1/guardians`: waiting, accepted, expired or removed.
+  - A decoy and a duress removal read exactly like real ones.
+  - The member's invite screen turns to "Guardian added".
+- **Wrong-PIN heads-up (`6b4a3ba` server, deployed; app in #120, awaiting Lethabo's review and merge).**
+  - The first wrong PIN at a check-in alerts guardians with trigger `wrong_pin`: never duress, never the bank, once per incident.
+  - The phone is unchanged (T47). The S1 bank timer ignores the heads-up.
+  - Unanswered check-ins still escalate at about 70 s as `no_answer` (the lead's decision).
+- **Hardening found in review (#120):**
+  - The guardian's heads-up screen said "Call 10111"; it's now a heads-up with its own wording.
+  - An alarm after a heads-up on the same incident wouldn't have raised a new notice; alerts are now keyed per incident and trigger.
+- **Evidence:**
+  - Python 376 passed; shared 151; contract 50; app jest 283.
+  - `scripts/e2e/wrong-pin-e2e.mjs`: 16/16 locally.
+  - Live on Azure: 5/5 with `sim_` phones.
+- **Blocked:** the new VIGIL.apk needs the four signing secrets. Lethabo was asked on #118 and #120. `vigil-apk.yml` failed at 03:03 UTC without them.
+- **Demo notes:**
+  - Lock the member phone so the PIN page is full-screen.
+  - After a heads-up, the guardian must stand down to close the incident (G33).
+  - Email is the only sign-up option.
+  - Refresh `FCM_ACCESS_TOKEN` before presenting.
+
+**Update, ~05:30 UTC — VIGIL is the demo app; today's email codes wired into it (#122).**
+- **VIGIL vs VUKA:** VIGIL (`com.teamsonar.vuka`, React Native, `main`) is the demo app. VUKA and VUKA-next (`za.co.vuka.app`, native Kotlin, `feature/integrate` and #114) are separate apps; tonight's app fixes are only in VIGIL.
+- **0.0.15 is published** (built from `fb76ee9`, checked: it contains #118 and #120). The team's first test ran on an older install; the server log shows no `GET /v1/guardians` calls. Reinstall and check **Settings → Apps → VIGIL → 0.0.15**.
+- **#122:** VIGIL's sign-up "Verify code" now uses real email codes. The phone registers first, the server emails the code, and the server checks it; the record step keeps that one registration. jest 285/285; end to end 8/8. **Needs Lethabo to review, merge, and build and upload VIGIL.apk 0.0.16.** The existing VIGIL QR then serves it.
+
+**Update, ~07:20 UTC — 0.0.16 live, phones on Azure, one sign-up trap.**
+- **VIGIL 0.0.16** (Lethabo, #123, `c14c049`) is checked: versionCode 16, Team SONAR certificate `ddfbf916…`. It contains #122 (real email codes), no code step after Google, VIGIL wording, and her phone-number sign-in by email code. The YAMNet model matches `10c95ea3…`.
+- **`server.json` had pointed VIGIL at an old tunnel server** (`multi-senators-macro-bridge.trycloudflare.com`, set at 05:05 UTC). That server had no `/v1/guardians`, no `/v1/account/otp` and no Hedera. It is now **back on Azure** (~07:00 UTC). The tunnel address is kept as `server-tunnel.json`, and Lethabo was told on #123. Phones confirmed on Azure (invite polling, real code sends and a verify).
+- **Sign-up trap:** after clearing a phone's storage, signing up with the **same email** fails with `409 contact_in_use`, because the email is bound to the old sim subject. 0.0.16 shows this as "Couldn't reach VIGIL's server". Repeated tries also hit the 3-per-address limit (429). **Demo workaround:** use Gmail plus-addressing (`name+demo1@gmail.com`, `+demo2`, …).
+- **Owed:**
+  - map `contact_in_use` to its own message in the app;
+  - decide whether a freshly verified inbox may move an email off an abandoned sim account.
+- **`scripts/e2e/azure-demo-check.mjs`:** a live, API-only demo check. 14/14 on Azure; one run saw a client-side "couldn't reach" at the first step with no server-side error, and a rerun passed.
+- **Settled:** the ledger site, CORS, the live feed, the Hedera mirror (root #38) and the pinned manifest are all fine. FCM is skipped for the demo (the guardian keeps VIGIL open).

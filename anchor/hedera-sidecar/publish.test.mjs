@@ -3,7 +3,7 @@ import test from "node:test";
 import { pinnedAnchorMessage, readMirror, submitPinnedMessage, verifyMirrorMessage,
   parseEcdsaSecret, verifyPinnedCredentials } from "./publish.mjs";
 
-const fingerprint = "c1d90404edd180765e15321d690881933c5a4ffcdecc18f064131b6c5c70a0a2";
+const fingerprint = "f20cf84a7fd4a795c9ce0a351a8a16a8213e2513037cc78cb44f6d5b9c334830";
 
 test("manifest message matches the committed verify pin byte for byte", async () => {
   const { message, topicId, topicEpoch } = await pinnedAnchorMessage("manifest");

@@ -36,7 +36,8 @@ def deliver_guardian_alert(connect, notifier, row, now, *, after_deliver=lambda:
         for guardian, result in results:
             cur.execute("""INSERT INTO guardian_deliveries
                 (outbox_id,incident_id,guardian_ref,delivered_at,evidence_ref,simulated)
-                VALUES(%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING""", (row["idempotency_key"], incident_id, guardian, result.delivered_at, result.evidence_ref, notifier.simulated))
+                VALUES(%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING""", (row["idempotency_key"], incident_id, guardian, result.delivered_at, result.evidence_ref,
+                                                                      notifier.simulated if result.simulated is None else result.simulated))
         bank_after_delivery(cur, incident_id)
         # Retry incomplete recipient sets, but do not postpone the timer once
         # at least one chosen guardian has real adapter evidence.

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vuka.example/contracts/payloads/evidence_observed.v1.json",
+  "title": "evidence_observed payload, pv 1 (PROPOSED, ADR-0047)",
+  "description": "Committed private payload: the reasons behind one detection, as the phone's CEM-1 evidence model weighed them (docs/COERCION-SCENARIOS.md). Appended just before the signal_detected it explains. It has no server effect: no incident, no deadline, no immediate anchor. The tally is an uncalibrated sum of integer decibans, never a probability (ADR-0039); guardians are shown only the band word and reason names. ruleset_digest is the SHA-256 of the phone's canonical ruleset, so any change to thresholds, weights or the prompt rule is visible in the record. Numeric fields are integers (spec §5). Adding a field is a pv bump.",
+  "type": "object",
+  "required": ["kind", "pv", "journey_id", "cem_version", "ruleset_digest", "decision", "tally_db", "band", "k_pct", "reasons"],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {"const": "evidence_observed"},
+    "pv": {"const": 1},
+    "journey_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "cem_version": {"const": "CEM-1"},
+    "ruleset_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decision": {"enum": ["record", "prompt"]},
+    "tally_db": {"type": "integer", "minimum": -1000, "maximum": 1000},
+    "band": {"enum": ["faint", "some", "strong", "very strong", "overwhelming"]},
+    "k_pct": {"type": "integer", "minimum": 0, "maximum": 100},
+    "reasons": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["name", "db"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,39}$"},
+          "db": {"type": "integer", "minimum": -100, "maximum": 100}
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "kind": "evidence_observed",
+      "pv": 1,
+      "journey_id": "sim_journey_1",
+      "cem_version": "CEM-1",
+      "ruleset_digest": "41c9f661465fdcfa27aa2109edafad2f9e759f5303b5a51c97ac1ed0a032a9b3",
+      "decision": "prompt",
+      "tally_db": 12,
+      "band": "strong",
+      "k_pct": 0,
+      "reasons": [{"name": "scream_single", "db": 7}, {"name": "snatch", "db": 5}]
+    }
+  ]
+}

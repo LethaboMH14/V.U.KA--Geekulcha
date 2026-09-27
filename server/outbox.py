@@ -59,8 +59,13 @@ def enqueue(cursor: Any, *, idempotency_key: str, kind: str, reference_id: str,
 
 
 def claim_due(cursor: Any, *, now: datetime, limit: int = 10,
-              lease_seconds: int = 60) -> list[dict[str, Any]]:
-    """Atomically claim due or expired-lease rows; worker owns returned token."""
+              lease_seconds: int = 60, kinds: tuple[str, ...] | None = None) -> list[dict[str, Any]]:
+    """Atomically claim due or expired-lease rows; worker owns returned token.
+
+    `kinds` restricts the claim to those row kinds. A worker that only handles
+    one kind must pass it: claiming and discarding other kinds leases them away
+    from their own worker and lets them crowd out the rows it does handle.
+    """
     if not isinstance(now, datetime) or now.utcoffset() is None:
         raise ValueError("now must have a timezone offset")
     if limit < 1 or limit > 100 or lease_seconds < 1:
@@ -71,15 +76,18 @@ def claim_due(cursor: Any, *, now: datetime, limit: int = 10,
                SELECT idempotency_key FROM outbox
                WHERE not_before <= %s AND (
                    state = 'pending' OR (state = 'inflight' AND lease_until <= %s)
-               )
-               ORDER BY not_before, idempotency_key
+               ) AND (%s::text[] IS NULL OR kind = ANY(%s::text[]))
+               -- Fewest attempts first: rows that keep failing (an unreachable
+               -- bank, a malformed row) can never crowd a fresh one out of the limit.
+               ORDER BY attempts, not_before, idempotency_key
                FOR UPDATE SKIP LOCKED LIMIT %s
            )
            UPDATE outbox AS o SET state = 'inflight', lease_token = %s,
                lease_until = %s, attempts = o.attempts + 1
            FROM due WHERE o.idempotency_key = due.idempotency_key
            RETURNING o.idempotency_key, o.kind, o.reference_id, o.attempts""",
-        (now, now, limit, str(lease_token), now + timedelta(seconds=lease_seconds)),
+        (now, now, list(kinds) if kinds else None, list(kinds) if kinds else None,
+         limit, str(lease_token), now + timedelta(seconds=lease_seconds)),
     )
     return [
         {"idempotency_key": key, "kind": kind, "reference_id": reference,

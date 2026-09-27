@@ -46,5 +46,8 @@ def purge_payloads(cur, subject_id: str, now) -> int:
         (subject_id, subject_id),
     )
     removed = cur.rowcount
+    # Location fixes (ADR-0048) go with the rest of the member's data.
+    from server.locations import purge_subject
+    purge_subject(cur, subject_id)
     cur.execute("UPDATE deletion_requests SET purged_at=%s WHERE subject_id=%s", (now, subject_id))
     return removed

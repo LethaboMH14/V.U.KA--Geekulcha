@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vuka.example/contracts/payloads/checkin_wrong_pin.v1.json",
+  "title": "checkin_wrong_pin payload, pv 1 (PROPOSED, 27 Sep)",
+  "description": "Committed private payload of a checkin_wrong_pin event: a wrong PIN was entered at a check-in. It carries no PIN material, only which entry it was. The server tells guardians once per incident, never as duress and never the bank; the phone still shows the same neutral \"Try again\" (T47). Numeric fields are integers (spec §5). Adding a field is a pv bump.",
+  "type": "object",
+  "required": [
+    "kind",
+    "pv",
+    "checkin_id",
+    "attempt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "checkin_wrong_pin"
+    },
+    "pv": {
+      "const": 1
+    },
+    "checkin_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "The checkin_id used in this check-in's checkin_opened payload."
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3,
+      "description": "1-based ordinal of this wrong entry on the check-in. Only entries 1-3 are recorded: from the fourth, every entry shows \"Checked in\" and the outcome is already no_answer at the deadline (T47)."
+    }
+  },
+  "examples": [
+    {
+      "kind": "checkin_wrong_pin",
+      "pv": 1,
+      "checkin_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+      "attempt": 1
+    }
+  ]
+}
