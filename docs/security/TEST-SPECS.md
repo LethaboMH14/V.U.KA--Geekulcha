@@ -455,6 +455,26 @@ Each test has exactly the seven fields below. “Runner” names the planned run
 
 **T50–T52 bind: ADR-0041 was accepted by Sibusiso on 24 Sep 2026 (PR #67).**
 
+## T57 — Server address trust (`PROPOSED`)
+
+- **Proves:** A release build changes its server address only when `server.json` carries a valid signature from the team key; an unsigned, wrongly signed, altered, older or unreachable file is ignored; a member-pinned address is never overridden; the member is shown any change (THREAT-MODEL PH-12; spec §7, §17).
+- **Layer and writer:** Android release build; Vukosi writes (`PROPOSED`). Runner: unit test on the discovery function plus manual observation on the release APK with a controlled `server.json`.
+- **Fixture:** Release APK (not the test-feed build); a local HTTPS host or intercepting proxy that serves `server.json`; five files: correctly signed and current, unsigned, signed by another key, signed then edited, and correctly signed but older; a current address and a member-pinned address; a controlled clock. `sim_` subjects only.
+- **Steps:** 1. With no pinned address, serve each file in turn and reload the app. 2. Repeat with a member-pinned address. 3. Serve the older valid file after the current one. 4. Make the fetch fail (timeout, 404). 5. Record which hosts the app contacts after each case.
+- **Oracle:** Only the correctly signed, current file changes the address. The unsigned, other-key and edited files are ignored and the address is unchanged. A pinned address never changes. The older valid file does not roll the address back (needs a version or timestamp inside the signed file; `PROPOSED`). A failed fetch keeps the current address. When the address changes, the member is shown the new host. The app never contacts the host named in a rejected file. **Baseline today:** the first case fails, because any `https://host` string is accepted; record that as the starting result, not as a pass.
+- **Prerequisites:** A signing key pair whose private half is held offline by the team and whose public half is built into the app; a signature format for `server.json`. Design decision: Lethabo, with Ipeleng reviewing the scheme.
+- **Negative control:** A correctly signed, current file with a new address still changes the address, so the demo keeps working when the tunnel address moves.
+
+## T58 — PIN guessing on PIN-gated actions (`PROPOSED`)
+
+- **Proves:** Wrong PINs on pause listening, end journey, open My record and add guardian are slowed and recorded; the screen and timing do not reveal normal versus duress; a restart does not reset the count; the correct PIN still works after the wait (THREAT-MODEL TM-C11; spec §9; ADR-0041, ADR-0036).
+- **Layer and writer:** Android native PIN module and screens; Vukosi writes (`PROPOSED`); Ipeleng reviews the delay schedule. Runner: JVM unit tests on the module plus the T15 harness with a controlled clock.
+- **Fixture:** `sim_subject_pin_guess`; a normal PIN and a duress PIN of six digits; a controlled clock; one action of each of the four kinds.
+- **Steps:** 1. On each action enter 1 to 10 wrong PINs and record the time until the next attempt is accepted and the screen text. 2. Force-stop and relaunch between attempts. 3. After a delay, enter the correct normal PIN; reset and enter the correct duress PIN. 4. Compare screen text and timing for a near miss (one digit off) and a random guess. 5. Inspect the queue for failed-attempt records and search them for the digits entered. 6. Try to set a four-digit PIN.
+- **Oracle (`PROPOSED` schedule):** Wrong PINs 1 to 3 are answered at once with the neutral "Try again". From the fourth, the next attempt is refused until a growing delay has passed (for example 30 s, 60 s, 120 s, capped at 15 min), with the same neutral text and the same delay for a near miss and a random guess. Force-stop and relaunch do not reset the count or the delay. After the wait, the correct normal PIN performs the action; the correct duress PIN behaves as in T15 and T16 (same screen and request shape, duress signal recorded). Each failed attempt is recorded as a device-signed record the server can see (the record kind is a contract-owner decision) and no record contains the digits entered. A four-digit PIN is refused at set-up (`PROPOSED` minimum: six digits). **Baseline today:** no delay at any count; record that as the starting result.
+- **Prerequisites:** A persisted attempt counter and next-allowed time in the native module; a controlled clock; the T15 harness (spec §15 Needs).
+- **Negative control:** A correct PIN on the first attempt performs the action at once with no delay and no failed-attempt record.
+
 ## Coverage
 
 `not written` means the implementation test has not been written; this document is a proposed specification.
@@ -505,6 +525,8 @@ Each test has exactly the seven fields below. “Runner” names the planned run
 | T50 | Sibusiso | pytest | not written |
 | T51 | Sibusiso | pytest | not written |
 | T52 | Sibusiso, Vukosi | pytest, T15 harness | not written |
+| T57 | Vukosi (`PROPOSED`) | unit test, manual observation | not written |
+| T58 | Vukosi (`PROPOSED`), Ipeleng reviews | JVM unit test, T15 harness | not written |
 
 ## Undefined items
 
@@ -518,4 +540,4 @@ Grouped by the owner who must resolve the contract gap:
 
 ## Skipped IDs
 
-T25–T29 are skipped because no definition for those IDs appears in spec §15 or THREAT-MODEL §6. No ID from T04–T24 or T30–T52 is otherwise skipped.
+T25–T29 are skipped because no definition for those IDs appears in spec §15 or THREAT-MODEL §6. No ID from T04–T24 or T30–T52 is otherwise skipped. T53–T56 are defined in spec §18 (ADR-0039), not in this file. T57 and T58 are `PROPOSED` here, the next free IDs on `main` when written; renumber if another change takes them first.

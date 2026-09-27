@@ -6,7 +6,7 @@
     },
     {
       "path": "docs/security/THREAT-MODEL.md",
-      "sha256": "e6276b8938f899b989d06dec6fa72222e532988442129ea6c3fb9be0a686842e"
+      "sha256": "866ea9914c7948c028fa2a00039c9192dd533443e3b3cde4e3f8ac1b3fd14547"
     },
     {
       "path": "docs/security/scorecard/controls.overrides.json",
