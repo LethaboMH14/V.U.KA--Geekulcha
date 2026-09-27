@@ -39,7 +39,7 @@ export const DOCUMENTS = {
     text: `## Draft — not the final terms
 These terms are a placeholder. They have not been written or reviewed by the VUKA team or a legal adviser, and they will be replaced before VUKA is offered to the public. Nothing here adds to or overrides the Privacy notice.
 ## What VUKA is
-VUKA is a hackathon prototype. Parts of it are simulated and say so on screen: Google sign-in is real only in builds connected to Firebase and simulated in the others, and sign-in and password-reset codes are not sent by text or email.
+VUKA is a hackathon prototype. Parts of it are simulated and say so on screen: Google sign-in is real only in builds connected to Firebase and simulated in the others, sign-up codes are sent by email, and sign-in and password-reset codes are not sent by text or email.
 ## Emergencies
 VUKA does not replace emergency services. In danger, call 10111.
 ## Your data
@@ -50,7 +50,9 @@ How your personal information is used is set out in the Privacy notice.`,
     text: `## Draft — not the final notice
 This is a draft. The full notice (docs/PRIVACY-POLICY.md) is PROPOSED and awaits team and legal review. VUKA is a hackathon prototype. Team SONAR has no registered legal entity. Information Officer registration is prepared, not submitted. Contact route: UNDEFINED — team to set.
 ## Kept on this phone only
-Your name and surname, your mobile number and email, how you signed up, your recovery choice, and, if you signed up with email, a salted hash of your password (never the password itself). These are never sent to the VUKA server and never written to your record.
+Your name and surname, your mobile number, how you signed up, your recovery choice, and, if you signed up with email, a salted hash of your password (never the password itself). These are never sent to the VUKA server and never written to your record.
+### Your email, if you sign up with it
+To check your email, the VUKA server emails you a 6-digit code through its email provider (Brevo). The server keeps your email on your account, encrypted, so a code can go to it; the code itself is kept only as a hash and expires in 10 minutes. Your email is never written to your record.
 ### If you use Google
 If you sign up or sign in with Google in a build connected to Firebase, Google and Firebase Authentication (Google's sign-in service, in the team's Firebase project) receive that sign-in and keep your Google email, name and account ID to confirm it.
 ## Your PINs
