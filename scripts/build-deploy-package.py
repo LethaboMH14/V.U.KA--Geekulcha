@@ -36,6 +36,10 @@ REQUIRED_MEMBERS = {
     "shared/keys.js",
     "shared/merkle.js",
     "shared/package.json",
+    # startup.sh runs the SIMULATED bank on 127.0.0.1:8001, where
+    # server/run_workers.py delivers bank_signal risk signals by default.
+    "sim_bank/__init__.py",
+    "sim_bank/main.py",
     "startup.sh",
 }
 
@@ -103,6 +107,9 @@ def should_package(name: str) -> bool:
         return path.suffix == ".py"
     if len(path.parts) > 2 and path.parts[0] == "contracts" and path.parts[1] == "payloads":
         return path.suffix == ".json"
+    if len(path.parts) == 2 and path.parts[0] == "sim_bank":
+        # The simulated bank's modules only, never sim_bank/tests/.
+        return path.suffix == ".py"
     if len(path.parts) == 2 and path.parts[0] == "shared":
         # Top-level shared modules only (the sidecar imports them), never
         # shared/test/, shared/scripts/ or the test runner's config.

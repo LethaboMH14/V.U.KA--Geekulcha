@@ -165,3 +165,22 @@ def test_every_file_the_hedera_sidecar_imports_is_packaged():
         seen.add("shared/package.json")  # "type": "module" for those files
     assert "shared/keys.js" in seen
     assert sorted(r for r in seen if not package_builder.should_package(r)) == []
+
+
+def test_sim_bank_is_packaged_and_started_where_the_worker_sends():
+    """Regression (27 Sep): sim_bank was never deployed, so on Azure every
+    bank_signal was refused (ConnectionRefusedError) and retried each minute.
+    The package ships its modules (not its tests) and startup.sh runs it on
+    exactly the loopback address run_workers.py sends to by default."""
+    import re
+    files = complete_deploy_files() | {"sim_bank/tests/test_sim_bank.py": b"sim_test"}
+    selected = {item.name for item in package_builder.read_safe_package_members(make_archive(files))}
+    assert {"sim_bank/__init__.py", "sim_bank/main.py"} <= selected
+    assert "sim_bank/tests/test_sim_bank.py" not in selected
+    repo = MODULE_PATH.parents[1]
+    default = re.search(r'VUKA_SIM_BANK_URL", "http://([0-9.]+):([0-9]+)"',
+                        (repo / "server" / "run_workers.py").read_text(encoding="utf-8"))
+    assert default, "run_workers.py no longer names a default sim_bank URL"
+    host, port = default.groups()
+    startup = (repo / "startup.sh").read_text(encoding="utf-8")
+    assert f"-m uvicorn sim_bank.main:app --host {host} --port {port} &" in startup

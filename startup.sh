@@ -93,6 +93,19 @@ else
   echo "vuka: no antenv (not the Azure/Oryx path); using whatever node is on PATH"
 fi
 
+# sim_bank (SIMULATED, never a real bank; sim_bank/main.py) receives the
+# bank_signal risk signals run_workers.py delivers. With VUKA_SIM_BANK_URL
+# unset the worker sends to http://127.0.0.1:8001, so it runs here on that
+# loopback port: nothing outside the container can reach it (App Service
+# routes only $PORT). It checks ANCHOR's signature against the pinned key, and
+# its holds live in memory, so a restart forgets them. Without it every bank
+# signal is refused and retried each minute. Set VUKA_SKIP_SIM_BANK=1, or
+# point VUKA_SIM_BANK_URL at another sim_bank, to skip it.
+if [ "${VUKA_SKIP_SIM_BANK:-0}" != "1" ] && [ -z "${VUKA_SIM_BANK_URL:-}" ]; then
+  echo "vuka: starting sim_bank (SIMULATED) on 127.0.0.1:8001"
+  "$PY" -m uvicorn sim_bank.main:app --host 127.0.0.1 --port 8001 &
+fi
+
 # run_workers.py is what actually delivers guardian alerts, bank signals and
 # anchor batches (server/README.md). Without it the API alone accepts events
 # but nothing in the outbox ever fires. Safe to run alongside N other copies
