@@ -417,3 +417,9 @@ The full suite passes (354), and 6 of the new tests fail on the original code.
 - (b) SMS is not configured (no Twilio), so SMS sign-up answers 503 `delivery_unavailable`. Say "email only" in the demo.
 - (c) The Google button in the native app is simulated (#116 item 1).
 - (d) The account contract and POPIA notice still need Lethabo and Ipeleng.
+
+**Update, 02:28 UTC: the first real sign-up code was delivered and verified.**
+- **The first attempts failed.** Brevo refused them with 401 because its "Authorised IPs" blocking was on for API keys; the key itself was valid. Sibusiso deactivated that blocking for API keys in Brevo. Turn it back on after the demo, or authorise Azure's outbound IPs (`az webapp show --query possibleOutboundIpAddresses`).
+- **Then a rate limit.** Three refused sends to one address had filled its per-recipient cap (3 per 15 min), so the next request got 429. That is by design, but a *definite* provider refusal should not count, because no email went out. That's owed as a follow-up.
+- **Success.** At 02:28:13 `POST /v1/account/otp` returned 201, `/otp/verify` returned 200 at 02:28:38, and `PUT /v1/account/password` returned 200 at 02:28:39. The code arrived in Sibusiso's inbox from the native app, which is Khutso's #116 email acceptance with n=1. No address or code is recorded here.
+- **One stray failure.** An earlier try at 02:25:06 got a 401 from our own signature check, not from Brevo. It didn't recur on the retry; look at it after the demo.
