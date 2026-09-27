@@ -3,7 +3,7 @@
  * Mutarisi's nav_graph.xml on feature/ui (5aa5d24) edge by edge:
  *
  *   welcome → account ("Create your account", terms first)
- *     account → Google chooser → phone (optional) → code → name
+ *     account → Google chooser → phone (optional) → name (no code: Google already confirms the email; 27 Sep)
  *     account → email (email + password) → phone (optional) → code → name
  *     account → phone (required) → code → name
  *     phone (Google / email) → "Skip for now" → code by email → name
@@ -74,6 +74,8 @@ export function next(step: Step, action: Action, s: FlowState): Step | 'home' | 
     case 'email':
       return action === 'continue' ? 'phone' : null;
     case 'phone':
+      // Google sign-up has no code step (27 Sep): Google confirms the email itself.
+      if (s.route === 'google' && !s.signingIn) return action === 'sendCode' || action === 'skip' ? 'name' : null;
       if (action === 'sendCode') return 'code';
       return action === 'skip' && phoneOptional(s) ? 'code' : null;
     case 'code':

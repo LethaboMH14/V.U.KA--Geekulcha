@@ -188,6 +188,7 @@ export function Onboarding({
           <PhoneStep
             key={signingIn ? 'signIn' : 'signUp'}
             optional={phoneOptional(flow)}
+            noCode={route === 'google' && !signingIn}
             signedUpAs={
               account && account.kind !== 'phone'
                 ? account.kind === 'google'

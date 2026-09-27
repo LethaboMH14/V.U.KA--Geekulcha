@@ -265,8 +265,11 @@ export function PhoneStep({
   onNext,
   onSkip,
   onBack,
+  noCode = false,
 }: {
   optional: boolean;
+  /** Google sign-up: no code step follows (Google confirms the email), so no code is promised. */
+  noCode?: boolean;
   /** The account line on the optional screen: "Google · … · simulated" or "Email · …". */
   signedUpAs?: string;
   initial?: string;
@@ -284,7 +287,11 @@ export function PhoneStep({
         Phone number
       </Text>
       <Text style={type.body}>
-        {optional ? "Optional. Add your mobile number and we'll text the code there, or skip and we'll email it." : "We'll text a code to check it's really you."}
+        {noCode
+          ? 'Optional. Add your mobile number, or skip. Google has already confirmed your email.'
+          : optional
+            ? "Optional. Add your mobile number and we'll text the code there, or skip and we'll email it."
+            : "We'll text a code to check it's really you."}
       </Text>
       {optional && signedUpAs ? <Text style={type.caption}>{signedUpAs}</Text> : null}
       <Text style={type.label}>Mobile number</Text>
@@ -305,7 +312,7 @@ export function PhoneStep({
       <Text style={type.caption}>Kept on this phone only. Nothing is sent until live sign-in.</Text>
       <View style={{flexGrow: 1}} />
       <Key
-        label="Send code"
+        label={noCode ? 'Continue' : 'Send code'}
         variant="signal"
         onPress={() => {
           if (!SA_MOBILE.test(digits)) return setError(true);

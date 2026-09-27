@@ -46,7 +46,7 @@ function mount() {
   return t!;
 }
 
-test('Google (SIMULATED chooser) → skip the number → code by email → name → permissions → PINs → record', async () => {
+test('Google (SIMULATED chooser) → skip the number → name (no code) → permissions → PINs → record', async () => {
   const t = mount();
   expect(shown(t)).toContain('Get started');
   expect(shown(t)).toContain("I'm a guardian");
@@ -59,16 +59,17 @@ test('Google (SIMULATED chooser) → skip the number → code by email → name 
   await press(t, 'Thandi Dlamini, thandi.dlamini@example.co.za');
   expect(shown(t)).toContain('Phone number');
   expect(shown(t)).toContain('Google · thandi.dlamini@example.co.za · simulated');
+  expect(shown(t)).toContain('Google has already confirmed your email.');
   await press(t, 'Skip for now');
-  expect(shown(t)).toContain('Enter the 6-digit code we sent to thandi.dlamini@example.co.za.');
-  await type(t, 'Code', '123456');
+  // No code step after Google (27 Sep): straight to the name.
+  expect(shown(t)).not.toContain('Enter the 6-digit code');
   expect(shown(t)).toContain('Your name');
   expect(shown(t)).toContain("We've filled this in from your Google account.");
-  // Back from the name returns to the number: the used code is done with.
+  // Back from the name returns to the number; skipping again goes straight back to the name.
   await press(t, 'Navigate up');
   expect(shown(t)).toContain('Phone number');
   await press(t, 'Skip for now');
-  await type(t, 'Code', '654321');
+  expect(shown(t)).toContain('Your name');
   await press(t, 'Continue');
   expect(shown(t)).toContain('Permissions');
   await press(t, 'Continue');
