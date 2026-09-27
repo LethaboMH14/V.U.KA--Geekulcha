@@ -120,7 +120,7 @@ test('"Already have an account? Sign in" → Sign in; Back returns to Create you
   await press(t, 'Sign in');
   expect(shown(t)).toContain("That email and password don't match an account on this phone.");
   await press(t, 'Sign in with your phone number');
-  expect(shown(t)).toContain("We'll text a code to check it's really you.");
+  expect(shown(t)).toContain("We'll send a code to check it's really you.");
   expect(shown(t)).not.toContain('Skip for now');
   await press(t, 'Navigate up');
   expect(shown(t)).toContain('Sign in with Google');

@@ -291,7 +291,7 @@ export function PhoneStep({
           ? 'Optional. Add your mobile number, or skip. Google has already confirmed your email.'
           : optional
             ? "Optional. Add your mobile number and we'll text the code there, or skip and we'll email it."
-            : "We'll text a code to check it's really you."}
+            : "We'll send a code to check it's really you."}
       </Text>
       {optional && signedUpAs ? <Text style={type.caption}>{signedUpAs}</Text> : null}
       <Text style={type.label}>Mobile number</Text>

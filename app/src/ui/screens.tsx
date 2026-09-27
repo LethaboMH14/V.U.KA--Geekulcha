@@ -366,6 +366,7 @@ export function VigilApp() {
         }}
         onDone={() => setScreen('invite')}
         onCancel={() => setScreen('settings')}
+        failed={inviteProblem}
       />
     );
   }
@@ -591,6 +592,17 @@ function GuardiansCard({delivery, live, onInvite}: {delivery: Delivery; live: bo
       ) : null}
     </Panel>
   );
+}
+
+/**
+ * Why no invite code appeared (27 Sep): before this, any failure read "Try
+ * again", as if the PIN were wrong. The same words follow either PIN.
+ */
+export function inviteProblem(e: unknown): string {
+  const m = String(e instanceof Error ? e.message : e);
+  const status = /\b([45]\d\d)\b/.exec(m)?.[1];
+  if (!status) return "Couldn't get a code: VIGIL's server couldn't be reached. Check your connection, then enter your PIN again.";
+  return `Couldn't get a code: VIGIL's server answered ${status}. Enter your PIN again; if it keeps happening, restart VIGIL.`;
 }
 
 /** The invite: a one-time code (10 minutes) and a message to share. */
@@ -1396,23 +1408,30 @@ function PinGate({
   onEnter,
   onDone,
   onCancel,
+  failed,
 }: {
   title: string;
   prompt: string;
   onEnter: (pin: string) => Promise<'ok' | 'retry'>;
   onDone: () => void;
   onCancel: () => void;
+  /** A failure that isn't a wrong PIN (no server, a refused request): shown instead of "Try again". */
+  failed?: (e: unknown) => string;
 }) {
   const [retry, setRetry] = useState(false);
+  const [problem, setProblem] = useState('');
   const busy = useRef(false);
   const submit = async (pin: string) => {
     if (busy.current) return;
     busy.current = true;
+    setProblem('');
     try {
       if ((await onEnter(pin)) === 'ok') onDone();
       else setRetry(true);
-    } catch {
-      setRetry(true);
+    } catch (e) {
+      setRetry(false);
+      if (failed) setProblem(failed(e));
+      else setRetry(true);
     } finally {
       busy.current = false;
     }
@@ -1424,7 +1443,7 @@ function PinGate({
       </Text>
       <Text style={[type.body, {textAlign: 'center', marginTop: space.sm}]}>{prompt}</Text>
       <Text style={styles.pinNote} accessibilityLiveRegion="polite">
-        {retry ? 'Try again' : ''}
+        {problem || (retry ? 'Try again' : '')}
       </Text>
       <PinKeypad onComplete={submit} />
       <View style={{marginTop: space.lg}}>
