@@ -704,6 +704,10 @@ def create_app(database=None) -> FastAPI:
             return None, _error_response(503, "database_unavailable", "database unavailable")
         return principal, None
 
+    # Member accounts: verified contacts, profile, password (PROPOSED, server/accounts.py).
+    from server import accounts as _accounts
+    _accounts.register_routes(app, store, _signed_caller)
+
     @app.post("/v1/guardians/invites", status_code=201)
     async def create_guardian_invite(request: Request):
         """PROPOSED: bodyless; consumes a fresh add_guardian pin_authorised (via /v1/events).
