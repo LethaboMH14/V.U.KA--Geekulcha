@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VUKA — system architecture (VIGIL + ANCHOR)",
+    "output": "vuka-architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "duress-path",
+        "label": "Duress path",
+        "focus": [
+          "member",
+          "api",
+          "db",
+          "workers",
+          "guardian"
+        ],
+        "note": "A sound or a duress PIN becomes a signed event, then a silent guardian alert."
+      },
+      {
+        "id": "proof-path",
+        "label": "Proof path",
+        "focus": [
+          "workers",
+          "sidecar",
+          "hedera",
+          "mirror",
+          "ledger",
+          "bank"
+        ],
+        "note": "Roots are anchored on Hedera; anyone re-checks a record in their own browser."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "member",
+      "type": "frontend",
+      "label": "Member phone (VIGIL)",
+      "sublabel": "Android · on-device YAMNet",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "P-256 Keystore signing"
+    },
+    {
+      "id": "email",
+      "type": "external",
+      "label": "Email provider",
+      "sublabel": "sign-up codes",
+      "pos": [
+        270,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "ANCHOR API",
+      "sublabel": "FastAPI · App Service",
+      "pos": [
+        270,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "stateless"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "hash chain · outbox",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "AES-256-GCM payloads"
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Outbox workers",
+      "sublabel": "alerts · anchoring",
+      "pos": [
+        690,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "guardian",
+      "type": "frontend",
+      "label": "Guardian phone",
+      "sublabel": "Android · alert + 10111",
+      "pos": [
+        690,
+        480
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "Hedera sidecar",
+      "sublabel": "Merkle root → 33 B",
+      "pos": [
+        900,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "hedera",
+      "type": "external",
+      "label": "Hedera testnet",
+      "sublabel": "HCS topic 0.0.10687280",
+      "pos": [
+        1110,
+        300
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "mirror",
+      "type": "external",
+      "label": "Mirror node",
+      "sublabel": "public read API",
+      "pos": [
+        1110,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ledger",
+      "type": "frontend",
+      "label": "Public ledger",
+      "sublabel": "verifies in the browser",
+      "pos": [
+        900,
+        480
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "GitHub Pages"
+    },
+    {
+      "id": "bank",
+      "type": "external",
+      "label": "Bank / insurer / court",
+      "sublabel": "checks without trusting us",
+      "pos": [
+        900,
+        640
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Microsoft Azure",
+      "wraps": [
+        "api",
+        "db",
+        "workers",
+        "sidecar"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Hedera (public ledger)",
+      "wraps": [
+        "hedera",
+        "mirror"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "signed-events",
+      "from": "member",
+      "to": "api",
+      "label": "signed events · TLS 1.3",
+      "variant": "emphasis",
+      "labelDy": 56
+    },
+    {
+      "id": "otp",
+      "from": "api",
+      "to": "email",
+      "label": "code",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -30
+    },
+    {
+      "id": "sql",
+      "from": "api",
+      "to": "db",
+      "label": "SQL"
+    },
+    {
+      "id": "outbox",
+      "from": "db",
+      "to": "workers",
+      "label": "outbox"
+    },
+    {
+      "id": "alert",
+      "from": "workers",
+      "to": "guardian",
+      "label": "silent alert",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "root",
+      "from": "workers",
+      "to": "sidecar",
+      "label": "root"
+    },
+    {
+      "id": "anchor",
+      "from": "sidecar",
+      "to": "hedera",
+      "label": "0x01 ‖ root"
+    },
+    {
+      "id": "consensus",
+      "from": "hedera",
+      "to": "mirror",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-bytes",
+      "from": "mirror",
+      "to": "ledger",
+      "label": "root bytes",
+      "variant": "security"
+    },
+    {
+      "id": "paste-record",
+      "from": "bank",
+      "to": "ledger",
+      "label": "paste record",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Scales by design",
+      "items": [
+        "Sound is judged on the phone: no server GPU per member",
+        "API is stateless; state lives in PostgreSQL, so App Service scales out",
+        "Est. Hedera message fees ≤ R569.47/month at any member count (roots coalesced to ≤1 per 60 s + hourly; $0.0008/msg; R16.2075/$)",
+        "Verification runs in each viewer's browser, not on our server"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Security",
+      "items": [
+        "Every event signed on the phone (P-256, Android Keystore)",
+        "Signed requests with nonce and ±120 s clock window",
+        "HTTP → HTTPS 301; TLS 1.3 observed",
+        "Only 33-byte roots on chain; nothing personal"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Live today (27 Sep)",
+      "items": [
+        "API + workers on Azure; Hedera testnet root #8 LIVE-VERIFIED in a browser",
+        "Guardian alerts by polling; push (FCM) not yet wired"
+      ]
+    }
+  ]
+}
