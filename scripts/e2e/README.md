@@ -40,6 +40,13 @@ cd app && npx tsc src/api/device.ts src/brain/cem/ruleset.ts --outDir build-e2e 
 DATABASE_URL=postgresql://vuka@127.0.0.1:55432/vuka3 node scripts/e2e/journey-e2e.mjs http://127.0.0.1:8000
 ```
 
+`wrong-pin-e2e.mjs` (27 Sep) uses the same setup, with the server's workers running
+(`python -m server.run_workers`). It checks two things. First, the member's invite
+screen sees "accepted", and a decoy reads the same (#118). Second, a wrong PIN at a
+check-in reaches every real guardian as a `wrong_pin` heads-up: never the decoy,
+never duress and never the bank, while the phone only says "Try again" (#120, T47).
+It printed 16/16 against `feat/lethabo-guardian-delivery`.
+
 Server-authored entries (`no_answer`, `incident_closed`) are signed with the
 pinned server key, which only its holder has. To run this locally, start the
 server with a throwaway key and patch `server.server_signing._pinned_public_key`

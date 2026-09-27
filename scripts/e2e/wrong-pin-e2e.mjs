@@ -22,8 +22,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const build = join(root, 'app', 'build-e2e');
 // device.ts imports react-native for NativeModules; under Node there are none.
 mkdirSync(join(build, 'node_modules', 'react-native'), {recursive: true});
-writeFileSync(join(build, 'node_modules', 'react-native', 'index.js'), 'module.exports = {NativeModules: {}, Platform: {constants: {}}};
-');
+writeFileSync(join(build, 'node_modules', 'react-native', 'index.js'), 'module.exports = {NativeModules: {}, Platform: {constants: {}}};\n');
 const require = createRequire(import.meta.url);
 const api = require(join(build, 'app', 'src', 'api', 'events.js'));
 const {createDevice} = require(join(build, 'app', 'src', 'api', 'device.js'));
