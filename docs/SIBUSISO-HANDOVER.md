@@ -423,3 +423,31 @@ The full suite passes (354), and 6 of the new tests fail on the original code.
 - **Then a rate limit.** Three refused sends to one address had filled its per-recipient cap (3 per 15 min), so the next request got 429. That is by design, but a *definite* provider refusal should not count, because no email went out. That's owed as a follow-up.
 - **Success.** At 02:28:13 `POST /v1/account/otp` returned 201, `/otp/verify` returned 200 at 02:28:38, and `PUT /v1/account/password` returned 200 at 02:28:39. The code arrived in Sibusiso's inbox from the native app, which is Khutso's #116 email acceptance with n=1. No address or code is recorded here.
 - **One stray failure.** An earlier try at 02:25:06 got a 401 from our own signature check, not from Brevo. It didn't recur on the retry; look at it after the demo.
+
+## 2026-09-27 (03:00–03:55 UTC) — bank signal delivered, invite status, wrong-PIN heads-up
+
+- **sim_bank runs on Azure (`7ba10de`).**
+  - Why: the team's VIGIL run raised an incident, and every bank signal was refused, because `sim_bank` was never packaged or started.
+  - Fix: it now runs in the container on `127.0.0.1:8001`, loopback only.
+  - The waiting signal was delivered at 02:57:58 UTC (`risk-signal 202`), with no failures since.
+- **The invite shows as accepted (`f5e16f5` server, #118 app, merged).**
+  - New device-signed `GET /v1/guardians`: waiting, accepted, expired or removed.
+  - A decoy and a duress removal read exactly like real ones.
+  - The member's invite screen turns to "Guardian added".
+- **Wrong-PIN heads-up (`6b4a3ba` server, deployed; app in #120, awaiting Lethabo's review and merge).**
+  - The first wrong PIN at a check-in alerts guardians with trigger `wrong_pin`: never duress, never the bank, once per incident.
+  - The phone is unchanged (T47). The S1 bank timer ignores the heads-up.
+  - Unanswered check-ins still escalate at about 70 s as `no_answer` (the lead's decision).
+- **Hardening found in review (#120):**
+  - The guardian's heads-up screen said "Call 10111"; it's now a heads-up with its own wording.
+  - An alarm after a heads-up on the same incident wouldn't have raised a new notice; alerts are now keyed per incident and trigger.
+- **Evidence:**
+  - Python 376 passed; shared 151; contract 50; app jest 283.
+  - `scripts/e2e/wrong-pin-e2e.mjs`: 16/16 locally.
+  - Live on Azure: 5/5 with `sim_` phones.
+- **Blocked:** the new VIGIL.apk needs the four signing secrets. Lethabo was asked on #118 and #120. `vigil-apk.yml` failed at 03:03 UTC without them.
+- **Demo notes:**
+  - Lock the member phone so the PIN page is full-screen.
+  - After a heads-up, the guardian must stand down to close the incident (G33).
+  - Email is the only sign-up option.
+  - Refresh `FCM_ACCESS_TOKEN` before presenting.
