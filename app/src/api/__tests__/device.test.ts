@@ -839,3 +839,23 @@ describe('account on this phone (Mutarisi’s sign-in, password and recovery)', 
     expect((await again.load()).profile?.signedOut).toBeUndefined();
   });
 });
+
+test('a member learns when an invite is accepted; unknown when it cannot be checked', async () => {
+  const reqs: Req[] = [];
+  const h = harness({
+    request: async <T,>(_u: string, method: string, path: string, body: string) => {
+      reqs.push({method, path, body});
+      if (method === 'GET' && path === '/v1/guardians')
+        return {guardians: [{guardian_id: 'gdn_a', status: 'accepted'}, {guardian_id: 'gdn_b', status: 'waiting'}]} as T;
+      return {} as T;
+    },
+  });
+  await onboarded(h);
+  expect(await h.device.guardianStatuses()).toEqual({gdn_a: 'accepted', gdn_b: 'waiting'});
+  expect(reqs.at(-1)).toEqual({method: 'GET', path: '/v1/guardians', body: ''});
+
+  // An older server (404) or no connection: null, so the screen keeps the code as before.
+  const old = harness({request: async () => Promise.reject(new Error('404 not_found: nope'))});
+  await onboarded(old);
+  expect(await old.device.guardianStatuses()).toBeNull();
+});

@@ -235,6 +235,12 @@ export function checkinRemainingMs(now: number, t: {signalQueuedAt?: number; ope
   return Math.max(0, Math.min(...bounds) - now - 5_000);
 }
 
+/**
+ * A member's invite as the server sees it (GET /v1/guardians). A decoy invite
+ * (second PIN) and a second-PIN removal read exactly like real ones.
+ */
+export type GuardianStatus = 'waiting' | 'accepted' | 'expired' | 'removed';
+
 /** One alert delivered to this guardian (GET /v1/guardians/me/alerts). */
 export type GuardianAlert = {
   incident_id: string;
@@ -858,6 +864,27 @@ export function createDevice(b: Backend) {
       profile = {...profile, invites: [...(profile.invites ?? []), {guardianId: r.guardian_id, at: new Date().toISOString()}]};
       await b.setProfile(JSON.stringify(profile));
       return {code: r.invite_code, guardianId: r.guardian_id};
+    },
+
+    /**
+     * Members: each invite's status by guardian id, so the invite screen can say
+     * when it was accepted. Null when it can't be checked (simulated build, an
+     * older server without the route, no connection): callers keep showing the
+     * code as before.
+     */
+    async guardianStatuses(): Promise<Record<string, GuardianStatus> | null> {
+      if (b.simulated || !profile || profile.role === 'guardian' || !profile.subjectId) return null;
+      try {
+        const r = await b.request<{guardians: {guardian_id: string; status: GuardianStatus}[]}>(
+          profile.serverUrl,
+          'GET',
+          '/v1/guardians',
+          '',
+        );
+        return Object.fromEntries(r.guardians.map(g => [g.guardian_id, g.status]));
+      } catch {
+        return null;
+      }
     },
 
     /**
