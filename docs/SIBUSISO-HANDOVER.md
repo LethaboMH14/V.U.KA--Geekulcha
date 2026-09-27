@@ -451,3 +451,8 @@ The full suite passes (354), and 6 of the new tests fail on the original code.
   - After a heads-up, the guardian must stand down to close the incident (G33).
   - Email is the only sign-up option.
   - Refresh `FCM_ACCESS_TOKEN` before presenting.
+
+**Update, ~05:30 UTC — VIGIL is the demo app; today's email codes wired into it (#122).**
+- **VIGIL vs VUKA:** VIGIL (`com.teamsonar.vuka`, React Native, `main`) is the demo app. VUKA and VUKA-next (`za.co.vuka.app`, native Kotlin, `feature/integrate` and #114) are separate apps; tonight's app fixes are only in VIGIL.
+- **0.0.15 is published** (built from `fb76ee9`, checked: it contains #118 and #120). The team's first test ran on an older install; the server log shows no `GET /v1/guardians` calls. Reinstall and check **Settings → Apps → VIGIL → 0.0.15**.
+- **#122:** VIGIL's sign-up "Verify code" now uses real email codes. The phone registers first, the server emails the code, and the server checks it; the record step keeps that one registration. jest 285/285; end to end 8/8. **Needs Lethabo to review, merge, and build and upload VIGIL.apk 0.0.16.** The existing VIGIL QR then serves it.
