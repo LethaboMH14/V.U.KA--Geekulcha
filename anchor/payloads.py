@@ -15,6 +15,7 @@ _SCHEMA_FILES = {
     "pin_authorised": "pin_authorised.v1.json",
     "checkin_opened": "checkin_opened.v1.json",
     "checkin_result": "checkin_result.v1.json",
+    "checkin_wrong_pin": "checkin_wrong_pin.v1.json",
     "journey_ended": "journey_ended.v1.json",
     "guardian_ack": "guardian_ack.v1.json",
     "evidence_observed": {1: "evidence_observed.v1.json", 2: "evidence_observed.v2.json"},

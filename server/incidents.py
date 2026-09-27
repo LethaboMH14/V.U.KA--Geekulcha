@@ -54,7 +54,7 @@ def incident_for_signal(cursor, subject_id, now, pre_incident_head):
 
 def request_alarm(cursor, incident_id, *, trigger, now):
     """Reserve one bank effect per incident; delivery gates non-duress timing."""
-    if trigger not in ("duress_signal", "no_answer", "contact_lost"):
+    if trigger not in ("duress_signal", "no_answer", "contact_lost", "wrong_pin"):
         raise ValueError("detection alone cannot request a bank signal")
     cursor.execute("SELECT bank_trigger,bank_sent_at FROM incidents WHERE incident_id=%s", (incident_id,))
     prior, sent_at = cursor.fetchone()
@@ -64,6 +64,8 @@ def request_alarm(cursor, incident_id, *, trigger, now):
     cursor.execute("SELECT 1 FROM outbox WHERE idempotency_key=%s", (key,))
     if cursor.fetchone() is None:
         enqueue(cursor, idempotency_key=key, kind="guardian_alert", reference_id=incident_id, not_before=now)
+    if trigger == "wrong_pin":
+        return  # guardians only: never the bank, never a bank trigger (27 Sep, PROPOSED)
     if trigger == "duress_signal":
         cursor.execute("UPDATE incidents SET has_duress=TRUE,bank_trigger='duress_signal' WHERE incident_id=%s", (incident_id,))
         if sent_at is None:
@@ -87,7 +89,10 @@ def bank_after_delivery(cursor, incident_id):
     from server.contact import all_outcomes_normal
     if trigger == "contact_lost" and all_outcomes_normal(cursor, incident_id):
         return  # G33: contact_lost after all-normal check-ins alerts guardians, never the bank
-    cursor.execute("SELECT MIN(delivered_at) FROM guardian_deliveries WHERE incident_id=%s", (incident_id,))
+    # The S1 three minutes run from the alert for this trigger's kind of outcome,
+    # never from an earlier wrong-PIN heads-up, which would shorten stand-down time.
+    cursor.execute("SELECT MIN(delivered_at) FROM guardian_deliveries WHERE incident_id=%s AND outbox_id NOT LIKE %s",
+                   (incident_id, "%:wrong_pin"))
     delivered = cursor.fetchone()[0]
     if delivered is None:
         return

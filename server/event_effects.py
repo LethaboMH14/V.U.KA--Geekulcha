@@ -66,7 +66,7 @@ def close_incident(cur, store, subject_id, incident_id, reason, now):
     return True
 
 
-DEVICE_KINDS = {"signal_detected", "checkin_opened", "checkin_result", "journey_ended", "pin_authorised", "evidence_observed"}
+DEVICE_KINDS = {"signal_detected", "checkin_opened", "checkin_result", "checkin_wrong_pin", "journey_ended", "pin_authorised", "evidence_observed"}
 GUARDIAN_KINDS = {"guardian_ack"}
 
 
@@ -160,6 +160,19 @@ def apply_event(cur, store, subject_id, entry, stored, now):
         if result == "duress_pin":
             incident_id = incidents.incident_for_signal(cur, subject_id, now, stored["prev_hash"])
             incidents.request_alarm(cur, incident_id, trigger="duress_signal", now=now)
+        anchor_intent(cur, event_id, now)
+        return
+    if kind == "checkin_wrong_pin":
+        # PROPOSED (27 Sep): a wrong PIN at an undecided check-in tells guardians
+        # at once (trigger wrong_pin, once per incident), never as duress and never
+        # the bank. The phone still shows the neutral "Try again" (T47), so nothing
+        # here is an oracle; an unanswered check-in still becomes no_answer at the
+        # deadline with its usual effects.
+        signal, journey, incident_id, outcome = proposed_require_known_checkin(cur, subject_id, payload["checkin_id"])
+        if entry["target_type"] != "journey" or entry["target_id"] != journey:
+            raise EventRefused("invalid_request")
+        if outcome is None:
+            incidents.request_alarm(cur, incident_id, trigger="wrong_pin", now=now)
         anchor_intent(cur, event_id, now)
         return
     if kind == "guardian_ack":

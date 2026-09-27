@@ -670,7 +670,7 @@ paths:
                       additionalProperties: false
                       properties:
                         incident_id: { type: string }
-                        trigger: { type: string, enum: [duress_signal, no_answer, contact_lost, unknown] }
+                        trigger: { type: string, enum: [duress_signal, no_answer, contact_lost, wrong_pin, unknown] }
                         delivered_at: { type: string, format: date-time }
                         opened_at: { type: string, format: date-time }
                         closed_at: { type: [string, 'null'], format: date-time }

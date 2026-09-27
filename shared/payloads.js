@@ -4,6 +4,7 @@ import pinAuthorisedSchema from "../contracts/payloads/pin_authorised.v1.json" w
 // imports keep this module usable in both Node tests and browser bundles.
 import checkinOpenedSchema from "../contracts/payloads/checkin_opened.v1.json" with { type: "json" };
 import checkinResultSchema from "../contracts/payloads/checkin_result.v1.json" with { type: "json" };
+import checkinWrongPinSchema from "../contracts/payloads/checkin_wrong_pin.v1.json" with { type: "json" };
 import journeyEndedSchema from "../contracts/payloads/journey_ended.v1.json" with { type: "json" };
 import guardianAckSchema from "../contracts/payloads/guardian_ack.v1.json" with { type: "json" };
 import evidenceObservedV1Schema from "../contracts/payloads/evidence_observed.v1.json" with { type: "json" };
@@ -32,6 +33,7 @@ const SUPPORTED_KEYWORDS = new Set([...VALIDATION_KEYWORDS, ...ANNOTATION_KEYWOR
 const SCHEMAS = Object.freeze({
   checkin_opened: checkinOpenedSchema,
   checkin_result: checkinResultSchema,
+  checkin_wrong_pin: checkinWrongPinSchema,
   journey_ended: journeyEndedSchema,
   guardian_ack: guardianAckSchema,
   pin_authorised: pinAuthorisedSchema,

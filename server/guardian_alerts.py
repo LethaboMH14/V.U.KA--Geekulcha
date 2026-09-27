@@ -14,7 +14,7 @@ reason names (PROPOSED, ADR-0047): words, never a number or a probability.
 from server.locations import location_for
 from server.payload_store import decrypt_payload
 
-TRIGGERS = ("duress_signal", "no_answer", "contact_lost")
+TRIGGERS = ("duress_signal", "no_answer", "contact_lost", "wrong_pin")
 
 
 def guardian_for_key(cur, signer_key_id):
