@@ -623,9 +623,11 @@ export function createDevice(b: Backend) {
      * only adds the name. Throws a message fit to show on screen.
      */
     async sendSignUpCode(email: string, appVersion: string): Promise<{otpId: string; sentTo: string}> {
-      if (!profile?.subjectId || profile.role !== 'member') await registerDevice('', appVersion, true);
+      // Only a registration made just now must reach the server first; an older stuck event must not block sign-in's code.
+      const fresh = !profile?.subjectId || profile.role !== 'member';
+      if (fresh) await registerDevice('', appVersion, true);
       await flush();
-      if (delivery.queued) throw new Error("Couldn't reach VIGIL's server. Check your connection, then tap Resend.");
+      if (fresh && delivery.queued) throw new Error("Couldn't reach VIGIL's server. Check your connection, then tap Resend.");
       try {
         const r = await b.request<{otp_id: string; sent_to: string}>(
           profile!.serverUrl,

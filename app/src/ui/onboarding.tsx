@@ -24,7 +24,7 @@ import {Dialog, Eyebrow, GlassIcon, Key, Lamp, Panel, PinKeypad, QuietKey, Reado
 import {Microphone, ShieldChevron} from './icons';
 import {colors, fonts, radii, space, type} from './theme';
 import {version} from '../../package.json';
-import {device, type Delivery, type PasswordHash, type RecoveryChannel} from '../api/device';
+import {device, profileContacts, type Delivery, type PasswordHash, type RecoveryChannel} from '../api/device';
 import {AccountStep, CodeStep, EmailStep, InlineError, InviteStep, PermissionsStep, PhoneStep, StepMark, type Account, type Channel} from './signup';
 import {AccountOnThisPhone, SignIn, WelcomeBack} from './account';
 import {googleName, type GoogleAccount} from '../api/google';
@@ -62,6 +62,8 @@ export function Onboarding({
   const [account, setAccount] = useState<Account | null>(null);
   /** The number typed on the sign-in phone route (never saved). */
   const [signInPhone, setSignInPhone] = useState('');
+  /** Sign-in by phone: this phone's account email when the number matches, so the code is real (27 Sep). */
+  const [signInEmail, setSignInEmail] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   // Stable across renders: the code step sends a new email whenever these change.
   const sendCode = useCallback((to: string) => device.sendSignUpCode(to, version), []);
@@ -203,24 +205,30 @@ export function Onboarding({
               setAccount(a => (a ? ({...a, phone: undefined} as Account) : a));
               go('skip');
             }}
-            onNext={msisdn => {
-              if (signingIn) setSignInPhone(msisdn);
-              else setAccount(a => (route === 'phone' || !a ? {kind: 'phone', contact: msisdn, verified: false} : ({...a, phone: msisdn} as Account)));
+            onNext={async msisdn => {
+              if (signingIn) {
+                setSignInPhone(msisdn);
+                const found = await device.findAccount({kind: 'phone', phone: msisdn}).catch(() => false);
+                setSignInEmail(found && !device.simulated ? profileContacts(device.profile).email ?? null : null);
+                return go('sendCode');
+              }
+              setAccount(a => (route === 'phone' || !a ? {kind: 'phone', contact: msisdn, verified: false} : ({...a, phone: msisdn} as Account)));
               go('sendCode');
             }}
           />
         ) : step === 'code' ? (
           <>
             <CodeStep
-              phone={signingIn ? signInPhone : account?.kind === 'phone' ? account.contact : account?.phone}
-              email={signingIn ? undefined : account?.kind === 'phone' ? account.email : account?.contact}
+              phone={signingIn ? (signInEmail ? undefined : signInPhone) : account?.kind === 'phone' ? account.contact : account?.phone}
+              email={signingIn ? signInEmail ?? undefined : account?.kind === 'phone' ? account.email : account?.contact}
               choose={chooseCodeChannel(flow)}
               busy={checking}
               onAdd={(channel, value) => setAccount(a => (a ? (channel === 'sms' ? ({...a, phone: value} as Account) : {...a, email: value}) : a))}
               onBack={back}
-              // Real email codes for sign-up (27 Sep); sign-in and the simulated build stay as they were.
-              send={signingIn || device.simulated ? undefined : sendCode}
-              check={signingIn || device.simulated ? undefined : checkCode}
+              // Real email codes (27 Sep): sign-up, and sign-in when this phone's account has an email.
+              // Text messages and the simulated build stay SIMULATED.
+              send={device.simulated || (signingIn && !signInEmail) ? undefined : sendCode}
+              check={device.simulated || (signingIn && !signInEmail) ? undefined : checkCode}
               onNext={via => {
                 if (signingIn) return void checkNumber();
                 setCodeVia(via);
