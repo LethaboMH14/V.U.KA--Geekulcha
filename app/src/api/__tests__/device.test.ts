@@ -859,3 +859,21 @@ test('a member learns when an invite is accepted; unknown when it cannot be chec
   await onboarded(old);
   expect(await old.device.guardianStatuses()).toBeNull();
 });
+
+
+test('wrong PINs 1-3 are recorded (the server alerts guardians); the phone only says "Try again"', async () => {
+  const h = harness();
+  await onboarded(h);
+  const c = await h.device.openCheckin(JOURNEY, '0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70');
+  expect(await c.enter('0000')).toBe('retry');
+  expect(await c.enter('1111')).toBe('retry');
+  expect(await c.enter('2222')).toBe('retry');
+  expect(await c.enter('3333')).toBe('checked'); // T47: from the 4th, every entry looks answered
+  await h.device.flush();
+  const wrongs = h.sent.filter(e => e.payload.kind === 'checkin_wrong_pin');
+  expect(wrongs.map(e => e.payload.attempt)).toEqual([1, 2, 3]);
+  expect(wrongs.every(e => e.payload.checkin_id === c.checkinId && e.target_id === JOURNEY)).toBe(true);
+  // checkin_opened is always recorded first, so the server knows the check-in.
+  expect(kinds(h).indexOf('checkin_opened')).toBeLessThan(kinds(h).indexOf('checkin_wrong_pin'));
+  expect(JSON.stringify(wrongs.map(e => e.payload))).not.toMatch(/0000|1111|2222|3333/); // no PIN material
+});

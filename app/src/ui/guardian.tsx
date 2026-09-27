@@ -107,6 +107,10 @@ const WHY: Record<GuardianAlert['trigger'], (n: string) => string> = {
   duress_signal: n => `${n} used their second PIN: they may be being forced.`,
   no_answer: n => `${n} didn't answer a check-in after VIGIL heard trouble.`,
   contact_lost: n => `${n}'s phone stopped checking in during an alert.`,
+  // A heads-up, not duress: most wrong PINs are typos, but someone else may have
+  // the phone, so the guardian must not call or text it (that could warn them).
+  wrong_pin: n =>
+    `${n} entered a wrong PIN at a journey check. They may have mistyped, or someone else may have their phone. Don't call or text them yet: you'll be alerted again if they don't check in.`,
   unknown: n => `${n} may need help.`,
 };
 
@@ -586,7 +590,7 @@ export function GuardianHome({onBack, onSetUpSelf, onLeft}: {onBack?: () => void
               {past.slice(0, 5).map(a => (
                 <View key={a.incident_id}>
                   <Rule />
-                  <Readout label={`${hhmm(a.opened_at)} · ${a.trigger === 'duress_signal' ? 'second PIN' : a.trigger === 'no_answer' ? 'no answer' : 'contact lost'}`} value={a.close_reason === 'stand_down' ? 'stood down' : a.close_reason ?? 'closed'} />
+                  <Readout label={`${hhmm(a.opened_at)} · ${a.trigger === 'duress_signal' ? 'second PIN' : a.trigger === 'no_answer' ? 'no answer' : a.trigger === 'wrong_pin' ? 'wrong PIN' : 'contact lost'}`} value={a.close_reason === 'stand_down' ? 'stood down' : a.close_reason ?? 'closed'} />
                 </View>
               ))}
             </Panel>

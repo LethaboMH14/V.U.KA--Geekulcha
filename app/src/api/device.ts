@@ -244,7 +244,7 @@ export type GuardianStatus = 'waiting' | 'accepted' | 'expired' | 'removed';
 /** One alert delivered to this guardian (GET /v1/guardians/me/alerts). */
 export type GuardianAlert = {
   incident_id: string;
-  trigger: 'duress_signal' | 'no_answer' | 'contact_lost' | 'unknown';
+  trigger: 'duress_signal' | 'no_answer' | 'contact_lost' | 'wrong_pin' | 'unknown';
   delivered_at: string;
   opened_at: string;
   closed_at: string | null;
@@ -783,7 +783,10 @@ export function createDevice(b: Backend) {
      * screen: that is when `checkin_opened` is recorded. `enter(pin)` gives
      * "checked" or "retry": wrong PINs 1–3 each get the same "Try again";
      * from then on every entry shows "Checked in" (the outcome is already
-     * no_answer server-side), so the check-in is never a PIN oracle.
+     * no_answer server-side), so the check-in is never a PIN oracle. Each of
+     * wrong PINs 1–3 is recorded as `checkin_wrong_pin`; the first one makes
+     * the server tell guardians (never as duress, never the bank). Nothing on
+     * this phone changes because of it.
      */
     async openCheckin(journeyId: string, signalEventId: string, opts: {onPinObserved?: (p: {retry: boolean; slow: boolean}) => void} = {}) {
       const checkinId = await uuid(b.signer);
@@ -807,7 +810,13 @@ export function createDevice(b: Backend) {
           entries += 1;
           const attempt = entries;
           const mode = await b.verify(pin);
-          if (mode === 'wrong') return attempt > 3 ? 'checked' : 'retry';
+          if (mode === 'wrong') {
+            if (attempt > 3) return 'checked';
+            await shown();
+            await record({kind: 'checkin_wrong_pin', pv: 1, checkin_id: checkinId, attempt}, journey(journeyId), {send: false});
+            void flush();
+            return 'retry';
+          }
           await shown();
           await record(
             {kind: 'checkin_result', pv: 1, checkin_id: checkinId, result: mode === 'duress' ? 'duress_pin' : 'normal_pin', attempt},

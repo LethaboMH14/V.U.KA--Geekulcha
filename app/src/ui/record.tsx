@@ -44,6 +44,7 @@ const KIND: Record<string, string> = {
   signal_detected: 'Sound detected',
   checkin_opened: 'Journey check shown',
   checkin_result: 'Journey check answered',
+  checkin_wrong_pin: 'Wrong PIN at a journey check',
   pin_authorised: 'PIN confirmed',
   no_answer: 'Journey check not answered',
   answered_late: 'Journey check answered late',
