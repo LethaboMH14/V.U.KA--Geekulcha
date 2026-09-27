@@ -394,3 +394,26 @@ Posted a correction on PR #79 acknowledging the gap explicitly rather than letti
 - (e) The key rotation needs Ipeleng's review.
 - (f) #105 was merged with review conditions still open.
 - (g) The 19:34–19:47 worker silence above.
+
+## 2026-09-27 (early hours) — sign-up codes: account service live on Azure, #116 risks fixed first
+
+**Why:** Khutso's #116 found that the native `VUKA.apk` sign-up never got a code, because Azure answered 404 on `/v1/account/otp`. The account service only existed on `feature/integrate`. Lethabo's #115 ported just that service onto the deploy branch.
+
+**Before deploying,** I fixed the four #116 risks in #115's code (`e29db84`, build-log `2026-09-27-sibusiso-account-otp-review-fixes.md`):
+- **Stored before sent:** a code is committed before the provider call.
+- **Caps:** 3 codes per recipient per 15 minutes and 100 per hour server-wide, on top of 5 per subject, with the counts serialised by advisory lock 864206.
+- **Dev log:** `VUKA_DEV_OTP_LOG` is refused on App Service.
+- **Errors:** provider error text never reaches the client.
+
+The full suite passes (354), and 6 of the new tests fail on the original code.
+
+**Deployed:**
+- `e29db84` was fast-forwarded onto `feat/lethabo-guardian-delivery`, which merges #115, and deployed at ~02:01 UTC. The boot is clean and the sidecar was ready at 02:04:55.
+- Sibusiso set `VUKA_BREVO_API_KEY` and `VUKA_EMAIL_FROM` as app settings himself; only the names were checked.
+- A signed `sim_` request reads `GET /v1/account` (the schema exists), and `POST /v1/account/otp` validates input. No email was sent by the assistant.
+
+**Owed:**
+- (a) One real sign-up from the app to a consenting team inbox, with the receipt recorded per Khutso's #116 acceptance matrix. Check spam, since new Brevo senders often land there.
+- (b) SMS is not configured (no Twilio), so SMS sign-up answers 503 `delivery_unavailable`. Say "email only" in the demo.
+- (c) The Google button in the native app is simulated (#116 item 1).
+- (d) The account contract and POPIA notice still need Lethabo and Ipeleng.
