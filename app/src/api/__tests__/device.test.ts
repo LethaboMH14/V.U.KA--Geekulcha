@@ -877,3 +877,38 @@ test('wrong PINs 1-3 are recorded (the server alerts guardians); the phone only 
   expect(kinds(h).indexOf('checkin_opened')).toBeLessThan(kinds(h).indexOf('checkin_wrong_pin'));
   expect(JSON.stringify(wrongs.map(e => e.payload))).not.toMatch(/0000|1111|2222|3333/); // no PIN material
 });
+
+test('sign-up email code: registers once, sends and checks a real code, keeps one genesis', async () => {
+  const reqs: Req[] = [];
+  const h = harness({
+    request: async <T,>(_u: string, method: string, path: string, body: string) => {
+      reqs.push({method, path, body});
+      if (path === '/v1/account/otp') return {otp_id: 'otp_1', sent_to: 't•••@example.co.za'} as T;
+      if (path === '/v1/account/otp/verify') {
+        if (JSON.parse(body).code !== '123456') throw new Error("401 wrong_code: that code isn't right");
+        return {verified: true} as T;
+      }
+      return {} as T;
+    },
+  });
+  const sent = await h.device.sendSignUpCode(' thandi@example.co.za ', '0.0.16');
+  expect(sent).toEqual({otpId: 'otp_1', sentTo: 't•••@example.co.za'});
+  expect(kinds(h)).toEqual(['registration']); // registered first: the server needs a signed phone
+  expect(JSON.parse(reqs[0].body)).toEqual({channel: 'email', to: 'thandi@example.co.za', purpose: 'verify'});
+  expect(await h.device.checkSignUpCode('otp_1', '000000')).toMatch(/isn't right/);
+  expect(await h.device.checkSignUpCode('otp_1', '123456')).toBe('ok');
+  await h.device.sendSignUpCode('thandi@example.co.za', '0.0.16'); // Resend: no second registration
+  await h.device.setPins('1234', '9876');
+  const p = await h.device.register('Thandi', '0.0.16'); // "Start your record" keeps it and adds the name
+  await h.device.flush();
+  expect(kinds(h)).toEqual(['registration']);
+  expect(p.firstName).toBe('Thandi');
+  expect(p.earlySignUp).toBeUndefined();
+});
+
+test('sign-up email code: offline and refused sends give plain words, never raw server text', async () => {
+  const offline = harness({post: async () => Promise.reject(new Error('Network request failed'))});
+  await expect(offline.device.sendSignUpCode('a@b.co', '0.0.16')).rejects.toThrow(/Couldn't reach VIGIL's server/);
+  const limited = harness({request: async () => Promise.reject(new Error('429 rate_limited: too many codes requested'))});
+  await expect(limited.device.sendSignUpCode('a@b.co', '0.0.16')).rejects.toThrow(/Too many codes/);
+});

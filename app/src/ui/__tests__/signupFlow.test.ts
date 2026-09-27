@@ -25,14 +25,14 @@ const tailSteps = ['name', 'permissions', 'pins', 'record', 'invite', 'home'];
 
 test('Google: account → chooser → phone (optional) → code → name → … → Home', () => {
   const s = {...fresh, route: 'google' as const};
-  expect(walk(s, ['getStarted', 'google', 'sendCode', 'verified', ...tail])).toEqual(['welcome', 'account', 'phone', 'code', ...tailSteps]);
+  expect(walk(s, ['getStarted', 'google', 'sendCode', ...tail])).toEqual(['welcome', 'account', 'phone', ...tailSteps]); // no code step after Google
   expect(phoneOptional(s)).toBe(true);
   expect(chooseCodeChannel(s)).toBe(true);
 });
 
 test('Google with the number skipped still verifies a code (by email), as his build', () => {
   const s = {...fresh, route: 'google' as const};
-  expect(walk(s, ['getStarted', 'google', 'skip', 'verified', ...tail])).toEqual(['welcome', 'account', 'phone', 'code', ...tailSteps]);
+  expect(walk(s, ['getStarted', 'google', 'skip', ...tail])).toEqual(['welcome', 'account', 'phone', ...tailSteps]); // no code step after Google
 });
 
 test('email: account → email → phone (optional) → code → name → … → Home', () => {
@@ -72,7 +72,7 @@ test('sign-in with Google or email and password → Welcome back → Home', () =
   expect(walk(fresh, ['getStarted', 'signIn', 'found', 'found'])).toEqual(['welcome', 'account', 'signIn', 'welcomeBack', 'home']);
   expect(back('signIn', fresh)).toBe('account');
   expect(back('welcomeBack', fresh)).toBe('signIn');
-  // "New to VUKA? Create an account" goes back to Create your account.
+  // "New to VIGIL? Create an account" goes back to Create your account.
   expect(next('signIn', 'create', fresh)).toBe('account');
 });
 

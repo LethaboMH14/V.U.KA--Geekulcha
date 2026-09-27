@@ -18,7 +18,7 @@
  * - A phone whose member signed out keeps its key, PINs and record, so it
  *   never signs up over them: Welcome offers Sign in instead.
  */
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {BackHandler, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Dialog, Eyebrow, GlassIcon, Key, Lamp, Panel, PinKeypad, QuietKey, Readout, Rule, Surface, TopAppBar} from './components';
 import {Microphone, ShieldChevron} from './icons';
@@ -63,6 +63,9 @@ export function Onboarding({
   /** The number typed on the sign-in phone route (never saved). */
   const [signInPhone, setSignInPhone] = useState('');
   const [checking, setChecking] = useState(false);
+  // Stable across renders: the code step sends a new email whenever these change.
+  const sendCode = useCallback((to: string) => device.sendSignUpCode(to, version), []);
+  const checkCode = useCallback((otpId: string, code: string) => device.checkSignUpCode(otpId, code), []);
   const [noAccount, setNoAccount] = useState(false);
   const [pin, setPin] = useState('');
   const [duress, setDuress] = useState('');
@@ -185,6 +188,7 @@ export function Onboarding({
           <PhoneStep
             key={signingIn ? 'signIn' : 'signUp'}
             optional={phoneOptional(flow)}
+            noCode={route === 'google' && !signingIn}
             signedUpAs={
               account && account.kind !== 'phone'
                 ? account.kind === 'google'
@@ -214,6 +218,9 @@ export function Onboarding({
               busy={checking}
               onAdd={(channel, value) => setAccount(a => (a ? (channel === 'sms' ? ({...a, phone: value} as Account) : {...a, email: value}) : a))}
               onBack={back}
+              // Real email codes for sign-up (27 Sep); sign-in and the simulated build stay as they were.
+              send={signingIn || device.simulated ? undefined : sendCode}
+              check={signingIn || device.simulated ? undefined : checkCode}
               onNext={via => {
                 if (signingIn) return void checkNumber();
                 setCodeVia(via);

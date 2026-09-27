@@ -20,7 +20,7 @@ object GuardianPushChannel {
         if (Build.VERSION.SDK_INT < 26) return
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
         val channel = NotificationChannel(ID, "Guardian alerts (pushed)", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "When someone you guard may need help, even when VUKA is closed."
+            description = "When someone you guard may need help, even when VIGIL is closed."
             // Matches the server's visibility: PRIVATE hides the text on a locked screen.
             lockscreenVisibility = Notification.VISIBILITY_PRIVATE
             enableVibration(true)

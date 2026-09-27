@@ -174,7 +174,7 @@ class KeepAliveTaskService : HeadlessJsTaskService() {
                 nm.createNotificationChannel(android.app.NotificationChannel("standby", "Guardian standby", android.app.NotificationManager.IMPORTANCE_LOW))
             }
             val n = androidx.core.app.NotificationCompat.Builder(this, "standby")
-                .setContentTitle("VUKA guardian")
+                .setContentTitle("VIGIL guardian")
                 .setContentText("Standing by for alerts")
                 .setSmallIcon(com.teamsonar.vuka.R.drawable.ic_launcher_monochrome)
                 .setOngoing(true)
