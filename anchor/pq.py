@@ -36,6 +36,9 @@ ROOT_MESSAGE_TYPE = 0x01  # 0x01 = root, 0x02 = manifest fingerprint (shared/key
 _HEX66 = re.compile(r"^[0-9a-f]{66}$")
 _TOPIC = re.compile(r"^\d+\.\d+\.\d+$")
 _TIMESTAMP = re.compile(r"^\d+\.\d{9}$")
+_B64 = re.compile(r"^[A-Za-z0-9+/]+={0,2}$")
+ED25519_SIG_LEN = 64
+ML_DSA_65_SIG_LEN = 3309
 
 
 def statement(*, network: str, topic: str, topic_epoch: int, seq: int, consensus_timestamp: str, message: bytes) -> dict:
@@ -60,10 +63,13 @@ def statement(*, network: str, topic: str, topic_epoch: int, seq: int, consensus
 def _check(st: dict) -> None:
     if not isinstance(st, dict) or set(st) != FIELDS:
         raise ValueError("statement fields are not exactly the v1 fields")
+    for key in ("v", "message_type", "topic_epoch", "seq"):
+        if type(st[key]) is not int:  # bool is refused, as in shared/pq.js
+            raise ValueError(f"{key} must be an integer")
     if st["v"] != VERSION or st["kind"] != KIND or st["message_type"] != ROOT_MESSAGE_TYPE:
         raise ValueError("unsupported statement version, kind or message type")
     for key in ("topic_epoch", "seq"):
-        if not isinstance(st[key], int) or isinstance(st[key], bool) or st[key] < 0:
+        if st[key] < 0:
             raise ValueError(f"{key} must be a non-negative integer")
     if not isinstance(st["network"], str) or not st["network"]:
         raise ValueError("network must be a non-empty string")
@@ -81,8 +87,29 @@ def statement_bytes(st: dict) -> bytes:
     return canonical(st)
 
 
-def verify(attestation: dict, *, ed25519_public: bytes, ml_dsa_65_public: bytes, mirror_message: bytes) -> str | None:
-    """None if valid; otherwise the first reason it is not."""
+def _b64(text, length: int) -> bytes:
+    """Strict base64 (no whitespace, correct padding) of exactly `length` bytes."""
+    if not isinstance(text, str) or len(text) % 4 or not _B64.match(text):
+        raise ValueError("not strict base64")
+    raw = base64.b64decode(text, validate=True)
+    if len(raw) != length:
+        raise ValueError("wrong signature length")
+    return raw
+
+
+def mirror_message(mirror_record: dict, st: dict) -> bytes:
+    """The message bytes from a Hedera mirror-node record, after checking that the
+    record is the one the statement names (topic, sequence number, consensus time)."""
+    if not isinstance(mirror_record, dict):
+        raise ValueError("mirror record must be an object")
+    if mirror_record.get("topic_id") != st["topic"] or mirror_record.get("sequence_number") != st["seq"]             or mirror_record.get("consensus_timestamp") != st["consensus_timestamp"]:
+        raise ValueError("mirror record is not the one the statement names")
+    return base64.b64decode(mirror_record.get("message", ""), validate=True)
+
+
+def verify(attestation: dict, *, ed25519_public: bytes, ml_dsa_65_public: bytes, mirror_record: dict) -> str | None:
+    """None if valid; otherwise the first reason it is not. `mirror_record` is the
+    mirror node's JSON for the topic message (GET /api/v1/topics/{topic}/messages/{seq})."""
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
     from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PublicKey
 
@@ -93,13 +120,17 @@ def verify(attestation: dict, *, ed25519_public: bytes, ml_dsa_65_public: bytes,
         signed = statement_bytes(st)
     except ValueError as exc:
         return f"statement: {exc}"
-    if bytes.fromhex(st["message_hex"]) != mirror_message:
+    try:
+        mirrored = mirror_message(mirror_record, st)
+    except (ValueError, TypeError) as exc:
+        return str(exc)
+    if bytes.fromhex(st["message_hex"]) != mirrored:
         return "message bytes differ from the mirror node's message"
     try:
-        sig_ed = base64.b64decode(attestation["sig_ed25519"], validate=True)
-        sig_pq = base64.b64decode(attestation["sig_ml_dsa_65"], validate=True)
+        sig_ed = _b64(attestation["sig_ed25519"], ED25519_SIG_LEN)
+        sig_pq = _b64(attestation["sig_ml_dsa_65"], ML_DSA_65_SIG_LEN)
     except (ValueError, TypeError):
-        return "signatures must be base64"
+        return "signatures must be strict base64 of the right length"
     try:
         Ed25519PublicKey.from_public_bytes(ed25519_public).verify(sig_ed, signed)
     except (InvalidSignature, ValueError):

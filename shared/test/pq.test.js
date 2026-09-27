@@ -16,7 +16,7 @@ const JS = read("contracts/vectors/pq-js.json");
 const MIRROR = read("contracts/vectors/hedera-mirror-0.0.10687280-seq8.json");
 const MESSAGE = Uint8Array.from(Buffer.from(MIRROR.message, "base64"));
 const fromHex = (h) => Uint8Array.from(Buffer.from(h, "hex"));
-const keys = { ed25519Public: fromHex(PY.ed25519_public_hex), mlDsa65Public: fromHex(PY.ml_dsa_65_public_hex), mirrorMessage: MESSAGE };
+const keys = { ed25519Public: fromHex(PY.ed25519_public_hex), mlDsa65Public: fromHex(PY.ml_dsa_65_public_hex), mirrorRecord: MIRROR };
 const clone = (o) => JSON.parse(JSON.stringify(o));
 function seed(label, n) {
   let out = Buffer.alloc(0);
@@ -48,6 +48,7 @@ describe("PQ root attestation v1 (demonstration)", () => {
     const enc = PY.ml_kem_768_py_encapsulation;
     const ss = ml_kem768.decapsulate(fromHex(enc.ciphertext_hex), kem.secretKey);
     expect(createHash("sha256").update(ss).digest("hex")).toBe(enc.ss_sha256);
+    // A different secret, as FIPS 203 implicit rejection implies; not a known-answer test of it.
     const bad = fromHex(enc.ciphertext_hex);
     bad[0] ^= 1;
     expect(createHash("sha256").update(ml_kem768.decapsulate(bad, kem.secretKey)).digest("hex")).not.toBe(enc.ss_sha256);
@@ -62,7 +63,24 @@ describe("PQ root attestation v1 (demonstration)", () => {
   test("mirror-bytes mismatch fails", async () => {
     const other = new Uint8Array(33);
     other[0] = 1;
-    expect(await verifyRootAttestation(PY.attestation, { ...keys, mirrorMessage: other })).toBe("message bytes differ from the mirror node's message");
+    const rec = { ...MIRROR, message: Buffer.from(other).toString("base64") };
+    expect(await verifyRootAttestation(PY.attestation, { ...keys, mirrorRecord: rec })).toBe("message bytes differ from the mirror node's message");
+  });
+
+  test.each([["sequence_number", 7], ["topic_id", "0.0.1"], ["consensus_timestamp", "1790454709.667629105"]])("a mirror record for another message (%s) fails even with equal bytes", async (field, value) => {
+    expect(await verifyRootAttestation(PY.attestation, { ...keys, mirrorRecord: { ...MIRROR, [field]: value } })).toBe("mirror record is not the one the statement names");
+  });
+
+  test.each([["v"], ["message_type"]])("boolean in place of %s is refused", async (field) => {
+    const att = clone(PY.attestation);
+    att.statement[field] = true;
+    expect(await verifyRootAttestation(att, keys)).toMatch(/^statement:/);
+  });
+
+  test.each([["sig_ed25519"], ["sig_ml_dsa_65"]])("malformed base64 in %s is refused", async (which) => {
+    const att = clone(PY.attestation);
+    att[which] = att[which].slice(0, 8) + " " + att[which].slice(8);
+    expect(await verifyRootAttestation(att, keys)).toBe("signatures must be strict base64 of the right length");
   });
 
   test("wrong context, swapped key and truncated signature fail", async () => {
@@ -74,7 +92,7 @@ describe("PQ root attestation v1 (demonstration)", () => {
     expect(await verifyRootAttestation(PY.attestation, { ...keys, mlDsa65Public: other })).toBe("ML-DSA-65 signature does not verify");
     const cut = clone(PY.attestation);
     cut.sig_ml_dsa_65 = Buffer.from(Buffer.from(cut.sig_ml_dsa_65, "base64").subarray(0, 3308)).toString("base64");
-    expect(await verifyRootAttestation(cut, keys)).toBe("ML-DSA-65 signature does not verify");
+    expect(await verifyRootAttestation(cut, keys)).toBe("signatures must be strict base64 of the right length");
     expect(CONTEXT.length).toBe(24);
   });
 

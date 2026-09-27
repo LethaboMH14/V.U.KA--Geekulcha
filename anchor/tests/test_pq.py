@@ -42,7 +42,7 @@ def seed(label, n):
 
 
 def check(att, **over):
-    kw = {"ed25519_public": ED_PUB, "ml_dsa_65_public": PQ_PUB, "mirror_message": MESSAGE}
+    kw = {"ed25519_public": ED_PUB, "ml_dsa_65_public": PQ_PUB, "mirror_record": MIRROR}
     kw.update(over)
     return pq.verify(att, **kw)
 
@@ -81,7 +81,8 @@ def test_tampered_ml_kem_ciphertext_gives_a_different_secret():
     enc = JS["ml_kem_768_js_encapsulation"]
     ct = bytearray(bytes.fromhex(enc["ciphertext_hex"]))
     ct[0] ^= 1
-    assert hashlib.sha256(kem.decapsulate(bytes(ct))).hexdigest() != enc["ss_sha256"]  # FIPS 203 implicit rejection
+    # A different secret, as FIPS 203 implicit rejection implies; not a known-answer test of it.
+    assert hashlib.sha256(kem.decapsulate(bytes(ct))).hexdigest() != enc["ss_sha256"]
 
 
 @pytest.mark.parametrize("field,value", [("seq", 7), ("topic_epoch", 2), ("consensus_timestamp", "1790454709.667629105"), ("topic", "0.0.1")])
@@ -91,16 +92,45 @@ def test_altered_statement_fields_fail(field, value):
     assert check(att) is not None
 
 
+def _mirror(**over):
+    rec = dict(MIRROR)
+    rec.update(over)
+    return rec
+
+
+OTHER = bytes([0x01]) + bytes(32)
+
+
 def test_mirror_bytes_mismatch_fails():
-    other = bytes([0x01]) + bytes(32)
-    assert check(PY["attestation"], mirror_message=other) == "message bytes differ from the mirror node's message"
+    rec = _mirror(message=base64.b64encode(OTHER).decode())
+    assert check(PY["attestation"], mirror_record=rec) == "message bytes differ from the mirror node's message"
+
+
+@pytest.mark.parametrize("field,value", [("sequence_number", 7), ("topic_id", "0.0.1"), ("consensus_timestamp", "1790454709.667629105")])
+def test_mirror_record_for_another_message_fails_even_with_equal_bytes(field, value):
+    assert check(PY["attestation"], mirror_record=_mirror(**{field: value})) == "mirror record is not the one the statement names"
 
 
 def test_statement_edited_to_match_other_mirror_bytes_fails_signatures():
     att = copy.deepcopy(PY["attestation"])
-    other = bytes([0x01]) + bytes(32)
-    att["statement"]["message_hex"] = other.hex()
-    assert check(att, mirror_message=other) == "Ed25519 signature does not verify"
+    att["statement"]["message_hex"] = OTHER.hex()
+    rec = _mirror(message=base64.b64encode(OTHER).decode())
+    assert check(att, mirror_record=rec) == "Ed25519 signature does not verify"
+
+
+@pytest.mark.parametrize("field", ["v", "message_type"])
+def test_boolean_in_place_of_an_integer_is_refused(field):
+    att = copy.deepcopy(PY["attestation"])
+    att["statement"][field] = True
+    assert check(att).startswith("statement:")
+
+
+@pytest.mark.parametrize("which", ["sig_ed25519", "sig_ml_dsa_65"])
+def test_malformed_base64_is_refused(which):
+    att = copy.deepcopy(PY["attestation"])
+    sig = att[which]
+    att[which] = sig[:8] + " " + sig[8:]
+    assert check(att) == "signatures must be strict base64 of the right length"
 
 
 def test_manifest_message_type_is_refused():
@@ -136,7 +166,7 @@ def test_each_signature_alone_is_not_enough():
 def test_truncated_signature_fails():
     att = copy.deepcopy(PY["attestation"])
     att["sig_ml_dsa_65"] = base64.b64encode(base64.b64decode(att["sig_ml_dsa_65"])[:-1]).decode()
-    assert check(att) == "ML-DSA-65 signature does not verify"
+    assert check(att) == "signatures must be strict base64 of the right length"
 
 
 def test_extra_fields_are_refused():
