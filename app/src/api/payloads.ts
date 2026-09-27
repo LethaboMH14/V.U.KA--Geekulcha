@@ -50,6 +50,12 @@ const SCHEMAS: Record<string, Record<string, Rule>> = {
     result: oneOf('normal_pin', 'duress_pin'),
     attempt: intMin(1),
   },
+  checkin_wrong_pin: {
+    kind: oneOf('checkin_wrong_pin'),
+    pv: oneOf(1),
+    checkin_id: match(UUID),
+    attempt: intIn(1, 3),
+  },
   journey_ended: {
     kind: oneOf('journey_ended'),
     pv: oneOf(1),

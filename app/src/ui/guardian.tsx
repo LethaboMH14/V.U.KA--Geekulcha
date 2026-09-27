@@ -65,11 +65,19 @@ let pushNoticeAt = 0;
  * The alert notice, from a push or a poll. A poll finding the alert a push
  * just announced doesn't sound it a second time.
  */
-function alertNotice(fromPush = false): void {
+function alertNotice(fromPush = false, trigger?: GuardianAlert['trigger']): void {
   if (fromPush) pushNoticeAt = Date.now();
   else if (Date.now() - pushNoticeAt < 60_000) return;
-  notice?.showAlert?.(`${device.profile?.guardian?.memberName ?? 'Your member'} may need help`, "Open VUKA. Don't call or text them: call 10111.");
+  const who = device.profile?.guardian?.memberName ?? 'Your member';
+  if (trigger === 'wrong_pin') notice?.showAlert?.(`${who} entered a wrong PIN`, "Open VUKA. Don't call or text them yet.");
+  else notice?.showAlert?.(`${who} may need help`, "Open VUKA. Don't call or text them: call 10111.");
 }
+
+/**
+ * One alert per incident AND trigger: a wrong-PIN heads-up followed by a
+ * no_answer or duress alarm on the same incident must sound again.
+ */
+export const alertKey = (a: Pick<GuardianAlert, 'incident_id' | 'trigger'>) => `${a.incident_id}:${a.trigger}`;
 
 /** The alert checks running now (standby and the app-wide watch): a push runs them at once. */
 const pollers = new Set<() => unknown>();
@@ -107,6 +115,10 @@ const WHY: Record<GuardianAlert['trigger'], (n: string) => string> = {
   duress_signal: n => `${n} used their second PIN: they may be being forced.`,
   no_answer: n => `${n} didn't answer a check-in after VIGIL heard trouble.`,
   contact_lost: n => `${n}'s phone stopped checking in during an alert.`,
+  // A heads-up, not duress: most wrong PINs are typos, but someone else may have
+  // the phone, so the guardian must not call or text it (that could warn them).
+  wrong_pin: n =>
+    `${n} entered a wrong PIN at a journey check. They may have mistyped, or someone else may have their phone. Don't call or text them yet: you'll be alerted again if they don't check in.`,
   unknown: n => `${n} may need help.`,
 };
 
@@ -385,10 +397,10 @@ export function useGuardianWatch(enabled: boolean): GuardianAlert | null {
       const a = await device.guardianAlerts().catch(() => null);
       if (!live || !a) return;
       setOpen(needsAttention(a));
-      const fresh = a.find(x => !x.closed_at && !told.current.has(x.incident_id));
+      const fresh = a.find(x => !x.closed_at && !told.current.has(alertKey(x)));
       if (fresh) {
-        told.current.add(fresh.incident_id);
-        alertNotice();
+        told.current.add(alertKey(fresh));
+        alertNotice(false, fresh.trigger);
       }
     };
     void poll();
@@ -450,10 +462,10 @@ export function GuardianHome({onBack, onSetUpSelf, onLeft}: {onBack?: () => void
       const a = await device.guardianAlerts();
       if (!live.current) return;
       // A new open alert pops up even when this app is in the background.
-      const fresh = a.find(x => !x.closed_at && !told.current.has(x.incident_id));
+      const fresh = a.find(x => !x.closed_at && !told.current.has(alertKey(x)));
       if (fresh) {
-        told.current.add(fresh.incident_id);
-        alertNotice();
+        told.current.add(alertKey(fresh));
+        alertNotice(false, fresh.trigger);
       }
       // Not while a just-pushed alert may still be on its way to this list.
       if (!a.some(x => !x.closed_at) && Date.now() - pushNoticeAt >= 60_000) notice?.clearAlert?.();
@@ -584,9 +596,9 @@ export function GuardianHome({onBack, onSetUpSelf, onLeft}: {onBack?: () => void
             <Panel tone="guardian">
               <Text style={type.label}>Earlier alerts</Text>
               {past.slice(0, 5).map(a => (
-                <View key={a.incident_id}>
+                <View key={alertKey(a)}>
                   <Rule />
-                  <Readout label={`${hhmm(a.opened_at)} · ${a.trigger === 'duress_signal' ? 'second PIN' : a.trigger === 'no_answer' ? 'no answer' : 'contact lost'}`} value={a.close_reason === 'stand_down' ? 'stood down' : a.close_reason ?? 'closed'} />
+                  <Readout label={`${hhmm(a.opened_at)} · ${a.trigger === 'duress_signal' ? 'second PIN' : a.trigger === 'no_answer' ? 'no answer' : a.trigger === 'wrong_pin' ? 'wrong PIN' : 'contact lost'}`} value={!a.closed_at ? 'still open' : a.close_reason === 'stand_down' ? 'stood down' : a.close_reason ?? 'closed'} />
                 </View>
               ))}
             </Panel>
@@ -662,6 +674,8 @@ function OpenAlert({
 }) {
   const stood = acks.includes('stand_down');
   const status = answerStatus(acks);
+  // A wrong PIN is a heads-up, not an alarm: most are typos (27 Sep, PROPOSED).
+  const headsUp = alert.trigger === 'wrong_pin';
   // Confirmed, because standing down closes the alert (H6) and unlocks calling them (G4).
   const [confirming, setConfirming] = useState(false);
   return (
@@ -669,7 +683,7 @@ function OpenAlert({
       <Panel hero tone="guardian">
         <Eyebrow style={{color: colors.amberText}}>Alert · {hhmm(alert.opened_at)}</Eyebrow>
         <Text style={[type.display, {marginTop: space.sm}]} accessibilityRole="header">
-          {who} may need help
+          {headsUp ? `${who} entered a wrong PIN` : `${who} may need help`}
         </Text>
         <Text style={[type.body, {marginTop: space.sm}]}>{WHY[alert.trigger](who)}</Text>
         {whyLine(alert.why) ? <Text style={[type.body, {marginTop: space.xs}]}>{whyLine(alert.why)}</Text> : null}
@@ -682,7 +696,7 @@ function OpenAlert({
           </View>
         )}
         <View style={styles.g4}>
-          <Text style={styles.g4Text}>Don't call or text {who}. Call 10111.</Text>
+          <Text style={styles.g4Text}>{headsUp ? `Don't call or text ${who} yet.` : `Don't call or text ${who}. Call 10111.`}</Text>
           <Text style={[type.caption, {color: colors.amberText, marginTop: 4}]}>If someone is with {who}, a ringing phone could put them at risk.</Text>
         </View>
         {status ? (
@@ -700,7 +714,11 @@ function OpenAlert({
             void Linking.openURL('tel:10111');
           }}
         />
-        <Text style={[type.caption, {marginTop: space.sm}]}>Opens your phone's dialer with 10111 ready. Press call there.</Text>
+        <Text style={[type.caption, {marginTop: space.sm}]}>
+          {headsUp
+            ? "Only if you have another reason to think they're in danger. Opens your phone's dialer with 10111 ready."
+            : "Opens your phone's dialer with 10111 ready. Press call there."}
+        </Text>
       </Panel>
       <View style={{gap: space.sm}}>
         <Key label={acks.includes('handling') ? "You're handling it" : "I'm handling it"} variant="guardianPlain" onPress={() => onAnswer('handling')} />

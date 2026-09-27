@@ -1,4 +1,4 @@
-import {alertsDelivery, answerStatus, answerTimeline, claimAnswer, consumeGuardianOpen, leaveBody, needsAttention, notificationsOff, notRecorded, standDownQuestion} from '../guardian';
+import {alertKey, alertsDelivery, answerStatus, answerTimeline, claimAnswer, consumeGuardianOpen, leaveBody, needsAttention, notificationsOff, notRecorded, standDownQuestion} from '../guardian';
 
 describe('guardian alert answers', () => {
   it('sends Call 10111 once per alert, however often it is pressed', () => {
@@ -93,5 +93,21 @@ describe('guardian notification and standby wiring', () => {
       expect(leaveBody('Thabo', m)).toMatch(/VIGIL's server isn't told, so ask Thabo to remove you/);
       expect(leaveBody('Thabo', m)).toMatch(/new invite\.$/);
     }
+  });
+});
+
+describe('wrong-PIN heads-up then an alarm on the same incident (27 Sep)', () => {
+  const base = {incident_id: 'inc_7', delivered_at: '2026-09-27T03:00:00Z', opened_at: '2026-09-27T02:59:00Z', closed_at: null, close_reason: null, why: null, location: null};
+  const headsUp = {...base, trigger: 'wrong_pin' as const};
+  const alarm = {...base, trigger: 'no_answer' as const, delivered_at: '2026-09-27T03:01:10Z'};
+
+  it('counts the alarm as a new alert, so it sounds again after the heads-up', () => {
+    expect(alertKey(alarm)).not.toBe(alertKey(headsUp));
+    const told = new Set([alertKey(headsUp)]);
+    expect(told.has(alertKey(alarm))).toBe(false);
+  });
+
+  it('shows the alarm, not the heads-up (the server lists newest first)', () => {
+    expect(needsAttention([alarm, headsUp] as never, new Set())?.trigger).toBe('no_answer');
   });
 });
