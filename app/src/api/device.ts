@@ -72,6 +72,8 @@ export type Backend = {
 
 export type Profile = {
   v: 1;
+  /** Registered by sign-up's email code step before the name was known (27 Sep). */
+  earlySignUp?: boolean;
   /** A member (listens, signs their own record) or a guardian (receives alerts). */
   role?: 'member' | 'guardian';
   firstName: string;
@@ -439,6 +441,59 @@ export function createDevice(b: Backend) {
    * queued with its reason shown, and the pass moves on, because the server
    * enforces unique counters, not their order.
    */
+  /**
+   * The genesis registration (§3). `early`: sign-up's email code step, before
+   * the name is known. A later call for the same key keeps that record (one
+   * genesis per key) and only sets the name.
+   */
+  async function registerDevice(firstName: string, appVersion: string, early: boolean): Promise<Profile> {
+    const {keyId} = await b.signer.identity();
+    const short = keyId.replace(/^dev_/, '').slice(0, 8);
+    if (profile?.role === 'member' && profile.earlySignUp && profile.subjectId === `sim_subj_${short}`) {
+      if (early) return profile;
+      const {earlySignUp: _early, ...rest} = profile;
+      profile = {...rest, firstName};
+      await b.setProfile(JSON.stringify(profile));
+      return profile;
+    }
+    // sim_ prefixes: the server accepts only simulation subjects (VUKA_SIM_ONLY).
+    const found = await b.discover().catch(() => null);
+    const serverUrl = found ?? DEFAULT_SERVER;
+    // A guardian-only phone setting VUKA up for itself keeps its guardian slot (member and guardian on one phone).
+    const guarding = profile?.guardian ? {guardian: profile.guardian} : {};
+    profile = {
+      v: 1,
+      role: 'member',
+      firstName,
+      subjectId: `sim_subj_${short}`,
+      actorId: `sim_member_${short}`,
+      serverUrl,
+      registeredOn: serverUrl,
+      ...guarding,
+      ...(early ? {earlySignUp: true} : {}),
+    };
+    await b.setProfile(JSON.stringify(profile));
+    // §18 registration: never IMEI, serial, Android ID or phone number.
+    await record(
+      {kind: 'registration', pv: 1, app_version: appVersion, model_sha256: MODEL_SHA256, android_api: 34, device_model: 'android'},
+      subject(),
+      {action: 'registration', genesis: true},
+    );
+    return profile;
+  }
+
+  /** Plain words for an account-code failure; never the provider's own text. */
+  function signUpCodeProblem(e: unknown): string {
+    const m = String(e instanceof Error ? e.message : e);
+    if (/rate_limited/.test(m)) return 'Too many codes were asked for. Wait a few minutes, then tap Resend.';
+    if (/wrong_code/.test(m)) return "That code isn't right. Check the email and try again.";
+    if (/expired/.test(m)) return 'That code has expired. Tap Resend for a new one.';
+    if (/locked/.test(m)) return 'Too many tries on that code. Tap Resend for a new one.';
+    if (/delivery_unavailable|delivery_failed/.test(m)) return "The email couldn't be sent just now. Tap Resend in a minute.";
+    if (/invalid_request/.test(m)) return 'Enter a valid email address.';
+    return "Couldn't reach VIGIL's server. Check your connection, then tap Resend.";
+  }
+
   function flush(): Promise<void> {
     if (b.simulated || !profile) return Promise.resolve();
     if (flushing) {
@@ -557,22 +612,42 @@ export function createDevice(b: Backend) {
      * identities derive from this phone's key, so they are stable per phone.
      */
     async register(firstName: string, appVersion: string): Promise<Profile> {
-      const {keyId} = await b.signer.identity();
-      const short = keyId.replace(/^dev_/, '').slice(0, 8);
-      // sim_ prefixes: the server accepts only simulation subjects (VUKA_SIM_ONLY).
-      const found = await b.discover().catch(() => null);
-      const serverUrl = found ?? DEFAULT_SERVER;
-      // A guardian-only phone setting VUKA up for itself keeps its guardian slot (member and guardian on one phone).
-      const guarding = profile?.guardian ? {guardian: profile.guardian} : {};
-      profile = {v: 1, role: 'member', firstName, subjectId: `sim_subj_${short}`, actorId: `sim_member_${short}`, serverUrl, registeredOn: serverUrl, ...guarding};
-      await b.setProfile(JSON.stringify(profile));
-      // §18 registration: never IMEI, serial, Android ID or phone number.
-      await record(
-        {kind: 'registration', pv: 1, app_version: appVersion, model_sha256: MODEL_SHA256, android_api: 34, device_model: 'android'},
-        subject(),
-        {action: 'registration', genesis: true},
-      );
-      return profile;
+      return registerDevice(firstName, appVersion, false);
+    },
+
+    /**
+     * Sign-up's "Verify code" by email (27 Sep): a real 6-digit code from the
+     * server (server/accounts.py, sent through its email provider). Every
+     * account call is signed with this phone's key, so the phone registers
+     * first if it hasn't; "Start your record" then keeps that registration and
+     * only adds the name. Throws a message fit to show on screen.
+     */
+    async sendSignUpCode(email: string, appVersion: string): Promise<{otpId: string; sentTo: string}> {
+      if (!profile?.subjectId || profile.role !== 'member') await registerDevice('', appVersion, true);
+      await flush();
+      if (delivery.queued) throw new Error("Couldn't reach VIGIL's server. Check your connection, then tap Resend.");
+      try {
+        const r = await b.request<{otp_id: string; sent_to: string}>(
+          profile!.serverUrl,
+          'POST',
+          '/v1/account/otp',
+          JSON.stringify({channel: 'email', to: email.trim(), purpose: 'verify'}),
+        );
+        return {otpId: r.otp_id, sentTo: r.sent_to};
+      } catch (e) {
+        throw new Error(signUpCodeProblem(e));
+      }
+    },
+
+    /** Checks the 6 digits with the server: 'ok', or a message fit to show. */
+    async checkSignUpCode(otpId: string, code: string): Promise<'ok' | string> {
+      if (!profile) return "Couldn't reach VIGIL's server. Check your connection, then try again.";
+      try {
+        await b.request(profile.serverUrl, 'POST', '/v1/account/otp/verify', JSON.stringify({otp_id: otpId, code}));
+        return 'ok';
+      } catch (e) {
+        return signUpCodeProblem(e);
+      }
     },
 
     /**

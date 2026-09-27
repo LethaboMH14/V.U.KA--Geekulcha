@@ -333,6 +333,8 @@ export function CodeStep({
   onAdd,
   onNext,
   onBack,
+  send,
+  check,
 }: {
   phone?: string;
   email?: string;
@@ -343,6 +345,13 @@ export function CodeStep({
   /** With the channel the code went to: the default for password-reset codes. */
   onNext: (via: Channel) => void;
   onBack: () => void;
+  /**
+   * Real email codes (27 Sep): the server emails a 6-digit code and checks it.
+   * Without these (sign-in, the simulated build), and for text messages (no
+   * SMS provider yet), the step stays SIMULATED as before.
+   */
+  send?: (email: string) => Promise<{otpId: string; sentTo: string}>;
+  check?: (otpId: string, code: string) => Promise<'ok' | string>;
 }) {
   const [code, setCode] = useState('');
   const [via, setVia] = useState<Channel>(phone ? 'sms' : 'email');
@@ -351,6 +360,27 @@ export function CodeStep({
   const [entryError, setEntryError] = useState('');
   const [left, setLeft] = useState(RESEND_SECONDS);
   const [sent, setSent] = useState(0);
+  const real = Boolean(send && check && via === 'email' && email);
+  const [otp, setOtp] = useState<{otpId: string; sentTo: string} | null>(null);
+  const [sending, setSending] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [problem, setProblem] = useState('');
+
+  // Each send (first view, Resend, a new channel or address) asks the server for a new code.
+  useEffect(() => {
+    if (!real || !send || !email) return;
+    let live = true;
+    setOtp(null);
+    setProblem('');
+    setSending(true);
+    send(email)
+      .then(r => live && setOtp(r))
+      .catch(e => live && setProblem(String(e instanceof Error ? e.message : e)))
+      .finally(() => live && setSending(false));
+    return () => {
+      live = false;
+    };
+  }, [real, send, email, sent]);
 
   // "Resend in 0:45", counting down from each send.
   useEffect(() => {
@@ -386,11 +416,24 @@ export function CodeStep({
     resend();
   };
   const type6 = (t: string) => {
-    if (busy) return;
+    if (busy || checking) return;
     const digits = t.replace(/\D/g, '').slice(0, 6);
     if (digits.length < 6) return setCode(digits);
-    setCode('');
-    onNext(via);
+    if (!real) {
+      setCode('');
+      return onNext(via);
+    }
+    if (!otp || !check) return setCode(digits);
+    setCode(digits);
+    setChecking(true);
+    setProblem('');
+    void check(otp.otpId, digits)
+      .then(r => {
+        if (r === 'ok') return onNext(via);
+        setCode('');
+        setProblem(r);
+      })
+      .finally(() => setChecking(false));
   };
 
   return (
@@ -401,7 +444,14 @@ export function CodeStep({
         Verify code
       </Text>
       <Text style={type.body}>{via === 'email' ? `Enter the 6-digit code we sent to ${email ?? 'your email'}.` : `Enter the 6-digit code we sent by text to ${phone ?? 'your phone'}.`}</Text>
-      <Simulated>SIMULATED · NO CODE IS SENT · ANY 6 DIGITS CONTINUE</Simulated>
+      {real ? (
+        <Text style={type.caption} accessibilityLiveRegion="polite">
+          {sending ? 'Sending the code…' : checking ? 'Checking…' : otp ? `Sent to ${otp.sentTo}. It expires in 10 minutes.` : ''}
+        </Text>
+      ) : (
+        <Simulated>SIMULATED · NO CODE IS SENT · ANY 6 DIGITS CONTINUE</Simulated>
+      )}
+      {real && problem ? <InlineError>{problem}</InlineError> : null}
       {choose ? (
         <View style={styles.channels} accessibilityRole="radiogroup">
           {(['sms', 'email'] as const).map(c => {
