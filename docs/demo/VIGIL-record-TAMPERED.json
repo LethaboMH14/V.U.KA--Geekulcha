@@ -1,0 +1,149 @@
+{
+  "subject_id": "sim_subj_8d582954",
+  "entries": [
+    {
+      "action": "registration",
+      "actor_id": "sim_member_8d582954",
+      "target_type": "subject",
+      "target_id": "sim_subj_8d582954",
+      "details": {
+        "v": 2,
+        "sig": "MEUCIF1ei6WAzoOXqDvT/JepTCQT4DzRvWV2OsB9sEg+j8fiAiEA+hWvDnPW3bbxkIBeXn1VDQTZKogQByUEzUP3ErhVOPQ=",
+        "signer": "device",
+        "counter": 1,
+        "event_id": "95a3b4cf-7a97-42a8-b0a6-5114628f89c5",
+        "commitment": "43d7bcfe99ba0ef7ad6020d8be989b334ed5c9b5ad09676711220984a26ecabf",
+        "chain_index": 0,
+        "received_at": "2026-09-27T11:58:26.977201Z",
+        "signer_key_id": "dev_8d582954371a78e5",
+        "signer_pubkey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEQPTx3iPdi4RKPxxhAcMuLLZ5r/JlZ+t+27C8tJSr/P5FXSJARMy7bEZjJLRkDp+4QBQDyzZ4WpTRg20oeFRvRA=="
+      },
+      "ts": "2026-09-27T11:58:25Z",
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "event_hash": "3a83a6b264a415f71f0080470c4b091bffc627be608eb0d011aaf9523e31be13"
+    },
+    {
+      "action": "device_event",
+      "actor_id": "sim_member_8d582954",
+      "target_type": "journey",
+      "target_id": "473c2afb-ed3e-4a51-bd20-1d690addb919",
+      "details": {
+        "v": 2,
+        "sig": "MEUCIQDmpARwXSBm0H0UzMONZ5txdXFflJ6F1s0uS7/wHCu9pwIgOEcuMGch1Z9fK0yc2Q4lKH+5rgW6k0Yt7JaSCjq9f8E=",
+        "signer": "device",
+        "counter": 2,
+        "event_id": "858e7a7b-6b9d-4d90-8467-6d2b5c797be9",
+        "commitment": "0d57162c44cd6c13d4c3ae6dc047740d8a4c37add7e4d06346b0b14e733cacf0",
+        "chain_index": 1,
+        "received_at": "2026-09-27T11:58:28.438130Z",
+        "signer_key_id": "dev_8d582954371a78e5"
+      },
+      "ts": "2026-09-27T11:58:28Z",
+      "prev_hash": "3a83a6b264a415f71f0080470c4b091bffc627be608eb0d011aaf9523e31be13",
+      "event_hash": "c620234cdbddbd3f419169470c4ef302f69753e0ff9be667065d2aeadf797531"
+    },
+    {
+      "action": "device_event",
+      "actor_id": "sim_member_8d582954",
+      "target_type": "subject",
+      "target_id": "sim_subj_8d582954",
+      "details": {
+        "v": 2,
+        "sig": "MEUCIQCBW27JmpNTCcnT1y6uiAOYziY+9/tac+HMnQTgFCQupgIgPXSdW77gCtrFCcJbe3OFBwiyDdwR3wGpCBhdMVtGweE=",
+        "signer": "device",
+        "counter": 3,
+        "event_id": "d6b7c502-b2b7-4ed1-a45c-0297c515df89",
+        "commitment": "850a540c68e4c6150f4ef688b0abbed5778381b8a3edf421d491ffecf58a31a9",
+        "chain_index": 2,
+        "received_at": "2026-09-27T11:58:29.514432Z",
+        "signer_key_id": "dev_8d582954371a78e5"
+      },
+      "ts": "2026-09-27T11:58:29Z",
+      "prev_hash": "c620234cdbddbd3f419169470c4ef302f69753e0ff9be667065d2aeadf797531",
+      "event_hash": "10ed8464bc57598f32fc66e45a5fe0fe870b6bbe8f9c7c2deb0c5fbf4e1ce80d"
+    },
+    {
+      "action": "device_event",
+      "actor_id": "sim_member_8d582954",
+      "target_type": "journey",
+      "target_id": "473c2afb-ed3e-4a51-bd20-1d690addb919",
+      "details": {
+        "v": 2,
+        "sig": "MEYCIQCnSvpS2sQXX8r21KNeBWHmCgHk6p72IHOGt5M38FunvAIhANA7/nQoYMuKAAzadqhBws0IMUhVssUsmapxM+BIrOX/",
+        "signer": "device",
+        "counter": 4,
+        "event_id": "1bc61695-34ad-47d9-8bdf-153e03f5df59",
+        "commitment": "8eaa08ebdc73dcf142c81aa8650581223003a16e0f59f039d2edc2a14c61a22f",
+        "chain_index": 3,
+        "received_at": "2026-09-27T11:58:29.960916Z",
+        "signer_key_id": "dev_8d582954371a78e5"
+      },
+      "ts": "2026-09-27T11:57:29Z",
+      "prev_hash": "10ed8464bc57598f32fc66e45a5fe0fe870b6bbe8f9c7c2deb0c5fbf4e1ce80d",
+      "event_hash": "0ec66fdc20388934bba5fb083c0b1ebc5e16da4246f6da08b2c27f41cf0f9e7a"
+    }
+  ],
+  "payloads": [
+    {
+      "event_id": "95a3b4cf-7a97-42a8-b0a6-5114628f89c5",
+      "payload": {
+        "android_api": 34,
+        "app_version": "0.0.6",
+        "device_model": "android",
+        "kind": "registration",
+        "model_sha256": "10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de",
+        "pv": 1
+      }
+    },
+    {
+      "event_id": "858e7a7b-6b9d-4d90-8467-6d2b5c797be9",
+      "payload": {
+        "app_version": "0.0.6",
+        "journey_id": "473c2afb-ed3e-4a51-bd20-1d690addb919",
+        "kind": "journey_armed",
+        "pv": 1
+      }
+    },
+    {
+      "event_id": "d6b7c502-b2b7-4ed1-a45c-0297c515df89",
+      "payload": {
+        "action": "end_journey",
+        "kind": "pin_authorised",
+        "mode": "normal",
+        "nonce": "BPnphGOvLcNMePUcL+j6Ug==",
+        "pv": 1,
+        "sig": "MEUCIQCbJSANbj5tn1sqQj+Yn7pOyBq68iRIVgk5+JrTL0xX7gIgfNwUuzmQH2DaDzl06KKAdLXTJ0hNK/3pFeEflHNfVu4=",
+        "signer_key_id": "dev_8d582954371a78e5",
+        "target_id": "473c2afb-ed3e-4a51-bd20-1d690addb919"
+      }
+    },
+    {
+      "event_id": "1bc61695-34ad-47d9-8bdf-153e03f5df59",
+      "payload": {
+        "journey_id": "473c2afb-ed3e-4a51-bd20-1d690addb919",
+        "kind": "journey_ended",
+        "pv": 1
+      }
+    }
+  ],
+  "salts": [
+    {
+      "event_id": "95a3b4cf-7a97-42a8-b0a6-5114628f89c5",
+      "salt": "OKeY51dxcpVu2dyI0vs62w=="
+    },
+    {
+      "event_id": "858e7a7b-6b9d-4d90-8467-6d2b5c797be9",
+      "salt": "Avs0DLN7PYiDKVniPiWOvQ=="
+    },
+    {
+      "event_id": "d6b7c502-b2b7-4ed1-a45c-0297c515df89",
+      "salt": "2t90ijm2F+9AmSMjXMj78w=="
+    },
+    {
+      "event_id": "1bc61695-34ad-47d9-8bdf-153e03f5df59",
+      "salt": "bbNQQuWvWyN4tf5e3yT6lA=="
+    }
+  ],
+  "proofs": [],
+  "receipts": []
+}
