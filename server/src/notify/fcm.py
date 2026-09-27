@@ -29,8 +29,8 @@ def _collapse_key(idempotency_key: str) -> str:
 
 
 def build_message(*, token: str, idempotency_key: str,
-                  title: str = "VUKA guardian alert",
-                  body: str = "Please open VUKA to check your selected contact.") -> dict:
+                  title: str = "VIGIL guardian alert",
+                  body: str = "Please open VIGIL to check your selected contact.") -> dict:
     if not token or not isinstance(token, str):
         raise ValueError("FCM registration token is required")
     if not title or not body:

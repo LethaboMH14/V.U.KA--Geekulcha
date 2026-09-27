@@ -43,8 +43,8 @@ def _on_app_service() -> bool:
 
 
 def _message(code: str, purpose: str) -> str:
-    what = "reset your VUKA password" if purpose == "reset" else "verify it's you in VUKA"
-    return f"Your VUKA code is {code}. Use it to {what}. It expires in 10 minutes. VUKA will never ask you for this code."
+    what = "reset your VIGIL password" if purpose == "reset" else "verify it's you in VIGIL"
+    return f"Your VIGIL code is {code}. Use it to {what}. It expires in 10 minutes. VIGIL will never ask you for this code."
 
 
 def brevo_configured() -> bool:
@@ -85,7 +85,7 @@ def send_code(channel: str, to: str, code: str, purpose: str) -> str:
 
 def _send_email(to: str, code: str, purpose: str) -> None:
     msg = EmailMessage()
-    msg["Subject"] = "Your VUKA code"
+    msg["Subject"] = "Your VIGIL code"
     msg["From"] = os.environ["VUKA_SMTP_FROM"]
     msg["To"] = to
     msg.set_content(_message(code, purpose))
@@ -119,7 +119,7 @@ def _send_brevo(to: str, code: str, purpose: str) -> None:
     body = json.dumps({
         "sender": _sender(os.environ["VUKA_EMAIL_FROM"]),
         "to": [{"email": to}],
-        "subject": "Your VUKA code",
+        "subject": "Your VIGIL code",
         "textContent": _message(code, purpose),
     })
     conn = http.client.HTTPSConnection("api.brevo.com", timeout=20, context=ssl.create_default_context())
