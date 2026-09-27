@@ -29,7 +29,7 @@
 | P3.L7 | Final gate and submission | Lethabo, Babatunde | all | **Sep 27 09:00** | ☐ | Added 23 Sep, Lethabo |
 | P3.A1 | Contract v2 + canonical and Merkle vectors + pinned mock server | Sibusiso | T | Sep 24 12:00 | ☐ | Added 23 Sep, Lethabo |
 | P3.A2 | Hedera spike: testnet topic with `submitKey`, mirror-node read-back, runtime decision | Sibusiso | T, I | Sep 24 | ☐ | Added 23 Sep, Lethabo |
-| P3.A3 | ANCHOR server: per-subject signed chains, auth, durable escalation, anchoring | Sibusiso | T, S | Sep 25 | ☐ | Added 23 Sep, Lethabo |
+| P3.A3 | ANCHOR server: per-subject signed chains, auth, durable escalation, anchoring | Sibusiso | T, S | Sep 25 | ◐ | Added 23 Sep, Lethabo · Slice 2 implemented locally; security and PostgreSQL review pending; escalation and anchoring remain outstanding |
 | P3.A4 | Deployed on Azure with CI (pytest + vitest vectors) | Sibusiso | T | Sep 25 23:59 | ☐ | Added 23 Sep, Lethabo |
 | P3.A5 | Export + public proof (no chain segment in public) | Sibusiso | I, T | Sep 25 | ☐ | Added 23 Sep, Lethabo |
 | P3.Q1 | Ed25519 + ML-DSA-65 root signing, keys published (cut line) | Sibusiso | Q | Sep 26 | ☐ | Added 23 Sep, Lethabo |
