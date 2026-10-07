@@ -58,7 +58,7 @@ money = '"R"#,##0;[Red]-"R"#,##0'
 
 s = wb.active; s.title = "Summary"
 summary = [
-    ("VUKA financial model", ""), ("Company", "VUKA (PILOTCORE). Founders: Lethabo Hoaeane, Sibusiso Khumalo. Not yet incorporated."),
+    ("VUKA financial model", ""), ("Company", "PILOT CORE (Pty) Ltd (Reg. 2026/122060/07), product VUKA. Founders and directors: Sibusiso Khumalo, Lethabo Hoaeane (50/50)."),
     ("Source", "Babatunde's economics, docs/ECONOMICS-VIGIL-ANCHOR.md (26 Sep 2026); rebuilt by scripts/build_financial_model.py"),
     ("", ""), ("Price per member per month (insurer pays)", PRICE), ("Variable cost per member per month", var_unit),
     ("Contribution margin", f"{(PRICE-var_unit)/PRICE:.1%}"), ("Fixed cost per month", fixed_total),
