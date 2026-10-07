@@ -466,3 +466,10 @@ The full suite passes (354), and 6 of the new tests fail on the original code.
   - decide whether a freshly verified inbox may move an email off an abandoned sim account.
 - **`scripts/e2e/azure-demo-check.mjs`:** a live, API-only demo check. 14/14 on Azure; one run saw a client-side "couldn't reach" at the first step with no server-side error, and a rerun passed.
 - **Settled:** the ledger site, CORS, the live feed, the Hedera mirror (root #38) and the pinned manifest are all fine. FCM is skipped for the demo (the guardian keeps VIGIL open).
+
+## 2026-10-07 — pitch deck for Caplia, financial model
+
+- **Team:** the deck now lists two founders only, Sibusiso and Lethabo, under the team name **PILOTCORE**. Work the other five delivered is owned by the lead who reviewed it.
+- **Figma deck** (`figma.com/slides/UzAIInKdb8FxkgPU8YCIIv`), now 11 slides. New: Market (TAM/SAM/SOM), Go-to-market, Pipeline and funding targets, Roadmap, Team. Business figures follow Babatunde's branch `docs/babatunde-war-room-and-access-model` (R1,884,583 ask; break-even 10,973).
+- **Caplia** readiness score was 327/700 on 5 Oct, before these changes. Gaps the repo can't fill: full-time status, equity split, 2+ years of domain experience, real interviews and LOIs.
+- **Financial model:** `docs/finance/VUKA-financial-model.xlsx` (gitignored, so run the script to get it), built by `scripts/build_financial_model.py`. With R1,884,583 raised in month 1 and the pilot paying from May 2027, cash first goes negative in Apr 2028 (lowest −R114,328), and the business is net-positive from Jun 2028. All figures are ESTIMATE or ASSUMPTION.
