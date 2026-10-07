@@ -10,7 +10,7 @@ VUKA is now **VIGIL + ANCHOR** (ADR-0034). Your task list is the **Work order** 
    - macOS/Linux: install Gitleaks 8.24.3, put it on your PATH, then run `git config --local core.hooksPath .githooks`
    - Never bypass the hook with `--no-verify`.
 3. **Tools:** Node 22 LTS or newer, Python 3.11 and the GitHub CLI (`gh auth login`).
-4. **Check it works:** `node scripts/check-docs.mjs && node scripts/check-intake.mjs` should pass, and `python scripts/economics_vigil_anchor.py` should print break-even 10,901 at R20.
+4. **Check it works:** `node scripts/check-docs.mjs && node scripts/check-intake.mjs` should pass, and `python scripts/economics_vigil_anchor.py` should print break-even 10,973 at R20.
 5. **Fill in your team file:** your real AI tool and model (several still say `UNDECLARED`), your weekend availability, and one running-log line saying you **accept** your work order or what blocks you.
 6. **Start your AI tool** with the prompt in `docs/SESSION-PROMPT.md`. Change one word: your name.
 
