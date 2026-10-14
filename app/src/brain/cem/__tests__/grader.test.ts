@@ -175,9 +175,10 @@ describe('graded prompt rule (cem1)', () => {
     const r = rig();
     r.feed([win(1, 'Shatter', 9000, 1000)]);
     r.close();
+    // Voice confirms on two adjacent windows (v3), so the candidate is at 40.5 s.
     r.feed([win(10, 'Shout', shoutRec, 40_000), win(11, 'Shout', shoutRec, 40_500), win(12, 'Shout', shoutRec, 41_000)]);
-    expect(r.grader.tick(42_500)).toEqual([]);
-    const settled = r.grader.tick(43_000);
+    expect(r.grader.tick(42_000)).toEqual([]);
+    const settled = r.grader.tick(42_500);
     expect(settled.map(a => (a.type === 'prompt' ? `prompt(${a.lifted})` : a.type))).toEqual(['prompt(true)']);
   });
 

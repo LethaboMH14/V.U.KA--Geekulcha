@@ -7,3 +7,9 @@ useDefault = true
 id = "vuka-synthetic-test-secret"
 description = "Deliberately noncredential fixture for exercising the scanner gate"
 regex = '''VUKA_TEST_SECRET_[A-Z0-9]{24}'''
+
+# False positive: line 8 is a colour-token reference (vukaBgBase -> @color/vuka_bg_base),
+# not a credential. Scoped to the one commit.
+[allowlist]
+description = "Android theme colour token flagged as generic-api-key"
+commits = ["89f8f1cdb230d641e4a42274fd0ab4e7bfc92e0b"]
