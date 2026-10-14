@@ -54,7 +54,7 @@
    - iTOO [My]Cylution is a partner or an objection, not a competitor.
    - What each does better.
    - VIGIL's one difference: it works when you can't press.
-3. **Thu 24** — rewrite `docs/LEAN-CANVAS.md` with figures: R20 partner-funded; break-even **10,901** (rounded up); R155,659/month fixed including the anchoring ceiling; anchoring at most ≈ R570/month whatever the member count; market facts from MASTER-CONTEXT §8. It is also the Sonke canvas due Saturday night.
+3. **Thu 24** — rewrite `docs/LEAN-CANVAS.md` with figures: R20 partner-funded; break-even **10,973** (rounded up); R156,683.98/month fixed, itemised from `docs/MARKET-DATA.md` §4 including the anchoring ceiling; anchoring at most ≈ R570/month whatever the member count; market facts from MASTER-CONTEXT §8. It is also the Sonke canvas due Saturday night.
 3b. **Thu 24–Sat 26 12:00 — validation.** Hold five short, consent-based conversations with potential users: would you arm this before a night drive? would you trust it? would R20 a month through your bank feel fair? Make one approach to a bank or insurer. Record each honestly in `docs/VALIDATION-2026-09.md`: no names without consent, and "no reply" is a valid result.
 4. **Fri 19:00** — problem statement with the mentors, co-written with Lethabo: two paragraphs, SAPS/ISS kidnapping and SABRIC 2025 data, plus one lived-experience line.
 5. **Fri–Sat — the deck** (more than 10 slides):
