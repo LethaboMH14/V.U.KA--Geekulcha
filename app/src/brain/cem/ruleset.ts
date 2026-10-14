@@ -46,4 +46,4 @@ export const RULESET_CANONICAL = {
   },
 };
 
-export const RULESET_DIGEST = '1f858caca29b0ae14acbd25b7ca3791dc13da9117bb6262432203a34a3bd4978';
+export const RULESET_DIGEST = '32a3973b5b97d890623d0745d3f8eabd3443dd4f36a8d372cd8d142f7568d67b';

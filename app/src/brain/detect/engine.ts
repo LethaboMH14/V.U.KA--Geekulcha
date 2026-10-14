@@ -172,7 +172,7 @@ export function step(state: EngineState, input: Input, r: Ruleset): {state: Engi
   let next: EngineState = {...state, history};
 
   // Confirmation: impulses in one window; voices in this window and the one
-  // two before it, which share no audio with it.
+  // `separation` before it (the ruleset says how far).
   const {separation} = r.confirm[win.t.family];
   const seqs = separation === 0 ? [w.seq] : [w.seq - separation, w.seq];
   const confirmed = seqs.every(s => history.some(h => h.seq === s && h.family === win.t.family));

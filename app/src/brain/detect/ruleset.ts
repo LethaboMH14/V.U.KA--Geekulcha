@@ -29,12 +29,13 @@ export type Ruleset = {
   /**
    * How a family is confirmed. `separation` 0: one window at or above threshold
    * confirms (impulses: glass and gun-like sounds are shorter than a window).
-   * `separation` 2: the current window AND the window two before it must both
-   * hit. With 50 % overlap those two share no audio, so one brief sound can't
-   * confirm itself; a voice must last about 1.5 s (a stated trade-off: a very
-   * short scream is missed).
+   * `separation` 1: the current window AND the one just before it must both
+   * hit. They overlap by half, so one short call ("Help!", about 0.5 s) that
+   * fills the shared half confirms; a click that barely touches one window
+   * doesn't. `separation` 2: the current window and the one two before it,
+   * which share no audio, so a voice must last about 1.5 s.
    */
-  readonly confirm: Readonly<Record<Family, {separation: 0 | 2}>>;
+  readonly confirm: Readonly<Record<Family, {separation: 0 | 1 | 2}>>;
   /** A second record of the same family within this long is a duplicate. */
   readonly recordGapMs: number;
   /** No second check-in prompt within this long of the last one (records continue). */
@@ -72,16 +73,19 @@ export type Ruleset = {
 
 export const RULESET_V1: Ruleset = {
   id: 'vigil-detect',
-  version: 2,
+  version: 3,
   calibrated: false,
-  // Starting values. Voice classes sit higher than impulses because shouting
-  // and yelling are common in ordinary life (taxi ranks, sport, a TV); glass
-  // and gun-like sounds are rare enough that a lower bar costs less. The
-  // harness replaces every one of these.
+  // Starting values. v3 (14 Oct) lowers the voice bars from 6000/6000/4500
+  // and confirms a voice on one short call, so a single shouted "Help!" is
+  // caught. YAMNet hears the KIND of sound (a shout), not the word: "Help!"
+  // and "Hey!" score alike. The cost is more check-ins from ordinary shouting
+  // (taxi ranks, sport, a TV), which the PIN check-in absorbs. Glass and
+  // gun-like bars are unchanged (glass recall in EVIDENCE.md is at these).
+  // The harness replaces every one of these.
   thresholdBp: {
-    Shout: 6000,
-    Yell: 6000,
-    Screaming: 4500,
+    Shout: 3500,
+    Yell: 3500,
+    Screaming: 3000,
     'Gunshot, gunfire': 3500,
     'Machine gun': 3500,
     Fusillade: 3500,
@@ -90,9 +94,9 @@ export const RULESET_V1: Ruleset = {
     Breaking: 4000,
   },
   recordThresholdBp: {
-    Shout: 3000,
-    Yell: 3000,
-    Screaming: 2250,
+    Shout: 1750,
+    Yell: 1750,
+    Screaming: 1500,
     'Gunshot, gunfire': 1750,
     'Machine gun': 1750,
     Fusillade: 1750,
@@ -102,7 +106,7 @@ export const RULESET_V1: Ruleset = {
   },
   contextThresholdBp: 3000,
   confirm: {
-    voice: {separation: 2},
+    voice: {separation: 1},
     glass: {separation: 0},
     gun: {separation: 0},
   },
