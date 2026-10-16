@@ -65,6 +65,7 @@ Columns: threat · spec control · test · residual. **S**poofing, **T**ampering
 | PH-9 | D | Notification permission revoked → check-in never shown → false `no_answer` | V1 refuse to arm; V4 `opened` only after shown | T17 | — |
 | PH-10 | E | Exported component or intent lets another app arm, answer or read | C-14 | T41 | — |
 | PH-11 | E | JS-side salt or nonce predictable (Hermes) | V7 native `SecureRandom` | T18 | — |
+| PH-12 | S T D | **`PROPOSED` (from the static app review, APP-V1).** The app replaces its server address with the one in `server.json`, a release asset anyone with write access to the release can edit. It accepts any `https://host`, and the address is unpinned unless the member typed one; the guardian-join path always follows it. An editor of that asset can move every unpinned install to a server that accepts events, answers "received" and never alerts | Today: HTTPS to GitHub only. **`PROPOSED`:** release builds do not auto-follow, or verify a signature over `server.json` against a key built into the app, and show the member when the address changes. §7 request signing does not help, because signatures go to whichever server was chosen; §17 already states that a hostile server can suppress escalation | T57 | Open until T57 passes. After the fix the signing key becomes the target, and certificate pinning is a separate control |
 
 ### 3.2 ANCHOR server
 
@@ -152,6 +153,7 @@ Columns: threat · spec control · test · residual. **S**poofing, **T**ampering
 | TM-C8 | Forced recovery (code dictated under threat), then bulk export | Recovery notifies guardians, revokes the old key | §9 | T13, T35 | **PR #43 S4:** extend the 24 h freeze to export (T39) |
 | TM-C9 | **Export during an open incident, from the held phone** | My Record hides incident events (V8), but `GET /v1/subjects/{id}/export` returns "genesis → head with payloads" (A5) to the device key. The payload of the current `checkin_result` contains `duress_pin`. Export is not in the §9 PIN table | A5, V8, S3 | **T30** | **Rule decided 24 Sep (ADR-0041): PIN-gated export, pre-incident hold** — open until T30 passes |
 | TM-C10 | PIN guessing on the held phone | Not specified: no attempt limit or wrong-PIN behaviour at the check-in | §8, §9 | T47 | **Rule decided 24 Sep (ADR-0041)** — open until T47 passes |
+| TM-C11 | **`PROPOSED` (from the static app review, APP-V2).** Guessing the PIN on PIN-gated **actions** on the held phone: pause listening, end journey, open My record, add a guardian. T47 covers only the check-in prompt | Today: the PIN is stored as Argon2id (19 MiB, 2 passes), both hashes are compared in constant time, and the screen never learns normal versus duress. A wrong PIN returns "retry" with no counter, delay or lockout, and 4-digit PINs are accepted. **`PROPOSED`:** a growing delay from the fourth wrong PIN that survives a restart, the same neutral message whatever the guesses so far, a failed-attempt record the server can see, and a 6-digit minimum | §9, ADR-0041, ADR-0036 | T58 | Open until T58 passes. The delay must not reveal duress or lock out a member in danger; Ipeleng to review the schedule |
 
 ## 5 · OWASP API Security Top 10 (2023) mapping
 
@@ -170,7 +172,7 @@ Columns: threat · spec control · test · residual. **S**poofing, **T**ampering
 
 Source: https://api-security.owasp.org/editions/2023/en/0x11-t10 (retrieved 23 Sep 2026).
 
-## 6 · New tests (T30–T49)
+## 6 · New tests (T30–T49; T57–T58 `PROPOSED`)
 
 Each needs a fixture, an oracle and prerequisites before Thu 20:00 (P3.S3). Owners are the people who write the test; Ipeleng reviews each.
 
@@ -196,18 +198,22 @@ Each needs a fixture, an oracle and prerequisites before Thu 20:00 (P3.S3). Owne
 | T47 | Wrong PIN at the check-in; repeated guesses | Decided by ADR-0041 (spec §8, §15): identical "Try again" ×3, then `no_answer` at the deadline; a later entry shows "Checked in"; duress still counts. Oracle in `TEST-SPECS.md` | Vukosi |
 | T48 | Operator deletion, threshold change or key rotation with one operator | Rejected; the attempt is chained | Sibusiso |
 | T49 | Subject A's key calls subject B's export, record and delete | 404, body byte-identical to a subject that doesn't exist (corrected 24 Sep: a 403 leaks existence) | Sibusiso |
+| T57 | `PROPOSED`: release build, `server.json` unsigned, wrongly signed, altered, older or unreachable; member-pinned address | Only a correctly signed, current file changes the address; a pinned address never changes; the member sees any change. Oracle in `TEST-SPECS.md` | Vukosi (`PROPOSED`) |
+| T58 | `PROPOSED`: wrong PINs on pause, end journey, My record and add guardian; restart between attempts; 4-digit PIN at set-up | Growing delay from the fourth wrong PIN, identical screen, restart does not reset it, failed attempts recorded, 4-digit PIN refused. Oracle in `TEST-SPECS.md` | Vukosi, Ipeleng reviews (`PROPOSED`) |
 
 ## 7 · Gaps this model raises
 
 1. **TM-C9, export during an open incident (largest).** A coercer holding the unlocked phone can open the export (or a share button built on it) and read `duress_pin` in the current payload. V8 hides it in My Record, but not in the export. **Proposed fix** for Lethabo and Sibusiso (spec change, both leads): export needs a fresh `pin_authorised` for action `export`; while an incident is open, or under a duress authorisation, the export ends at the last head before the incident. A chain prefix still verifies, so the no-op stays convincing. Test T30.
-2. **TM-C10, PIN guessing and wrong-PIN behaviour**: decided 24 Sep by ADR-0041; T47. Open only until T47 passes.
+2. **TM-C10, PIN guessing and wrong-PIN behaviour**: decided 24 Sep by ADR-0041; T47. Open only until T47 passes. T47 covers the check-in prompt only; guessing on PIN-gated actions is TM-C11 (item 7).
 3. **B1–B3** from the PR #43 review remain open until the spec text lands (`docs/security/SSDLC.md` §13).
 4. **No branch protection** (G17): a reviewed control can still be bypassed by a direct push.
 5. **Contract tests are not in CI** (`SSDLC.md` C-62).
+6. **PH-12, server address taken from a mutable release asset (`PROPOSED`, High).** Found by reading the app on PR #88 (head `83bc248`), not by the spec. Until T57 passes, whoever can edit the `vigil-demo` release asset can redirect every unpinned install. The demo relies on this file because the tunnel address changes, so the fix should be a signed file, not simply removing discovery. Owner to decide: Lethabo (app), with Ipeleng reviewing the signing scheme.
+7. **TM-C11, PIN guessing on PIN-gated actions (`PROPOSED`, High to Medium).** Same source. The PIN store is sound (Argon2id, constant-time, Keystore-sealed); the gap is the missing limit on guesses. Until T58 passes, a person holding the unlocked phone can try PINs on pause, end, export and add-guardian without delay. Owner to decide: Lethabo and Mutarisi (screens), with Ipeleng on the delay schedule so it cannot expose duress or lock out a member in danger.
 
 ## 8 · Limitations
 
-- Written against the spec and ADRs; there is no product code to inspect yet.
+- Written against the spec and ADRs; there was no product code to inspect when it was issued. PH-12 and TM-C11 (`PROPOSED`) come from a later static read of the app on PR #88 at head `83bc248`; they are not accepted until the owner (Ipeleng) reviews them and their tests pass.
 - Physical attacks beyond TB0 (forensic extraction of a rooted phone) are out of scope.
 - STRIDE coverage of the SMS gateway depends on the provider Khutso chooses; to be added when named.
 
