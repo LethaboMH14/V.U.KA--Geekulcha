@@ -24,7 +24,7 @@ VUKA was already partner-funded on paper: *"A partner pays about R20 per member 
   - nothing names the duress during the event;
   - release instructions are shown only after safety.
 
-  It is written and tested against `sim_bank` (SIMULATED), **on the server branch only**. It is not on `main`, and not deployed since the server was lost (open gap G30; [`06-LAUNCH-ROADMAP.md`](06-LAUNCH-ROADMAP.md) §0).
+  It is written and tested against `sim_bank` (SIMULATED), **on `main` since 18 Oct (#131)**, but not deployed since the server was lost (open gap G30; [`06-LAUNCH-ROADMAP.md`](06-LAUNCH-ROADMAP.md) §0).
 - **Evidence levels.** Banks and insurers see a tier, an E-level and reasons, never a score (`docs/VUKA-2-SPEC.md`).
 - **Third-party access is designed, not built** (ADR-0039). Three gates in `docs/OPEN-GAPS.md` hold it back: G36 (selective disclosure), G37 (safe release) and G38 (human review only, no automated pricing, no adverse inference from a missing record).
 - **An access-model proposal** on the unmerged branch `docs/babatunde-war-room-and-access-model`: an optional read-node inside a bank's perimeter, and per-case access with the member's consent (`PROPOSED`).
@@ -176,7 +176,7 @@ In Phase 1, measure:
 | Operator agreement (s21) and data-processing terms | Not drafted | counsel |
 | Data residency (s72, D3/2018) | Data was last known to be in Azure UAE North (Sep 2026). Its state since the subscription was disabled on 15 Oct is unknown. The 15 Oct demo ran the server on a presenter's PC. Both need a documented position; the privacy notice still says South Africa North | Sibusiso |
 | SLA with measured uptime | Targets proposed; probe written; no baseline | Sibusiso |
-| Running code on `main` | Not yet (D4) | both |
+| Running code on `main` | Done 18 Oct (#131); deploy from `main` still to set up | both |
 | Accounts and IP held by the company | No (D10) | both |
 
 ## 8 · What we say, and what we don't

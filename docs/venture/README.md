@@ -44,7 +44,7 @@ Each is argued in the file named. None is made here.
 | D1 | **One canonical economics model on `main`.** Three are in circulation (break-even 10,901 on `main`, 10,973 in the Caplia deck from an unmerged branch, and an older R50 model), and all pay five hackathon stipends for a two-founder company | An investor checks the deck against the model | `05-TWO-PITCHES.md` §5 |
 | D2 | **Re-size the funding ask** (R1,884,583 today) from a two-founder cost base, launch costs and a realistic first-revenue date | The current ask runs out of cash in its own model (lowest −R114,328) | `05-TWO-PITCHES.md` §5 |
 | D3 | **Lead buyer:** a bank first (Nedbank, with a risk signal into fraud operations, observe-only) or an insurer first (iTOO/Hollard, claim verification) | It decides the first integration we build | `01-B2B-ENTERPRISE.md` §5–§6 |
-| D4 | **Merge the last deployed server onto `main`**, after turning `main`'s CI green (red since 26 Sep; last green 25 Sep, 22:35 UTC). A trial merge of PR #99 conflicts only in four documents | No partner can review, and no launch can ship, code that isn't on `main` | `06-LAUNCH-ROADMAP.md` §3 |
+| D4 | **Done 18 Oct:** `main` turned green (#130) and the server merged onto `main` (#131). Left: deploy only from `main`, and add app tests and an Android build to CI. A trial merge of PR #99 conflicts only in four documents | No partner can review, and no launch can ship, code that isn't on `main` | `06-LAUNCH-ROADMAP.md` §3 |
 | D5 | **One app.** VIGIL (React Native, `main`) and the native VUKA app (`feature/integrate`) both exist | Two apps halve the work on each | `06-LAUNCH-ROADMAP.md` §3 |
 | D6 | **Fix the duress gaps at sign-in and sign-out.** A duress PIN at "Welcome back", or at sign-out while listening is paused, raises nothing; spec V6 says it must. This needs new PIN actions in the contract | A safety rule the product currently breaks | `06-LAUNCH-ROADMAP.md` §4 |
 | D7 | **Listening model:** ADR-0046 (listening until paused) or **journey mode as the default** (recommended after the legal and comparable-product research) | Comfort, battery, RICA's party exception, and the honesty ledger | `03-DISTRESS-SIGNALS.md` §6 |
@@ -59,7 +59,7 @@ Each is argued in the file named. None is made here.
 
 **Changes:**
 - **The criteria.** The hackathon's I/T/U/S/B/Q weights no longer decide anything. In their place: what a partner's vendor-risk team asks ([`01-B2B-ENTERPRISE.md`](01-B2B-ENTERPRISE.md) §7), what an investor asks, and the published rubric of each award, once we have it ([`05-TWO-PITCHES.md`](05-TWO-PITCHES.md) §2).
-- **The team.** Seven members became two founders. The work done by the other five stays credited in `team/` and in the build log; nothing is rewritten. `RULES.md` needs a nonauthor domain reviewer on every lead-authored PR, and with two founders every PR is lead-authored. A proposed replacement is in `06-LAUNCH-ROADMAP.md` §6; it needs both founders' recorded decision and an edit to `RULES.md`. Until then, never skip the reviewer silently.
+- **The team.** Seven members became two founders. The work done by the other five stays credited in `team/` and in the build log; nothing is rewritten. `RULES.md` now says the team is two leads and the reviewers are Lethabo and Sibusiso only (#128, 18 Oct).
 - **"Built" means deployable.** After the hackathon, a feature counts as built when it is on `main`, deployed, and measured, not when it works on a branch.
 
 ## 5 · The next 90 days at a glance (proposed)
@@ -67,7 +67,7 @@ Each is argued in the file named. None is made here.
 | By | What | File |
 |---|---|---|
 | this week | Check the Azure subscription and credit; record what happened on 15 Oct; confirm key backups; decide D9 | 06 §0 |
-| end Oct 2026 | Company-owned server live in South Africa North; D1, D2, D4, D5 decided; `main` green; SLA probe live; CPSI debrief and Wits introductions requested; website domain chosen | 06, 05, 04, 02, website brief |
+| end Oct 2026 | Company-owned server live in South Africa North; D1, D2, D5 decided; SLA probe live; CPSI debrief and Wits introductions requested; website domain chosen | 06, 05, 04, 02, website brief |
 | 1–30 Nov 2026 | Duress fixes (D6), real push and SMS fallback shipped (all four S1 items in 06 §2); GBV design reviews held before the 16 Days of Activism (25 Nov); pitches rehearsed; YouthX next-stage rubric requested | 06, 02, 05 |
 | 21 Nov 2026 | YouthX winners announced (`REPORTED` date); company website live | 05, website brief |
 | Dec 2026 | Partner safeguarding protocol and ethics clearance agreed; then the closed beta with consenting testers from that partner; target API 36 and the other Play blockers cleared; first bank or insurer meeting; written pilot proposal | 06, 02, 01 |

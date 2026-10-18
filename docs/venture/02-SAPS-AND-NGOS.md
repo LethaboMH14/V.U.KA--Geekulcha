@@ -19,13 +19,13 @@ Every conversation starts here. Over-promising to police or to survivors' organi
 | Let the member export their own record | Push anything to SAPS, or hand member data to police without the member's own export or a logged lawful order |
 
 **State today, printed under the table:**
-- The code is on `main`; the server is on a branch (PR #99).
+- App and server code are both on `main` (server since 18 Oct, #131).
 - There has been **no company server since 15 Oct** ([`06-LAUNCH-ROADMAP.md`](06-LAUNCH-ROADMAP.md) §0).
 - Guardians receive alerts only while their own app is open (no push yet).
 - Anchoring runs on Hedera testnet.
 - **The absence of a VUKA record is never evidence against anyone.**
 
-**Don't hand this table out at meetings until D9, D4 and real push have shipped.**
+**Don't hand this table out at meetings until D9 and real push have shipped.**
 
 **Why "Call 10111" deserves a second look** (`REPORTED`, parliamentary reply CW502, 8 Jul 2026, https://static.pmg.org.za/RCW502-2026-07-08.pdf):
 - **Response time:** the reply gives 10111's national average response time to "Alpha" complaints as **28:30**, as at 30 Apr 2026. Quote it as given until someone reads the PDF.
@@ -92,7 +92,7 @@ All `REPORTED` unless tagged. One specific ask each.
   - guardian removal that is silent to the removed guardian and takes effect after 24 hours;
   - a decoy guardian under duress.
 
-  This is built on the PR #99 branch only, and the remaining guardians are told who was removed. GBV organisations should review this scenario first.
+  This is on `main` since 18 Oct (#131) but not deployed, and the remaining guardians are told who was removed. GBV organisations should review this scenario first.
 - **Mandatory reporting.** Since 14 Apr 2023, Domestic Violence Act s2B has required any adult who knows of or suspects domestic violence against a child, a person with a disability or an older person to report it (`REPORTED`). Guardian onboarding may need to say so. Activists warn that this can override women's autonomy, so it needs legal review before any wording ships.
 - **Endorsement and contact conditions.**
   - No "endorsed by", "backed by" or "in partnership with" until the organisation says so in writing.
@@ -105,7 +105,7 @@ All `REPORTED` unless tagged. One specific ask each.
 
 - The two-minute judges' pitch ([`05-TWO-PITCHES.md`](05-TWO-PITCHES.md)), told as community impact.
 - A phone with VIGIL in **SIMULATED** mode, and the public verify page once the server is back ([`06-LAUNCH-ROADMAP.md`](06-LAUNCH-ROADMAP.md) §0).
-- The table in §1, with its "state today" lines, once D9, D4 and real push have shipped.
+- The table in §1, with its "state today" lines, once D9 and real push have shipped.
 - One specific ask from §3.
 - **Afterwards,** a short record in `docs/build-log/entries/`: the organisation, the date and what was agreed. **The repository is public:** no individual's name or attributed quote without that person's written consent, and no contact details.
 

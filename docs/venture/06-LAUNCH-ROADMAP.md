@@ -26,13 +26,13 @@ Microsoft's documentation says an Azure for Students subscription is **disabled 
 |---|---|---|
 | **VIGIL app** (React Native 0.74.5, `com.teamsonar.vuka`, versionCode 16 / 0.0.16) | On `main`. `tsc` clean and **jest 285/285** on 18 Oct. **targetSdk 34** | `app/android/app/build.gradle`; audit run |
 | **Native VUKA app** (Kotlin, `za.co.vuka.app`, targetSdk 37) | A separate codebase of about 7,000 lines, on `feature/integrate` and draft PR #114 only. Never run on a device | PR #114 |
-| **ANCHOR server** (FastAPI, PostgreSQL, Hedera sidecar, `sim_bank`) | **On a branch only**: the head of a five-PR stack (#51 → #85 → #89 → #96 → #99), 155 commits ahead of `main`. The last deployed commit, `431f887`, is an ancestor of #99's head. On `main`, `server/` and `anchor/` are placeholders | `git rev-list`, `git merge-base` |
-| Server tests | At #99's head: 212 passed, 2 skipped, and 150 that need PostgreSQL (not runnable in the audit sandbox). #99's CI `tests` job passed with a Postgres service on 27 Sep; its `secret-scan` and `semgrep` jobs failed | audit run; CI |
+| **ANCHOR server** (FastAPI, PostgreSQL, Hedera sidecar, `sim_bank`) | **On `main` since 18 Oct** (#131, squash of the #51 → #99 stack). The last deployed commit was `431f887`; deploys don't yet come from `main` | #131 |
+| Server tests | #131 reports Python 364/364 against PostgreSQL 16, root Node 68/68, sidecar 13/13; on this branch after merging `main`, root Node 78/78 | #131; local run |
 | End to end on Azure (26–27 Sep) | The API-only demo check passed **14/14** on a rerun, after one run failed at step 1 (a client-side "couldn't reach"). Wrong-PIN heads-up 5/5 live (27 Sep). Export provable on Hedera 17 s after export (n = 1, 26 Sep) | `docs/SIBUSISO-HANDOVER.md` |
 | Public verify page | On `main`, served by GitHub Pages; ledger tests 42/42; last deploy 14 Oct | audit run |
 | Hedera | **Testnet only**: topic `0.0.10687280`. Testnet resets clear topics (G31) | `contracts/keys/verify-pins.json` |
 | Distribution | A sideloaded APK on the prerelease `vigil-demo`; **no Play Store listing**. The `vigil-apk.yml` CI build failed 4 of 4 times on 27 Sep for lack of signing secrets, so no CI-built APK has shipped | GitHub Releases and Actions APIs |
-| `main`'s CI | **Red since 26 Sep** (last green 25 Sep, 22:35 UTC). At `main`'s head, `document-contracts`, `secret-scan`, `npm-audit` and `osv-scan` fail. Open PRs #124 and #125 each fix what the other still fails | GitHub Actions API |
+| `main`'s CI | Red 26 Sep – 18 Oct; **green again since #130** (18 Oct), which folded in #125 and a gitleaks allowlist | #130 |
 
 ## 2 · Safety and launch blockers, in order
 
@@ -51,10 +51,7 @@ Microsoft's documentation says an Azure for Students subscription is **disabled 
 
 **S2 — silent failure, or exposure a partner or the law won't accept**
 
-5. **Code of record:**
-   - Combine #124 and #125 into one PR that turns `main` green.
-   - Then open one consolidation PR from #99 to `main`. A trial merge conflicts **only in four documents** (`docs/CHECKLIST.md`, `docs/SIBUSISO-HANDOVER.md`, `docs/adr.md`, `team/khutso.md`) and has no code conflicts. On the merged tree, root tests pass 68/68 and `shared/` 151/151 (audit, 18 Oct).
-   - Add app jest and `tsc`, the ledger tests and an Android build to CI, and deploy only from `main` (D4).
+5. **Code of record:** done 18 Oct (#130 green `main`, #131 server merged). Left: add app jest and `tsc`, the ledger tests and an Android build to CI, and deploy only from `main`.
 6. **One app** (D5, §3).
 7. **Signed server discovery,** and a server move that keeps guardian links.
 8. **Exports that verify without us:** embed inclusion proofs and receipts in each export (the fields exist and are empty), so a record verifies from Hedera even when VUKA's server is down.
@@ -86,17 +83,11 @@ Microsoft's documentation says an Azure for Students subscription is **disabled 
 19. **Accounts:** Azure, Firebase, Brevo, the Hedera portal and Cloudflare sit on personal accounts, and the GitHub repository is under Lethabo's personal account. Nothing is held by PILOT CORE (`FACT`, audit). Move each one to a company-owned account.
 20. **IP and licence:** the repository is **public** under the MIT licence, "Copyright (c) 2026 Lethabo Masilo Hoaeane" (`LICENSE`), and seven people contributed. Before an investor or partner relies on the code, counsel should advise on assigning contributors' IP to PILOT CORE and on whether the code stays MIT-licensed in public.
 21. **Release hygiene:** the `vigil-demo` release is titled 0.0.8, its notes describe 0.0.15, and debug-signed native APKs sit beside VIGIL.apk.
-22. **Dependencies:** `npm audit` on `main` reports 76 advisories in `app/` (1 critical, in `shell-quote`), mostly in build tooling (`FACT`, 18 Oct). PR #125 starts on these.
+22. **Dependencies:** `npm audit` on `main` reports 76 advisories in `app/` (1 critical, in `shell-quote`), mostly in build tooling (`FACT`, 18 Oct). #125's fixes landed through #130, with an SCA waiver for three tooling-only advisories.
 
 ## 3 · Two code-of-record decisions (D4, D5)
 
-**D4 — merge the server onto `main`.** The reviewed branch and the last deployed system have drifted apart: a partner's security review, a new contributor and every AI tool read `main` and find placeholders. Proposed order:
-1. Turn `main` green: #124 and #125 together, with a written disposition for the two advisories that have no patched version.
-2. Open one consolidation PR from #99's head.
-3. Close #51, #85, #89, #95 and #96 with a note saying where their work went, and close the stale app PRs #77, #86, #88, #112 and #121.
-4. Delete the 27 remote branches already fully merged.
-
-Reviews: see §6.
+**D4 — done 18 Oct.** Lethabo turned `main` green (#130), merged the server (#131) and closed the superseded PRs (#51, #85, #89, #95, #96, #99, #77, #86). Left: deploy from `main` only, close #88, #112 and #121 if still open, and delete fully merged branches.
 
 **D5 — one app.** VIGIL (React Native) is the published demo app, with CEM-1, motion and the latest sign-up flow. The native app has the power-button help and guardian watch work (#114). Proposed:
 - **VIGIL is the app.**
@@ -137,14 +128,13 @@ Spec V6 says a duress PIN at any prompt emits a `pin_authorised` with `mode: dur
 
 | Phase | When | Done means |
 |---|---|---|
-| **0 · Recover and stabilise** | now → end Nov 2026 | A company-owned server in South Africa North; keys backed up; `main` green; D4 and D5 decided and the server on `main`; **all four S1 items in §2 fixed and tested**, including real push and SMS fallback; SLA probe live; privacy notice rewritten; IO registered |
+| **0 · Recover and stabilise** | now → end Nov 2026 | A company-owned server in South Africa North; keys backed up; D5 decided; deploys from `main`; **all four S1 items in §2 fixed and tested**, including real push and SMS fallback; SLA probe live; privacy notice rewritten; IO registered |
 | **1 · Closed beta** | from Dec 2026, **once the partner's safeguarding protocol and ethics clearance are agreed** ([`02-SAPS-AND-NGOS.md`](02-SAPS-AND-NGOS.md) §6), to about Feb 2027 | Target API 36 and the other Play blockers cleared; Play Console closed testing; 20–50 consenting testers from that one partner; field false alarms, battery and delivery measured; a weekly build |
 | **2 · Pilot-ready** | Feb → Apr 2027 | Penetration test done; mainnet; exports that verify without our server; the pilot SLA met for 30 consecutive days by the probe |
 | **3 · Partner pilot** | after a signed pilot letter, observe-only first ([`01-B2B-ENTERPRISE.md`](01-B2B-ENTERPRISE.md) §6) | The financial model assumes paid members from May 2027; with a first meeting in Dec 2026, that is optimistic |
 
-## 6 · How we work now that it's two founders (`PROPOSED`)
+## 6 · How we work now that it's two founders
 
-- **Every PR is now lead-authored.** `RULES.md` says a lead-authored PR needs the other lead's approval, the author's recorded self-review and **a nonauthor domain reviewer**. With two founders there is no third person.
-- **Proposed rule change:** the other founder reviews every PR. Security and contract changes also get a recorded cross-family AI review, or an outside reviewer. This needs both founders' recorded decision and an edit to `RULES.md`; until then the existing rule stands.
+- **Reviews:** `RULES.md` and CODEOWNERS now name the two leads as the only reviewers (#127, #128, 18 Oct). Proposed on top: security and contract changes also get a recorded cross-family AI review.
 - **A weekly release cadence in the beta:** a tagged build, release notes, and the probe's weekly score.
 - **One public roadmap** (this file), updated in the same PR that changes it.

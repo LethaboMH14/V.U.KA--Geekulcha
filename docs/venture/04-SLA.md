@@ -69,7 +69,7 @@ A safety alert pipeline is judged on whether the alarm gets through. Measure in 
 | SMS | Not configured; open gap G25 | `FACT` |
 | Verify site | GitHub Pages, reading the public Hedera mirror, and the server for Merkle paths | `FACT` |
 | Monitoring | Platform health check only. `/healthz` checks the database, **not the worker** | `FACT` |
-| Code | The last deployed server is on PR #99's branch, not on `main` | `FACT` |
+| Code | The server is on `main` since 18 Oct (#131); deploys don't yet come from `main` | `FACT` |
 
 ### 4.2 What the hosting allows (`FACT` unless tagged)
 
