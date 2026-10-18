@@ -20,9 +20,23 @@ Both pitches tell the same true story. What changes is the last third: **where t
 
 ## 2 · What each audience will be checking
 
-- **Nedbank YouthX Awards 2026.** Open to South Africans aged 18–26. Entries closed 9 Oct 2026; finalists pitch to an independent panel; **winners announced 21 Nov 2026**; prizes include cash, mentorship through Nedbank's enterprise development team and, for the top 3, the One Young World Summit (`REPORTED`, 2026 call for entries in Hype Magazine; not yet checked against Nedbank's own page). Judging criteria: research pending, follow-up commit.
-- **Investec's The Easies** and **Caplia** (readiness score 327/700 on 5 Oct). The handover names the gaps Caplia scores that the repo can't fill: full-time status, equity split, two-plus years of domain experience, real interviews and letters of intent (`docs/SIBUSISO-HANDOVER.md`). Criteria and deadlines: research pending, follow-up commit.
+**The research on competition criteria could not run** (18 Oct 2026). The shared web-search budget ran out and the cloud session couldn't reach the organisers' sites. So the criteria below are what is known, and the fastest route to the rest is to **ask the organisers directly**.
+
+- **Nedbank YouthX Awards 2026.**
+  - **The email** (`FACT`, Sibusiso's YouthX email) says VUKA "officially made the YouthX Awards top 50" and that next-stage details will follow by email. It gives no date, format or criteria.
+  - **The call for entries** (`REPORTED`, Hype Magazine, https://hypemagazine.co.za/?p=119155) gives ages 18–26, entries closing 9 Oct 2026, and **winners on 21 Nov 2026**. It lists mentorship through Nedbank's enterprise development team; earlier coverage put the 2025 prize at up to R200,000.
+  - **Judging criteria and the stages between now and 21 Nov are unknown.** *Action: reply to the YouthX email and ask for the next stage's format, time limit and scoring rubric.* A youth award run through a bank's enterprise development is likely to weigh viability, youth ownership, jobs and community impact (`ASSUMPTION`).
+- **Investec's The Easies and Caplia.**
+  - **Unresearched:** what the Easies is, its 2026 criteria, its deadlines (including the extension), and how Caplia builds its 700-point score.
+  - **Known gaps:** the readiness score was 327/700 on 5 Oct, and the handover lists five gaps: full-time status, equity split, two-plus years of domain experience, real interviews, and letters of intent (`docs/SIBUSISO-HANDOVER.md`).
+  - **Two of the gaps are paperwork:**
+    - The founders' record already says PILOT CORE is held **50/50** (`scripts/build_financial_model.py`), so the "equity split" gap is probably a missing **signed shareholders' agreement**.
+    - **Dated interviews and non-binding letters of intent** can be gathered in weeks: insurer claims and fraud staff, bank fraud teams, GBV organisations, campus security, potential members.
+  - **The other gaps:** set a full-time date for each founder, and name domain advisors for the experience gap. Then re-score on Caplia and record the date and the score.
 - **Investors at E-Hub-style events.** The questions in §6.
+- **South African expectations** (`ASSUMPTION`, verify before use):
+  - **B-BBEE:** banks and insurers buy under the Financial Sector Code, so a supplier's B-BBEE level matters to them and opens their enterprise and supplier development funding. A micro enterprise can usually prove its level by sworn affidavit. **The repo doesn't record PILOTCORE's status; only the founders can state it.**
+  - **Jobs and impact metrics:** youth and social-impact judges look for them.
 
 ## 3 · The investor pitch (3 minutes)
 
@@ -32,7 +46,9 @@ Both pitches tell the same true story. What changes is the last third: **where t
 
 That is a coerced transfer. South Africa recorded **17,061 kidnappings in 2023/24**, up 264% in ten years, 44% of them during a hijacking. Digital banking crime cost **R2.4 billion in 2025**.
 
-**[Who loses money]** The bank and the insurer can't tell Thandi from someone who made the story up. So they pay a fraudster, or they fight a real victim, and both cost them.
+**[Who loses money]** The bank and the insurer can't tell Thandi from someone who made the story up. So they pay a fraudster, or they fight a real victim, and both cost them. In one case before the ombud, a bank's fraud system *did* flag the payments and called the customer, and she confirmed them, because she was being held. *[`REPORTED`, Business Report, 18 Mar 2025: re-open the article before using this line.]*
+
+**[Why now]** Banks have started building this themselves: Discovery Bank's panic code works inside its own app. But it must be typed, and it works in one bank. VUKA works across banks, notices when you can't type, and leaves a record anyone can check.
 
 **[Product]** VUKA is two things. **VIGIL**, on her phone, notices duress without a button: a scream, breaking glass, or her duress PIN, which looks exactly like her normal one. Her guardians are alerted silently. **ANCHOR** keeps a signed record of every step, fingerprinted on a public ledger, so a bank or insurer can check *when* it happened without trusting us. It works today on Android; the bank side is simulated until a partner connects.
 
@@ -98,9 +114,12 @@ These exclude what a launch actually adds: the penetration test, counsel, produc
 | "Who has signed?" | Nobody yet. The first pilot proposal goes to insurers and banks this quarter ([`01-B2B-ENTERPRISE.md`](01-B2B-ENTERPRISE.md)) |
 | "Why would a bank pay R20?" | The bank already sells panic buttons at R19.90; ours works when you can't press. The price is our proposal; the pilot tests it |
 | "Why a blockchain?" | Only so a stranger can check *when* a record existed without trusting us. Only 33-byte fingerprints go on it, never personal data |
-| "Is it legal to listen?" | Nothing is recorded or sent; a 3-second buffer on the phone is classified and discarded. Our reading is that this isn't interception under RICA; counsel is confirming |
 | "What if the phone is switched off?" | If it's off before anything is detected, nothing escalates. We say so ([`03-DISTRESS-SIGNALS.md`](03-DISTRESS-SIGNALS.md) adds tamper signals) |
-| "What's your uptime?" | Not measured yet; the probe starts with this PR, and the targets are in [`04-SLA.md`](04-SLA.md) |
+| "What's your uptime?" | Not measured yet. The probe and the targets are in [`04-SLA.md`](04-SLA.md). Our student cloud account was disabled, so we're moving to a company-owned server in South Africa (state this only once confirmed: [`06-LAUNCH-ROADMAP.md`](06-LAUNCH-ROADMAP.md) §0) |
+| "Discovery Bank already has a panic code." | Yes, and it shows banks want this. It works inside one bank and must be typed. VUKA works across banks, notices when you can't type, alerts the people you chose if you can't answer, and leaves a record a stranger can check |
+| "Capitec's CIO says duress PINs backfire once criminals know about them." | It's a fair point. Our two PINs look identical, so an attacker who knows a duress PIN exists still can't tell which one was entered. A missed check-in and a wrong PIN also alert guardians, so the PIN isn't the only route. We're testing the argument with GBV organisations rather than assuming it away |
+| "Who else does this?" | Panic buttons through AURA (FNB GuardMe, OUTsurance, Discovery 911), and Valor, a voice-activated panic app that says it alerts bank fraud desks. VUKA is the trigger and the record; it can feed the response services insurers already pay for |
+| "Is it lawful?" | Nothing is recorded or uploaded; a 3-second buffer on the phone is classified and discarded. Our reading of RICA is that this isn't interception, especially while the member, who is a party, carries the phone. Counsel is confirming, and we propose journey mode as the default (D7) |
 | "Why you two?" | Built it in a weekend with five teammates, then kept going; one owns the backend and ledger, one the product and app |
 
 ## 7 · Practice and ownership (proposed)
@@ -108,3 +127,16 @@ These exclude what a launch actually adds: the penetration test, counsel, produc
 - **Investor pitch:** Sibusiso leads, Lethabo answers product questions.
 - **Judges' pitch:** Lethabo leads the story and the demo, Sibusiso answers the record and the money.
 - Rehearse both against a timer, recorded, by **mid November**, so the YouthX version is ready before **21 Nov** (`REPORTED` date).
+
+## 8 · Funding routes to check (proposed order)
+
+The web research for this section didn't run (§2). Rows are `ASSUMPTION` unless tagged, and **no amount, deadline or eligibility rule here goes into a deck until it is checked on the organiser's own page.** The canvas branch's "TIA up to R1.2M + angel R800k" is unsourced and must not be quoted.
+
+| Order | Route | Fit now |
+|---|---|---|
+| 1 | **Non-dilutive.** A YouthX prize if won. **TIA seed funding**, which runs through implementing partners such as university technology-transfer offices, with no direct application (`REPORTED`: Wits and TIA news, Aug 2026; a TIA pre-seed call with Propella closed 16 Oct 2026). **NYDA** grants (youth 18–35). SAB Foundation social-innovation awards. The Innovation Hub's Gauteng Accelerator Programme | High: ask the Wits E-Hub for the TIA route |
+| 2 | **Bank enterprise and supplier development**, Nedbank through the YouthX relationship first | High once B-BBEE status is confirmed |
+| 3 | **Angels through African Business Angel Network member groups**, once a letter of intent exists | Medium |
+| 4 | **Accelerators** (Founders Factory Africa, Google for Startups Accelerator: Africa, card-network fintech programmes), after pilot traction | Later |
+
+Typical South African pre-seed cheque sizes aren't quoted until checked against a published survey (for example SAVCA's).

@@ -42,7 +42,8 @@ Anything not in this table (traction, users, partners, accuracy, market size) st
 
 ## 5 · Build suggestions (Lethabo decides)
 
-- **Where it lives.** A separate repository for the company site, kept apart from this product repository, so company pages don't go through VUKA's review rules and a site edit can't touch the app. GitHub Pages already serves the ledger, so the same deploy pattern (`.github/workflows/ledger-pages.yml`) is a known path.
+- **Where it lives.** A separate repository for the company site, kept apart from this product repository, so company pages don't go through VUKA's review rules and a site edit can't touch the app. Create it under a **company-owned** GitHub organisation, and hold the domain, hosting and email in the company's name too. Today every VUKA account sits on a personal one (D10 in [`README.md`](README.md)).
+- **Hosting.** GitHub Pages works and the ledger already uses it (`.github/workflows/ledger-pages.yml`). Its terms bar using it to run an online business or commercial software service, and it carries no uptime guarantee ([`04-SLA.md`](04-SLA.md) §4.2). A brochure site is a grey area. Azure Static Web Apps, on the company subscription from D9, is the cleaner choice and carries a 99.95% SLA.
 - **Domain.** Check `pilotcore.co.za` (or a close variant) with a ZA Central Registry–accredited registrar. A company domain also gives the partner email address that bank procurement expects.
 - **Stack.** Plain static HTML and CSS is enough, and it loads on a budget 2–3 GB Android phone on bad signal (gate 2 in `docs/MASTER-CONTEXT.md` §10). The ledger's vendored Inter fonts and colour tokens (`dashboard/ledger/`) can make the company and product look like one family.
 - **Accessibility.** WCAG 2.2 AA contrast, real headings, alt text, and readable without JavaScript.

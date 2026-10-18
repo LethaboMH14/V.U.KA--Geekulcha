@@ -501,3 +501,8 @@ The full suite passes (354), and 6 of the new tests fail on the original code.
   - Evaluate the whole plan on the PR.
   - Start the **PILOTCORE website** (`docs/venture/PILOTCORE-WEBSITE-BRIEF.md`).
 - **Still running:** the web research on banks and insurers, SAPS and NGOs, lawful detection, provider SLAs and the competitions. Its results go into the same PR as follow-up commits.
+- **Update, later on 18 Oct: the research is in** (`docs/venture/research/`, folded into the plan; build-log `2026-10-18-sibusiso-venture-research-followup.md`). The earlier "still running" line was wrong after 13:11 UTC: the run was cut off and resumed at 13:38. The most important finding is that **VUKA has no server of record it controls.** The release file the apps follow says "Azure subscription disabled" (15 Oct) and points to a presenter-PC tunnel. Also new:
+  - the sign-out screen has the same duress gap as sign-in;
+  - Play now requires target API 36 (VIGIL targets 34);
+  - credit-funded Azure carries no contractual SLA.
+  First action for Sibusiso: check the subscription and its credit, record what happened, and confirm the payload-key backup.

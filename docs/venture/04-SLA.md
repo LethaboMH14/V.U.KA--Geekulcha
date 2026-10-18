@@ -1,120 +1,145 @@
 # 4 · Service levels: what partners will hold us to, and how VUKA gets there
 
 > **E-Hub insight 4 (15 Oct 2026):** *"We need to get VUKA to the best SLA score possible."*
-> **Reading taken:** an SLA (service-level agreement) is the promise a bank or insurer writes into its contract with us: how often the alert path is up, how fast an alert reaches a guardian, how fresh the public record is, and how quickly we respond when something breaks. The "score" is how many of those promises we actually keep, **measured**, not asserted. §1 records the other readings checked.
-> **Status:** targets `PROPOSED`; the outside-in probe is **built** (`scripts/sla/`); no live baseline exists yet (§5). Owner: Sibusiso (server, operations). Serves T, S, B.
+> **Reading taken:** an SLA (service-level agreement) is the promise a bank or insurer writes into its contract with us: how often the alert path is up, how fast an alert goes out and arrives, how fresh the public record is, and how quickly we respond when something breaks. The **score** is the share of those promises that are **measured and met** in a month; unmeasured counts as missed. §1 records the other readings checked.
+> **Status:** targets `PROPOSED`. The outside-in probe is **built** (`scripts/sla/`). **No live baseline exists**, and the server of record is currently not under the company's control (§4.1). Owner: Sibusiso (server, operations). Serves T, S, B.
 
 ---
 
 ## 1 · Why this matters, and why now
 
-A bank or insurer that switches VUKA on for its customers is putting its name on a safety promise. Its vendor-risk team will ask for availability and response targets in writing before a pilot, and its regulator expects it to manage material IT suppliers (§3.3). Today **no SLA, availability target or measured uptime exists anywhere in the repository** (spec, gaps, economics and README all searched, 18 Oct). That makes this the gap a buyer will find first.
+A bank or insurer that switches VUKA on for its customers is putting its name on a safety promise. Its vendor-risk team will ask for availability and response targets in writing before a pilot, and its regulators expect it to manage IT suppliers (§3). Today **no SLA, availability target or measured uptime exists anywhere in the repository** (spec, gaps, economics and README searched, 18 Oct).
 
-**Other readings.** Whether "SLA score" is a named metric in any programme VUKA is in (YouthX, the Easies, Caplia) is being checked in the research pass; the result follows in §7. Caplia already gives an *investor-readiness* score, which VUKA scored 327/700 on 5 Oct (`docs/SIBUSISO-HANDOVER.md`). Raising that is covered by [`05-TWO-PITCHES.md`](05-TWO-PITCHES.md) and [`06-LAUNCH-ROADMAP.md`](06-LAUNCH-ROADMAP.md), not here. If the E-Hub feedback meant something else, this file is the place to correct it.
+**Other readings checked.** No source found treats "SLA score" as a named metric in YouthX, the Easies or Caplia, but their criteria couldn't be researched this session (§7), so this stays open. Caplia's 327/700 *investor-readiness* score (5 Oct) lists five gaps, none of them a service level (`docs/SIBUSISO-HANDOVER.md`); raising it is covered in [`05-TWO-PITCHES.md`](05-TWO-PITCHES.md). If the E-Hub feedback meant something else, correct it here.
 
-## 2 · What we would be promising: the service-level indicators
+## 2 · What we would be promising: the indicators
 
-A safety alert pipeline is judged on whether the alarm gets through, not on whether a web page loads. These are the measures (SLIs) that matter, in order:
+A safety alert pipeline is judged on whether the alarm gets through. Measure in **one-minute time slices** (good minutes ÷ total minutes), so a failure at 3 a.m. for one member counts as much as one at peak. OpenSLO recommends exactly this for "a system for reporting incidents or calling for help" (`FACT`, §7).
 
-| # | Indicator (SLI) | Definition | Why a partner cares |
+| # | Indicator (SLI) | Definition | In the contract? |
 |---|---|---|---|
-| **S1** | **Alert-path availability** | Share of minutes in which the server accepts signed events **and** the worker that runs deadlines, alerts and anchoring is ticking | If the worker stops, no `no_answer`, no guardian alert and no bank signal is written, even though the API still answers. This happened on 26 Sep (below) |
-| **S2** | **Alert delivery time** | From server receipt of a duress signal, `no_answer` or `contact_lost`, to the guardian's phone acknowledging receipt of the alert | The one number a family member feels |
-| **S3** | **Escalation timeliness** | `no_answer` written within its deadline (check-in window 60 s + grace) | A late timeout is a late alarm |
-| **S4** | **Bank-signal time** | From a duress signal to the partner bank's acknowledgement of the risk signal | The partner's fraud team needs the hold before the transfer |
-| **S5** | **Anchor freshness** | Age of the newest Merkle root on Hedera; immediate roots after PIN-gated outcomes (spec §10: coalesced to one per 60 s) and an hourly root | The record's "when" is only as good as its anchoring |
-| **S6** | **Durability** | Acknowledged events lost: target **zero** (RPO 0 for anything the server receipted) | A receipt the server issued must never disappear |
-| **S7** | **Verification availability** | The public verify page and the public mirror it reads from answer | A stranger must be able to check a record without us |
-| **S8** | **Partner incident response** | Time from a partner-reported (or self-detected) P1 incident to a human acknowledgement, and to a status update | Contracts set this; two founders must promise only what they can staff |
+| **S1** | Alert-path availability | The server accepts signed events **and** the worker that runs deadlines, alerts and anchoring has ticked in the last 60 s | Yes |
+| **S2a** | Alert **dispatch** | From server receipt of a duress signal, `no_answer` or `contact_lost` to the push or SMS provider accepting the alert | Yes: we control it |
+| **S2b** | Alert **delivery** | From server receipt to the guardian's phone acknowledging it | **Reported, not contracted**: push and carrier delivery are outside our control. Microsoft does the same: its SMS SLA excludes carriers, and its push SLA covers the send API only (`FACT`, §7) |
+| **S3** | Escalation timeliness | `no_answer` written within its deadline (60 s window + 10 s grace) | Yes |
+| **S4** | Bank-signal time | Duress signal to the partner's acknowledgement of the risk signal | Yes |
+| **S5** | Anchor freshness | Age of the newest root on Hedera; immediate roots after PIN-gated outcomes (coalesced to one per 60 s, spec §10) and an hourly root | Reported in the pilot, contracted at scale |
+| **S6** | Durability | Receipted events lost (target zero); recovery time | Yes |
+| **S7** | Verification availability | The public verify page answers and shows the newest root | Reported |
+| **S8** | Incident response | P1 incident to a human acknowledgement | Yes |
+| **S9** | Security-incident notice | Suspected security incident to notice to the partner | Yes |
 
-## 3 · Proposed targets by phase
-
-### 3.1 Targets (`PROPOSED`, to be agreed by both founders and then with the first partner)
+## 3 · Proposed targets by phase (`PROPOSED`)
 
 | SLI | Pilot (one partner, ≤ 5,000 members) | Scale (several partners) |
 |---|---|---|
-| S1 alert-path availability, monthly | **99.5%** (≈ 3.6 h down a month) | **99.9%** (≈ 43 min) |
-| S2 alert delivery, p95 | **≤ 30 s** by push, with SMS fallback started at 60 s | **≤ 15 s**, push + SMS in parallel for duress |
-| S3 `no_answer` written | **≤ deadline + 10 s**, p99 | same |
-| S4 bank-signal acknowledgement, p95 | **≤ 60 s** | **≤ 30 s** |
-| S5 anchor freshness | immediate root **≤ 120 s** p95 after a PIN-gated outcome; newest root **≤ 65 min** old at all times | immediate **≤ 90 s** |
-| S6 durability | **0** receipted events lost; RPO 0, RTO **4 h** | RPO 0, RTO **1 h** |
-| S7 verify page | **99.5%** | 99.9% |
-| S8 P1 response | acknowledge **≤ 1 h**, 07:00–22:00 SAST every day; automated paging outside those hours, stated as best effort | 24/7, ≤ 15 min, with a staffed rota |
+| S1 alert path, monthly | **99.5%** (216 min of budget) | **99.9%** (43 min) |
+| S2a dispatch | p95 **≤ 5 s**, p99 ≤ 15 s | p95 **≤ 2 s** |
+| S2b delivery (reported) | p95 **≤ 30 s** on synthetic canary alerts, n ≥ 2,000 a month; **every** unacknowledged alert re-sent by SMS at 60 s | p95 **≤ 15 s**; duress sent by push **and** SMS at once; voice call at 120 s |
+| S3 `no_answer` | written by deadline + 10 s, p99 | same |
+| S4 bank signal | p95 **≤ 60 s** | p95 **≤ 30 s** |
+| S5 anchor freshness | immediate root **≤ 120 s** p95; newest root **≤ 65 min** old | immediate **≤ 90 s** |
+| S6 durability | RPO **0** for a process or machine failure; RPO **≤ 5 min** for a zone loss (`ASSUMPTION`: restore point without high availability); RTO **4 h** | RPO **0** (zone-redundant HA, `REPORTED` zero data loss); RTO **1 h** |
+| S7 verify page | **99.5%** | **99.9%** |
+| S8 P1 response | acknowledge **≤ 1 h**, 07:00–22:00 SAST every day; automated paging outside those hours, best effort | 24/7, **≤ 15 min**, with a staffed rota |
+| S9 security notice | **≤ 4 h** from detection | **≤ 2 h** |
 
-**Why these numbers.** They are set from what the current stack can reach after the §4 changes, not from what sounds good. A 99.99% promise from two founders with one region and no rota would be the first broken promise. S8 says out loud that a two-person company cannot staff a 24/7 pager; promising it anyway would be a claim we can't keep.
+**Why these numbers:**
+- **They come from the platform, not from ambition.** Microsoft's published SLAs give a contractual floor of about **99.85%** for the pilot stack below (App Service 99.95% × PostgreSQL without HA 99.9%, `ESTIMATE` assuming independent failures). That leaves about 150 minutes a month for our own faults under a 99.5% promise. The scale stack (zone-redundant App Service and PostgreSQL, 99.99% each) gives about 99.98%.
+- **S9 follows the partner's clock.** Since 1 Sep 2026, a bank or insurer must give its regulators an initial notice of a material IT or cyber incident within 24 hours of classifying it (Joint Communication 5 of 2026; `REPORTED`, Reserve Bank page via search extract). Our notice must arrive well inside that window.
+- **S8 is honest about two founders.** A 24/7 pager can't be promised without a rota.
+- **Service credits:** none in the pilot, or one 10% credit if S1 falls below 99.5%. At scale, mirror Microsoft's structure (10% / 25% / 100%), capped at the monthly fee, on contracted rows only.
 
-### 3.2 The SLA "score"
-
-**Score = the number of SLOs met in the period ÷ the number promised.** An SLO that was not measured counts as **not met**. That rule is built into `scripts/sla/probe.mjs` and `aggregate.mjs`. It makes the score impossible to improve by measuring less.
-
-### 3.3 What a partner's contract will also ask for
-
-Insurers and banks in South Africa are regulated on how they manage IT suppliers. Expect their vendor questionnaires to ask for an incident-notification window, a business-continuity plan, data residency, a recent penetration test and evidence of an information-security programme. See §7 for the published standards and their dates. Two of these are already open gaps: **no independent penetration test (G8)** and **POPIA Information Officer registration** (`docs/OPEN-GAPS.md`).
+**The score.** SLOs met ÷ SLOs promised, per month; **unmeasured counts as missed**. This rule is built into `scripts/sla/probe.mjs` and `aggregate.mjs`, so the score can't be raised by measuring less.
 
 ## 4 · Where we are, honestly, and what has to change
 
-### 4.1 The current stack (`FACT` unless tagged)
+### 4.1 The stack as last recorded
 
-| Part | Today | Source |
+| Part | State | Tag / source |
 |---|---|---|
-| API and worker | One Azure App Service, **Basic B1**, Always On, `/healthz` health check and auto-heal; region **UAE North**, because the Azure for Students subscription blocks South Africa North | `docs/SIBUSISO-HANDOVER.md` (24 and 26 Sep) |
-| Database | Azure Database for PostgreSQL Flexible Server, **B1ms** (burstable), single instance | same |
-| Anchoring | Hedera Consensus Service **testnet** via a Node sidecar in the same container | same |
-| Guardian alerts | Push via FCM exists on the server, but **guardians keep the app open**: the app doesn't yet send a real FCM token, and the FCM access token expires hourly and was refreshed by hand | `docs/SIBUSISO-HANDOVER.md` (26–27 Sep), `docs/NEW-CHAT-HANDOVER.md` |
-| SMS | Not configured (no provider); a delivery path with signal but no data is open gap **G25** | `docs/OPEN-GAPS.md` |
-| Verify site | GitHub Pages, reading the public Hedera mirror | `docs/NEW-CHAT-HANDOVER.md` |
-| Monitoring | None beyond the platform health check, until this PR's hourly probe runs from `main` | this PR |
-| Where the code lives | The server that runs on Azure is on `feat/lethabo-guardian-delivery` (PR #99), **not on `main`** | `git ls-tree origin/main server/` shows placeholders only |
+| Server of record | Azure App Service **Basic B1**, one instance, Always On, `/healthz` health check and auto-heal, **UAE North**, on an **Azure for Students** subscription. Since **15 Oct** the apps' discovery file points to a presenter-PC tunnel with the note **"Azure subscription disabled"** | `FACT` for the set-up (`docs/SIBUSISO-HANDOVER.md`); `REPORTED` for the 15 Oct status (release asset note) |
+| Database | PostgreSQL Flexible Server **B1ms** (burstable), no HA; public access with an `AllowAzureServices` firewall rule | `FACT`, same |
+| Anchoring | Hedera **testnet** via a Node sidecar in the same container | `FACT` |
+| Guardian alerts | Push code exists on the server, but the published app has no Firebase and **guardians must keep the app open**; the push token was refreshed by hand hourly | `FACT` |
+| SMS | Not configured; open gap G25 | `FACT` |
+| Verify site | GitHub Pages, reading the public Hedera mirror, and the server for Merkle paths | `FACT` |
+| Monitoring | Platform health check only. `/healthz` checks the database, **not the worker** | `FACT` |
+| Code | The running server is on PR #99's branch, not on `main` | `FACT` |
 
-### 4.2 Incidents already on record
+### 4.2 What the hosting allows (`FACT` unless tagged)
 
-Real incidents, worth more than any target because a partner will ask what has gone wrong before:
+- **Credit-funded Azure has no contractual SLA.** Microsoft's SLA excludes "purchases made using Microsoft subscription credits" and free tiers, and service credits are "your sole and exclusive remedy" (SLA for Microsoft Online Services, 1 Oct 2026 edition). So on Azure for Students, VUKA has **no SLA under it at all** (`ESTIMATE`, from that exclusion).
+- **Azure for Students** gives $100 of credit for 12 months, is "expressly for the support of education or teaching, noncommercial research, or efforts to design, develop, test, and demonstrate software applications for these purposes", and when the credit runs out or expires "Azure disables your services and subscription" (Microsoft docs). A paid pilot run by PILOT CORE sits outside that purpose (`ASSUMPTION`: our reading, not counsel's).
+- **The region is locked.** The subscription's policy allows only Italy North, UAE North, India South Central, Spain Central and Austria East (`docs/SIBUSISO-HANDOVER.md`). Azure South Africa North (Johannesburg) has three availability zones (`REPORTED`, Microsoft news, Oct 2021).
+- **On a single instance, health checks don't save you fast.** An unhealthy single instance isn't removed and is replaced only after **one hour** of failed pings, at most once an hour and three times a day (Microsoft docs). A worker heartbeat needs a watchdog beside it.
+- **Hedera's public mirror is "for testing and development"**; production should use commercial mirror providers, and the public mainnet mirror is throttled at 50 requests per second per IP. Testnet resets clear topics, with 2–4 weeks' notice (Hedera docs). Hedera states 3–5 s finality (`REPORTED`, vendor claim).
+- **GitHub Pages has no uptime guarantee**, and its terms bar using it to run an online business or commercial SaaS. Scheduled GitHub Actions runs can be delayed or dropped at busy times, and in a public repository they **switch off after 60 days without activity** (GitHub docs).
 
-1. **26 Sep, worker outage.** The server signing key was missing on Azure, and one unsignable deadline made the scheduler raise. That stopped every worker effect: about 11,000 failures in the log, and **no alerts and no anchors** while the API kept answering. Fixed in `5629d27`: each subject now runs in isolation (`docs/SIBUSISO-HANDOVER.md`).
-2. **26 Sep, 19:34–19:47 UTC, worker silent for 13 minutes.** No log lines at all; an `az webapp restart` fixed it. **The cause is unknown and could recur** (same source).
-3. **24 Sep, GitHub Actions billing.** Every CI job failed for a spending-limit reason, not a code reason (same source). This matters for SLA because the hourly probe runs on GitHub Actions.
+### 4.3 Incidents on record
 
-**What they teach:** `/healthz` reports the database only. Both worker incidents would have shown a healthy `/healthz`. The outside-in probe catches a stalled worker only indirectly, through anchor freshness (S5), and only within about an hour. **The single most valuable SLA change is a worker heartbeat** that `/healthz` reports (§4.3, item 1).
+1. **26 Sep, worker outage.** The server signing key was missing on Azure, and one unsignable deadline stopped every worker effect: about 11,000 failures, **no alerts and no anchors**, while the API kept answering. Fixed in `5629d27` (`docs/SIBUSISO-HANDOVER.md`).
+2. **26 Sep, 19:34–19:47 UTC: the worker was silent for 13 minutes**, cause unknown; a restart fixed it (same source).
+3. **24 Sep, GitHub Actions billing:** every CI job failed on a spending limit (same source). The hourly probe runs on GitHub Actions.
+4. **By 15 Oct, the server of record was lost** (§4.1). Cause not recorded.
 
-### 4.3 The changes, in order of value per rand
+**What they teach:** both worker incidents would have passed today's `/healthz`; the hourly probe sees a stalled worker only indirectly, through anchor freshness, within about an hour; and the hosting itself can disappear when a credit runs out. **Fix the account first, then the heartbeat.**
 
-| # | Change | Moves | Owner | Tag |
-|---|---|---|---|---|
-| 1 | **Worker heartbeat in `/healthz`**: the worker writes its last tick time, and `/healthz` returns 503 if it is older than 60 s. The probe then measures S1 directly | S1 | Sibusiso | `PROPOSED` |
-| 2 | **Merge the running server onto `main`** (PR #99 and its base), so what is deployed is what is reviewed | all | both founders | `PROPOSED` |
-| 3 | **Real push delivery:** the app registers its FCM token; the server uses a service-account flow instead of a hand-refreshed hourly token; delivery receipts recorded per alert | S2 | Lethabo (app), Sibusiso (server) | `PROPOSED` |
-| 4 | **SMS fallback** through a South African SMS gateway for duress and `no_answer` alerts not acknowledged in 60 s (closes part of G25; never from the member's phone, which would leave a trace in the Sent folder) | S2 | Sibusiso | `PROPOSED` |
-| 5 | **Paid subscription in South Africa North**: App Service Standard or Premium with at least two instances, PostgreSQL General Purpose with zone-redundant high availability. Also answers POPIA s72 (cross-border transfer to the UAE) | S1, S6 | both founders (cost decision) | `PROPOSED`; prices in §7 |
-| 6 | **Separate the worker** from the web process, so a stuck web request can't starve deadlines | S1, S3 | Sibusiso | `PROPOSED` |
-| 7 | **Status page and alerting**: the probe pages a founder on breach, and a public status page shows the last 90 days | S8 | Sibusiso | `PROPOSED` |
-| 8 | **Inside-out SLIs from the database**: S2–S4 computed from timestamps the outbox and incidents tables already hold; reported monthly | S2–S4 | Sibusiso | `PROPOSED` |
-| 9 | **Hedera mainnet** with a funded operator account and a balance alarm (testnet resets, G31) | S5 | Sibusiso | `PROPOSED` |
-| 10 | **Runbooks and drills**: restore from backup once a month and record the time (RTO) | S6 | both | `PROPOSED` |
+### 4.4 The changes, in order of value per rand
+
+| # | Change | Moves | Owner |
+|---|---|---|---|
+| 1 | **A pay-as-you-go subscription owned by PILOT CORE, in South Africa North,** with the same small sizes (App Service Basic, PostgreSQL burstable). About **R470 a month** (`ESTIMATE`, US list prices at R16.21/USD; South Africa North prices and VAT not retrieved). Gives a contractual floor, removes the UAE cross-border question for primary data, and fits a 99.5% pilot promise | S1, S6, the law | both founders (cost) |
+| 2 | **Worker heartbeat in `/healthz`** (503 when the last tick is older than 60 s) plus an in-process watchdog | S1, S3 | Sibusiso |
+| 3 | **A one-minute external probe** (Azure Monitor availability test or an independent uptime service) for S1. Keep the hourly GitHub probe as a second vantage point | S1 | Sibusiso |
+| 4 | **Merge the running server onto `main`** and deploy only from `main` | all | both |
+| 5 | **Real push:** a service-account flow instead of an hourly hand-refreshed token; the app registers its token; delivery receipts per alert | S2 | Lethabo (app), Sibusiso (server) |
+| 6 | **SMS fallback** through a South African gateway with delivery reports, for duress and `no_answer` alerts unacknowledged after 60 s (R0.18–R0.29 per SMS, `FACT`, `docs/MARKET-DATA.md`). Never from the member's phone | S2 | Sibusiso |
+| 7 | **Synthetic canary alerts** every 15 minutes from a test member to a test guardian device: about 2,880 samples a month, enough for an honest p95 at pilot volumes | S2b | Sibusiso |
+| 8 | **Separate the worker** from the web process | S1, S3 | Sibusiso |
+| 9 | **Inside-out SLIs** computed monthly from the outbox and incident timestamps already stored | S2a, S3, S4 | Sibusiso |
+| 10 | **Hedera mainnet**, a funded operator with a balance alarm, and reads from at least two mirror providers | S5, S7 | Sibusiso |
+| 11 | **Status page and paging:** the probe pages a founder on breach (burn-rate alerts); a public status page, hosted apart from the API it reports on | S8 | Sibusiso |
+| 12 | **Restore drill** each month, with the time recorded | S6 | both |
+| 13 | **At scale:** App Service Premium v3 × 2, zone-redundant (99.99%), and PostgreSQL General Purpose with zone-redundant HA (99.99%; not available on burstable). About **R7,860–R8,360 a month before VAT** (`ESTIMATE`, same basis), plus a staffed rota. Move the verify page to Azure Static Web Apps Standard (99.95%), keeping GitHub Pages as a mirror | S1, S6, S7 | both |
 
 ## 5 · Measuring it: what this PR builds
 
 **Built and tested** (`FACT`: `node --test test/sla-probe.test.mjs`, 9/9, 18 Oct 2026):
+- `scripts/sla/probe.mjs`: one outside-in sample, no credentials. It checks `/healthz` n times (healthy only when it answers `ok` **and** the database is reachable; p50 and p95 latency), the age of the newest `0x01` root on the Hedera topic from the public mirror (S5), and that the verify page answers 200 (S7). Anything it can't reach is **not measured**, which counts as **not met**.
+- `scripts/sla/aggregate.mjs`: many runs into one window, every figure with its n.
+- `.github/workflows/sla-probe.yml`: hourly from GitHub's network, keeping each run's JSON for 90 days. Scheduled runs start only from the default branch, so **it begins once this PR is merged**.
 
-- `scripts/sla/probe.mjs` — one outside-in sample, no credentials:
-  - `/healthz` n times: healthy only when it answers `ok` **and** the database is reachable; p50 and p95 latency.
-  - The newest `0x01` root on the Hedera topic, from the public mirror: its age (S5).
-  - The verify page answers 200 (S7).
-  - Anything it cannot reach is **not measured**, which counts as **not met**.
-- `scripts/sla/aggregate.mjs` — many runs into one window, every figure with its n.
-- `.github/workflows/sla-probe.yml` — runs the probe hourly from GitHub's network and keeps each run's JSON for 90 days. GitHub runs scheduled workflows only from the default branch, so **it starts once this PR is merged**.
+**No live baseline yet.** From this session's cloud container the probe reached nothing (DNS blocked by the network policy): 0 of 4 met, 3 not measured. That's a limit of where it ran. Given §4.1, the first runs on `main` will most likely report the API as breached until the server is restored. That is the correct reading.
 
-**No live baseline yet.** The probe was run from this session's cloud container on 18 Oct and reached nothing (DNS blocked by the container's network policy): 0 of 4 met, 3 not measured. That is a limit of where it ran, not a measurement of VUKA. The first real figures come from the workflow's first runs on `main`.
-
-**What the probe cannot see:** S2, S3, S4 and S6 happen inside the server. They need change 8 (§4.3). An hourly probe also cannot see an outage shorter than an hour; S1 needs change 1 before its availability figure means much.
+**What the probe can't see:** S2–S4, S6, S8 and S9 happen inside the server or the team; they need changes 2, 7 and 9. An hourly probe also misses outages shorter than an hour; S1 needs changes 2 and 3 before its figure means much. When the server moves, pass its address with `--api`.
 
 ## 6 · Decisions needed
 
-1. **Both founders:** accept or change the pilot targets in §3.1, especially S8's support hours.
-2. **Both founders:** the paid subscription in South Africa North (change 5) — it is the largest cost line in this plan.
-3. **Sibusiso:** build changes 1, 6 and 8 first; they cost nothing but time.
-4. **Lethabo:** the app side of change 3 (real FCM tokens).
+1. **Both founders:** the company-owned subscription in South Africa North (change 1). It also answers D9 in the README.
+2. **Both founders:** accept or change the pilot targets in §3, especially S8's hours and S9's window.
+3. **Sibusiso:** changes 2, 3 and 9 first; they cost little but time.
+4. **Lethabo:** the app side of change 5.
 
-## 7 · Sources
+## 7 · Sources and method
 
-Repository sources are cited inline. **Pending, as a follow-up commit on this PR:** the providers' published SLAs (Azure App Service and PostgreSQL by tier, FCM, SMS gateways, Hedera), what Azure for Students allows, South Africa North prices, and the financial-sector supplier standards a partner will cite. Each will carry its URL and date.
+**Read directly (`FACT`):**
+- **Microsoft:** the *Service Level Agreement for Microsoft Online Services*, worldwide English, 1 Oct 2026 edition (https://www.microsoft.com/licensing/docs/view/Service-Level-Agreements-SLA-for-Online-Services), covering App Service, PostgreSQL Flexible Server, Notification Hubs, Communication Services, Static Web Apps and the general limitations.
+- **Microsoft docs** at `MicrosoftDocs/azure-docs` commit `2ec7ec2`: `education-hub/about-azure-for-students.md`, `education-hub/azure-dev-tools-teaching/azure-students-program.md`, `cost-management-billing/manage/azurestudents-subscription-disabled.md`, `app-service/monitor-instances-health-check.md` and `app-service/configure-zone-redundancy.md`.
+- **Hedera docs** at `hashgraph/hedera-docs` commit `0b8e9b9`: `networks/testnet/index.mdx`, `networks/mainnet/index.mdx`, `reference/rest-api/index.mdx`, `native/tutorials/consensus/batch-anchor-verify.mdx` and `networks/fees.mdx`.
+- **GitHub docs** at `github/docs` commit `dae83f7`: GitHub Pages limits; Actions schedule delays and the 60-day disabling of scheduled workflows.
+- **OpenSLO** glossary and its low-traffic example, at commit `e025975`.
+
+**Seen through search extracts (`REPORTED`):**
+- Microsoft Learn reliability pages on App Service zone redundancy and PostgreSQL zone-redundant HA.
+- Microsoft news on South Africa North's availability zones (Oct 2021).
+- Third-party Azure price pages.
+- Joint Communication 5 of 2026 (Reserve Bank page).
+
+**Not retrieved:**
+- South Africa North prices (query: `https://prices.azure.com/api/retail/prices?$filter=armRegionName eq 'southafricanorth'`).
+- The SLAs of Firebase Cloud Messaging, SMS gateways and Brevo. Our recollection, unchecked: FCM has no SLA, and delivery is best effort.
+- Hedera's mainnet incident history.
+- The criteria of YouthX, the Easies and Caplia (the shared search budget ran out).
+
+**Conflict to resolve:** `docs/MARKET-DATA.md` tags "PostgreSQL B2ms, ZA North, $126/month" as `FACT`. That is close to a General Purpose 2-vCore price; re-check the SKU before the model uses it.
