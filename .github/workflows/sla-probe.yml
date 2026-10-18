@@ -1,0 +1,35 @@
+name: sla-probe
+# One outside-in sample of the live stack per hour (docs/venture/04-SLA.md).
+# Reads public endpoints only: no secrets, no writes, nothing sent to users.
+# Each run's JSON is kept as an artifact; scripts/sla/aggregate.mjs turns a
+# window of them into the figures an SLA report quotes.
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sla-probe
+  cancel-in-progress: false
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - name: Probe API health, anchor freshness and the verify page
+        run: |
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          mkdir -p sla
+          node scripts/sla/probe.mjs --samples 5 --out "sla/probe-$stamp.json" --summary >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sla-probe-${{ github.run_id }}
+          path: sla/
+          retention-days: 90
