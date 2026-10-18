@@ -35,7 +35,7 @@ A bank, an insurer or a court can independently check a record's **integrity and
 
 ## Business model
 
-The app is **free to users**. A bank or insurer partner funds about **R20 per member per month** as a value-added benefit, on the same shelf as the panic buttons banks already sell. Break-even is **10,901 members** (`ASSUMPTION` price; `ESTIMATE` costs). See [`docs/ECONOMICS-VIGIL-ANCHOR.md`](docs/ECONOMICS-VIGIL-ANCHOR.md), and run the numbers yourself:
+The app is **free to users**. A bank or insurer partner funds about **R20 per member per month** as a value-added benefit, on the same shelf as the panic buttons banks already sell. Break-even is **10,973 members** (`ASSUMPTION` price; `ESTIMATE` costs). See [`docs/ECONOMICS-VIGIL-ANCHOR.md`](docs/ECONOMICS-VIGIL-ANCHOR.md), and run the numbers yourself:
 
 ```bash
 python scripts/economics_vigil_anchor.py
