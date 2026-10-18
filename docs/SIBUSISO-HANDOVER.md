@@ -473,3 +473,31 @@ The full suite passes (354), and 6 of the new tests fail on the original code.
 - **Figma deck** (`figma.com/slides/UzAIInKdb8FxkgPU8YCIIv`), now 11 slides. New: Market (TAM/SAM/SOM), Go-to-market, Pipeline and funding targets, Roadmap, Team. Business figures follow Babatunde's branch `docs/babatunde-war-room-and-access-model` (R1,884,583 ask; break-even 10,973).
 - **Caplia** readiness score was 327/700 on 5 Oct, before these changes. Gaps the repo can't fill: full-time status, equity split, 2+ years of domain experience, real interviews and LOIs.
 - **Financial model:** `docs/finance/VUKA-financial-model.xlsx` (gitignored, so run the script to get it), built by `scripts/build_financial_model.py`. With R1,884,583 raised in month 1 and the pilot paying from May 2027, cash first goes negative in Apr 2028 (lowest −R114,328), and the business is net-positive from Jun 2028. All figures are ESTIMATE or ASSUMPTION.
+
+## 2026-10-18 — after the E-Hub showcase: the venture plan, an SLA probe, and a website brief for Lethabo
+
+- **New since 7 Oct (Sibusiso):**
+  - VUKA made the **Nedbank YouthX Awards 2026 top 50** (YouthX email).
+  - Sibusiso entered Investec's **The Easies** (the reason for the Caplia deck).
+  - He demonstrated VUKA at the **Wits E-Hub Tech & AI Day** on 15 Oct.
+  - The two founders are taking VUKA into business as PILOTCORE.
+- **E-Hub feedback, six points.** Each now has a plan in `docs/venture/`:
+  - (1) B2B with insurers and Nedbank, integrated into their systems;
+  - (2) SAPS and aligned NGOs;
+  - (3) stronger distress signals that are lawful and comfortable;
+  - (4) the best SLA score;
+  - (5) two pitches, one for investors and one for judges;
+  - (6) launch soon.
+- **Built:** `scripts/sla/probe.mjs`, `scripts/sla/aggregate.mjs` and `.github/workflows/sla-probe.yml`, with 9 tests.
+  - Scheduled runs start only once this is on `main`.
+  - From the cloud session the probe reached nothing (DNS blocked), so **no live baseline exists yet**.
+- **Found while writing it:**
+  - **Three economics models are in circulation:** 10,901 on `main`, 10,973 in the Caplia deck, and R50 on the canvas branch.
+  - All three still pay **five stipends**. With **two founders**, the war-room model gives a break-even of **4,670** (`ESTIMATE`).
+  - The **running server is not on `main`** (PR #99).
+  - **Screams open a check-in for only 6.5% of FSD50K clips (n = 108).**
+  - The **sign-in duress gap** needs a `sign_in` PIN action, which is a contract change for both founders.
+- **Asked of Lethabo:**
+  - Evaluate the whole plan on the PR.
+  - Start the **PILOTCORE website** (`docs/venture/PILOTCORE-WEBSITE-BRIEF.md`).
+- **Still running:** the web research on banks and insurers, SAPS and NGOs, lawful detection, provider SLAs and the competitions. Its results go into the same PR as follow-up commits.
