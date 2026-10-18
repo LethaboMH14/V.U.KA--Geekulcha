@@ -1,6 +1,7 @@
 # VUKA — War Room Pitch
 
 > **Spoken target:** 3 minutes (competition round 1). **Actual: 320 words (~2:17 at 140 wpm).** Six beats, hard caps. Under 3:00.
+> **Longer version:** `docs/WAR-ROOM-PITCH-5MIN.md` (Lethabo's revision 2, ~5 min, answers the 26 Sep mentor feedback; merged from #113).
 > **Companion files:** `context.md` · `pitch-deck-outline.md` · `docs/reviews/ANCHOR-ACCESS-MODEL-ADR-PROPOSAL.md`.
 > **Read `docs/MASTER-CONTEXT.md` §2 for the judging criteria** (I 15 · T 15 · U 10 · S 10 · B 15 · Q 5).
 
