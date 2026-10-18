@@ -44,6 +44,18 @@ export function aggregate(runs) {
   };
 }
 
+/** The window's SLA score: SLOs met ÷ SLOs promised (04-SLA.md §3). Nothing measured means not met. */
+export function score(a) {
+  const slos = [
+    {id: 'api_availability', met: a.api_availability.ratio >= SLO.api_health_success_ratio},
+    {id: 'api_latency_p95', met: a.api_latency_ms.p95 !== null && a.api_latency_ms.p95 <= SLO.api_health_p95_ms},
+    {id: 'anchor_freshness', met: a.anchor_freshness.ratio === 1},
+    {id: 'verify_site', met: a.verify_site.ratio >= SLO.verify_site_ratio},
+  ];
+  const met = slos.filter(s => s.met).length;
+  return {slos, met, of: slos.length, ratio: met / slos.length};
+}
+
 export function summaryMarkdown(a) {
   const pct = x => `${(x * 100).toFixed(2)}%`;
   return [
@@ -54,7 +66,9 @@ export function summaryMarkdown(a) {
     `| API availability (healthz ok, database reachable) | ${pct(a.api_availability.ratio)} | ${a.api_availability.samples} samples | ${pct(a.api_availability.target)} |`,
     `| API latency p95 | ${a.api_latency_ms.p95 ?? 'not measured'} ms | ${a.api_latency_ms.n} | <= ${a.api_latency_ms.target_p95} ms |`,
     `| Anchor root within ${a.anchor_freshness.target_s / 60} min | ${pct(a.anchor_freshness.ratio)} (max age ${a.anchor_freshness.max_age_s ?? 'not measured'} s) | ${a.anchor_freshness.runs} runs, ${a.anchor_freshness.runs_unmeasured} unmeasured | 100% |`,
-    `| Verify page up | ${pct(a.verify_site.ratio)} | ${a.verify_site.runs} runs | 100% |`,
+    `| Verify page up | ${pct(a.verify_site.ratio)} | ${a.verify_site.runs} runs | ${pct(SLO.verify_site_ratio)} |`,
+    '',
+    `Score: **${score(a).met}/${score(a).of} SLOs met** in this window (unmeasured counts as missed).`,
     '',
     'Probe spacing limits resolution: an outage shorter than the gap between runs can be missed. Unmeasured runs count as misses.',
   ].join('\n') + '\n';
@@ -69,5 +83,5 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     process.exit(2);
   }
   const a = aggregate(loadRuns(paths));
-  process.stdout.write(summary ? summaryMarkdown(a) : JSON.stringify(a, null, 2) + '\n');
+  process.stdout.write(summary ? summaryMarkdown(a) : JSON.stringify({...a, score: score(a)}, null, 2) + '\n');
 }

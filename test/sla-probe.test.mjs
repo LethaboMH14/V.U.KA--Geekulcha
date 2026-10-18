@@ -5,7 +5,7 @@ import {mkdtempSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {parseArgs, percentile, consensusToMs, runProbe, judge, summaryMarkdown, DEFAULTS} from '../scripts/sla/probe.mjs';
-import {aggregate, loadRuns} from '../scripts/sla/aggregate.mjs';
+import {aggregate, loadRuns, score, summaryMarkdown as windowSummary} from '../scripts/sla/aggregate.mjs';
 
 const typed = (type, fill = 0xab) => Buffer.concat([Buffer.from([type]), Buffer.alloc(32, fill)]).toString('base64');
 const NOW = '2026-10-18T12:00:00.000Z';
@@ -153,7 +153,7 @@ test('aggregation keeps every n and counts unmeasured runs as misses', () => {
   const a = aggregate(loadRuns([dir]));
   assert.equal(a.window.runs, 3);
   assert.equal(a.window.from, '2026-10-18T10:00:00Z');
-  assert.deepEqual(a.api_availability, {healthy: 10, samples: 12, ratio: 10 / 12, target: 0.99});
+  assert.deepEqual(a.api_availability, {healthy: 10, samples: 12, ratio: 10 / 12, target: 0.995});
   assert.equal(a.api_latency_ms.n, 10);
   assert.equal(a.api_latency_ms.p95, 900);
   assert.equal(a.anchor_freshness.runs_within_target, 1);
@@ -161,4 +161,16 @@ test('aggregation keeps every n and counts unmeasured runs as misses', () => {
   assert.equal(a.anchor_freshness.max_age_s, 5000);
   assert.equal(a.verify_site.runs_ok, 2);
   assert.throws(() => aggregate([]), /no probe runs/);
+  // Availability 83% and a stale anchor miss; p95 900 ms meets; the verify page at 2/3 misses.
+  const s = score(a);
+  assert.deepEqual(s.slos.map(x => [x.id, x.met]), [['api_availability', false], ['api_latency_p95', true], ['anchor_freshness', false], ['verify_site', false]]);
+  assert.equal(s.met, 1);
+  assert.match(windowSummary(a), /1\/4 SLOs met/);
+});
+
+test('a window where everything was measured and met scores 4/4; no latency samples is a miss', () => {
+  const run = t => ({probe: 'vuka-sla-probe', version: 1, started_at: t, api_health: {n: 5, healthy: 5, latencies_ms: [120, 130, 140, 150, 160]}, anchor_fresh: {measured: true, age_s: 600}, verify_site: {ok: true}});
+  assert.equal(score(aggregate([run('2026-10-18T10:00:00Z'), run('2026-10-18T11:00:00Z')])).met, 4);
+  const blind = {probe: 'vuka-sla-probe', version: 1, started_at: '2026-10-18T12:00:00Z', api_health: {n: 5, healthy: 0, latencies_ms: []}, anchor_fresh: {measured: false}, verify_site: {ok: false}};
+  assert.equal(score(aggregate([blind])).met, 0);
 });

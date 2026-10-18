@@ -33,10 +33,11 @@ export const DEFAULTS = {
 
 // PROPOSED targets, docs/venture/04-SLA.md §3 (pilot phase).
 export const SLO = {
-  api_health_success_ratio: 0.99,
-  api_health_p95_ms: 1500,
-  anchor_max_age_s: 65 * 60, // team/sibusiso.md acceptance: last anchor under 65 minutes old
-  verify_site_ok: true,
+  api_health_success_ratio: 0.995, // S1 alert path, 99.5% a month
+  api_health_p95_ms: 1500, // S1 latency guard
+  anchor_max_age_s: 65 * 60, // S5: newest root under 65 minutes old (team/sibusiso.md acceptance)
+  verify_site_ok: true, // S7
+  verify_site_ratio: 0.995, // S7 over a window
 };
 
 const ROOT_TYPE = 0x01; // spec §10: typed 33-byte messages, 0x01 root, 0x02 key-manifest hash

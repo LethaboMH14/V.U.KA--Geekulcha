@@ -1,14 +1,17 @@
-## 2026-10-18 | Sibusiso, with Claude Code assistant | Venture plan: research folded in, corrections (server of record, duress at sign-out, Play blockers) | PROPOSED
+## 2026-10-18 | Sibusiso, with Claude Code assistant | Claude Code | Venture plan: research folded in, adversarial review applied (server of record, duress at sign-out, Play blockers) | PROPOSED
 
 **Research** — Eight research reports, kept in `docs/venture/research/`:
 - Three read-only repository audits: the business model, the build state, and the signals and legal positions.
 - Five web passes: banks and insurers, SAPS and NGOs, lawful detection, service levels, and competitions and funding.
 
-The first run was cut off by a user interrupt at 13:11 UTC and resumed at 13:38; all eight finished. Each correction below was checked against the file, branch or release asset it cites before it went into a plan file.
+The first run was cut off by a user interrupt at 13:11 UTC and resumed at 13:38; all eight finished. Each correction below was checked against the file, branch or release asset it cites before it went into a plan file. Then four reviewer agents checked the rewritten plan against these notes, the repository and the honesty ledger. They raised about 100 findings, which were applied in the same pass. The two that changed the plan's substance:
+- Offering VIGIL as a trigger for an insurer's armed-response dispatch contradicts accepted ADR-0036(1). That is now decision D11.
+- A proposed public commitment, "remove a guardian at any time", contradicts ADR-0036(5). It is now worded with the 24-hour delay.
 
 **Real data / references** —
 - **The 15 Oct server note.** The `server.json` asset on the `vigil-demo` release points to a presenter-PC tunnel, with the note "Azure subscription disabled". That is the asset's own note (`REPORTED`); the audit read it through the Releases API.
-- **Duress at sign-out.** `app/src/api/device.ts` `signOut` with no journey ignores which PIN was used. `app/src/api/__tests__/device.test.ts` asserts that sign-in records nothing.
+- **Duress at sign-out.** `app/src/api/device.ts` `signOut` with no journey ignores which PIN was used. `device.test.ts:826-840` asserts that the duress PIN (`9876`) at a paused sign-out sends nothing; `:779-793` asserts that a normal-PIN sign-in sends nothing.
+- **The 15 Oct upload.** `server.json` on `vigil-demo` was uploaded by the `Sibusiso-K` account at 07:17:44 UTC (`FACT`, GitHub Releases API).
 - **Microsoft SLA**, 1 Oct 2026 edition (read directly): App Service 99.95% (99.99% zone-redundant); PostgreSQL 99.9% without HA (99.99% zone-redundant); credit-funded purchases excluded.
 - **Azure for Students terms** (Microsoft docs, read directly): non-commercial use only, disabled when the credit runs out.
 - **Android developer docs** (read directly): target API 36 required from 31 Aug 2026; the `dataSync` service capped at 6 h in 24 on Android 15; `USE_FULL_SCREEN_INTENT` limited to calling and alarm apps.
@@ -32,12 +35,12 @@ Changed:
 - `03-DISTRESS-SIGNALS.md`: RICA s4 party backstop, POPIA s57 and s71, the Android and Play rules, the timer as the first new signal; D7 now recommends journey mode as the default.
 - `04-SLA.md`: published SLAs; no contractual SLA on credit-funded Azure; S2 split into dispatch (contracted) and delivery (reported); S9 security notice; incident 4; costs as `ESTIMATE`.
 - `05-TWO-PITCHES.md`: what is and isn't known about each competition; the Caplia gaps that are paperwork; new Q&A; funding routes tagged `ASSUMPTION`.
-- `06-LAUNCH-ROADMAP.md`: §0 server of record; duress at sign-in **and** sign-out; `main` CI red since 25 Sep; the trial merge of #99; Play blockers; company housekeeping.
+- `06-LAUNCH-ROADMAP.md`: §0 server of record; duress at sign-in **and** sign-out; `main` CI red since 26 Sep; the trial merge of #99; Play blockers; company housekeeping.
 - `PILOTCORE-WEBSITE-BRIEF.md`: company-owned accounts; hosting terms.
 - `docs/venture/research/`: the eight reports, with scratchpad paths replaced.
 
 Evidence:
-- `node --test "test/**/*.test.mjs"`: 50/50.
+- `node --test "test/**/*.test.mjs"`: 51/51. `test/sla-probe.test.mjs` is now 10/10: the probe's S1 target was aligned to 99.5%, and `aggregate.mjs` gained the window score that `04-SLA.md` §3 describes.
 - `git diff --check`: clean.
 - `node scripts/check-docs.mjs`: all new links resolve. It fails only on the existing file name `2026-09-27-lethabo-vigil-0.0.16.md`, as it does on `main`.
 - The research files were scanned for key-shaped strings and personal contact details; setting names only.

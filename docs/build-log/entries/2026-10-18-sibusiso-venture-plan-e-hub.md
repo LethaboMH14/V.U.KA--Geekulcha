@@ -1,4 +1,4 @@
-## 2026-10-18 | Sibusiso, with Claude Code assistant | Post-hackathon venture plan (E-Hub insights 1–6), SLA probe, PILOTCORE website brief | PROPOSED
+## 2026-10-18 | Sibusiso, with Claude Code assistant | Claude Code | Post-hackathon venture plan (E-Hub insights 1–6), SLA probe, PILOTCORE website brief | PROPOSED
 
 **Research** — What was read before writing:
 - The required reading in `AGENTS.md` (`docs/MASTER-CONTEXT.md`, `BRIEF.md`, `RULES.md`, the 5 newest build-log entries).

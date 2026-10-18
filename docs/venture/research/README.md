@@ -18,4 +18,7 @@ These are the eight reports the plan in `docs/venture/` was built from. They're 
 - **Pages were not opened directly.** The cloud session that ran the research couldn't open most web pages (DNS blocked by its network policy). Claims come from search-engine extracts of the named page, so they are `REPORTED` **even when the source is a bank's, regulator's or Parliament's own page**. Re-open each URL before quoting it to a partner, judge or investor.
 - **Some items are recall, not research.** Where the search budget ran out, a report says so and marks those items. Treat them as leads.
 - **Paths beginning `<session-scratchpad>` or `<session-images>`** refer to files in the research session, not in this repository. The images are Sibusiso's YouthX email.
-- **Two findings were overtaken the same day.** `repo-build-state` notes that `04-SLA.md` and `06-LAUNCH-ROADMAP.md` described Azure as running. Both were corrected in the follow-up commit, and the plan now opens with the server-of-record problem.
+- **Two findings were folded into the plan the same day:**
+  - `repo-build-state` notes that `04-SLA.md` and `06-LAUNCH-ROADMAP.md` described Azure as running. Both were corrected, and the plan now opens with the server-of-record problem.
+  - It also found the duress gap at sign-out (with listening paused), which the first draft listed only at sign-in.
+- **Tags inside these notes differ.** `web-banks-insurers.md` tags official pages seen only through search extracts as `FACT`. Read every such `FACT` there as `REPORTED`. The plan files apply the stricter tag.
