@@ -1,0 +1,119 @@
+name: vigil-apk
+# Builds the signed VIGIL release APK in CI and publishes it as VIGIL.apk on the
+# vigil-demo release, so the site's download link and QR serve the latest main
+# without anyone's laptop.
+#
+# Repository secrets (Settings -> Secrets and variables -> Actions):
+#   VUKA_UPLOAD_STORE_B64       base64 of the Team SONAR upload keystore (.jks)
+#   VUKA_UPLOAD_STORE_PASSWORD  keystore password
+#   VUKA_UPLOAD_KEY_ALIAS       key alias (vigil-upload)
+#   VUKA_UPLOAD_KEY_PASSWORD    key password
+#   GOOGLE_SERVICES_JSON_B64    optional: base64 of app/android/app/google-services.json
+#                               (turns on real Google sign-in and guardian push)
+# Without the four signing secrets the run stops before building: a release
+# is never signed with the public debug key (app/android/app/build.gradle).
+# The published APK must carry the pinned Team SONAR certificate, or it could
+# not update the copies already installed; the run checks that before upload.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: vigil-apk
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # upload the release asset
+    env:
+      # SHA-256 of the Team SONAR upload certificate (app/README.md, docs/build-log).
+      EXPECTED_CERT_SHA256: ddfbf916779c404c037033f9ae30f057cb4f03242a26bacd66ac8ee40660e62d
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - name: Check the signing secrets are set
+        env:
+          STORE_B64: ${{ secrets.VUKA_UPLOAD_STORE_B64 }}
+          STORE_PW: ${{ secrets.VUKA_UPLOAD_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.VUKA_UPLOAD_KEY_ALIAS }}
+          KEY_PW: ${{ secrets.VUKA_UPLOAD_KEY_PASSWORD }}
+        run: |
+          missing=""
+          [ -n "$STORE_B64" ] || missing="$missing VUKA_UPLOAD_STORE_B64"
+          [ -n "$STORE_PW" ] || missing="$missing VUKA_UPLOAD_STORE_PASSWORD"
+          [ -n "$KEY_ALIAS" ] || missing="$missing VUKA_UPLOAD_KEY_ALIAS"
+          [ -n "$KEY_PW" ] || missing="$missing VUKA_UPLOAD_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing. Add them under Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+      - name: Use JDK 17 and the Android NDK the app pins
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;26.1.10909125" "platforms;android-34" "build-tools;34.0.0" > /dev/null
+      - name: Install app dependencies
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+      - name: Fetch the pinned YAMNet model (sha256-checked)
+        working-directory: app
+        run: node scripts/fetch-model.mjs
+      - name: Write the keystore and optional Firebase config
+        env:
+          STORE_B64: ${{ secrets.VUKA_UPLOAD_STORE_B64 }}
+          GSJ_B64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
+        run: |
+          umask 077
+          printf '%s' "$STORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          if [ -n "$GSJ_B64" ]; then
+            printf '%s' "$GSJ_B64" | base64 -d > app/android/app/google-services.json
+            echo "Firebase config present: real Google sign-in and guardian push are on."
+          else
+            echo "::notice::No GOOGLE_SERVICES_JSON_B64: Google sign-in stays SIMULATED and guardians get alerts in-app only."
+          fi
+      - name: Build the signed release APK
+        working-directory: app/android
+        env:
+          VUKA_UPLOAD_STORE_PASSWORD: ${{ secrets.VUKA_UPLOAD_STORE_PASSWORD }}
+          VUKA_UPLOAD_KEY_ALIAS: ${{ secrets.VUKA_UPLOAD_KEY_ALIAS }}
+          VUKA_UPLOAD_KEY_PASSWORD: ${{ secrets.VUKA_UPLOAD_KEY_PASSWORD }}
+        run: |
+          export VUKA_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.jks"
+          ./gradlew --no-daemon assembleRelease
+      - name: Check the APK carries the Team SONAR certificate
+        run: |
+          apk=app/android/app/build/outputs/apk/release/app-release.apk
+          apksigner="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+          cert="$("$apksigner" verify --print-certs "$apk" | awk -F': ' '/certificate SHA-256 digest/ {print $2; exit}')"
+          echo "certificate sha256: $cert"
+          if [ "$cert" != "$EXPECTED_CERT_SHA256" ]; then
+            echo "::error::The APK is not signed with the Team SONAR upload key; it would not install over existing copies. Not publishing."
+            exit 1
+          fi
+          cp "$apk" VIGIL.apk
+          version="$(node -p "require('./app/package.json').version")"
+          sha="$(sha256sum VIGIL.apk | cut -d' ' -f1)"
+          echo "VIGIL $version, sha256 $sha" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Remove the keystore and Firebase config
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks" app/android/app/google-services.json
+      - name: Keep the APK as a run artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: VIGIL-apk
+          path: VIGIL.apk
+          retention-days: 30
+      - name: Publish as VIGIL.apk on the vigil-demo release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload vigil-demo VIGIL.apk --clobber --repo "$GITHUB_REPOSITORY"
+          echo "Published: https://github.com/$GITHUB_REPOSITORY/releases/download/vigil-demo/VIGIL.apk" | tee -a "$GITHUB_STEP_SUMMARY"

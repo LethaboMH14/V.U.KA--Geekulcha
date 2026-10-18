@@ -1,0 +1,137 @@
+{
+  "description": "Canonical-form vectors per VUKA-2-SPEC.md §5",
+  "golden": [
+    {
+      "name": "ASCII simple",
+      "input": {
+        "a": 1,
+        "b": "hello"
+      },
+      "bytes": "7b2261223a312c2262223a2268656c6c6f227d",
+      "sha256": "d84ab9f85753473707229d00b92623f0f9a1b8b9bf69763fc5cfc692b56c236b",
+      "note": "Plain ASCII object"
+    },
+    {
+      "name": "Afrikaans diacritics",
+      "input": {
+        "text": "skêr en brëe"
+      },
+      "bytes": "7b2274657874223a22736b5c75303065617220656e2062725c753030656265227d",
+      "sha256": "b67d4b1dd9d8a4b0418df1580d0f0d75d565dfc706eeb7e36bc42651095db2e2",
+      "note": "ê/ë escaped as \\u00ea/\\u00eb"
+    },
+    {
+      "name": "isiZulu greeting",
+      "input": {
+        "text": "Sawubona, unjani?"
+      },
+      "bytes": "7b2274657874223a2253617775626f6e612c20756e6a616e693f227d",
+      "sha256": "3a9ed6054bc039a9a33a06e165eec0999cf4ac4e61650beae35acce84a64746a",
+      "note": "ASCII-only isiZulu text (no escapes)"
+    },
+    {
+      "name": "emoji outside BMP",
+      "input": {
+        "emoji": "😀"
+      },
+      "bytes": "7b22656d6f6a69223a225c75643833645c7564653030227d",
+      "sha256": "95214adac04561738c96eceaf332900a133fcbe1e1031a552a41b91e83d6092e",
+      "note": "U+1F600 \\uD83D\\uDE00 surrogate pair"
+    },
+    {
+      "name": "nested object",
+      "input": {
+        "outer": {
+          "inner": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "bytes": "7b226f75746572223a7b22696e6e6572223a5b312c322c335d7d7d",
+      "sha256": "9039124e2e25c1515627c1cb592987e89bd3adfb61155f13f1abdfc38772fcdf",
+      "note": "Recursive key sorting"
+    },
+    {
+      "name": "empty containers",
+      "input": {
+        "empty_obj": {},
+        "empty_arr": []
+      },
+      "bytes": "7b22656d7074795f617272223a5b5d2c22656d7074795f6f626a223a7b7d7d",
+      "sha256": "f41079191d354d8f29da00810acc909b27b42c69fe31d1a8ed5ff7b715055f08",
+      "note": "Empty dict and list"
+    },
+    {
+      "name": "max safe integer",
+      "input": {
+        "max": 9007199254740991
+      },
+      "bytes": "7b226d6178223a393030373139393235343734303939317d",
+      "sha256": "5274eb3771d44c0dc4c8145127c27d94a9a8128420eb69f1ea038d267ac28b06",
+      "note": "2^53-1 = 9007199254740991"
+    },
+    {
+      "name": "negative safe integer",
+      "input": {
+        "min": -9007199254740991
+      },
+      "bytes": "7b226d696e223a2d393030373139393235343734303939317d",
+      "sha256": "f6db7b0d468fd52892256184ace277fdf3d4c3facc8313042b65407c9a6d2442",
+      "note": "-(2^53-1)"
+    },
+    {
+      "name": "integer zero",
+      "input": {
+        "zero": 0,
+        "neg_one": -1
+      },
+      "bytes": "7b226e65675f6f6e65223a2d312c227a65726f223a307d",
+      "sha256": "806778429cf745092b57a079adda7e7bcb4f7f1838a8beee469507cbb8d7c360",
+      "note": "Zero and negative one"
+    }
+  ],
+  "rejections": [
+    {
+      "name": "float",
+      "input_repr": "{'score': 0.5}",
+      "raised": true,
+      "error": "Float not allowed at score: 0.5",
+      "note": "",
+      "json": "{\"score\":0.5}"
+    },
+    {
+      "name": "non-ASCII key",
+      "input_repr": "{'têxt': 'value'}",
+      "raised": true,
+      "error": "Non-ASCII key at <root>: 'têxt'",
+      "note": "",
+      "json": "{\"têxt\":\"value\"}"
+    },
+    {
+      "name": "integer 2^53",
+      "input_repr": "{'big': 9007199254740992}",
+      "raised": true,
+      "error": "Integer 9007199254740992 outside safe range [-9007199254740991, 9007199254740991] at big",
+      "note": "",
+      "json": "{\"big\":9007199254740992}"
+    },
+    {
+      "name": "negative integer -2^53",
+      "input_repr": "{'big': -9007199254740992}",
+      "raised": true,
+      "error": "Integer -9007199254740992 outside safe range [-9007199254740991, 9007199254740991] at big",
+      "note": "",
+      "json": "{\"big\":-9007199254740992}"
+    },
+    {
+      "name": "duplicate JSON key",
+      "input_repr": "{\"a\":1,\"a\":2}",
+      "raised": true,
+      "error": "Duplicate key in JSON input: 'a'",
+      "note": "",
+      "json": "{\"a\":1,\"a\":2}"
+    }
+  ]
+}

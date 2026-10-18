@@ -1,0 +1,706 @@
+{
+  "C-01": {
+    "category": "Operations and governance",
+    "mechanism": "Requirements carry stable IDs; tests cite them",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-02": {
+    "category": "Operations and governance",
+    "mechanism": "ADRs append-only, acceptance recorded per decision",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-03": {
+    "category": "Operations and governance",
+    "mechanism": "Security review recorded before a contract is frozen",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-04": {
+    "category": "Operations and governance",
+    "mechanism": "STRIDE threat model mapped to spec IDs and tests",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-05": {
+    "category": "Operations and governance",
+    "mechanism": "Abuse-test specifications T04–T24, T30–T49",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-06": {
+    "category": "Operations and governance",
+    "mechanism": "Requirement → owner → test trace",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-07": {
+    "category": "Operations and governance",
+    "mechanism": "Honesty ledger as a governance control",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-08": {
+    "category": "Operations and governance",
+    "mechanism": "Open-gap register, public",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-10": {
+    "category": "Device (MASVS)",
+    "mechanism": "Event keys: P-256 in Android Keystore, StrongBox when present, non-exportable (V7)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-11": {
+    "category": "Device (MASVS)",
+    "mechanism": "Salts and nonces from java.security.SecureRandom only, never JS (V7)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-12": {
+    "category": "Device (MASVS)",
+    "mechanism": "PIN checked on device with Argon2id; hash in Keystore-wrapped storage; pin_authorised bound to one action and target (§9)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-13": {
+    "category": "Device (MASVS)",
+    "mechanism": "Foreground service type built from granted permissions; no start from background; no boot receiver (V2, V10)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-14": {
+    "category": "Device (MASVS)",
+    "mechanism": "Only the launcher activity is exported; every other component exported=\"false\"",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-15": {
+    "category": "Device (MASVS)",
+    "mechanism": "allowBackup=\"false\" and data-extraction rules exclude the queue and keys",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-16": {
+    "category": "Device (MASVS)",
+    "mechanism": "usesCleartextTraffic=\"false\"; network security config trusts system CAs only",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-17": {
+    "category": "Device (MASVS)",
+    "mechanism": "Encrypted local queue (AES-GCM, Keystore key) (V8)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-18": {
+    "category": "Device (MASVS)",
+    "mechanism": "Raw audio is never written to storage; only label and basis-point score leave the classifier (RICA bright line)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-19": {
+    "category": "Privacy and POPIA (LINDDUN, L1–L16)",
+    "mechanism": "No PIN, salt, payload, token or location in Log.*; release build strips debug logs",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-20": {
+    "category": "Device (MASVS)",
+    "mechanism": "Permissions limited to the judge-build list in spec §11; never CAMERA, SEND_SMS, ACCESS_BACKGROUND_LOCATION, RECEIVE_BOOT_COMPLETED",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-21": {
+    "category": "Chain and anchor",
+    "mechanism": "One canonicaliser, shared/canonical.js; no floats; ASCII keys; safe integers (§5)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-22": {
+    "category": "Chain and anchor",
+    "mechanism": "DER → raw r‖s only in shared/der.js (§5.7)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-23": {
+    "category": "Supply chain",
+    "mechanism": "No secrets in the JS bundle (it is extractable). Server credentials never ship in the app",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-24": {
+    "category": "Device (MASVS)",
+    "mechanism": "No eval, new Function or dynamic require",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-25": {
+    "category": "Duress and coercion",
+    "mechanism": "Normal and duress PIN code paths share one render, one haptic, one request builder and one response wait (V5)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-26": {
+    "category": "Duress and coercion",
+    "mechanism": "No guardian acknowledgement on the member's phone during an open incident; incident events hidden from My Record until close (V8)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-27": {
+    "category": "Supply chain",
+    "mechanism": "Exact dependency versions (no ^ or ~) and a committed package-lock.json",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-30": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Order of checks: authenticate → event_id idempotency → nonce, counter, skew → append (§7)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-31": {
+    "category": "Chain and anchor",
+    "mechanism": "Signed statement binds domain, subject, actor, target, action, source time, key id, counter, event id and commitment (§4, B1)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-32": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Deadlines from server receipt time only; window limited to 20 s or 60 s (§7, B4)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-33": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Outcome row locked (SELECT … FOR UPDATE); first terminal outcome wins; outbox in the same transaction (§8)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-34": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Parameterised SQL only; no string-built queries",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-35": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Request models reject unknown fields and floats",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-36": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Object-level authorisation on every /v1/subjects/{id}/… path: the key must belong to that subject (API1)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-37": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Rate limits on invites (per subject, device, IP), recovery and public endpoints (G1, API4)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-38": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Uniform error bodies; no stack traces; no personal data in logs",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-39": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Constant-time comparison for codes and hashes (hmac.compare_digest)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-40": {
+    "category": "Privacy and POPIA (LINDDUN, L1–L16)",
+    "mechanism": "Payloads and salts stored apart from the chain and encrypted at rest; deletion removes only them (P1)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-41": {
+    "category": "Duress and coercion",
+    "mechanism": "Server response bytes and timing for normal and duress results identical; outbox work runs after the response (V5, S3)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-42": {
+    "category": "Duress and coercion",
+    "mechanism": "Export PIN-gated and never reveals an open incident to the device (proposed fix for gap TM-C9)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-43": {
+    "category": "Duress and coercion",
+    "mechanism": "Post-recovery 24 h freeze extends to bulk export (S4)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-50": {
+    "category": "Privacy and POPIA (LINDDUN, L1–L16)",
+    "mechanism": "The export never leaves the browser: no upload, no analytics, no third-party script",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-51": {
+    "category": "Privacy and POPIA (LINDDUN, L1–L16)",
+    "mechanism": "CSP default-src 'none'; script-src 'self'; connect-src 'self' <pinned mirror host>; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none' PROPOSED",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-52": {
+    "category": "Privacy and POPIA (LINDDUN, L1–L16)",
+    "mechanism": "Export content rendered with textContent only, never innerHTML",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-53": {
+    "category": "Privacy and POPIA (LINDDUN, L1–L16)",
+    "mechanism": "Pinned network, topic id and key-manifest fingerprint built into the page; mirror bytes decoded and compared with the recomputed root (§6, B2)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-54": {
+    "category": "Privacy and POPIA (LINDDUN, L1–L16)",
+    "mechanism": "Three honest states: live-verified, archived (\"archived — not independent\"), unavailable (§10)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-55": {
+    "category": "Privacy and POPIA (LINDDUN, L1–L16)",
+    "mechanism": "WebCrypto for SHA-256 and P-256; no home-made crypto",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-60": {
+    "category": "Operations and governance",
+    "mechanism": "Actions pinned by commit SHA; permissions: contents: read; persist-credentials: false",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-61": {
+    "category": "Operations and governance",
+    "mechanism": "Document contracts and claim safeguards in CI",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-62": {
+    "category": "Operations and governance",
+    "mechanism": "Contract tests (node --test) run in CI. Gap: 10/10 pass locally, but checks.yml does not run them FACT",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-63": {
+    "category": "Operations and governance",
+    "mechanism": "Branch protection requiring CI and non-author review",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-64": {
+    "category": "Operations and governance",
+    "mechanism": "CODEOWNERS auto-requests security review on contracts/, server/, shared/, dashboard/",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-65": {
+    "category": "Operations and governance",
+    "mechanism": "Release APK built from a tag; sha256 published with the release (D1, T20)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-70": {
+    "category": "Supply chain",
+    "mechanism": "Lockfiles committed: package-lock.json; Python requirements with hashes; Gradle dependency verification",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-71": {
+    "category": "Supply chain",
+    "mechanism": "SCA on every PR",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-72": {
+    "category": "Supply chain",
+    "mechanism": "Pinned toolchain: Node, Python, JDK 17, RN 0.74. Today team/START-HERE.md states minimums (\"Node 22 LTS or newer\"), not pins; add engines in package.json and .python-version",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-73": {
+    "category": "Supply chain",
+    "mechanism": "Model-weights manifest with sha256; the app verifies the digest before loading; input shape asserted from get_input_details() (V3)",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-74": {
+    "category": "Supply chain",
+    "mechanism": "Gitleaks binary pinned by version and sha256",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-75": {
+    "category": "Supply chain",
+    "mechanism": "SBOM (CycloneDX) for the APK and server",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-80": {
+    "category": "Supply chain",
+    "mechanism": "Pre-commit gitleaks scan of staged content; refuses commits if gitleaks is missing",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-81": {
+    "category": "Supply chain",
+    "mechanism": "CI scans full history and worktree",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-82": {
+    "category": "Supply chain",
+    "mechanism": "Hook failure behaviour tested in isolated fixtures",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-83": {
+    "category": "Supply chain",
+    "mechanism": ".env, keys, keystores, service-account files, *.tflite, data files git-ignored",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-84": {
+    "category": "Supply chain",
+    "mechanism": "Runtime secrets (Hedera submitKey, server Ed25519 key, FCM service account, SMS key) only in App Service settings or a local .env; never in chat, issue or PR",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-85": {
+    "category": "Supply chain",
+    "mechanism": "Two distinct operators sign signing-key rotation, operator deletion and threshold changes (ADR-0036(8))",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-86": {
+    "category": "Supply chain",
+    "mechanism": "APK signing keystore held by Vukosi and Mutarisi only, backed up offline; never committed",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-90": {
+    "category": "Supply chain",
+    "mechanism": "semgrep",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-91": {
+    "category": "Supply chain",
+    "mechanism": "bandit",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-92": {
+    "category": "Supply chain",
+    "mechanism": "eslint + eslint-plugin-security",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-93": {
+    "category": "Supply chain",
+    "mechanism": "Android lint",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-94": {
+    "category": "Supply chain",
+    "mechanism": "detekt",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-100": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "ZAP baseline on staging API and verify page, report kept",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-101": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Active scan (zap-api-scan.py against the OpenAPI file) on staging only",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-102": {
+    "category": "Device (MASVS)",
+    "mechanism": "MobSF static scan of the release APK",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-110": {
+    "category": "Device (MASVS)",
+    "mechanism": "Root, emulator and hooking detection",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-111": {
+    "category": "Device (MASVS)",
+    "mechanism": "TLS certificate pinning in the app",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-112": {
+    "category": "Device (MASVS)",
+    "mechanism": "Play Integrity verdicts",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-120": {
+    "category": "Operations and governance",
+    "mechanism": "Incident roles and steps written",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-121": {
+    "category": "Operations and governance",
+    "mechanism": "15-minute tabletop of one leaked-key and one location-leak scenario",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-122": {
+    "category": "Operations and governance",
+    "mechanism": "Secret-exposure procedure: revoke first",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-130": {
+    "category": "Operations and governance",
+    "mechanism": "Operator-contract gap disclosed; no new live partner without a clause",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-131": {
+    "category": "Privacy and POPIA (LINDDUN, L1–L16)",
+    "mechanism": "Correction propagation: design-open, with the s57 conflict named",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-132": {
+    "category": "Device (MASVS)",
+    "mechanism": "Only the six mapped labels leave inference; T41 on the feature-complete APK",
+    "extra_tests": [
+      "T41"
+    ],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-133": {
+    "category": "API and server (ASVS, API Top 10)",
+    "mechanism": "Account-matching flow documented; no real bank without a legal decision",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-134": {
+    "category": "Operations and governance",
+    "mechanism": "No marketing on the safety channels",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-136": {
+    "category": "Device (MASVS)",
+    "mechanism": "FLAG_SECURE plus the parityTest variant",
+    "extra_tests": [
+      "T57"
+    ],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-137": {
+    "category": "Device (MASVS)",
+    "mechanism": "setAccessibilityDataSensitive on the PIN pad",
+    "extra_tests": [
+      "PT-65"
+    ],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-139": {
+    "category": "Privacy and POPIA (LINDDUN, L1–L16)",
+    "mechanism": "Guardian list without last-alert times, under the hold; abuse test",
+    "extra_tests": [
+      "PT-69"
+    ],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  }
+}

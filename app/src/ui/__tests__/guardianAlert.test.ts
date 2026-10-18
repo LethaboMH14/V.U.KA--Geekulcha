@@ -1,0 +1,113 @@
+import {alertKey, alertsDelivery, answerStatus, answerTimeline, claimAnswer, consumeGuardianOpen, leaveBody, needsAttention, notificationsOff, notRecorded, standDownQuestion} from '../guardian';
+
+describe('guardian alert answers', () => {
+  it('sends Call 10111 once per alert, however often it is pressed', () => {
+    const claimed = new Set<string>();
+    expect(claimAnswer(claimed, 'inc_1', 'called_10111')).toBe(true);
+    expect(claimAnswer(claimed, 'inc_1', 'called_10111')).toBe(false);
+    // A different alert, or a different answer, is its own claim.
+    expect(claimAnswer(claimed, 'inc_2', 'called_10111')).toBe(true);
+    expect(claimAnswer(claimed, 'inc_1', 'stand_down')).toBe(true);
+  });
+
+  it('never claims a call happened, only that Call 10111 was pressed', () => {
+    expect(answerStatus([])).toBeNull();
+    expect(answerStatus(['handling'])).toBeNull();
+    expect(answerStatus(['called_10111'])).toBe('You pressed Call 10111, recorded.');
+    expect(answerStatus(['called_10111', 'stand_down'])).toBe("Stood down. You confirmed they're safe.");
+    expect(answerStatus(['stand_down'])).toBe("Stood down without calling 10111. You confirmed they're safe.");
+  });
+
+  it('says 10111 will not be called when standing down before calling', () => {
+    expect(standDownQuestion([])).toMatch(/10111 won't be called from this alert\.$/);
+    expect(standDownQuestion(['called_10111'])).toBe("Only stand down if you know they're safe.");
+  });
+
+  it('a failed write is not called recorded', () => {
+    for (const a of ['called_10111', 'handling', 'stand_down'] as const) {
+      expect(notRecorded(a)).toMatch(/wasn't recorded yet\. Check your data and try again\.$/);
+    }
+  });
+
+  it('the response timeline shows only what happened, in order', () => {
+    const open = {opened_at: '2026-09-26T19:58:00Z', closed_at: null};
+    expect(answerTimeline(open, [], {})).toEqual([
+      {label: 'Alert raised', at: open.opened_at},
+      {label: 'Waiting on stand-down or closure', at: null},
+    ]);
+    const t = answerTimeline(open, ['called_10111', 'stand_down'], {called_10111: '2026-09-26T19:59:00Z', stand_down: '2026-09-26T20:07:00Z'});
+    expect(t.map(s => s.label)).toEqual(['Alert raised', 'You pressed Call 10111', 'You stood down']);
+    // Closed by someone else: the closure is the last row, not a stand-down that didn't happen.
+    const closed = answerTimeline({...open, closed_at: '2026-09-26T20:10:00Z'}, ['handling'], {handling: '2026-09-26T20:00:00Z'});
+    expect(closed.map(s => s.label)).toEqual(['Alert raised', "You're handling it", 'Alert closed']);
+  });
+});
+
+describe('guardian alert banner', () => {
+  const alert = (id: string, closed: string | null) => ({
+    incident_id: id,
+    trigger: 'no_answer' as const,
+    delivered_at: '2026-09-26T10:00:00Z',
+    opened_at: '2026-09-26T10:00:00Z',
+    closed_at: closed,
+    close_reason: closed ? 'stand_down' : null,
+  });
+
+  it('shows only for an open alert this guardian has not stood down from', () => {
+    expect(needsAttention([], new Set())).toBeNull();
+    expect(needsAttention([alert('inc_1', '2026-09-26T10:05:00Z')], new Set())).toBeNull();
+    expect(needsAttention([alert('inc_1', null)], new Set())?.incident_id).toBe('inc_1');
+    expect(needsAttention([alert('inc_1', null)], new Set(['inc_1']))).toBeNull();
+  });
+});
+
+describe('guardian notification and standby wiring', () => {
+  it('opens the alert once after its notice was tapped, and never without the native module', async () => {
+    let pending = true;
+    const native = {consumeAlertOpen: async () => {
+      const v = pending;
+      pending = false;
+      return v;
+    }};
+    expect(await consumeGuardianOpen(native)).toBe(true);
+    expect(await consumeGuardianOpen(native)).toBe(false);
+    expect(await consumeGuardianOpen(undefined)).toBe(false);
+    expect(await consumeGuardianOpen({consumeAlertOpen: async () => Promise.reject(new Error('gone'))})).toBe(false);
+  });
+
+  it('sees notifications turned off on any Android version through the native check', async () => {
+    expect(await notificationsOff({notificationsEnabled: async () => false})).toBe(true);
+    expect(await notificationsOff({notificationsEnabled: async () => true})).toBe(false);
+  });
+
+  it('says push only when the server has this phone\'s token for this server', () => {
+    expect(alertsDelivery({push: {server: 'https://a'}}, 'https://a')).toBe('Push, and checked every 5 s');
+    expect(alertsDelivery({push: {server: 'https://a'}}, 'https://b')).toBe('Checked every 5 s while VIGIL runs');
+    expect(alertsDelivery({}, 'https://a')).toBe('Checked every 5 s while VIGIL runs');
+  });
+
+  it('stopping says the server is not told, and what happens to a member\'s own account', () => {
+    expect(leaveBody('Thabo', true)).toMatch(/Your own VIGIL account and guardians aren't affected\./);
+    expect(leaveBody('Thabo', false)).toMatch(/goes back to the start screen/);
+    for (const m of [true, false]) {
+      expect(leaveBody('Thabo', m)).toMatch(/VIGIL's server isn't told, so ask Thabo to remove you/);
+      expect(leaveBody('Thabo', m)).toMatch(/new invite\.$/);
+    }
+  });
+});
+
+describe('wrong-PIN heads-up then an alarm on the same incident (27 Sep)', () => {
+  const base = {incident_id: 'inc_7', delivered_at: '2026-09-27T03:00:00Z', opened_at: '2026-09-27T02:59:00Z', closed_at: null, close_reason: null, why: null, location: null};
+  const headsUp = {...base, trigger: 'wrong_pin' as const};
+  const alarm = {...base, trigger: 'no_answer' as const, delivered_at: '2026-09-27T03:01:10Z'};
+
+  it('counts the alarm as a new alert, so it sounds again after the heads-up', () => {
+    expect(alertKey(alarm)).not.toBe(alertKey(headsUp));
+    const told = new Set([alertKey(headsUp)]);
+    expect(told.has(alertKey(alarm))).toBe(false);
+  });
+
+  it('shows the alarm, not the heads-up (the server lists newest first)', () => {
+    expect(needsAttention([alarm, headsUp] as never, new Set())?.trigger).toBe('no_answer');
+  });
+});

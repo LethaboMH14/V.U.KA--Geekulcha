@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vuka.example/contracts/payloads/checkin_opened.v1.json",
+  "title": "checkin_opened payload, pv 1 (PROPOSED, docs/VUKA-2-SPEC.md §4b)",
+  "description": "Committed private payload of a checkin_opened event: the check-in was confirmed shown on screen (V4). Numeric fields are integers (spec §5). Adding a field is a pv bump.",
+  "type": "object",
+  "required": [
+    "kind",
+    "pv",
+    "checkin_id",
+    "journey_id",
+    "signal_event_id",
+    "window_s"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "checkin_opened"
+    },
+    "pv": {
+      "const": 1
+    },
+    "checkin_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "Device-generated lowercase UUID; also the {id} in /v1/checkins/{id}/opened and /result. Device-generated so a check-in can be queued offline (V8)."
+    },
+    "journey_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "The journey this check-in belongs to, as in signal_detected."
+    },
+    "signal_event_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "details.event_id of the signal_detected event that triggered this check-in. The server uses it to cancel that signal's no_answer_fallback (§8, G34)."
+    },
+    "window_s": {
+      "type": "integer",
+      "enum": [
+        20,
+        60
+      ],
+      "description": "Device-chosen check-in window in seconds; §7 limits it to 20 or 60. Named window_s, not window_ms, so it is not confused with signal_detected's 975 ms audio window."
+    }
+  },
+  "examples": [
+    {
+      "kind": "checkin_opened",
+      "pv": 1,
+      "checkin_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+      "journey_id": "sim_journey_1",
+      "signal_event_id": "0f8a2b6c-91d4-4e7a-b3c5-6d1e9f2a4b70",
+      "window_s": 20
+    }
+  ]
+}

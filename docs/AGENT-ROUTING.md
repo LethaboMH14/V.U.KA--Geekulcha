@@ -23,7 +23,7 @@ EXECUTE  →  REVIEW  →  REPO GATE
 
 **What goes here:** checking stage 1's output against the standing rules — does the claim have real evidence, is the figure tagged `FACT`/`ESTIMATE`/`ASSUMPTION`/`PROPOSED` correctly, does it contradict something else in the repo, does it overclaim, does it touch a frozen contract without the required sign-off, is the research/business-reasoning/competitor-reference actually there and actually true (not just present as a section header). Use your tool's strongest available model for this pass — the whole point of having a review stage is that it can catch what stage 1 missed.
 
-**Escalate to a human (Ipeleng, or both leads) instead of a stronger model when:** the question is a legal interpretation, a genuinely ambiguous architecture trade-off, or anything the reviewing model itself is uncertain about after one pass. A second AI pass does not resolve genuine ambiguity — say so and route to a person.
+**Escalate to a human (both leads) instead of a stronger model when:** the question is a legal interpretation, a genuinely ambiguous architecture trade-off, or anything the reviewing model itself is uncertain about after one pass. A second AI pass does not resolve genuine ambiguity — say so and route to a person.
 
 ## Stage 3 — Repo gate
 
