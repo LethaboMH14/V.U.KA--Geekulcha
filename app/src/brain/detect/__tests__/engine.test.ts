@@ -112,29 +112,39 @@ describe('gun-like sounds must beat their excluded neighbours', () => {
   });
 });
 
-describe('voices need two windows that share no audio', () => {
+describe('voices need two adjacent windows (v3: one short call is enough)', () => {
   const s = R.thresholdBp.Screaming;
   it('does not record a single scream window', () => {
     const {decisions} = run([audio(win(1, 'Screaming', 9000))]);
     expect(decisions[0].record).toBe(false);
-    expect(decisions[0].reasons).toContainEqual({rule: 'confirm', family: 'voice', window_seqs: [-1, 1], separation: 2, pass: false});
+    expect(decisions[0].reasons).toContainEqual({rule: 'confirm', family: 'voice', window_seqs: [0, 1], separation: 1, pass: false});
   });
 
-  it('does not let one brief sound confirm itself in two overlapping windows', () => {
-    // A 0.5 s shout lands in two adjacent (overlapping) windows at most.
-    const {decisions} = run([audio(win(1, 'Screaming', s + 500)), audio(win(2, 'Screaming', s + 500)), audio(win(3, null, 0))]);
-    expect(decisions.map(d => d.record)).toEqual([false, false, false]);
+  it('records one shouted "Help!" that fills the half two adjacent windows share', () => {
+    // A 0.5 s call lands in two adjacent (overlapping) windows.
+    const {decisions} = run([audio(win(1, 'Shout', R.thresholdBp.Shout)), audio(win(2, 'Shout', R.thresholdBp.Shout)), audio(win(3, null, 0))]);
+    expect(decisions.map(d => [d.record, d.prompt])).toEqual([
+      [false, false],
+      [true, true],
+      [false, false],
+    ]);
+    expect(decisions[1].candidate).toMatchObject({class_label: 'Shout', score_bp: 3500});
   });
 
-  it('records when the voice is still there two windows later, across voice classes', () => {
-    const {decisions} = run([audio(win(1, 'Shout', 7000)), audio(win(2, null, 0)), audio(win(3, 'Screaming', s))]);
-    expect(decisions.map(d => d.record)).toEqual([false, false, true]);
-    expect(decisions[2].candidate?.class_label).toBe('Screaming');
+  it('records across voice classes in adjacent windows', () => {
+    const {decisions} = run([audio(win(1, 'Shout', 7000)), audio(win(2, 'Screaming', s))]);
+    expect(decisions.map(d => d.record)).toEqual([false, true]);
+    expect(decisions[1].candidate?.class_label).toBe('Screaming');
   });
 
   it('treats a missing (unclassified) window as a miss, not a pass', () => {
-    const {decisions} = run([audio(win(1, 'Yell', 7000)), audio(win(4, 'Yell', 7000))]);
+    const {decisions} = run([audio(win(1, 'Yell', 7000)), audio(win(3, 'Yell', 7000))]);
     expect(decisions.map(d => d.record)).toEqual([false, false]);
+  });
+
+  it('does not prompt one basis point below the voice bar', () => {
+    const {decisions} = run([1, 2].map(n => audio(win(n, 'Yell', R.thresholdBp.Yell - 1))));
+    expect(decisions.map(d => d.prompt)).toEqual([false, false]);
   });
 });
 
@@ -312,10 +322,10 @@ describe('CEM-1 record level: never quieter than V4', () => {
   }
 
   it('a V4 class wins even when a louder class only clears its record threshold', () => {
-    // Shout 5900 < 6000 (record level) and Glass 3600 >= 3500 (V4) in one window.
-    const {decisions} = run([audio(two(1, ['Shout', 5900], ['Glass', 3600]))]);
+    // Shout 3400 < 3500 (record level) and Shatter 3100 >= 3000 (V4) in one window.
+    const {decisions} = run([audio(two(1, ['Shout', 3400], ['Shatter', 3100]))]);
     expect(decisions[0]).toMatchObject({level: 'prompt', record: true, prompt: true});
-    expect(decisions[0].candidate?.class_label).toBe('Glass');
+    expect(decisions[0].candidate?.class_label).toBe('Shatter');
   });
 
   it('a record-level hit never delays a V4 record of the same family', () => {
@@ -331,11 +341,11 @@ describe('CEM-1 record level: never quieter than V4', () => {
     expect(decisions[1].record).toBe(false);
   });
 
-  it('record-level voices confirm on the record history (two windows, separation 2)', () => {
+  it('record-level voices confirm on the record history (two adjacent windows, then a duplicate)', () => {
     const s = R.recordThresholdBp.Shout + 100;
     const {decisions} = run([1, 2, 3].map(n => audio(win(n, 'Shout', s))));
-    expect(decisions.map(d => d.record)).toEqual([false, false, true]);
-    expect(decisions[2]).toMatchObject({level: 'record', prompt: false});
+    expect(decisions.map(d => d.record)).toEqual([false, true, false]);
+    expect(decisions[1]).toMatchObject({level: 'record', prompt: false});
   });
 
   it('below the record threshold nothing is recorded', () => {
