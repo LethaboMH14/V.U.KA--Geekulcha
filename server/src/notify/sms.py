@@ -49,7 +49,7 @@ class SmsSender:
         if parsed.query:
             path += "?" + parsed.query
         payload = json.dumps({"to": to, "from": self.config.sender, "body": body}).encode()
-        connection = http.client.HTTPSConnection(
+        connection = http.client.HTTPSConnection(  # nosemgrep: python.lang.security.audit.httpsconnection-detected.httpsconnection-detected (verified: ssl.create_default_context())
             parsed.netloc, timeout=10, context=ssl.create_default_context()
         )
         # Provider-specific response parsing is intentionally deferred until a

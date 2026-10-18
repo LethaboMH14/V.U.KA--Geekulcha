@@ -122,7 +122,7 @@ def _send_brevo(to: str, code: str, purpose: str) -> None:
         "subject": "Your VIGIL code",
         "textContent": _message(code, purpose),
     })
-    conn = http.client.HTTPSConnection("api.brevo.com", timeout=20, context=ssl.create_default_context())
+    conn = http.client.HTTPSConnection("api.brevo.com", timeout=20, context=ssl.create_default_context())  # nosemgrep: python.lang.security.audit.httpsconnection-detected.httpsconnection-detected (verified: ssl.create_default_context())
     try:
         conn.request("POST", "/v3/smtp/email", body=body, headers={
             "api-key": os.environ["VUKA_BREVO_API_KEY"],
@@ -143,7 +143,7 @@ def _send_sms(to: str, code: str, purpose: str) -> None:
     sid = os.environ["VUKA_TWILIO_ACCOUNT_SID"]
     auth = base64.b64encode(f"{sid}:{os.environ['VUKA_TWILIO_AUTH_TOKEN']}".encode()).decode()
     body = urllib.parse.urlencode({"To": to, "From": os.environ["VUKA_TWILIO_FROM"], "Body": _message(code, purpose)})
-    conn = http.client.HTTPSConnection("api.twilio.com", timeout=20, context=ssl.create_default_context())
+    conn = http.client.HTTPSConnection("api.twilio.com", timeout=20, context=ssl.create_default_context())  # nosemgrep: python.lang.security.audit.httpsconnection-detected.httpsconnection-detected (verified: ssl.create_default_context())
     try:
         conn.request("POST", f"/2010-04-01/Accounts/{urllib.parse.quote(sid)}/Messages.json", body=body,
                      headers={"Authorization": f"Basic {auth}", "Content-Type": "application/x-www-form-urlencoded"})

@@ -34,7 +34,7 @@ class SimBankHTTP:
 
     def send(self, body, headers):
         if self.scheme == "https":
-            conn = http.client.HTTPSConnection(self.netloc, timeout=10, context=ssl.create_default_context())
+            conn = http.client.HTTPSConnection(self.netloc, timeout=10, context=ssl.create_default_context())  # nosemgrep: python.lang.security.audit.httpsconnection-detected.httpsconnection-detected (verified: ssl.create_default_context())
         else:
             conn = http.client.HTTPConnection(self.netloc, timeout=10)
         try:

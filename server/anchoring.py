@@ -80,7 +80,7 @@ def reconcile_mirror_root(root_hex, submitted_at, *, fetch=None):
         parts = urlparse(url)
         if parts.scheme != "https" or parts.netloc != "testnet.mirrornode.hedera.com":
             raise AnchorPublicationError("invalid mirror URL")
-        conn = http.client.HTTPSConnection(parts.netloc, timeout=10, context=ssl.create_default_context())
+        conn = http.client.HTTPSConnection(parts.netloc, timeout=10, context=ssl.create_default_context())  # nosemgrep: python.lang.security.audit.httpsconnection-detected.httpsconnection-detected (verified: ssl.create_default_context())
         try:
             conn.request("GET", parts.path + ("?" + parts.query if parts.query else ""))
             response = conn.getresponse()

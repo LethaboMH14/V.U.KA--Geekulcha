@@ -12,6 +12,7 @@
     "@hiero-ledger/proto": {
       "protobufjs": "8.8.0"
     },
-    "ws": "8.21.3"
+    "ws": "8.21.3",
+    "@grpc/grpc-js": "^1.13.6"
   }
 }
