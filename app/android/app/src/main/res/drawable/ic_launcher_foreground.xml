@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- VIGIL launcher mark: the round cobalt key on its graphite plinth, as on Home. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Plinth -->
+    <path
+        android:fillColor="#111214"
+        android:pathData="M54,25a29,29 0,1 1,0 58a29,29 0,1 1,0 -58z" />
+    <path
+        android:strokeColor="#14FFFFFF"
+        android:strokeWidth="0.8"
+        android:pathData="M54,25.4a28.6,28.6 0,1 1,0 57.2a28.6,28.6 0,1 1,0 -57.2z" />
+    <!-- Key, lit from above -->
+    <path android:pathData="M54,32a22,22 0,1 1,0 44a22,22 0,1 1,0 -44z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="54"
+                android:startY="32"
+                android:endX="54"
+                android:endY="76">
+                <item android:offset="0" android:color="#FF4A7BE0" />
+                <item android:offset="1" android:color="#FF3363C6" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

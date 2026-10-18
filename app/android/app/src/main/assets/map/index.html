@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>VUKA guardian map</title>
+<!-- MapLibre GL JS (BSD-3-Clause), bundled in the app: no remote code. Tiles: OpenFreeMap. -->
+<link rel="stylesheet" href="maplibre-gl.css">
+<script src="maplibre-gl.js"></script>
+<style>
+  :root { --ink: #1E3A5F; --amber: #B45309; --ivory: #F5F3EE; }
+  html, body, #map { margin: 0; height: 100%; background: var(--ivory); }
+  .maplibregl-ctrl-attrib { font: 10px/1.3 system-ui, sans-serif; }
+  #note { position: absolute; left: 8px; right: 8px; bottom: 8px; padding: 6px 10px; border-radius: 10px;
+          background: rgba(245, 243, 238, .92); color: #1f2937; font: 12px/1.35 system-ui, sans-serif; display: none; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="note"></div>
+<script>
+  // Data arrives from the app: {last: {lat_e7, lon_e7, acc_m, at}, trail: [{lat_e7, lon_e7, at}]}.
+  var map = null, pending = null, loaded = false;
+  var note = document.getElementById('note');
+  function deg(e7) { return e7 / 1e7; }
+  function circle(lon, lat, metres) {
+    var pts = [], n = 48, r = metres / 6371008.8;
+    for (var i = 0; i <= n; i++) {
+      var b = (i / n) * 2 * Math.PI, la = lat * Math.PI / 180, lo = lon * Math.PI / 180;
+      var la2 = Math.asin(Math.sin(la) * Math.cos(r) + Math.cos(la) * Math.sin(r) * Math.cos(b));
+      var lo2 = lo + Math.atan2(Math.sin(b) * Math.sin(r) * Math.cos(la), Math.cos(r) - Math.sin(la) * Math.sin(la2));
+      pts.push([lo2 * 180 / Math.PI, la2 * 180 / Math.PI]);
+    }
+    return {type: 'Feature', geometry: {type: 'Polygon', coordinates: [pts]}};
+  }
+  function show(data) {
+    if (!loaded) { pending = data; return; }
+    var lon = deg(data.last.lon_e7), lat = deg(data.last.lat_e7);
+    var line = {type: 'Feature', geometry: {type: 'LineString', coordinates: data.trail.map(function (p) { return [deg(p.lon_e7), deg(p.lat_e7)]; })}};
+    var pin = {type: 'Feature', geometry: {type: 'Point', coordinates: [lon, lat]}};
+    map.getSource('acc').setData(circle(lon, lat, Math.max(5, data.last.acc_m)));
+    map.getSource('trail').setData(line);
+    map.getSource('pin').setData(pin);
+    map.easeTo({center: [lon, lat], zoom: data.last.acc_m > 500 ? 13 : 16, duration: 400});
+    note.style.display = 'block';
+    note.textContent = 'Last seen ' + new Date(data.last.at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) +
+      ', within about ' + data.last.acc_m + ' m.';
+  }
+  function fail(msg) { note.style.display = 'block'; note.textContent = msg; }
+  window.vukaShow = show;
+  document.addEventListener('message', function (e) { try { show(JSON.parse(e.data)); } catch (_) {} });
+  window.addEventListener('message', function (e) { try { show(JSON.parse(e.data)); } catch (_) {} });
+  try {
+    map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://tiles.openfreemap.org/styles/positron',
+      center: [28.0473, -26.2041], zoom: 10, attributionControl: {compact: true},
+    });
+    map.on('load', function () {
+      map.addSource('acc', {type: 'geojson', data: {type: 'FeatureCollection', features: []}});
+      map.addSource('trail', {type: 'geojson', data: {type: 'FeatureCollection', features: []}});
+      map.addSource('pin', {type: 'geojson', data: {type: 'FeatureCollection', features: []}});
+      map.addLayer({id: 'acc', type: 'fill', source: 'acc', paint: {'fill-color': '#B45309', 'fill-opacity': 0.12}});
+      map.addLayer({id: 'acc-edge', type: 'line', source: 'acc', paint: {'line-color': '#B45309', 'line-width': 1}});
+      map.addLayer({id: 'trail', type: 'line', source: 'trail', paint: {'line-color': '#1E3A5F', 'line-width': 3, 'line-opacity': 0.7}});
+      map.addLayer({id: 'pin', type: 'circle', source: 'pin', paint: {'circle-radius': 8, 'circle-color': '#B45309', 'circle-stroke-color': '#fff', 'circle-stroke-width': 3}});
+      loaded = true;
+      if (pending) show(pending);
+    });
+    map.on('error', function () { fail('Map tiles could not load. Use "Open in Maps" instead.'); });
+  } catch (e) {
+    fail('The map could not start. Use "Open in Maps" instead.');
+  }
+</script>
+</body>
+</html>

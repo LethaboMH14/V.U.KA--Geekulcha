@@ -1,0 +1,26 @@
+# Narrow, time-boxed ignores. Each entry must match a waiver in
+# docs/security/SCA-WAIVERS.md (SCA-W1). Build-time only; see the waiver for the reasoning.
+[[IgnoredVulns]]
+id = "GHSA-5p2g-fcmc-qvqq"
+ignoreUntil = 2026-10-31
+reason = "SCA-W1: image-size in Metro (build-time), no fixed version; repo assets only"
+
+[[IgnoredVulns]]
+id = "GHSA-w3rx-r6r6-pgpr"
+ignoreUntil = 2026-10-31
+reason = "SCA-W1: image-size in Metro (build-time), no fixed version; repo assets only"
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2026-11-15
+reason = "SCA-W2: build and test tooling only, no fixed version; see docs/security/SCA-WAIVERS.md"
+
+[[IgnoredVulns]]
+id = "GHSA-86w9-cpqp-85rv"
+ignoreUntil = 2026-11-15
+reason = "SCA-W2: build and test tooling only, no fixed version; see docs/security/SCA-WAIVERS.md"
+
+[[IgnoredVulns]]
+id = "GHSA-hp3w-g68c-fv3c"
+ignoreUntil = 2026-11-15
+reason = "SCA-W2: build and test tooling only, no fixed version; see docs/security/SCA-WAIVERS.md"

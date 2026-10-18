@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches colors.bgBase in src/ui/theme.ts (Ivory). -->
+    <color name="vigil_graphite">#F5F3EE</color>
+</resources>

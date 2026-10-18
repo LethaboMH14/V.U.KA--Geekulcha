@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>VUKA Ledger</title>
+  <meta name="description" content="Check a VUKA safety record against the public Hedera testnet topic, in your own browser, without trusting VUKA." />
+  <script>
+    /* The ledger's Settings theme choice (same key as ledger/app.js), per browser only. */
+    try {
+      var t = window.localStorage.getItem("vuka-ledger-theme");
+      if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    } catch (e) { /* storage blocked: follow the system theme */ }
+  </script>
+  <link rel="preload" href="ledger/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="ledger/carbon.css" />
+  <link rel="stylesheet" href="ledger/ledger.css" />
+  <link rel="stylesheet" href="ledger/hashscan.css" />
+  <link rel="stylesheet" href="home.css" />
+</head>
+<body class="hm">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="top hm-top">
+    <div class="hm-bar">
+      <a class="brand" href="./" aria-label="VUKA Ledger, home">
+        <svg class="brand-mark" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <circle cx="5" cy="8" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <path d="M8.25 8H14.5M12.5 8v2.5M10.5 8v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+        </svg>
+        <span class="brand-name">VUKA <strong>Ledger</strong></span>
+      </a>
+      <nav class="hm-nav" id="hm-nav" aria-label="Page sections">
+        <a href="#how">How it works</a>
+        <a href="#system">VIGIL app</a>
+        <a href="#banks">For banks and insurers</a>
+        <a href="#security">Security</a>
+      </nav>
+      <button type="button" class="hm-menu" id="hm-menu" aria-expanded="false" aria-controls="hm-nav">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M2 4h12v1.2H2Zm0 3.4h12v1.2H2Zm0 3.4h12V12H2Z" fill="currentColor" /></svg>
+        <span>Menu</span>
+      </button>
+      <a class="cds-btn cds-btn--primary cds-btn--md hm-open" href="ledger/#overview">Open the ledger</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============ HERO ============ -->
+    <section class="hm-hero hm-wrap" aria-labelledby="hero-title">
+      <div class="hm-hero-text">
+        <h1 id="hero-title">Check a safety record without trusting us.</h1>
+        <p class="hm-lede">VIGIL, on the member's phone, records each check-in; every entry is signed and chained to the one before it, and within a minute a fingerprint of every changed record goes onto the public Hedera ledger.</p>
+        <div class="hm-ctas">
+          <a class="cds-btn cds-btn--primary cds-btn--lg" href="ledger/#verify">Verify a record</a>
+          <a class="cds-btn cds-btn--tertiary cds-btn--lg" href="ledger/#overview">See the live ledger</a>
+        </div>
+      </div>
+
+      <aside class="hm-proof" aria-labelledby="proof-title">
+        <div class="hm-proof-head">
+          <h2 id="proof-title">Live from Hedera testnet</h2>
+          <span class="hm-proof-when" id="proof-when">Reading the mirror…</span>
+        </div>
+        <dl class="hm-proof-list">
+          <div class="hm-proof-row">
+            <dt>Topic</dt>
+            <dd>
+              <a class="mono hm-proof-value" id="p-topic" href="https://hashscan.io/testnet/topic/0.0.10687280" target="_blank" rel="noopener noreferrer">0.0.10687280</a>
+              <span class="hm-proof-note" id="p-topic-note">The public topic every record fingerprint is written to.</span>
+            </dd>
+          </div>
+          <div class="hm-proof-row">
+            <dt>Latest record fingerprint</dt>
+            <dd>
+              <span class="hm-proof-status" id="p-root-status"></span>
+              <span class="hm-proof-value" id="p-root">Checking…</span>
+              <span class="hm-proof-note" id="p-root-note">Read from the Hedera mirror node by this browser.</span>
+            </dd>
+          </div>
+          <div class="hm-proof-row">
+            <dt>Key manifest</dt>
+            <dd>
+              <span class="hm-proof-status" id="p-man-status"></span>
+              <span class="hm-proof-value" id="p-man">Checking…</span>
+              <span class="hm-proof-note" id="p-man-note">Hashing the pinned server-key manifest.</span>
+            </dd>
+          </div>
+        </dl>
+        <noscript><p class="hm-proof-note">This panel needs JavaScript to read the mirror. The topic link above works without it.</p></noscript>
+      </aside>
+    </section>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <section class="hm-section hm-wrap" id="how" aria-labelledby="how-title">
+      <header class="hm-section-head">
+        <h2 id="how-title">How it works</h2>
+      </header>
+      <ol class="hm-steps">
+        <li>
+          <span class="hm-step-n">Step 1</span>
+          <h3>Recorded on the phone</h3>
+          <p>VIGIL signs each check-in with a key held on the member's device, and every entry names the hash of the one before it.</p>
+        </li>
+        <li>
+          <span class="hm-step-n">Step 2</span>
+          <h3>Fingerprinted on Hedera</h3>
+          <p>The ANCHOR server writes one 33-byte Merkle root per window of up to a minute to a public Hedera topic, which fixes its time and order.</p>
+        </li>
+        <li>
+          <span class="hm-step-n">Step 3</span>
+          <h3>Checked by anyone</h3>
+          <p>A bank or insurer drops the member's shared record into Verify, and their own browser recomputes every hash and matches the root on Hedera.</p>
+        </li>
+      </ol>
+
+      <figure class="hm-figure">
+        <div class="hm-fig-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways on small screens">
+          <svg viewBox="0 0 960 280" role="img" aria-labelledby="hd-title hd-desc">
+            <title id="hd-title">How a VUKA record reaches Hedera and a bank's files</title>
+            <desc id="hd-desc">The member's phone sends signed entries to the ANCHOR server. The server publishes one Merkle root per window of up to a minute to the Hedera testnet topic 0.0.10687280. The member shares their record with a bank or insurer, whose browser recomputes the root and matches it against the Hedera message.</desc>
+            <defs>
+              <marker id="hm-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0 0 10 5 0 10z" class="hd-rule-fill" />
+              </marker>
+              <marker id="hm-ah-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0 0 10 5 0 10z" class="hd-accent-fill" />
+              </marker>
+            </defs>
+
+            <g class="hd-node">
+              <rect x="20" y="28" width="200" height="76" rx="8" />
+              <text x="120" y="60" class="hd-t">Member phone</text>
+              <text x="120" y="82" class="hd-s">VIGIL · device key</text>
+            </g>
+            <g class="hd-node">
+              <rect x="370" y="28" width="220" height="76" rx="8" />
+              <text x="480" y="60" class="hd-t">ANCHOR server</text>
+              <text x="480" y="82" class="hd-s">a hash chain per member</text>
+            </g>
+            <g class="hd-node">
+              <rect x="720" y="28" width="220" height="76" rx="8" />
+              <text x="830" y="60" class="hd-t">Hedera testnet topic</text>
+              <text x="830" y="82" class="hd-s hd-mono">0.0.10687280</text>
+            </g>
+            <g class="hd-node">
+              <rect x="370" y="180" width="220" height="76" rx="8" />
+              <text x="480" y="212" class="hd-t">Bank or insurer</text>
+              <text x="480" y="234" class="hd-s">verifies in its own browser</text>
+            </g>
+
+            <g class="hd-edge hd-edge-accent">
+              <line x1="220" y1="66" x2="368" y2="66" marker-end="url(#hm-ah-accent)" />
+              <text x="294" y="56" class="hd-lbl">signed entries</text>
+            </g>
+            <g class="hd-edge hd-edge-accent">
+              <line x1="590" y1="66" x2="718" y2="66" marker-end="url(#hm-ah-accent)" />
+              <text x="654" y="56" class="hd-lbl">root per ≤1 min</text>
+              <text x="654" y="88" class="hd-lbl hd-mono">0x01 ‖ root</text>
+            </g>
+            <g class="hd-edge">
+              <path d="M120 104 V218 H368" marker-end="url(#hm-ah)" />
+              <text x="132" y="160" class="hd-lbl hd-left">shares the record</text>
+              <text x="132" y="176" class="hd-lbl hd-left">(member's choice)</text>
+            </g>
+            <g class="hd-edge">
+              <path d="M590 218 H830 V106" marker-end="url(#hm-ah)" />
+              <text x="710" y="194" class="hd-lbl">reads the message,</text>
+              <text x="710" y="210" class="hd-lbl">matches the root</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>The blue path is anchoring: phone to server to Hedera. The record itself travels by hand from the member to the bank, and only a 33-byte fingerprint is public. The full diagram and formulas are in <a href="ledger/#method">Method</a>.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============ THE VUKA SYSTEM ============ -->
+    <section class="hm-section hm-wrap" id="system" aria-labelledby="system-title">
+      <header class="hm-section-head">
+        <h2 id="system-title">The VUKA system</h2>
+        <p class="hm-sub">Three parts, each open to inspection: the member's phone app, the server that anchors records, and this site, where anyone checks them.</p>
+      </header>
+
+      <div class="hm-sys">
+        <!-- VIGIL: the member's phone app. The release asset and page are real; iOS is not built. -->
+        <article class="hm-sys-card" id="vigil" aria-labelledby="vigil-title">
+          <header class="hm-sys-head">
+            <span class="hm-sys-kind">Phone app</span>
+            <h3 id="vigil-title">VIGIL</h3>
+          </header>
+          <p class="hm-sys-text">The member's app: it records each check-in, signs it with a key held on the phone and chains it to the one before, ready to share with a bank or insurer.</p>
+          <div class="hm-sys-get">
+            <div class="hm-sys-get-text">
+              <a class="cds-btn cds-btn--primary cds-btn--md hm-sys-btn" href="https://github.com/LethaboMH14/V.U.KA--Geekulcha/releases/download/vigil-demo/VIGIL.apk" rel="noopener noreferrer">Download for Android</a>
+              <p class="hm-sys-note">A demo build (APK) signed with the team's key. It installs outside the Play Store, so Android asks you to allow installs from your browser.</p>
+              <p class="hm-sys-note">Or scan the code with your Android phone's camera.</p>
+            </div>
+            <svg class="hm-qr" viewBox="0 0 49 49" role="img" aria-label="QR code: download VIGIL for Android" shape-rendering="crispEdges">
+              <rect class="hm-qr-paper" width="49" height="49" />
+              <path class="hm-qr-ink" d="M4 4h7v1h-7zM12 4h2v1h-2zM15 4h3v1h-3zM19 4h4v1h-4zM24 4h1v1h-1zM27 4h2v1h-2zM31 4h2v1h-2zM34 4h1v1h-1zM38 4h7v1h-7zM4 5h1v1h-1zM10 5h1v1h-1zM13 5h2v1h-2zM18 5h4v1h-4zM23 5h1v1h-1zM28 5h1v1h-1zM32 5h1v1h-1zM34 5h3v1h-3zM38 5h1v1h-1zM44 5h1v1h-1zM4 6h1v1h-1zM6 6h3v1h-3zM10 6h1v1h-1zM16 6h1v1h-1zM19 6h1v1h-1zM23 6h3v1h-3zM27 6h3v1h-3zM33 6h4v1h-4zM38 6h1v1h-1zM40 6h3v1h-3zM44 6h1v1h-1zM4 7h1v1h-1zM6 7h3v1h-3zM10 7h1v1h-1zM12 7h2v1h-2zM17 7h1v1h-1zM19 7h1v1h-1zM21 7h3v1h-3zM25 7h2v1h-2zM30 7h1v1h-1zM32 7h2v1h-2zM35 7h1v1h-1zM38 7h1v1h-1zM40 7h3v1h-3zM44 7h1v1h-1zM4 8h1v1h-1zM6 8h3v1h-3zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM17 8h2v1h-2zM20 8h1v1h-1zM22 8h1v1h-1zM25 8h3v1h-3zM29 8h4v1h-4zM35 8h1v1h-1zM38 8h1v1h-1zM40 8h3v1h-3zM44 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h9v1h-9zM22 9h5v1h-5zM28 9h1v1h-1zM30 9h1v1h-1zM32 9h2v1h-2zM35 9h2v1h-2zM38 9h1v1h-1zM44 9h1v1h-1zM4 10h7v1h-7zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h1v1h-1zM32 10h1v1h-1zM34 10h1v1h-1zM36 10h1v1h-1zM38 10h7v1h-7zM12 11h1v1h-1zM17 11h1v1h-1zM21 11h3v1h-3zM25 11h1v1h-1zM27 11h2v1h-2zM33 11h4v1h-4zM4 12h1v1h-1zM8 12h1v1h-1zM10 12h5v1h-5zM16 12h1v1h-1zM18 12h1v1h-1zM21 12h1v1h-1zM23 12h2v1h-2zM26 12h3v1h-3zM30 12h1v1h-1zM33 12h1v1h-1zM36 12h6v1h-6zM44 12h1v1h-1zM7 13h1v1h-1zM11 13h3v1h-3zM15 13h3v1h-3zM19 13h1v1h-1zM22 13h1v1h-1zM27 13h8v1h-8zM38 13h4v1h-4zM4 14h1v1h-1zM6 14h6v1h-6zM15 14h3v1h-3zM20 14h3v1h-3zM26 14h3v1h-3zM30 14h2v1h-2zM36 14h3v1h-3zM40 14h1v1h-1zM44 14h1v1h-1zM8 15h1v1h-1zM11 15h1v1h-1zM13 15h1v1h-1zM15 15h1v1h-1zM17 15h1v1h-1zM21 15h2v1h-2zM25 15h1v1h-1zM27 15h2v1h-2zM30 15h2v1h-2zM33 15h4v1h-4zM38 15h1v1h-1zM40 15h2v1h-2zM4 16h1v1h-1zM6 16h1v1h-1zM9 16h4v1h-4zM18 16h2v1h-2zM21 16h1v1h-1zM25 16h4v1h-4zM32 16h1v1h-1zM36 16h2v1h-2zM39 16h2v1h-2zM43 16h1v1h-1zM4 17h3v1h-3zM9 17h1v1h-1zM11 17h2v1h-2zM17 17h2v1h-2zM21 17h5v1h-5zM29 17h2v1h-2zM33 17h3v1h-3zM37 17h5v1h-5zM43 17h2v1h-2zM5 18h2v1h-2zM10 18h4v1h-4zM15 18h1v1h-1zM20 18h1v1h-1zM22 18h1v1h-1zM24 18h2v1h-2zM29 18h3v1h-3zM33 18h3v1h-3zM37 18h2v1h-2zM40 18h1v1h-1zM44 18h1v1h-1zM7 19h1v1h-1zM13 19h1v1h-1zM17 19h3v1h-3zM21 19h2v1h-2zM25 19h1v1h-1zM28 19h1v1h-1zM31 19h3v1h-3zM35 19h2v1h-2zM40 19h1v1h-1zM44 19h1v1h-1zM7 20h1v1h-1zM9 20h2v1h-2zM12 20h2v1h-2zM20 20h1v1h-1zM23 20h6v1h-6zM33 20h1v1h-1zM36 20h1v1h-1zM39 20h1v1h-1zM8 21h1v1h-1zM12 21h1v1h-1zM14 21h1v1h-1zM18 21h1v1h-1zM25 21h1v1h-1zM27 21h1v1h-1zM29 21h3v1h-3zM33 21h2v1h-2zM37 21h6v1h-6zM4 22h4v1h-4zM10 22h6v1h-6zM17 22h1v1h-1zM19 22h1v1h-1zM21 22h1v1h-1zM24 22h1v1h-1zM27 22h2v1h-2zM31 22h2v1h-2zM34 22h1v1h-1zM36 22h1v1h-1zM38 22h2v1h-2zM41 22h2v1h-2zM44 22h1v1h-1zM5 23h1v1h-1zM7 23h1v1h-1zM12 23h1v1h-1zM14 23h1v1h-1zM17 23h6v1h-6zM24 23h1v1h-1zM26 23h2v1h-2zM30 23h2v1h-2zM35 23h3v1h-3zM39 23h1v1h-1zM41 23h1v1h-1zM44 23h1v1h-1zM5 24h2v1h-2zM8 24h1v1h-1zM10 24h1v1h-1zM12 24h1v1h-1zM14 24h1v1h-1zM18 24h2v1h-2zM22 24h1v1h-1zM26 24h5v1h-5zM35 24h2v1h-2zM41 24h1v1h-1zM43 24h2v1h-2zM4 25h3v1h-3zM8 25h1v1h-1zM13 25h1v1h-1zM16 25h1v1h-1zM19 25h2v1h-2zM25 25h1v1h-1zM27 25h1v1h-1zM32 25h3v1h-3zM36 25h1v1h-1zM38 25h4v1h-4zM44 25h1v1h-1zM5 26h1v1h-1zM8 26h3v1h-3zM13 26h1v1h-1zM15 26h3v1h-3zM19 26h1v1h-1zM24 26h2v1h-2zM27 26h5v1h-5zM33 26h1v1h-1zM36 26h1v1h-1zM38 26h4v1h-4zM44 26h1v1h-1zM4 27h3v1h-3zM8 27h2v1h-2zM11 27h1v1h-1zM13 27h1v1h-1zM18 27h1v1h-1zM21 27h1v1h-1zM23 27h6v1h-6zM31 27h1v1h-1zM33 27h2v1h-2zM36 27h3v1h-3zM40 27h2v1h-2zM5 28h1v1h-1zM8 28h1v1h-1zM10 28h4v1h-4zM21 28h1v1h-1zM24 28h3v1h-3zM28 28h1v1h-1zM31 28h3v1h-3zM35 28h3v1h-3zM41 28h3v1h-3zM5 29h1v1h-1zM7 29h3v1h-3zM11 29h1v1h-1zM14 29h4v1h-4zM19 29h4v1h-4zM25 29h1v1h-1zM27 29h1v1h-1zM29 29h4v1h-4zM36 29h1v1h-1zM38 29h1v1h-1zM40 29h1v1h-1zM42 29h1v1h-1zM4 30h4v1h-4zM10 30h2v1h-2zM13 30h3v1h-3zM19 30h1v1h-1zM21 30h2v1h-2zM25 30h4v1h-4zM30 30h4v1h-4zM36 30h3v1h-3zM40 30h1v1h-1zM44 30h1v1h-1zM4 31h2v1h-2zM8 31h1v1h-1zM11 31h1v1h-1zM14 31h2v1h-2zM19 31h3v1h-3zM24 31h3v1h-3zM28 31h1v1h-1zM30 31h10v1h-10zM41 31h1v1h-1zM44 31h1v1h-1zM4 32h1v1h-1zM6 32h1v1h-1zM10 32h1v1h-1zM13 32h2v1h-2zM16 32h1v1h-1zM18 32h1v1h-1zM20 32h2v1h-2zM23 32h5v1h-5zM31 32h1v1h-1zM33 32h2v1h-2zM36 32h2v1h-2zM44 32h1v1h-1zM4 33h1v1h-1zM11 33h2v1h-2zM16 33h3v1h-3zM22 33h2v1h-2zM28 33h1v1h-1zM30 33h1v1h-1zM32 33h5v1h-5zM38 33h1v1h-1zM40 33h3v1h-3zM44 33h1v1h-1zM7 34h2v1h-2zM10 34h1v1h-1zM12 34h4v1h-4zM19 34h2v1h-2zM22 34h2v1h-2zM25 34h1v1h-1zM27 34h2v1h-2zM32 34h1v1h-1zM34 34h1v1h-1zM36 34h2v1h-2zM39 34h1v1h-1zM41 34h1v1h-1zM44 34h1v1h-1zM7 35h1v1h-1zM9 35h1v1h-1zM13 35h1v1h-1zM16 35h6v1h-6zM23 35h5v1h-5zM30 35h1v1h-1zM33 35h3v1h-3zM37 35h1v1h-1zM44 35h1v1h-1zM4 36h3v1h-3zM10 36h2v1h-2zM13 36h1v1h-1zM15 36h1v1h-1zM19 36h1v1h-1zM24 36h3v1h-3zM28 36h1v1h-1zM31 36h1v1h-1zM33 36h1v1h-1zM36 36h5v1h-5zM43 36h1v1h-1zM12 37h2v1h-2zM15 37h1v1h-1zM17 37h2v1h-2zM20 37h3v1h-3zM27 37h1v1h-1zM30 37h3v1h-3zM34 37h1v1h-1zM36 37h1v1h-1zM40 37h1v1h-1zM42 37h1v1h-1zM4 38h7v1h-7zM12 38h1v1h-1zM15 38h2v1h-2zM19 38h2v1h-2zM22 38h1v1h-1zM24 38h8v1h-8zM33 38h1v1h-1zM35 38h2v1h-2zM38 38h1v1h-1zM40 38h2v1h-2zM44 38h1v1h-1zM4 39h1v1h-1zM10 39h1v1h-1zM18 39h2v1h-2zM24 39h2v1h-2zM28 39h2v1h-2zM31 39h6v1h-6zM40 39h2v1h-2zM4 40h1v1h-1zM6 40h3v1h-3zM10 40h1v1h-1zM12 40h3v1h-3zM17 40h3v1h-3zM23 40h2v1h-2zM29 40h1v1h-1zM34 40h7v1h-7zM43 40h2v1h-2zM4 41h1v1h-1zM6 41h3v1h-3zM10 41h1v1h-1zM13 41h1v1h-1zM16 41h1v1h-1zM18 41h3v1h-3zM22 41h1v1h-1zM24 41h1v1h-1zM26 41h2v1h-2zM29 41h3v1h-3zM39 41h1v1h-1zM43 41h1v1h-1zM4 42h1v1h-1zM6 42h3v1h-3zM10 42h1v1h-1zM13 42h2v1h-2zM19 42h1v1h-1zM21 42h2v1h-2zM24 42h2v1h-2zM27 42h3v1h-3zM31 42h1v1h-1zM33 42h5v1h-5zM44 42h1v1h-1zM4 43h1v1h-1zM10 43h1v1h-1zM18 43h2v1h-2zM21 43h1v1h-1zM25 43h1v1h-1zM30 43h2v1h-2zM33 43h1v1h-1zM35 43h1v1h-1zM39 43h1v1h-1zM43 43h2v1h-2zM4 44h7v1h-7zM12 44h1v1h-1zM19 44h5v1h-5zM25 44h4v1h-4zM31 44h1v1h-1zM33 44h1v1h-1zM36 44h1v1h-1zM38 44h4v1h-4zM43 44h1v1h-1z" />
+            </svg>
+          </div>
+          <p class="hm-sys-note hm-sys-ios"><strong>iPhone:</strong> Android only for now. An iPhone version needs an iOS build and Apple's TestFlight review; it isn't available yet.</p>
+          <ul class="hm-sys-links">
+            <li><a href="https://github.com/LethaboMH14/V.U.KA--Geekulcha/releases/tag/vigil-demo" target="_blank" rel="noopener noreferrer">All releases</a></li>
+          </ul>
+        </article>
+
+        <!-- ANCHOR: the server. Its status is read live from GET /healthz by home.js. -->
+        <article class="hm-sys-card" id="anchor" aria-labelledby="anchor-title">
+          <header class="hm-sys-head">
+            <span class="hm-sys-kind">Server</span>
+            <h3 id="anchor-title">ANCHOR</h3>
+          </header>
+          <p class="hm-sys-text">The server that keeps a hash chain per member and writes one Merkle root per window of up to a minute to the public Hedera topic.</p>
+          <dl class="hm-sys-kv">
+            <div>
+              <dt>Status</dt>
+              <dd>
+                <span class="hm-proof-status" id="a-health-status"></span>
+                <span class="hm-proof-value" id="a-health">Checking…</span>
+                <span class="hm-proof-note" id="a-health-note">Asking GET /healthz from this browser.</span>
+              </dd>
+            </div>
+            <div>
+              <dt>Address</dt>
+              <dd class="mono hm-sys-host">vuka-anchor-server.azurewebsites.net</dd>
+            </div>
+          </dl>
+          <noscript><p class="hm-sys-note">The live status needs JavaScript.</p></noscript>
+          <ul class="hm-sys-links">
+            <li><a href="https://github.com/LethaboMH14/V.U.KA--Geekulcha/blob/main/contracts/openapi.yaml" target="_blank" rel="noopener noreferrer">API contract (OpenAPI)</a></li>
+            <li><a href="https://github.com/LethaboMH14/V.U.KA--Geekulcha/tree/main/server" target="_blank" rel="noopener noreferrer">Server source on GitHub</a></li>
+          </ul>
+        </article>
+
+        <!-- Ledger: this site. -->
+        <article class="hm-sys-card" id="ledger-site" aria-labelledby="ledger-site-title">
+          <header class="hm-sys-head">
+            <span class="hm-sys-kind">This site</span>
+            <h3 id="ledger-site-title">Ledger</h3>
+          </header>
+          <p class="hm-sys-text">Where a bank, an insurer or anyone else checks a shared record: their own browser recomputes every hash and matches the root on Hedera.</p>
+          <div class="hm-sys-actions">
+            <a class="cds-btn cds-btn--primary cds-btn--md hm-sys-btn" href="ledger/#overview">Open the ledger</a>
+            <a class="cds-btn cds-btn--tertiary cds-btn--md hm-sys-btn" href="ledger/#verify">Verify a record</a>
+          </div>
+          <ul class="hm-sys-links">
+            <li><a href="https://hashscan.io/testnet/topic/0.0.10687280" target="_blank" rel="noopener noreferrer">Topic on HashScan</a></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ BANKS AND INSURERS ============ -->
+    <section class="hm-section hm-wrap" id="banks" aria-labelledby="banks-title">
+      <header class="hm-section-head">
+        <h2 id="banks-title">For banks and insurers</h2>
+        <p class="hm-sub">A member's record reaches you as a file. You check it yourself, in your browser, against a public ledger we cannot edit.</p>
+      </header>
+
+      <dl class="hm-kv">
+        <div>
+          <dt>What you receive</dt>
+          <dd>A record the member chooses to share from VIGIL, under Settings → My record → Share with a bank or insurer. It is one JSON file.</dd>
+        </div>
+        <div>
+          <dt>What you do</dt>
+          <dd>Open Verify and drop the file. Your browser recomputes every hash and signature and checks the root on Hedera. Nothing is uploaded.</dd>
+        </div>
+        <div>
+          <dt>What you file</dt>
+          <dd>The fingerprint: the Merkle root, the chain head, the topic, the sequence number and the consensus time. Anyone can check it against the public topic later.</dd>
+        </div>
+      </dl>
+
+      <div class="hm-proves">
+        <div>
+          <h3 id="proves-title">A match proves</h3>
+          <ul aria-labelledby="proves-title">
+            <li>These exact entries existed, in this order, no later than the topic's consensus time.</li>
+            <li>Each entry was signed by the key registered for it, and the server key is the pinned one.</li>
+            <li>Nobody has edited, removed or reordered an entry since.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 id="not-proves-title">It does not prove</h3>
+          <ul aria-labelledby="not-proves-title">
+            <li>That the event was real. A signature shows a key was used, not what a microphone heard.</li>
+            <li>That nothing is missing from before the export, or that a compromised server sent every alert.</li>
+            <li>Permanence on testnet. Hedera resets testnet; a re-anchor after a reset is a later record under a new epoch.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p><a class="cds-btn cds-btn--primary cds-btn--lg" href="ledger/#verify">Verify a record</a></p>
+    </section>
+
+    <!-- ============ PRIVACY AND DURESS ============ -->
+    <section class="hm-section hm-wrap" id="privacy" aria-labelledby="privacy-title">
+      <header class="hm-section-head">
+        <h2 id="privacy-title">Privacy and duress</h2>
+      </header>
+      <p class="hm-note">A duress PIN is recorded inside a signed commitment, so the chain shows only a hash. The public topic shows at most one root per minute, so anyone watching sees that something happened in that minute, never whether it was a duress check-in or a normal one. Nothing personal goes on-chain: each Hedera message is a type byte and a 32-byte fingerprint.</p>
+    </section>
+
+    <!-- ============ SECURITY ============ -->
+    <section class="hm-section hm-wrap" id="security" aria-labelledby="security-title">
+      <header class="hm-section-head">
+        <h2 id="security-title">Security</h2>
+        <p class="hm-sub">Everything that makes the checks work is open to inspection.</p>
+      </header>
+      <ul class="hm-links">
+        <li>
+          <a id="score-link" href="../security.html" data-scorecard>Security scorecard</a>
+          <span id="score-note">The repository's security controls, weighted, and how much of that weight a passing test backs.</span>
+        </li>
+        <li>
+          <a href="https://github.com/LethaboMH14/V.U.KA--Geekulcha" target="_blank" rel="noopener noreferrer">Source code on GitHub</a>
+          <span>VIGIL, the ANCHOR server, the shared verification code and this site.</span>
+        </li>
+        <li>
+          <a href="ledger/#method">Method</a>
+          <span>The diagram, the exact formulas your browser reruns, and what a match proves.</span>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="foot hm-foot">
+    <div class="hm-wrap hm-foot-inner">
+      <div class="hm-foot-notes">
+        <p>The ledger is Hedera testnet, which Hedera resets from time to time.</p>
+        <p><span class="mono">sim_</span> subjects and <span class="mono">sim_bank</span> are SIMULATED.</p>
+        <p><a href="https://github.com/LethaboMH14/V.U.KA--Geekulcha" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
+        <p>Fonts: Inter, Geist Mono, IBM Plex — SIL OFL 1.1.</p>
+      </div>
+      <nav class="hm-foot-col" aria-labelledby="foot-products">
+        <h2 id="foot-products">Products</h2>
+        <ul>
+          <li><a href="#vigil">VIGIL</a></li>
+          <li><a href="#anchor">ANCHOR</a></li>
+          <li><a href="ledger/#overview">Ledger</a></li>
+          <li><a href="../security.html" data-scorecard>Security scorecard</a></li>
+        </ul>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="./home.js"></script>
+</body>
+</html>

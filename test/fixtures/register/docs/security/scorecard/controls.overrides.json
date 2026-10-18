@@ -1,0 +1,18 @@
+{
+  "C-01": {
+    "category": "Fixture category",
+    "mechanism": "Fixture mechanism",
+    "extra_tests": [],
+    "ci_jobs": [],
+    "review_links": [],
+    "external": []
+  },
+  "C-123": {
+    "category": "Three digit category",
+    "mechanism": "Preserved mechanism",
+    "extra_tests": ["PT-88"],
+    "ci_jobs": ["security-score"],
+    "review_links": ["docs/reviews/fixture.md"],
+    "external": ["https://example.test/report"]
+  }
+}

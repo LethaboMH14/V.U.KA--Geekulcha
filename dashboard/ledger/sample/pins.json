@@ -1,0 +1,9 @@
+{
+  "sample": true,
+  "note": "SAMPLE pins for tests: the real pinned topic, but the fingerprint of sample/manifest.json (a generated server key).",
+  "network": "testnet",
+  "topic_id": "0.0.10687280",
+  "topic_epoch": 1,
+  "manifest_fingerprint_hex": "594d900d327c0e0d25e10788b8f0e5c57704f08eab3c8aa696699de6e722de17",
+  "manifest_serialization": "canonical-json v2 (docs/VUKA-2-SPEC.md §5, via shared/canonical.js)"
+}
