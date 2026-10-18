@@ -62,3 +62,32 @@ Recheck command and date: `osv-scanner scan source --recursive .` on each releas
 Required code-owner approvals: Vukosi or Mutarisi (app), and the security lead (Ipeleng)
 ```
 
+```text
+ID: SCA-W2
+Advisory: GHSA-vfj7-8cjw-p6xm (braces 3.0.3, CVSS 8.7);
+          GHSA-86w9-cpqp-85rv (node-forge 1.4.0, CVSS 8.7);
+          GHSA-hp3w-g68c-fv3c (sprintf-js 1.1.3, CVSS 6.9).
+          OSV-Scanner v2.6.0 reports no fixed version for any of the three on 14 Oct 2026, and each
+          is already the newest published release.
+Package and affected version: braces 3.0.3 (via babel-jest > @jest/transform > micromatch 4.0.8);
+          node-forge 1.4.0 (via react-native > @react-native/community-cli-plugin > @react-native/dev-middleware > selfsigned 2.4.1);
+          sprintf-js 1.1.3 (via metro-config > cosmiconfig 5.2.1 > js-yaml 3.15.2 > argparse 1.0.10).
+Manifest/lockfile: app/package-lock.json
+Owner: Lethabo and Sibusiso (the two leads)
+Impact and exploitability: The dependency paths above were read with `npm ls --all` in app/. All
+  three packages are reached only through test or build tooling (the Jest transformer, Metro's
+  development server and Metro's config loader). None is imported by VIGIL's own code, and none is
+  bundled into the APK. The three advisory texts could NOT be read when this waiver was written
+  (osv.dev was unreachable from the authoring environment), so the exploitability claim rests on
+  the dependency paths, not on the advisories. THE APPROVERS MUST READ THE THREE ADVISORIES
+  BEFORE APPROVING THIS WAIVER.
+Mitigation: Each package processes input from this repository's own files on a developer or CI
+  machine; none processes network or user input in the shipped app. The IDs are ignored only for
+  app/ (app/osv-scanner.toml) and only until the expiry below. Run the Metro development server
+  only on trusted networks.
+Expiry: 2026-11-15
+Recheck command and date: `osv-scanner scan source --recursive .` on each release and at the
+  expiry; upgrade braces, node-forge or sprintf-js (or the packages that pull them in) as soon as
+  a fixed version exists.
+Required code-owner approvals: Lethabo and Sibusiso (both leads)
+```

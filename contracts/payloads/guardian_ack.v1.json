@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vuka.example/contracts/payloads/guardian_ack.v1.json",
+  "title": "guardian_ack payload, pv 1 (PROPOSED, docs/VUKA-2-SPEC.md §3 G5)",
+  "description": "Committed private payload of a guardian_ack event: a guardian's signed response to an alert. Submitted via POST /v1/events (superseding the non-chain POST /v1/alerts/{id}/ack in the contract, PROPOSED 25 Sep), because §3's table classifies guardian_ack as a chain-anchored guardian_event and a bare signed statement cannot become a hash-chained entry outside /v1/events. Numeric fields are integers (spec §5). Adding a field is a pv bump.",
+  "type": "object",
+  "required": [
+    "kind",
+    "pv",
+    "incident_id",
+    "action"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "guardian_ack"
+    },
+    "pv": {
+      "const": 1
+    },
+    "incident_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "The incident this acknowledgement responds to; must belong to the target subject."
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "called_10111",
+        "handling",
+        "stand_down"
+      ],
+      "description": "G5. stand_down closes the incident (§8) and cancels a pending non-duress bank signal (S1, ADR-0037); it can never cancel a duress-triggered one. called_10111 and handling are recorded with no further server effect."
+    }
+  },
+  "examples": [
+    {
+      "kind": "guardian_ack",
+      "pv": 1,
+      "incident_id": "7c1d3f0e-5b2a-4c8e-9a61-2f4d8e0b1c33",
+      "action": "stand_down"
+    }
+  ]
+}

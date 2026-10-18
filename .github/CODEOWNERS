@@ -1,55 +1,12 @@
-# CODEOWNERS — GitHub auto-requests these people as reviewers when a PR touches
-# a matching path. This replaces manually remembering / typing --add-reviewer.
-# Reference: RULES.md "Lethabo is first reviewer for Mutarisi, Ipeleng, Babatunde
-# and Vukosi (from 23 Sep); Sibusiso for Khutso. Both remain final reviewers."
+# CODEOWNERS: GitHub auto-requests these people as reviewers when a PR touches
+# a matching path.
 #
-# Rules: LAST matching pattern wins, so general rules go first, overrides after.
-# CODEOWNERS fails SILENTLY on a bad username, a team with no members, or an
-# owner without write access — no error, the review request just never fires.
-# Verify this actually works by opening one real PR per owner after this merges
-# (docs/build-log/README.md's "what did NOT move" also applies here: this file
-# needs a working test, not just an unread commit).
+# From 18 Oct 2026 the team working on this repository is the two leads:
+# Lethabo (@LethaboMH14) and Sibusiso (@Sibusiso-K). Every path is reviewed by
+# both. Earlier per-person first-reviewer and domain-reviewer entries (Mutarisi,
+# Ipeleng, Babatunde, Vukosi, Khutso) were removed; see git history for them.
+#
+# CODEOWNERS fails SILENTLY on a bad username or an owner without write access:
+# the review request just never fires. Check that a real PR gets both requests.
 
-# Default: both leads see everything
-*                                   @LethaboMH14 @Sibusiso-K
-
-# Lethabo's first-review people
-team/mutarisi.md                   @LethaboMH14 @mutarisi-chibaya
-team/ipeleng.md                    @LethaboMH14 @Ipeleng-Modise
-team/babatunde.md                  @LethaboMH14 @tunde3zy-commits
-docs/RICA-POSITION.md              @LethaboMH14 @Ipeleng-Modise
-docs/POPIA-IO-REGISTRATION.md      @LethaboMH14 @Ipeleng-Modise
-docs/LEAN-CANVAS.md                @LethaboMH14 @tunde3zy-commits
-docs/SONKE-OVERVIEW.md             @LethaboMH14 @tunde3zy-commits
-docs/COMPETITORS.md                @LethaboMH14 @tunde3zy-commits
-docs/ECONOMICS-VIGIL-ANCHOR.md     @LethaboMH14 @tunde3zy-commits
-scripts/economics_vigil_anchor.py  @LethaboMH14 @tunde3zy-commits
-docs/STAGED-DURESS-DEFENCE.md      @LethaboMH14 @Ipeleng-Modise
-team/vukosi.md                     @LethaboMH14 @KhozaVu
-
-# Sibusiso's first-review people
-team/khutso.md                     @Sibusiso-K @KhutsoMothopa
-docs/EVIDENCE.md                   @Sibusiso-K @KhutsoMothopa
-docs/CHECKLIST.md                  @Sibusiso-K @KhutsoMothopa
-docs/MASTER-CONTEXT.md             @Sibusiso-K @KhutsoMothopa
-docs/build-log/                    @Sibusiso-K @KhutsoMothopa
-
-# Contract / security / governance — needs Ipeleng or the contract owner
-# PLUS both leads per RULES.md's stricter bar. GitHub only auto-requests;
-# it can't enforce "both leads AND domain owner" as a single AND rule, so
-# branch protection's "require review from code owners" plus this list is
-# the closest native approximation — the rest is still on us to check.
-contracts/                         @Sibusiso-K @LethaboMH14 @Ipeleng-Modise
-docs/adr.md                        @Sibusiso-K @LethaboMH14
-docs/OVERLAPS.md                   @Sibusiso-K @LethaboMH14
-
-# Architecture / product — Lethabo owns
-app/                               @LethaboMH14 @KhozaVu @mutarisi-chibaya
-dashboard/                         @LethaboMH14 @mutarisi-chibaya @Ipeleng-Modise
-shared/                            @Sibusiso-K @LethaboMH14 @Ipeleng-Modise
-anchor/                            @Sibusiso-K @LethaboMH14
-docs/VUKA-2-SPEC.md                @LethaboMH14 @Sibusiso-K
-RULES.md                           @LethaboMH14 @Sibusiso-K
-AGENTS.md                          @LethaboMH14 @Sibusiso-K
-server/                            @Sibusiso-K @LethaboMH14 @Ipeleng-Modise
-archive/                           @LethaboMH14 @Sibusiso-K
+*    @LethaboMH14 @Sibusiso-K
