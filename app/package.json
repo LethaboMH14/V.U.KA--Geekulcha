@@ -43,6 +43,8 @@
     "node": ">=18"
   },
   "overrides": {
-    "fast-xml-parser": "^5.7.0"
+    "fast-xml-parser": "^5.7.0",
+    "@grpc/grpc-js": "^1.13.6",
+    "sprintf-js": "^1.1.3"
   }
 }

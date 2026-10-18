@@ -21,5 +21,5 @@ What changed for a household, operator or reviewer:
 - [ ] Personal file and BUILD-LOG updated
 - [ ] Lethabo review recorded
 - [ ] Sibusiso review recorded
-- [ ] Nonauthor domain/security review where required; no self-approval
+- [ ] Other lead's review recorded; no self-approval (security/contract changes: both leads)
 - [ ] Built/sim_/specified labels match actual evidence
