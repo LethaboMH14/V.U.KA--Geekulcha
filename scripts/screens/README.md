@@ -31,3 +31,7 @@ node showcase.cjs        # opens a phone-sized window, runs the test onboarding,
 ```
 
 On Home, **Preview: show a check-in** opens a check-in. Test PINs: normal 1357, duress 2468. **Settings → Guardian view** shows what a guardian sees. A page reload clears the in-memory state; run `showcase.cjs` again. `showcase-web/` is a build output: don't commit it.
+
+## Journey recording (for slide videos)
+
+`record-journey.cjs` records the Thandi journey through the simulated preview at 1920×1080, with captions beside the phone. It is a browser recording, not a phone recording, and the title and end cards say so. Trim the set-up using `setupEndMs` in `timings.json`, then join title, clip and end card with ffmpeg (see the commit that added this file for the exact steps).
