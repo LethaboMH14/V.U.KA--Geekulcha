@@ -17,6 +17,7 @@
 | `vigil-checkin-guardian-2up.png` | Check-in and guardian view | Same caveats |
 | `dash-banks.png` | Dashboard home, "For banks and insurers" | Rendered from `dashboard/index.html` |
 | `dash-verify.png` | Ledger Verify view, waiting for a record | The red "Hedera testnet" chip means the mirror was unreachable from the sandbox (proxy denied `testnet.mirrornode.hedera.com`); no live data shown |
+| `*-dark.png` | Navy variants of the Home and the check-in + guardian composites, for the investor deck | Same caption baked in |
 | `raw/` | The uncomposed screenshots | 824 × 1784 (phone, 412 × 892 at 2×) and 2560 × 1600 (dashboard, 1280 × 800 at 2×) |
 
 **Not captured:** the guardian invite (it needs the server even in preview: "VIGIL's server couldn't be reached"); the live ledger (no route to Hedera); any device-only behaviour.

@@ -79,3 +79,27 @@ caption_band(b, DCAP, size=30).save(out + 'dash-banks.png', optimize=True)
 v = Image.open(shots + 'dash-verify.png').convert('RGB')
 caption_band(v, DCAP + ' The red "Hedera testnet" chip shows the mirror was unreachable from here.', size=30).save(out + 'dash-verify.png', optimize=True)
 print('ok')
+
+# Dark variants for the navy investor deck (background #061426, light text). Same caveat.
+NAVY, LIGHT, DIM = (6, 20, 38), (241, 241, 241), (170, 182, 198)
+
+def single_dark(name, src, label):
+    ph = framed(shots + src, 620)
+    W = ph.width + 80
+    canvas = Image.new('RGBA', (W, ph.height + 110), NAVY + (255,))
+    canvas.paste(ph, (40, 30), ph)
+    d = ImageDraw.Draw(canvas)
+    d.text((W // 2, ph.height + 60), label, font=font('IBMPlexSans-SemiBold.ttf', 28), fill=LIGHT, anchor='mm')
+    caption_band(canvas.convert('RGB'), CAP, bg=NAVY, fg=DIM, size=20).save(out + name, optimize=True)
+
+single_dark('vigil-home-framed-dark.png', 'vigil-home.png', 'VIGIL, Active')
+pair = [framed(shots + 'vigil-checkin.png', 560), framed(shots + 'vigil-guardian-alert.png', 560)]
+labels = ['A sound opens a check-in', 'Guardian view (preview)']
+W = sum(p.width for p in pair) + gap * 3
+canvas = Image.new('RGBA', (W, pair[0].height + 120), NAVY + (255,)); d = ImageDraw.Draw(canvas); x = gap
+for p, lab in zip(pair, labels):
+    canvas.paste(p, (x, 30), p)
+    d.text((x + p.width // 2, p.height + 75), lab, font=font('IBMPlexSans-SemiBold.ttf', 30), fill=LIGHT, anchor='mm')
+    x += p.width + gap
+caption_band(canvas.convert('RGB'), CAP, bg=NAVY, fg=DIM, size=24).save(out + 'vigil-checkin-guardian-2up-dark.png', optimize=True)
+print('dark ok')
