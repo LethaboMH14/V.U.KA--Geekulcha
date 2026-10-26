@@ -92,7 +92,7 @@ That is a coerced transfer. South Africa recorded **17,061 kidnappings in 2023/2
 
 | Model | Break-even at R20 | Where |
 |---|---|---|
-| `main` (`scripts/economics_vigil_anchor.py`) | **10,901** | `docs/MASTER-CONTEXT.md` §8 |
+| `main` (`scripts/economics_vigil_anchor.py`) | **10,973** (re-run 25 Oct 2026; 10,901 was an earlier `main` figure) | `docs/MASTER-CONTEXT.md` §8 |
 | War-room branch (itemised costs) | **10,973** | the Caplia/Figma deck. **`scripts/build_financial_model.py`, already on `main`, also uses these inputs**, so `main` holds two conflicting models; its funding label "TIA grant + angel target" echoes the unsourced canvas figures (§8) |
 | Canvas branch (R50 price) | 3,774 at R50 | superseded by the R20 decision |
 

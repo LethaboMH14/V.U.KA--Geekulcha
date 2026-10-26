@@ -165,7 +165,7 @@ Ordered by how much harm they could do.
 
 ## 6 · Judges' deck: draft outline (10 slides)
 
-Built in Canva as a separate design from the investor deck, once you approve this outline. Every figure carries its tag.
+**Built 26 Oct** as a separate Canva design, `DAHZIXLh5mk` ("VUKA Judges Pitch"), from this outline. Canva's generator dropped every claim tag, wrote "Building trusted partnerships" on slide 9, lost "not measured yet" on slide 8 and drew a phone labelled "journey mode" on slide 4. Corrections are **staged in an open Canva transaction, not saved**, until Sibusiso approves the preview: tags and sources restored as footnotes on slides 2 and 4–8; slide 3 shows the real 4-screen strip (`assets/screens-2026-10-26/vigil-journey-4up.png`); slide 4 the real Home screen; slide 5 the real Verify view; slide 8 retitled "Service levels (proposed)" with "no live baseline; unmeasured counts as missed"; slide 9 "No endorsement and no SAPS contact yet" with the candidate NGOs named as candidates; slide 10 the not-measured and never-claimed lists. Every figure carries its tag.
 
 | # | Slide | Content (tagged) | Criteria |
 |---|---|---|---|
@@ -186,7 +186,7 @@ Built in Canva as a separate design from the investor deck, once you approve thi
 
 ## 7 · Investor deck: proposed changes (needs your approval before any Canva edit)
 
-Edits to `DAHY_VcrKis` are not made yet. Each is a Canva transaction that needs a preview and your approval before commit.
+**Status 26 Oct:** items 1, 2, 3, 5, 6, 7 and 8 are **staged in an open Canva transaction on `DAHY_VcrKis`, not saved**, pending Sibusiso's approval of the preview. Slides 1 and 5 now show the real screens (navy variants, caption baked in) and the stock photo is covered by the deck navy; slide 5 says "Tamper-evident"; slide 8 shows 10,973 at R20 with its tag; two new slides sit after Go-to-market: "Lawful, comfortable, community-first" (items 6 and 7) and "Service levels and the launch plan" (items 5 and 8). The deck becomes 12 slides. Items 4 and 9 are unchanged by design.
 
 1. **Replace the two stock phone mock-ups** (slides 1 and 5) with real screenshots. **Blocked:** no screenshots in this sandbox (§4).
 2. **Slide 5 "Tamper-proof by design"** → "Tamper-evident: a record can't be backdated or quietly edited without detection." (`MASTER-CONTEXT` §6.)
