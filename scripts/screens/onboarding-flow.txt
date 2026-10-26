@@ -1,0 +1,24 @@
+click:Get started
+click:I agree to the Terms and the Privacy notice
+click:Sign up with email
+fill:0:demo@example.com
+fill:1:demo-pass-123
+fill:2:demo-pass-123
+click:Continue
+click:Skip for now
+fill:0:123456
+wait:800
+fill:0:Demo
+fill:1:Member
+click:Continue
+click:Continue
+keys:1357
+wait:600
+keys:1357
+wait:600
+keys:2468
+wait:600
+keys:2468
+wait:1200
+click:Create my record
+wait:2500

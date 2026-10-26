@@ -10,7 +10,7 @@
 
 - **The B2B direction (point 1) is the best-supported point.** The investor deck, the 3-minute pitch and `01-B2B-ENTERPRISE.md` all say "partner pays per member". Nothing yet shows an integration surface, a named bank or insurer team, or a signed letter of intent.
 - **Points 2 (SAPS and NGOs) and 4 (SLA) are missing from every pitch artefact.** The plans exist (`02`, `04`), but no deck slide, pitch line or judges' slide carries them. The investor deck has no SLA slide and no SAPS/NGO slide.
-- **Point 3 (lawful, comfortable distress signals) is partly answered.** "No audio stored" and "label and score only" are consistent everywhere. "Listening only after Activate" is consistent in the pitches but **contradicted** by the Sonke fields ("Always on after set-up"). The listening model is an open decision (D7).
+- **Point 3 (lawful, comfortable distress signals) is partly answered.** "No audio stored" and "label and score only" are consistent everywhere. The app as built listens from Activate until the member deactivates it, and its own Home screen says "all the time" (ADR-0046). That contradicts the honesty ledger's "never say always on" (`MASTER-CONTEXT` §6). The listening model is an open decision (D7).
 - **Point 5 (two pitches) is half done.** The investor deck exists. The judges' deck did not exist before today (see §6 for the draft outline).
 - **Point 6 (launch) is missing from the decks.** `06-LAUNCH-ROADMAP.md` has dated phases, but the investor deck's only launch content is a "90 days / 5,000 members / three partners" line.
 - **The most urgent conflict is in the Sonke submission fields, not the pitches:** they say the server is live on Azure and that root #8 is LIVE-VERIFIED. The repository says there has been no company-controlled server since 15 Oct (`06-LAUNCH-ROADMAP.md` §0, `04-SLA.md` §4.1). That text must not go to the FNB submission (due 26 Oct 23:59 SAST, per your message) until it is corrected.
@@ -76,9 +76,9 @@ Legend: ✅ matches · ⚠️ partial · ❌ contradicts · ⬜ missing.
 | App | ⚠️ | The account screen says listening starts and pauses with a user action; the detail depends on the listening model in `03` §6 |
 | Plan (`03`) | ✅ | Full analysis; **D7 still open** (listening until paused, ADR-0046, versus journey mode as default) |
 
-**Contradictions to resolve:**
-1. "Always on" (Sonke) versus "listening only after Activate" (5-minute pitch). Pick one after D7 is decided. Until then, use "listens while you have Journey mode on" and say that D7 is open.
-2. **Location.** The 5-minute pitch Part 2 (Privacy) says "This build doesn't share location. Don't claim it." The app's guardian screen shows a map when the alert has a location (`app/src/ui/guardian.tsx` lines 690–695; `app/src/ui/map.tsx`), and `app/src/ui/account.tsx` describes location "sent for 30 minutes after a check-in (PROPOSED, ADR-0048)". The Sonke fields say "a map of the phone's location during the alert". **Conflict, not resolved from the repository.** Check on a device before any privacy line about location goes out.
+**Contradictions to resolve** (updated 26 Oct after rendering the real UI, `assets/screens-2026-10-26/`):
+1. **"Always on" is the shipped app's own wording.** The Home screen says "Active · Listening on this phone, all the time. If it hears trouble, it asks for your PIN", and the intro says "It listens on this phone while VIGIL is active — never when you have deactivated it" (`FACT`, rendered from `app/src/ui/` on 26 Oct). That is ADR-0046 (listening until paused). So the Sonke "Always on after set-up" matches the app, and the pitches' "after Activate" is also accurate (Activate once, then it stays on). The real conflict is between **the app as built** and **`MASTER-CONTEXT` §6**, which says never "always on", say "journey mode". D7 decides which one changes. Until then, say "listens from Activate until you deactivate it", which is what the app does, and don't say "journey mode" about this build.
+2. **Location: resolved, the 5-minute pitch line is stale.** The app asks for location as optional ("Location · optional — shares a fix with guardians if you don't answer a check-in"). After a check-in, Home says "this phone sends its location until [time]. Your guardians see it only if they were alerted". The guardian onboarding says "a location fix if one was shared — never your day-to-day movement" (`FACT`, rendered 26 Oct; also `app/src/ui/guardian.tsx` lines 690–695, `app/src/ui/account.tsx`, ADR-0048 `PROPOSED`). The 5-minute pitch's "This build doesn't share location" must be corrected. The privacy line becomes: "Location is optional. If you allow it, a fix is shared with your guardians only after a check-in, and they see it only if they were alerted."
 
 **Missing:** a sentence on the lawful basis (RICA party exception, counsel reviewing; `05` §6), and a sentence on comfort (the member can see listening, can stop it, and the detection is on the phone). Both need counsel's wording, not ours.
 
@@ -125,8 +125,8 @@ Legend: ✅ matches · ⚠️ partial · ❌ contradicts · ⬜ missing.
 Ordered by how much harm they could do.
 
 1. **Sonke fields say the server is live.** "Live today: server on Azure; root #8 LIVE-VERIFIED on Hedera testnet." Contradicts `06` §0 and `04` §4.1 (the last recorded server was lost on 15 Oct; the apps point at a presenter's PC). **Replace with the state as recorded in `06` §0 before any use.**
-2. **Duress wording and listening model.** "Always on" (Sonke) versus "listening only after Activate" (pitches) versus D7 (open). Also the duress PIN gap at sign-in and sign-out (D6, `06` §4): the Sonke fields say "Duress PIN: the same 'Checked in' screen, and guardians are alerted", which is **not true today at sign-in or at a paused sign-out** (`06` §2 item 2). Say the gap or wait for the fix.
-3. **Location.** The app shows and sends location in places; the 5-minute pitch says the build doesn't share it. Resolve on a device.
+2. **Duress wording and listening model.** The app itself says "listening … all the time" (ADR-0046); `MASTER-CONTEXT` §6 forbids "always on"; D7 is open (§2, point 3). Also the duress PIN gap at sign-in and sign-out (D6, `06` §4): the Sonke fields say "Duress PIN: the same 'Checked in' screen, and guardians are alerted", which is **not true today at sign-in or at a paused sign-out** (`06` §2 item 2). Say the gap or wait for the fix.
+3. **Location.** Resolved 26 Oct: the app shares an optional location fix after a check-in (§2, point 3). Correct the 5-minute pitch's "doesn't share location" line.
 4. **"Tamper-proof by design"** (investor deck slide 5). `MASTER-CONTEXT` §6 and the removed-lines table in `WAR-ROOM-PITCH-5MIN.md` say: "tamper-evident", "can't be backdated or quietly edited without detection", never "impossible to fake" or "tamper-proof".
 5. **Root number:** 7 (5-minute pitch) versus 8 (Sonke). Check the mirror node before any slide shows a number.
 6. **Break-even:** `05` §5 says `main` prints 10,901; it prints 10,973. Fix `05` §5 in a later PR (this file does not change it).
@@ -142,7 +142,7 @@ Ordered by how much harm they could do.
 | Artefact | Exists in repo? | Notes |
 |---|---|---|
 | **Demo video** | **No** (`git grep` for demo video finds only plans and the Sonke fields) | `docs/venture/08-DEMO-VIDEO-PLAN.md` (new, this PR) plans it. Needs a real Android phone and a live server |
-| **Real app screenshots** | **Not found** in this sandbox (checked `/tmp/claude-0/…/scratchpad/shots/` and a filesystem search for `app-13-home.png`, `dash-home.png`, `app-17-settings.png`) | The files are in a different session's scratchpad, or were not kept. **Re-supply them, or I rebuild them** (the browser shim, the clean crop of check-in screens). Do not use the left-half renderings |
+| **Real app screenshots** | **Yes, since 26 Oct** (`docs/venture/assets/screens-2026-10-26/`, made by `scripts/screens/`) | Browser renderings of the real UI in SIMULATED preview, captioned as such in every image. The 25 Oct files were not in this sandbox, so they were rebuilt; the check-in screens now render full width. Device screenshots are still needed for any "on a phone" claim |
 | **Dashboard home** | ✅ | `dashboard/index.html` |
 | **Dashboard ledger** | ✅ | `dashboard/ledger/` (needs a network that can reach Azure and Hedera to show live data; the sandbox cannot) |
 | **App onboarding copy** | Member-first | No enterprise surface; partner copy is only the share flow |
@@ -172,7 +172,7 @@ Built in Canva as a separate design from the investor deck, once you approve thi
 | 1 | Title | VUKA: notices duress without a button, and proves when. PILOTCORE. "Draft for judges. Testnet and simulated bank, as stated." | — |
 | 2 | Problem and community | A forced transfer looks like a willing one. 17,061 kidnappings in 2023/24, up 264%, 44% during a hijacking (`FACT`, SAPS via ISS Africa, as recorded in `docs/EVIDENCE.md`). R2.4bn lost to digital banking crime in 2025 (`FACT`, SABRIC, as recorded). One formal ombud case: R4,962.38 and about 61 days (`REPORTED`) | B, S |
 | 3 | One person's evening | "Imagine Thandi" (**illustrative composite, not a case**). A journey starts; a scream or glass opens a quiet Journey check; normal PIN: nothing sent; duress PIN: same screen, guardians alerted with "Don't call or text them. Call 10111." (spec G4, copy to be reviewed by a GBV organisation, D12, `PROPOSED`) | I, U |
-| 4 | Lawful and comfortable on the phone | No audio is stored. A 3-second buffer is classified on the phone and discarded; only a label and a score leave it (`FACT` for the design, as in `AudioPipeline.kt` per the 5-min pitch; not re-read today). Android only; not iOS (`FACT`, ADR-0008). Listening model: **open (D7)**. Lawful basis: counsel reviewing (`ASSUMPTION`) | S |
+| 4 | Lawful and comfortable on the phone | No audio is stored. A 3-second buffer is classified on the phone and discarded; only a label and a score leave it (`FACT` for the design, as in `AudioPipeline.kt` per the 5-min pitch; not re-read today). Android only; not iOS (`FACT`, ADR-0008). Listening as built: from Activate until the member deactivates it, with Android's microphone dot showing (`FACT`, the app's own copy; ADR-0046); journey mode as default is **open (D7)**. Location: optional, shared with guardians only after a check-in (`FACT`, app copy). Lawful basis: counsel reviewing (`ASSUMPTION`) | S |
 | 5 | Technical feasibility (what runs today) | VIGIL app on `main`. ANCHOR server on `main` (#131). Hedera testnet, topic `0.0.10687280` (`FACT`). Ran end to end on Android in September, on a demo build (`REPORTED`, the handover record). **Not running on a company-owned server since 15 Oct (`FACT`, `06` §0)** | T |
 | 6 | Measured, not claimed | Glass 46.0% (n = 139), gunshot 54.6% (n = 108), shatter 72.9% (n = 70), scream 6.5% (n = 108). False check-ins on everyday sounds: 1.8 per hour (folds 1–3) and 7.3 per hour (folds 4–5), a dense stress test, **not a field rate** (`FACT`, `docs/eval/cem1-measurements.md`). Thresholds uncalibrated | T, S |
 | 7 | Scalability | Each member has a signed chain. Anchoring: at most R569.47 a month for the whole network, whatever the count (`ESTIMATE`, script). At scale, a staffed rota and a zone-redundant stack: about R7,860–R8,360 a month before VAT (`ESTIMATE`, `04` §4.4 item 13) | T, B |
@@ -204,11 +204,12 @@ Edits to `DAHY_VcrKis` are not made yet. Each is a Canva transaction that needs 
 
 | Blocker | Who | Unblocks |
 |---|---|---|
-| Real app screenshots not in this sandbox | You (re-supply) or me (rebuild, with the shim fixed) | Investor slides 1 and 5; judges slide 3 |
-| No company-owned server since 15 Oct (D9) | Both founders | Demo video, slide 5 (judges), live SLA numbers, any "live" claim |
-| Listening model (D7) | Both founders | Lawful and comfort slide; the "always on" line |
+| Device screenshots (the browser renderings exist since 26 Oct) | Sibusiso or Lethabo, on an Android phone | Any slide that says "on a phone" |
+| No company-owned server since 15 Oct (D9) | Both founders | Demo video, slide 5 (judges), live SLA numbers, any "live" claim, live ledger screenshots |
+| Listening model (D7) | Both founders | Lawful and comfort slide; the app's own "all the time" copy versus the honesty ledger |
 | Duress PIN gap at sign-in and sign-out (D6) | Both founders (contract change) | Any claim that a duress PIN always raises an alert |
-| Location: app vs pitch (§3 item 3) | Lethabo (app) and you (pitch) on a device | Privacy line |
+| The 5-minute pitch's location line | Lethabo (it is her revision) | Privacy line (§2, point 3) |
+| The session proxy denies `www.canva.com`, `testnet.mirrornode.hedera.com` and the Azure host | Environment settings | Direct uploads to Canva (images go via their public GitHub URL instead) and live ledger data |
 | FNB App of the Year rules (26 Oct 23:59) | You: the rules are not in the repository | FNB submission scope |
 | Judges' rubric (YouthX, the Easies) | You: ask the organisers | Judges deck weights |
 | SAPS, CPSI, NGO contact | Both founders, after the plan is agreed | Slide 9 becomes true only then |

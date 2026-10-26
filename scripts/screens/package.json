@@ -1,0 +1,13 @@
+{
+  "name": "vuka-deck-screens",
+  "private": true,
+  "description": "Browser rendering of the real VIGIL UI (SIMULATED preview) for deck screenshots. Not a device build.",
+  "dependencies": {
+    "esbuild": "0.24.0",
+    "phosphor-react-native": "2.1.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-native-svg": "15.2.0",
+    "react-native-web": "0.19.12"
+  }
+}
