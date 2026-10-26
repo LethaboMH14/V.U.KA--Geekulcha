@@ -2,7 +2,7 @@
 
 > **Status:** `PROPOSED`, 25 Oct 2026. **No video has been recorded.** This file plans one. It does not claim that any footage exists.
 > **Why it is blocked:** the video must show a real Android phone, a running server and a real sound. As of 25 Oct the repository records no company-controlled server (`06-LAUNCH-ROADMAP.md` §0), and the detection thresholds are uncalibrated (`docs/eval/cem1-measurements.md`). Recording it today would show a demo on a presenter's machine, which is the state the video must not hide.
-> **Length:** 90 seconds maximum (FNB App of the Year brief, as given by Sibusiso on 25 Oct; not in the repository).
+> **Length:** 90 seconds at most (`PROPOSED`): short enough to loop on a showcase screen. No event currently requires a video.
 
 ---
 
@@ -78,5 +78,4 @@ Until every box is ticked, the video is not presented as the demo.
 
 1. A real Android phone and a second one (or a borrowed one) for the shots.
 2. A server decision (D9) so the verify page reads a live root.
-3. The FNB rule text: is the 90-second limit for the video, or for the slides, and is a voice-over required?
-4. The 46-second video in `docs/submission/SONKE-FIELDS.md`: where is that file? It is not in the repository (`docs/venture/07-EHUB-ALIGNMENT-AUDIT.md` §3 item 10).
+3. The 46-second video in `docs/submission/SONKE-FIELDS.md`: where is that file? It is not in the repository (`docs/venture/07-EHUB-ALIGNMENT-AUDIT.md` §3 item 10).

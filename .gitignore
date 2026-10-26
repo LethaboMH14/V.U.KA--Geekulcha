@@ -80,3 +80,4 @@ app/android/app/src/main/assets/models/
 # Compiled engine for the host harness (scripts/eval); regenerated, never committed.
 app/build-eval/
 app/build-e2e/
+scripts/screens/showcase-web/

@@ -1,6 +1,7 @@
 # 7 · E-Hub alignment audit: what matches, what contradicts, what is missing
 
 > **Status:** `PROPOSED`, 25 Oct 2026. Written by the Claude Code assistant acting for Sibusiso Khumalo (second lead), from the repository on `main` at `origin/main` (7e4648d) and the Canva investor deck `DAHY_VcrKis` as read on 25 Oct. Nothing here is decided; both founders review it.
+> **26 Oct:** FNB App of the Year work is out of scope (Sibusiso, 26 Oct); the next event is the AFRETEC E-Hub Tech Showcase, Wed 28 Oct (`09-AFRETEC-SHOWCASE.md`).
 > **Scope:** the six E-Hub feedback points (`docs/venture/README.md` §2) checked against every artefact that reaches a partner, judge or investor: the 3-minute and 5-minute pitch files, the Canva investor deck, the demo video (none exists yet), the app, the dashboard, and the Sonke submission fields.
 > **Tags:** `FACT` (checked by a command or a file read, named), `ESTIMATE`, `ASSUMPTION`, `PROPOSED`, `REPORTED` (from a search extract or a third party, not re-checked first-hand).
 
@@ -13,7 +14,7 @@
 - **Point 3 (lawful, comfortable distress signals) is partly answered.** "No audio stored" and "label and score only" are consistent everywhere. The app as built listens from Activate until the member deactivates it, and its own Home screen says "all the time" (ADR-0046). That contradicts the honesty ledger's "never say always on" (`MASTER-CONTEXT` §6). The listening model is an open decision (D7).
 - **Point 5 (two pitches) is half done.** The investor deck exists. The judges' deck did not exist before today (see §6 for the draft outline).
 - **Point 6 (launch) is missing from the decks.** `06-LAUNCH-ROADMAP.md` has dated phases, but the investor deck's only launch content is a "90 days / 5,000 members / three partners" line.
-- **The most urgent conflict is in the Sonke submission fields, not the pitches:** they say the server is live on Azure and that root #8 is LIVE-VERIFIED. The repository says there has been no company-controlled server since 15 Oct (`06-LAUNCH-ROADMAP.md` §0, `04-SLA.md` §4.1). That text must not go to the FNB submission (due 26 Oct 23:59 SAST, per your message) until it is corrected.
+- **The most urgent conflict is in the Sonke submission fields, not the pitches:** they say the server is live on Azure and that root #8 is LIVE-VERIFIED. The repository says there has been no company-controlled server since 15 Oct (`06-LAUNCH-ROADMAP.md` §0, `04-SLA.md` §4.1). That text must not be reused anywhere until it is corrected.
 
 ---
 
@@ -146,9 +147,7 @@ Ordered by how much harm they could do.
 | **Dashboard home** | ✅ | `dashboard/index.html` |
 | **Dashboard ledger** | ✅ | `dashboard/ledger/` (needs a network that can reach Azure and Hedera to show live data; the sandbox cannot) |
 | **App onboarding copy** | Member-first | No enterprise surface; partner copy is only the share flow |
-| **SSDLC** | ✅ (23 Sep, `PROPOSED` until Ipeleng accepts) | `docs/security/SSDLC.md`. The FNB rules are not in the repository; the 26 Oct deadline and "10 slides, demo login and link, 90 s video, SSDLC, Lean Business Canvas" come from your message |
-| **Lean Business Canvas** | **Stale** | `docs/LEAN-CANVAS.md` says "STALE, do not quote" and describes the retired four-layer design. Needs rewriting under the venture plan before the FNB submission |
-| **Sonke submission PDF** | ✅ (`docs/submission/VUKA-GKHack26-submission.pdf`, 16 slides, the hackathon version) | Not the FNB deck. Its claims carry the conflicts in §3 |
+| **Sonke submission PDF** | ✅ (`docs/submission/VUKA-GKHack26-submission.pdf`, 16 slides, the hackathon version) | The September hackathon version. Its claims carry the conflicts in §3 |
 
 ---
 
@@ -210,7 +209,6 @@ Ordered by how much harm they could do.
 | Duress PIN gap at sign-in and sign-out (D6) | Both founders (contract change) | Any claim that a duress PIN always raises an alert |
 | The 5-minute pitch's location line | Lethabo (it is her revision) | Privacy line (§2, point 3) |
 | The session proxy denies `www.canva.com`, `testnet.mirrornode.hedera.com` and the Azure host | Environment settings | Direct uploads to Canva (images go via their public GitHub URL instead) and live ledger data |
-| FNB App of the Year rules (26 Oct 23:59) | You: the rules are not in the repository | FNB submission scope |
 | Judges' rubric (YouthX, the Easies) | You: ask the organisers | Judges deck weights |
 | SAPS, CPSI, NGO contact | Both founders, after the plan is agreed | Slide 9 becomes true only then |
 
