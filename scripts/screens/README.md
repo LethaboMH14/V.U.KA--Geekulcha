@@ -34,4 +34,18 @@ On Home, **Preview: show a check-in** opens a check-in. Test PINs: normal 1357, 
 
 ## Journey recording (for slide videos)
 
-`record-journey.cjs` records the Thandi journey through the simulated preview at 1920×1080, with captions beside the phone. It is a browser recording, not a phone recording, and the title and end cards say so. Trim the set-up using `setupEndMs` in `timings.json`, then join title, clip and end card with ffmpeg (see the commit that added this file for the exact steps).
+`record-journey.cjs` records the Thandi journey through the simulated preview at 1920×1080, with captions beside the phone. It is a browser recording, not a phone recording, and the title and end cards say so. Captions follow `docs/venture/09-AFRETEC-SHOWCASE.md` §4; the Thandi journey is an illustrative composite.
+
+```sh
+cd scripts/screens && node build.mjs <build>            # the preview must be served on 8790 from <build>
+node record-journey.cjs <out>                           # writes page@*.webm and timings.json
+SETUP=$(node -p "require('<out>/timings.json').setupEndMs/1000")
+ffmpeg -y -ss "$SETUP" -i <out>/page@*.webm -an -vf fps=30,format=yuv420p -c:v libx264 -crf 18 <out>/clip.mp4
+python3 journey-cards.py <build>/fonts <out>            # card-title, card-problem, card-cant, card-measured (PNG)
+ffmpeg -y -loop 1 -t 5 -i <out>/card-title.png -loop 1 -t 6 -i <out>/card-problem.png -i <out>/clip.mp4 \
+  -loop 1 -t 6 -i <out>/card-cant.png -loop 1 -t 7 -i <out>/card-measured.png \
+  -filter_complex "[0:v]fps=30,format=yuv420p,setsar=1,fade=t=in:st=0:d=0.5,fade=t=out:st=4.5:d=0.5[v0];[1:v]fps=30,format=yuv420p,setsar=1,fade=t=in:st=0:d=0.5,fade=t=out:st=5.5:d=0.5[v1];[2:v]fps=30,format=yuv420p,setsar=1[v2];[3:v]fps=30,format=yuv420p,setsar=1,fade=t=in:st=0:d=0.5,fade=t=out:st=5.5:d=0.5[v3];[4:v]fps=30,format=yuv420p,setsar=1,fade=t=in:st=0:d=0.5,fade=t=out:st=6.5:d=0.5[v4];[v0][v1][v2][v3][v4]concat=n=5:v=1:a=0[out]" \
+  -map "[out]" -c:v libx264 -crf 18 -pix_fmt yuv420p -movflags +faststart -an <out>/final.mp4
+```
+
+The result is silent (no audio track), about 66 seconds. No narration: a voice-over is a separate decision. `setupEndMs` trims the set-up. The measured card's figures are from `docs/eval/cem1-measurements.md`; change a figure only when that file changes.

@@ -15,16 +15,19 @@ const flow = fs
   .split('\n')
   .filter(Boolean);
 
+// Captions follow docs/venture/09-AFRETEC-SHOWCASE.md §4 and docs/MASTER-CONTEXT.md §6.
+// "Listens from Activate until you deactivate it" is what the app does; its Home
+// copy says "all the time" (D7, open), so the caption says so.
 const CAPTIONS = {
-  setup: 'Setting up a test member (trimmed from the video).',
-  home: '1 · Before a risky trip, Thandi activates VIGIL. Activate is the last button she presses. It listens until she deactivates it, and Android shows the microphone dot.',
+  setup: 'Setting up a test member. Trimmed from the video.',
+  home: '1 · Thandi turns VIGIL on before a trip. It listens from Activate until she deactivates it, and Android shows the microphone indicator. The Home wording is under review (D7).',
   check:
-    '2 · A sound such as breaking glass never raises an alarm on its own. It opens a quiet check-in. In this preview a button opens it; in use, the sound does. No audio is stored.',
-  normal: '3 · Her normal PIN. The check-in closes and nothing is sent to anyone.',
+    '2 · A sound like breaking glass does not raise an alarm by itself. It opens a quiet check-in. In this preview a button opens it; on a phone, the sound does. No audio is written to storage.',
+  normal: '3 · Her normal PIN. The check-in closes and nothing is sent to anyone. In this preview nothing is signed or sent.',
   duress:
-    '4 · Her duress PIN. The screen is the same "Checked in" screen. What her guardians receive is shown next.',
+    '4 · Her duress PIN. The screen looks the same as the normal one (identical in this preview, one run). Her guardians are alerted. Their screen comes next.',
   guardian:
-    '5 · Her guardian\'s phone, in the preview: "Don\'t call or text Lerato. Call 10111." The guardian chooses what to do. VUKA dispatches no one.',
+    '5 · A fixed preview, not a set-up guardian (this demo account has none). The guardian reads: "Don\'t call or text Lerato. Call 10111." They decide what to do. VUKA dispatches no one. Wording: GBV review pending (D12).',
 };
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
