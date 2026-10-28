@@ -63,7 +63,9 @@ Spoken lines are plain. Stage notes give the tag, the source, and what to do if 
 
 **Say:** "Every person has their own signed record. Public anchoring costs at most about R570 a month for the whole network, however many members there are."
 
-*Stage:* R570: `ESTIMATE` (`scripts/economics_vigil_anchor.py`, hourly anchoring plus immediate roots capped at one a minute). It is the anchoring cost only, not the whole business.
+*Stage:* R570: `ESTIMATE` (`scripts/economics_vigil_anchor.py`, hourly anchoring plus immediate roots capped at one a minute). It is the anchoring cost only, not the whole business, and it is a cost, not a price.
+- **Enterprise framing (28 Oct, Sibusiso):** the slide now says "Enterprise route: backend inside the partner's systems (PROPOSED). Until then, our hosting at scale: R7,860 to R8,360 a month before VAT" (`ESTIMATE`, `04` §4.4). Partner-hosted is offer N2 (`01` §5), `PROPOSED`, nobody has agreed. The spoken line is unchanged; the enterprise line need not be read aloud.
+- **How the money works:** partners pay per protected member per month, about R20 (`ASSUMPTION`), plus a proposed integration fee (`01` §6). R570 a month does not fund the company: the fixed-cost models in `05` §5 are far higher. Do not call R570 our price.
 
 ### Slide 8 · Service levels · 1:30
 
