@@ -1,6 +1,6 @@
 # 10 · Judges' pitch script: VUKA Judges Pitch (about 2 minutes)
 
-> **Status:** `PROPOSED`, 27 Oct 2026. Written by the Claude Code assistant for Sibusiso Khumalo, from the saved judges' deck (Canva `DAHZIXLh5mk`, 10 slides, read 27 Oct), `05-TWO-PITCHES.md` §4 and `09-AFRETEC-SHOWCASE.md` §4. Nothing here has been said to anyone.
+> **Status:** `PROPOSED`, 27 Oct 2026; slide 10 reframed 28 Oct. Written by the Claude Code assistant for Sibusiso Khumalo, from the saved judges' deck (Canva `DAHZIXLh5mk`, 10 slides, read 27 Oct), `05-TWO-PITCHES.md` §4 and `09-AFRETEC-SHOWCASE.md` §4. Every slide's Canva presenter notes now carry its spoken line, tags and answers (28 Oct). Nothing here has been said to anyone.
 > **Criteria:** B (business case), T (feasibility and scale), S (ethics and honesty). I (impact on users) for the Thandi story. Community impact is not a letter in the published set (`07` §5).
 > **Tags:** `FACT` · `ESTIMATE` · `ASSUMPTION` · `PROPOSED` · `REPORTED`, as in `docs/MASTER-CONTEXT.md` §7.
 
@@ -79,11 +79,14 @@ Spoken lines are plain. Stage notes give the tag, the source, and what to do if 
 
 ### Slide 10 · What we don't claim, and the ask · 1:50
 
-**Say:** "We don't claim proof of duress, invisibility, court admissibility, or crime prevention. We ask for feedback, a GBV reviewer, and an introduction to CPSI or the Wits Gender Equity Office."
+**Say:** "We don't claim proof of duress, invisibility, court admissibility, or crime prevention. We ask for an observe-only pilot with a bank or insurer, an introduction to SAPS through CPSI, and partners to trial wearable triggers like rings and earrings, measured before we claim anything. Long term, our backend runs inside a bank's or insurer's own app."
 
-*Stage:* The not-claimed list is from `docs/MASTER-CONTEXT.md` §6. The ask is `PROPOSED`. The founders decide it.
+*Stage:* Reframed 28 Oct (Sibusiso): VUKA is a safety, security and claims tool for banks and insurers, not a GBV-support product. The slide now asks for a bank or insurer pilot, a SAPS introduction through CPSI, and a wearable trial, with the long-term aim of running inside a partner's app. Every ask is `PROPOSED`; no bank, insurer or SAPS contact has been made. The not-claimed list is from `docs/MASTER-CONTEXT.md` §6.
+- **Banks and insurers:** offers N1, N3 and I1 (`01` §5, `11`). **Long term (N2):** white label or deep link first, SDK later. Hard parts (`01` §5): microphone review inside a bank app, duress parity, no PIN logging in partner analytics, member mapping without banking data, one codebase first (D5).
+- **SAPS:** data reaches police only by the member's own export or a logged lawful order (design rule, `PROPOSED`). Never say SAPS uses or buys VUKA.
+- **Wearables (rings, earrings):** `PROPOSED`, not built, not measured. Start with a discreet manual trigger (a tap pattern), which needs no machine learning. Sensor detection only after an ethics-cleared trial that collects labelled data and publishes accuracy with n. Health data is likely special personal information under POPIA (`ASSUMPTION`; counsel). `STAGED-DURESS-DEFENCE.md` §7 rejected wearable signal correlation as an uncalibrated ML claim, so this needs a founders' decision record first.
 
-**Total:** 331 spoken words, about 2 minutes 15 seconds at 150 words a minute (`ESTIMATE`; not timed aloud). For a flat two minutes, cut the slide 8 line (18 words) and the R2.4 billion sentence on slide 2 (8 words). That brings it to 305 words, about 2 minutes.
+**Total:** 357 spoken words, about 2 minutes 23 seconds at 150 words a minute (`ESTIMATE`; not timed aloud). For a tighter slot, cut the slide 8 line (18 words), the R2.4 billion sentence on slide 2 (8 words) and the long-term sentence on slide 10 (12 words): about 319 words, about 2 minutes 8 seconds.
 
 ---
 
